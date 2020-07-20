@@ -20,8 +20,10 @@ public class ForLoopStmt extends ConditionalStmt {
 
     private final static String forEachSyntaxMsg = "Syntax of for-each loop: for ele: T; collection {...}";
 
-    public ForLoopStmt(LineFile lineFile) {
-        super(lineFile);
+    public ForLoopStmt(BlockStmt condition, BlockStmt bodyBlock, LineFile lineFile) {
+        super(bodyBlock, lineFile);
+
+        this.condition = condition;
     }
 
     public void setCondition(BlockStmt condition) {

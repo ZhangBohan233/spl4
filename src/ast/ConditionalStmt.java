@@ -10,6 +10,12 @@ public abstract class ConditionalStmt extends Node {
         super(lineFile);
     }
 
+    public ConditionalStmt(BlockStmt bodyBlock, LineFile lineFile) {
+        super(lineFile);
+
+        this.bodyBlock = bodyBlock;
+    }
+
     public void setBodyBlock(BlockStmt bodyBlock) {
         this.bodyBlock = bodyBlock;
     }

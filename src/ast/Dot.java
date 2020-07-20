@@ -17,14 +17,26 @@ public class Dot extends BinaryExpr  {
     protected SplElement internalEval(Environment env) {
 
         SplElement leftTv = left.evaluate(env);
-        if (!(SplElement.isPrimitive(leftTv))) {
+        if (leftTv instanceof Pointer) {
 //            PointerType type = (PointerType) leftTv.getType();
             Pointer ptr = (Pointer) leftTv;
             if (ptr.getPtr() == 0) {
                 throw new SplException("Pointer to null does not support attributes operation. ",
                         getLineFile());
             }
-            return null;
+            SplObject leftObj = env.getMemory().get(ptr);
+            if (leftObj instanceof Instance) {
+                return crossEnvEval(right, ((Instance) leftObj).getEnv(), env, getLineFile());
+            } else if (leftObj instanceof SplModule) {
+                return crossEnvEval(right, ((SplModule) leftObj).getEnv(), env, getLineFile());
+            } else if (leftObj instanceof SplArray) {
+                return ((SplArray) leftObj).getAttr(right, getLineFile());
+            } else if (leftObj instanceof NativeObject) {
+                return ((NativeObject) leftObj).invoke(right, env, getLineFile());
+            } else {
+                throw new TypeError("Object '" + leftObj + "' does not support attributes operation. ",
+                            getLineFile());
+            }
 //            switch (type.getPointerType()) {
 //                case PointerType.CLASS_TYPE:
 //                    Instance instance = (Instance) env.getMemory().get(ptr);
@@ -62,6 +74,9 @@ public class Dot extends BinaryExpr  {
 //                throw new SplException("Class attribute not callable. ", lineFile);
             SplCallable callable = (SplCallable) objEnv.getMemory().get((Pointer) funcTv);
             return callable.call(((FuncCall) right).getArguments(), oldEnv);
+        } else if (right instanceof IndexingNode) {
+//            SplElement
+            return ((IndexingNode) right).crossEnvEval(objEnv, oldEnv);
         } else {
             throw new SplException("Unexpected right side type of dot '" + right.getClass() + "' ", lineFile);
         }

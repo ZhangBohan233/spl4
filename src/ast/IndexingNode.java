@@ -13,15 +13,12 @@ import java.util.List;
 public class IndexingNode extends Node  {
 
     private final Node callObj;
-    private Line args;
+    private final Line args;
 
-    public IndexingNode(Node callObj, LineFile lineFile) {
+    public IndexingNode(Node callObj, Line args, LineFile lineFile) {
         super(lineFile);
 
         this.callObj = callObj;
-    }
-
-    public void setArgs(Line args) {
         this.args = args;
     }
 
@@ -46,15 +43,17 @@ public class IndexingNode extends Node  {
     @Override
     protected SplElement internalEval(Environment env) {
 
-        SplElement callRes = getCallObj().evaluate(env);
-        List<Node> arguments = getArgs().getChildren();
-        int index = getIndex((Pointer) callRes, arguments, env, getLineFile());
-
-//        Type arrEleType = ((ArrayType) callRes.getType()).getEleType();
-
-        SplElement value = SplArray.getItemAtIndex((Pointer) callRes, index, env, getLineFile());
-        return value;
+        return crossEnvEval(env, env);
     }
+
+    public SplElement crossEnvEval(Environment definitionEnv, Environment callEnv) {
+        SplElement callRes = getCallObj().evaluate(definitionEnv);
+        List<Node> arguments = getArgs().getChildren();
+        int index = getIndex(arguments, callEnv, getLineFile());
+
+        return SplArray.getItemAtIndex((Pointer) callRes, index, callEnv.getMemory(), getLineFile());
+    }
+
     @Override
     public String toString() {
         return callObj + " " + args;
@@ -66,7 +65,7 @@ public class IndexingNode extends Node  {
 //        return new ArrayType(ofType);
 //    }
 
-    public static int getIndex(Pointer arrayPtr, List<Node> arguments, Environment env, LineFile lineFile) {
+    public static int getIndex(List<Node> arguments, Environment env, LineFile lineFile) {
 //        if (!(arrayTv.getType() instanceof ArrayType)) {
 //            throw new TypeError("Only array type supports indexing. ", lineFile);
 //        }

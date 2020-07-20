@@ -2,6 +2,7 @@ package ast;
 
 import interpreter.SplException;
 import interpreter.env.Environment;
+import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
 import interpreter.splObjects.*;
@@ -31,20 +32,36 @@ public class Assignment extends BinaryExpr {
 
             env.setVar(((Declaration) key).declaredName, value, lineFile);
         } else if (key instanceof Dot) {
-//            SplElement leftLeft = ((Dot) key).left.evaluate(env);
-//            PointerType leftLeftType = (PointerType) leftLeft.getType();
-//            Environment leftEnv;
-//            if (leftLeftType.getPointerType() == PointerType.MODULE_TYPE) {
-//                SplModule leftModule = (SplModule) env.getMemory().get((Pointer) leftLeft.getValue());
-//                leftEnv = leftModule.getEnv();
-//            } else if (leftLeftType.getPointerType() == PointerType.CLASS_TYPE) {
-//                Instance leftModule = (Instance) env.getMemory().get((Pointer) leftLeft.getValue());
-//                leftEnv = leftModule.getEnv();
-//            } else {
-//                throw new TypeError();
-//            }
-//            leftEnv.setVar(((NameNode) ((Dot) key).right).getName(), value, lineFile);
+            SplElement dotLeft = ((Dot) key).left.evaluate(env);
+            if (!(dotLeft instanceof Pointer)) {
+                throw new TypeError("Left side of dot must be instance or module", lineFile);
+            }
+            SplObject dotLeftObj = env.getMemory().get((Pointer) dotLeft);
+            Environment objEnv;
+            if (dotLeftObj instanceof SplModule) {
+                objEnv = ((SplModule) dotLeftObj).getEnv();
+            } else if (dotLeftObj instanceof Instance) {
+                objEnv = ((Instance) dotLeftObj).getEnv();
+            } else {
+                throw new TypeError("Left side of dot must be instance or module", lineFile);
+            }
+            objEnv.setVar(((NameNode) ((Dot) key).right).getName(), value, lineFile);
         } else if (key instanceof IndexingNode) {
+            IndexingNode indexingNode = (IndexingNode) key;
+            Pointer arrPtr = (Pointer) indexingNode.getCallObj().evaluate(env);
+            if (indexingNode.getArgs().getChildren().size() == 1) {
+                Int index = (Int) indexingNode.getArgs().getChildren().get(0).evaluate(env);
+                SplObject obj = env.getMemory().get(arrPtr);
+
+                // todo: custom class set-item
+                if (obj instanceof SplArray) {
+                    SplArray.setItemAtIndex(arrPtr, (int) index.value, value, env, lineFile);
+                } else {
+                    throw new SplException("Object '" + obj + "' does not support set-item. ", lineFile);
+                }
+            } else {
+                throw new SplException("Array creation must take exactly one int as argument. ", lineFile);
+            }
 //            TypeValue leftCallRes = ((IndexingNode) key).getCallObj().evaluate(env);
 //            List<Node> arguments = ((IndexingNode) key).getArgs().getChildren();
 //            int index = IndexingNode.getIndex(leftCallRes, arguments, env, lineFile);

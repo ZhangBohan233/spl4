@@ -17,44 +17,50 @@ public class ClassStmt extends Node {
     private final String className;
     private List<Node> superclassesNodes;
     //    private TypeRepresent superclass;
-    private final boolean isInterface;
-    private final boolean isAbstract;
+//    private final boolean isInterface;
+//    private final boolean isAbstract;
     //    private TemplateNode templateNode;
-    private BlockStmt body;
+    private final BlockStmt body;
 
-    public ClassStmt(String className, boolean isInterface, boolean isAbstract, LineFile lineFile) {
+    /**
+     * @param className  name of class
+     * @param extensions extending line, null if not specified.
+     * @param body       body block
+     * @param lineFile   line file
+     */
+    public ClassStmt(String className, Line extensions, BlockStmt body, LineFile lineFile) {
         super(lineFile);
 
         this.className = className;
-        this.isInterface = isInterface;
-        this.isAbstract = isAbstract;
-    }
-
-    public void setBody(BlockStmt body) {
+        this.superclassesNodes = extensions == null ? null : extensions.getChildren();
         this.body = body;
     }
 
-//    public void setImplements(Implements implementations) {
-//        this.implementations = implementations;
+//    public void setBody(BlockStmt body) {
+//        this.body = body;
 //    }
 //
-//    public void setTemplateNode(TemplateNode templateNode) {
-//        this.templateNode = templateNode;
+////    public void setImplements(Implements implementations) {
+////        this.implementations = implementations;
+////    }
+////
+////    public void setTemplateNode(TemplateNode templateNode) {
+////        this.templateNode = templateNode;
+////    }
+//
+//    public void setSuperclasses(Line extensions) {
+//        this.superclassesNodes = extensions.getChildren();
+////        if (extendNode instanceof Extends) {
+////            superclass = ((Extends) extendNode).getValue();
+////        } else {
+////            throw new ParseError("Superclass must be a class. ", getLineFile());
+////        }
 //    }
-
-    public void setSuperclasses(Line extensions) {
-        this.superclassesNodes = extensions.getChildren();
-//        if (extendNode instanceof Extends) {
-//            superclass = ((Extends) extendNode).getValue();
-//        } else {
-//            throw new ParseError("Superclass must be a class. ", getLineFile());
-//        }
-    }
 
     private void validateExtending() {
         if (superclassesNodes == null) {
+            superclassesNodes = new ArrayList<>();
             if (!className.equals(Constants.OBJECT_CLASS)) {
-                superclassesNodes = new ArrayList<>();
                 superclassesNodes.add(new NameNode("Object", getLineFile()));
             }
         }
@@ -64,15 +70,6 @@ public class ClassStmt extends Node {
     protected SplElement internalEval(Environment env) {
 
         validateExtending();
-
-//        System.out.println(superclass);
-
-//        ClassType superclassT;
-//        if (superclass == null) {
-//            superclassT = null;
-//        } else {
-//            superclassT = (ClassType) superclass.evalType(env);
-//        }
 
         List<Pointer> superclassesPointers = new ArrayList<>();
         for (int i = superclassesNodes.size() - 1; i >= 0; i--) {
@@ -99,7 +96,7 @@ public class ClassStmt extends Node {
 //            templateList = templateNode.value.getChildren();
 //        }
 
-        SplClass clazz = new SplClass(className, superclassesPointers, body, env, isAbstract, isInterface);
+        SplClass clazz = new SplClass(className, superclassesPointers, body, env);
         Pointer clazzPtr = env.getMemory().allocate(1, env);
         env.getMemory().set(clazzPtr, clazz);
 //        ClassType clazzType = new ClassType(clazzPtr);

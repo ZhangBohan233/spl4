@@ -184,7 +184,7 @@ public class SplInvokes extends NativeObject {
             if (object instanceof Instance) {
                 Instance instance = (Instance) object;
 
-                if (ptr.getPtr() == stringPtr.getPtr()) {  // is String itself
+                if (instance.getClazzPtr().getPtr() == stringPtr.getPtr()) {  // is String itself
                     return extractFromSplString(instance, environment, lineFile);
                 } else {
                     Pointer toStrPtr = (Pointer) instance.getEnv().get(Constants.TO_STRING_FN, lineFile);

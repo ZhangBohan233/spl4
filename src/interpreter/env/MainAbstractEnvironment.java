@@ -12,9 +12,9 @@ import java.util.Set;
 
 public abstract class MainAbstractEnvironment extends Environment {
 
-    public static final Set<String> NON_OVERRIDE_FUNCTIONS = Set.of(
-            "init"
-    );
+//    public static final Set<String> NON_OVERRIDE_FUNCTIONS = Set.of(
+//            "init"
+//    );
 
     protected Set<ModuleEnvironment> namespaces = new HashSet<>();
 
@@ -63,7 +63,7 @@ public abstract class MainAbstractEnvironment extends Environment {
 
     @Override
     protected void setInNamespaces(String name, SplElement typeValue) {
-
+//        System.out.println(12312313);
     }
 
     public void breakLoop() {

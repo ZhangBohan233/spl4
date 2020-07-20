@@ -8,19 +8,17 @@ import util.LineFile;
 
 public class IfStmt extends ConditionalStmt {
 
-    private Line condition;
-    private Node elseBlock;
+    private final Line condition;
+    private BlockStmt elseBlock;
     private boolean hasElse;
 
-    public IfStmt(LineFile lineFile) {
-        super(lineFile);
-    }
+    public IfStmt(Line condition, BlockStmt bodyBlock, LineFile lineFile) {
+        super(bodyBlock, lineFile);
 
-    public void setCondition(Line condition) {
         this.condition = condition;
     }
 
-    public void setElseBlock(Node elseBlock) {
+    public void setElseBlock(BlockStmt elseBlock) {
         this.elseBlock = elseBlock;
     }
 

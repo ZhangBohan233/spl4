@@ -92,12 +92,12 @@ public class FileTokenizer {
 
         tokens.clear();
 
-//        if (importLang) {
-//            tokens.add(new IdToken("import", LineFile.LF_TOKENIZER));
-//            tokens.add(new IdToken("namespace", LineFile.LF_TOKENIZER));
-//            tokens.add(new StrToken("lang", LineFile.LF_TOKENIZER));
-//            findImport(0, 3);
-//        }
+        if (importLang) {
+            LineFile lineFile0 = new LineFile(0, srcFile);
+            tokens.add(new IdToken("import", lineFile0));
+            tokens.add(new IdToken("namespace", lineFile0));
+            tokens.add(new IdToken("lang", lineFile0));
+        }
 
         int lineNum = 1;
         String line;
@@ -134,6 +134,16 @@ public class FileTokenizer {
                         return currentActive.parentElement;
                     } else {
                         throw new SyntaxError("')' must close a '(', not a '" + symbol + "'. ",
+                                tk.getLineFile());
+                    }
+                case "[":
+                    return new SqrBracketList(currentActive);
+                case "]":
+                    if (currentActive instanceof SqrBracketList) {
+                        currentActive.parentElement.add(currentActive);
+                        return currentActive.parentElement;
+                    } else {
+                        throw new SyntaxError("']' must close a '[', not a '" + symbol + "'. ",
                                 tk.getLineFile());
                     }
                 case "{":

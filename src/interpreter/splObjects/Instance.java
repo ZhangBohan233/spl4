@@ -58,12 +58,12 @@ public class Instance extends SplObject {
         SplObject obj = outerEnv.getMemory().get(clazzPtr);
 //        if (!(obj instanceof SplClass)) throw new TypeError();
         SplClass clazz = (SplClass) obj;
-        if (clazz.isAbstract && isFirstCall) {
-            throw new SplException("Abstract class '" + clazz.getClassName() + "' is not instantiable. ", lineFile);
-        }
-        if (clazz.isInterface && isFirstCall) {
-            throw new SplException("Interface '" + clazz.getClassName() + "' is not instantiable. ", lineFile);
-        }
+//        if (clazz.isAbstract && isFirstCall) {
+//            throw new SplException("Abstract class '" + clazz.getClassName() + "' is not instantiable. ", lineFile);
+//        }
+//        if (clazz.isInterface && isFirstCall) {
+//            throw new SplException("Interface '" + clazz.getClassName() + "' is not instantiable. ", lineFile);
+//        }
         InstanceEnvironment instanceEnv = new InstanceEnvironment(
                 clazz.getClassName(),
                 clazz.getDefinitionEnv(),
@@ -260,7 +260,7 @@ public class Instance extends SplObject {
             if (supConst.minArgCount() > 0) {
                 // superclass has a non-trivial constructor
                 if (noLeadingSuperCall(constructor)) {
-                    throw new SplException("Constructor of child class must first call super.init() with matching " +
+                    throw new SplException("Constructor of child class must first call super.__init__() with matching " +
                             "arguments. ", lineFile);
                 }
             } else {
@@ -293,7 +293,7 @@ public class Instance extends SplObject {
             Dot dot = new Dot(LineFile.LF_INTERPRETER);
             dot.setLeft(new NameNode("super", LineFile.LF_INTERPRETER));
             FuncCall supInit = new FuncCall(LineFile.LF_INTERPRETER);
-            supInit.setCallObj(new NameNode("init", LineFile.LF_INTERPRETER));
+            supInit.setCallObj(new NameNode(Constants.CONSTRUCTOR, LineFile.LF_INTERPRETER));
             supInit.setArguments(new Arguments(new Line(), LineFile.LF_INTERPRETER));
             dot.setRight(supInit);
 

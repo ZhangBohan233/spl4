@@ -1,16 +1,36 @@
 package ast;
 
 import interpreter.primitives.*;
+import interpreter.splObjects.Function;
+import interpreter.splObjects.Instance;
+import interpreter.splObjects.SplObject;
 import interpreter.types.*;
 import interpreter.env.Environment;
 import lexer.SyntaxError;
 import util.LineFile;
+
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public class BinaryOperator extends BinaryExpr {
 
     public static final int NUMERIC = 1;
     public static final int LOGICAL = 2;
     public static final int LAZY = 3;
+
+    private static final Map<String, String> ARITHMETIC_OP_MAP = Map.of(
+            "+", "__add__",
+            "-", "__sub__",
+            "*", "__mul__",
+            "/", "__div__",
+            "%", "__mod__"
+    );
+
+    private static final Set<String> UNCHANGED_LOGICAL = Set.of(
+            "is"
+    );
+
     private final int type;
 
     public BinaryOperator(String operator, int type, LineFile lineFile) {
@@ -22,34 +42,37 @@ public class BinaryOperator extends BinaryExpr {
     @Override
     protected SplElement internalEval(Environment env) {
         if (type == NUMERIC) {
-            SplElement leftTv = left.evaluate(env);
-            SplElement rightTv = right.evaluate(env);
-            if (!SplElement.isPrimitive(leftTv) || !SplElement.isPrimitive(rightTv)) {
-//                System.out.println(leftTv.getType());
-//                System.out.println(rightTv.getType());
-                throw new TypeError("Pointer type arithmetic is not supported. ",
-                        getLineFile());
-            }
+            SplElement leftEle = left.evaluate(env);
+            SplElement rightEle = right.evaluate(env);
 
-            if (leftTv.isIntLike()) {
-                SplElement result = new Int(integerArithmetic(
-                        operator,
-                        leftTv.intValue(),
-                        rightTv.intValue(),
-                        rightTv.isIntLike(),
-                        getLineFile()
-                ));
-//                System.out.println(leftTv.getValue() + operator + rightTv.getValue() + '=' + result);
-                return result;
-            } else if (leftTv instanceof SplFloat) {
-                return new SplFloat(floatArithmetic(
-                        operator,
-                        leftTv.floatValue(),
-                        rightTv.floatValue(),
-                        getLineFile()
-                ));
+            if (leftEle instanceof Pointer) {
+                return pointerTypeNumericArithmetic((Pointer) leftEle, rightEle, operator, env, getLineFile());
             } else {
-                throw new TypeError();
+                if (!SplElement.isPrimitive(rightEle)) {
+                    throw new TypeError("Arithmetic between primitive and pointer is not supported. ",
+                            getLineFile());
+                }
+
+                if (leftEle.isIntLike()) {
+                    SplElement result = new Int(integerArithmetic(
+                            operator,
+                            leftEle.intValue(),
+                            rightEle.intValue(),
+                            rightEle.isIntLike(),
+                            getLineFile()
+                    ));
+//                System.out.println(leftEle.getValue() + operator + rightEle.getValue() + '=' + result);
+                    return result;
+                } else if (leftEle instanceof SplFloat) {
+                    return new SplFloat(floatArithmetic(
+                            operator,
+                            leftEle.floatValue(),
+                            rightEle.floatValue(),
+                            getLineFile()
+                    ));
+                } else {
+                    throw new TypeError();
+                }
             }
         } else if (type == LOGICAL) {
             SplElement leftTv = left.evaluate(env);
@@ -127,6 +150,23 @@ public class BinaryOperator extends BinaryExpr {
             return fto.evaluate(env);
         }
         throw new SyntaxError("Unexpected error. ", getLineFile());
+    }
+
+    private static SplElement pointerTypeNumericArithmetic(Pointer leftPtr,
+                                                        SplElement rightEle,
+                                                        String operator,
+                                                        Environment env,
+                                                        LineFile lineFile) {
+        SplObject leftObj = env.getMemory().get(leftPtr);
+        if (leftObj instanceof Instance) {
+            String fnName = ARITHMETIC_OP_MAP.get(operator);
+            Environment instanceEnv = ((Instance) leftObj).getEnv();
+            Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
+            Function opFn = (Function) env.getMemory().get(fnPtr);
+            return opFn.call(new SplElement[]{rightEle}, env, lineFile);
+        } else {
+            throw new TypeError();
+        }
     }
 
     private static long integerArithmetic(String op, long l, long r, boolean rIsInt, LineFile lineFile) {

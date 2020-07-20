@@ -51,6 +51,16 @@ public class Parser {
         return builder.getLine();
     }
 
+    private Line parseSqrBracket(SqrBracketList sqrBracketList) throws IOException {
+        AstBuilder builder = new AstBuilder();
+        int i = 0;
+        while (i < sqrBracketList.size()) {
+            i = parseOne(sqrBracketList, i, builder);
+        }
+        builder.finishPart();
+        return builder.getLine();
+    }
+
     private Node parseParenthesis(BracketList bracketList) throws IOException {
         AstBuilder builder = new AstBuilder();
         int i = 0;
@@ -64,10 +74,10 @@ public class Parser {
     /**
      * Returns the index after proceed.
      *
-     * @param parent
-     * @param index
-     * @param builder
-     * @return
+     * @param parent  parent collective element
+     * @param index   the current processing index in parent
+     * @param builder the abstract syntax tree builder
+     * @return the index in parent after the current one has been proceeded
      */
     private int parseOne(CollectiveElement parent, int index, AstBuilder builder) throws IOException {
         Element ele = parent.get(index++);
@@ -100,15 +110,41 @@ public class Parser {
                     } else if (FileTokenizer.FAKE_TERNARY.contains(identifier)) {
                         builder.addFakeTernary(identifier, lineFile);
                     } else {
-                        boolean isInterface = false;
+
+                        // These are for convenience
+                        IdToken nameToken;
+                        Element next;
+                        BraceList bodyList;
+                        BlockStmt bodyBlock;
+                        BracketList conditionList;
+                        Line condition;
+
                         switch (identifier) {
+                            case "=":
+                                builder.addNode(new Assignment(lineFile));
+                                break;
+                            case ".":
+                                builder.addNode(new Dot(lineFile));
+                                break;
+                            case "++":
+                                builder.addNode(new IncDecOperator(true, lineFile));
+                                break;
+                            case "--":
+                                builder.addNode(new IncDecOperator(false, lineFile));
+                                break;
+                            case ";":
+                                builder.finishPart();
+                                builder.finishLine();
+                                break;
+                            case ",":
+                                builder.finishPart();
+                                break;
                             case "fn":  // function definition
-                                Element next = parent.get(index++);
+                                next = parent.get(index++);
                                 BracketList paramList;
-                                BraceList bodyList;
                                 String name;
                                 if (next instanceof AtomicElement) {
-                                    IdToken nameToken = (IdToken) ((AtomicElement) next).atom;
+                                    nameToken = (IdToken) ((AtomicElement) next).atom;
                                     name = nameToken.getIdentifier();
                                     paramList = (BracketList) parent.get(index++);
                                 } else {
@@ -118,30 +154,78 @@ public class Parser {
                                 bodyList = (BraceList) parent.get(index++);
 
                                 Line paramBlock = parseOneLineBlock(paramList);
-                                BlockStmt bodyBlock = parseBlock(bodyList);
+                                bodyBlock = parseBlock(bodyList);
 
                                 FuncDefinition def = new FuncDefinition(name, paramBlock, bodyBlock, lineFile);
                                 builder.addNode(def);
 
                                 break;
-                            case "=":
-//                                builder.addAssignment(lineFile);
-                                builder.addNode(new Assignment(lineFile));
+                            case "class":
+                                nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
+                                Element probExtendEle = parent.get(index++);
+                                BraceList bodyEle;
+                                Line extensions;
+                                if (probExtendEle instanceof BracketList) {
+                                    // extending, example:
+                                    // class C(A, B) { ... }
+                                    bodyEle = (BraceList) parent.get(index++);
+                                    extensions = parseOneLineBlock((BracketList) probExtendEle);
+                                } else {
+                                    bodyEle = (BraceList) probExtendEle;
+                                    extensions = null;
+                                }
+                                bodyBlock = parseBlock(bodyEle);
+                                ClassStmt classStmt = new ClassStmt(
+                                        nameToken.getIdentifier(),
+                                        extensions,
+                                        bodyBlock,
+                                        lineFile);
+                                builder.addNode(classStmt);
+                                break;
+                            case "const":
+                                nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
+                                builder.addNode(new Declaration(Declaration.CONST, nameToken.getIdentifier(), lineFile));
                                 break;
                             case "var":
-                                IdToken nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
+                                nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
                                 builder.addNode(new Declaration(Declaration.VAR, nameToken.getIdentifier(), lineFile));
                                 break;
                             case "return":
                                 builder.addNode(new ReturnStmt(lineFile));
-//                                builder.addReturnStmt(lineFile);
                                 break;
-                            case ";":
-                                builder.finishPart();
-                                builder.finishLine();
+                            case "new":
+                                builder.addNode(new NewStmt(lineFile));
                                 break;
-                            case ",":
-                                builder.finishPart();
+                            case "if":
+                                conditionList = new BracketList(null);
+                                while (!((next = parent.get(index++)) instanceof BraceList)) {
+                                    conditionList.add(next);
+                                }
+                                bodyList = (BraceList) next;
+                                condition = parseOneLineBlock(conditionList);
+                                IfStmt ifStmt = new IfStmt(condition, parseBlock(bodyList), lineFile);
+                                builder.addNode(ifStmt);
+                                if (index < parent.size()) {
+                                    next = parent.get(index);
+                                    if (next instanceof AtomicElement &&
+                                            ((AtomicElement) next).atom instanceof IdToken &&
+                                            ((IdToken) ((AtomicElement) next).atom).getIdentifier().equals("else")) {
+                                        BraceList elseList = (BraceList) parent.get(index + 1);
+                                        index += 2;
+                                        ifStmt.setElseBlock(parseBlock(elseList));
+                                    }
+                                }
+                                break;
+                            case "for":
+                                conditionList = new BracketList(null);
+                                while (!((next = parent.get(index++)) instanceof BraceList)) {
+                                    conditionList.add(next);
+                                }
+                                bodyList = (BraceList) next;
+                                BlockStmt conditionLines = parseBlock(conditionList);
+                                ForLoopStmt forLoopStmt =
+                                        new ForLoopStmt(conditionLines, parseBlock(bodyList), lineFile);
+                                builder.addNode(forLoopStmt);
                                 break;
                             case "import":
                                 AtomicElement probNamespaceEle = (AtomicElement) parent.get(index++);
@@ -177,15 +261,16 @@ public class Parser {
                                 }
 
                                 File fileImporting = new File(path);
+//                                System.out.println(fileImporting.getAbsolutePath() + " and " + lineFile.getFile().getAbsolutePath());
                                 if (fileImporting.equals(lineFile.getFile())) {
                                     break;  // self importing, do not import
                                 }
 
                                 if (index + 2 < parent.size()) {
-                                    Element nextEle = parent.get(index);
-                                    if (nextEle instanceof AtomicElement &&
-                                            ((AtomicElement) nextEle).atom instanceof IdToken &&
-                                            ((IdToken) ((AtomicElement) nextEle).atom).getIdentifier().equals("as")) {
+                                    next = parent.get(index);
+                                    if (next instanceof AtomicElement &&
+                                            ((AtomicElement) next).atom instanceof IdToken &&
+                                            ((IdToken) ((AtomicElement) next).atom).getIdentifier().equals("as")) {
                                         AtomicElement customNameEle = (AtomicElement) parent.get(index + 1);
                                         index += 2;
                                         importName = ((IdToken) customNameEle.atom).getIdentifier();
@@ -250,6 +335,24 @@ public class Parser {
             }
             Node node = parseParenthesis(bracketList);
             builder.addNode(node);
+        } else if (ele instanceof SqrBracketList) {
+            SqrBracketList bracketList = (SqrBracketList) ele;
+            if (index > 1) {
+                Element probCallObj = parent.get(index - 2);
+                if (probCallObj instanceof AtomicElement && isCall(((AtomicElement) probCallObj).atom)) {
+                    // is an indexing to an identifier
+                    LineFile lineFile = ((AtomicElement) probCallObj).atom.getLineFile();
+                    Line argLine = parseSqrBracket(bracketList);
+                    Node callObj = builder.removeLast();
+                    IndexingNode indexingNode = new IndexingNode(callObj, argLine, lineFile);
+                    builder.addNode(indexingNode);
+                    return index;
+                } else if (probCallObj instanceof BracketList) {
+
+                    return index;
+                }
+            }
+            // todo: direct list initialization
         }
         return index;
     }

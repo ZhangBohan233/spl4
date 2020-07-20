@@ -132,12 +132,12 @@ public class SplArray extends SplObject {
         }
     }
 
-    public static SplElement getItemAtIndex(Pointer arrPtr, int index, Environment env, LineFile lineFile) {
-        SplArray array = (SplArray) env.getMemory().get(arrPtr);
+    public static SplElement getItemAtIndex(Pointer arrPtr, int index, Memory memory, LineFile lineFile) {
+        SplArray array = (SplArray) memory.get(arrPtr);
         if (index < 0 || index >= array.length) {
             throw new SplException("Index " + index + " out of array length " + array.length + ". ", lineFile);
         }
-        ReadOnlyPrimitiveWrapper wrapper = (ReadOnlyPrimitiveWrapper) env.getMemory().get(arrPtr.getPtr() + index + 1);
+        ReadOnlyPrimitiveWrapper wrapper = (ReadOnlyPrimitiveWrapper) memory.get(arrPtr.getPtr() + index + 1);
         return wrapper.value;
     }
 

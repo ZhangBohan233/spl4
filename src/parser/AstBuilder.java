@@ -473,13 +473,13 @@ public class AstBuilder {
         }
     }
 
-    void addAngleBracketBlock() {
-        if (inner == null) {
-            inner = new AstBuilder();
-        } else {
-            inner.addAngleBracketBlock();
-        }
-    }
+//    void addAngleBracketBlock() {
+//        if (inner == null) {
+//            inner = new AstBuilder();
+//        } else {
+//            inner.addAngleBracketBlock();
+//        }
+//    }
 
 //    void buildTemplateAndAdd(LineFile lineFile) {
 //        if (inner.inner == null) {
@@ -505,28 +505,28 @@ public class AstBuilder {
 //        }
 //    }
 
-    void addIndexing(LineFile lineFile) {
-        if (inner == null) {
-//            System.out.println(stack);
-            IndexingNode node = new IndexingNode(stack.remove(stack.size() - 1), lineFile);
-            stack.add(node);
-            inner = new AstBuilder();
-        } else {
-            inner.addIndexing(lineFile);
-        }
-    }
+//    void addIndexing(LineFile lineFile) {
+//        if (inner == null) {
+////            System.out.println(stack);
+//            IndexingNode node = new IndexingNode(stack.remove(stack.size() - 1), lineFile);
+//            stack.add(node);
+//            inner = new AstBuilder();
+//        } else {
+//            inner.addIndexing(lineFile);
+//        }
+//    }
 
-    void buildIndexing() {
-        if (inner.inner == null) {
-            inner.finishPart();
-            Line line = inner.getLine();
-            inner = null;
-            IndexingNode node = (IndexingNode) stack.get(stack.size() - 1);
-            node.setArgs(line);
-        } else {
-            inner.buildIndexing();
-        }
-    }
+//    void buildIndexing() {
+//        if (inner.inner == null) {
+//            inner.finishPart();
+//            Line line = inner.getLine();
+//            inner = null;
+//            IndexingNode node = (IndexingNode) stack.get(stack.size() - 1);
+//            node.setArgs(line);
+//        } else {
+//            inner.buildIndexing();
+//        }
+//    }
 
 //    void addImportModule(String importName, LineFile lineFile) {
 //        if (inner == null) {
@@ -552,29 +552,29 @@ public class AstBuilder {
 //        }
 //    }
 
-    void addClass(String className, boolean isInterface, boolean isAbstract, LineFile lineFile) {
-        if (inner == null) {
-            stack.add(new ClassStmt(className, isInterface, isAbstract, lineFile));
-        } else {
-            inner.addClass(className, isInterface, isAbstract, lineFile);
-        }
-    }
+//    void addClass(String className, boolean isInterface, boolean isAbstract, LineFile lineFile) {
+//        if (inner == null) {
+//            stack.add(new ClassStmt(className, isInterface, isAbstract, lineFile));
+//        } else {
+//            inner.addClass(className, isInterface, isAbstract, lineFile);
+//        }
+//    }
 
-    void buildClass(LineFile lineFile) {
-        if (inner == null) {
-            finishPart();
-//            System.out.println(activeLine.getChildren());
-            if (activeLine.getChildren().size() != 2)
-                throw new ParseError("Class must have a body. ", lineFile);
-            ClassStmt cs = (ClassStmt) activeLine.getChildren().get(0);
-            BlockStmt body = (BlockStmt) activeLine.getChildren().remove(1);
-            cs.setBody(body);
-            finishLine();
-//            System.out.println(6666);
-        } else {
-            inner.buildClass(lineFile);
-        }
-    }
+//    void buildClass(LineFile lineFile) {
+//        if (inner == null) {
+//            finishPart();
+////            System.out.println(activeLine.getChildren());
+//            if (activeLine.getChildren().size() != 2)
+//                throw new ParseError("Class must have a body. ", lineFile);
+//            ClassStmt cs = (ClassStmt) activeLine.getChildren().get(0);
+//            BlockStmt body = (BlockStmt) activeLine.getChildren().remove(1);
+//            cs.setBody(body);
+//            finishLine();
+////            System.out.println(6666);
+//        } else {
+//            inner.buildClass(lineFile);
+//        }
+//    }
 
 //    void addExtend(LineFile lineFile) {
 //        if (inner == null) {
@@ -677,46 +677,46 @@ public class AstBuilder {
         }
     }
 
-    IfStmt addIf(LineFile lineFile) {
-        if (inner == null) {
-            IfStmt res = new IfStmt(lineFile);
-            stack.add(res);
-            inner = new AstBuilder();
-            return res;
-        } else {
-            return inner.addIf(lineFile);
-        }
-    }
+//    IfStmt addIf(LineFile lineFile) {
+//        if (inner == null) {
+//            IfStmt res = new IfStmt(lineFile);
+//            stack.add(res);
+//            inner = new AstBuilder();
+//            return res;
+//        } else {
+//            return inner.addIf(lineFile);
+//        }
+//    }
 
-    void buildConditionTitle() {
-        if (inner.inner == null) {
-            Node stmt = stack.get(stack.size() - 1);
-            if (stmt instanceof IfStmt) {
-                inner.finishPart();
-                Line line = inner.getLine();
-                inner = null;
-                ((IfStmt) stmt).setCondition(line);
-            } else if (stmt instanceof WhileStmt) {
-                inner.finishPart();
-                Line line = inner.getLine();
-                inner = null;
-                ((WhileStmt) stmt).setCondition(line);
-            } else if (stmt instanceof ForLoopStmt) {
-                inner.finishPart();
-                inner.finishLine();
-                BlockStmt blockStmt = inner.getBaseBlock();
-                inner = null;
-                ((ForLoopStmt) stmt).setCondition(blockStmt);
-            } else if (stmt instanceof CaseStmt) {
-                inner.finishPart();
-                Line line = inner.getLine();
-                inner = null;
-                ((CaseStmt) stmt).setCondition(line);
-            }
-        } else {
-            inner.buildConditionTitle();
-        }
-    }
+//    void buildConditionTitle() {
+//        if (inner.inner == null) {
+//            Node stmt = stack.get(stack.size() - 1);
+//            if (stmt instanceof IfStmt) {
+//                inner.finishPart();
+//                Line line = inner.getLine();
+//                inner = null;
+//                ((IfStmt) stmt).setCondition(line);
+//            } else if (stmt instanceof WhileStmt) {
+//                inner.finishPart();
+//                Line line = inner.getLine();
+//                inner = null;
+//                ((WhileStmt) stmt).setCondition(line);
+//            } else if (stmt instanceof ForLoopStmt) {
+//                inner.finishPart();
+//                inner.finishLine();
+//                BlockStmt blockStmt = inner.getBaseBlock();
+//                inner = null;
+//                ((ForLoopStmt) stmt).setCondition(blockStmt);
+//            } else if (stmt instanceof CaseStmt) {
+//                inner.finishPart();
+//                Line line = inner.getLine();
+//                inner = null;
+//                ((CaseStmt) stmt).setCondition(line);
+//            }
+//        } else {
+//            inner.buildConditionTitle();
+//        }
+//    }
 
     void buildConditionBody() {
         if (inner == null) {
@@ -820,23 +820,23 @@ public class AstBuilder {
         }
     }
 
-    void addWhile(LineFile lineFile) {
-        if (inner == null) {
-            stack.add(new WhileStmt(lineFile));
-            inner = new AstBuilder();
-        } else {
-            inner.addWhile(lineFile);
-        }
-    }
+//    void addWhile(LineFile lineFile) {
+//        if (inner == null) {
+//            stack.add(new WhileStmt(lineFile));
+//            inner = new AstBuilder();
+//        } else {
+//            inner.addWhile(lineFile);
+//        }
+//    }
 
-    void addFor(LineFile lineFile) {
-        if (inner == null) {
-            stack.add(new ForLoopStmt(lineFile));
-            inner = new AstBuilder();
-        } else {
-            inner.addFor(lineFile);
-        }
-    }
+//    void addFor(LineFile lineFile) {
+//        if (inner == null) {
+//            stack.add(new ForLoopStmt(lineFile));
+//            inner = new AstBuilder();
+//        } else {
+//            inner.addFor(lineFile);
+//        }
+//    }
 
     void addBreak(LineFile lineFile) {
         if (inner == null) {

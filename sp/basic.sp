@@ -1,6 +1,6 @@
-import lang
-import namespace "imp.sp"
-import namespace "imp2.sp"
+//import namespace lang
+//import "imp.sp"
+//import namespace "imp2.sp"
 
 
 fn lsp(a, b) {
@@ -12,5 +12,11 @@ fn main() {
     var a = 2;
     var b = 4;
 
-    return lsp(3, b) + tet;
+    var c = new int[5];
+    c[2] = 1;
+
+    var d = "asd" + "efg";
+    Invokes.println(d);
+
+    return a + b + c[2];
 }

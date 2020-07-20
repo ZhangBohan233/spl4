@@ -2,6 +2,7 @@ package ast;
 
 import interpreter.SplException;
 import interpreter.env.Environment;
+import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
 import interpreter.splObjects.*;
@@ -61,9 +62,9 @@ public class NewStmt extends UnaryExpr {
                                               LineFile lineFile) {
         if (node instanceof FuncCall) {
             return instanceCreation((FuncCall) node, classDefEnv, callEnv, lineFile);
-//        }
-//        else if (node instanceof IndexingNode) {
-////            return arrayCreation((IndexingNode) node, classDefEnv, callEnv, lineFile);
+        }
+        else if (node instanceof IndexingNode) {
+            return arrayCreation((IndexingNode) node, classDefEnv, callEnv, lineFile);
         } else if (node instanceof Dot) {
             Dot dot = (Dot) node;
             SplElement dotLeft = dot.left.evaluate(classDefEnv);
@@ -169,16 +170,24 @@ public class NewStmt extends UnaryExpr {
 //        return literalArray;
 //    }
 //
-//    private static Pointer arrayCreation(IndexingNode node,
-//                                           Environment classDefEnv,
-//                                           Environment callEnv,
-//                                           LineFile lineFile) {
-////        ArrayType arrayType = (ArrayType) node.evalType(classDefEnv);
+    private static Pointer arrayCreation(IndexingNode node,
+                                           Environment classDefEnv,
+                                           Environment callEnv,
+                                           LineFile lineFile) {
+//        ArrayType arrayType = (ArrayType) node.evalType(classDefEnv);
 //        List<Integer> dimensions = new ArrayList<>();
 //        traverseArrayCreation(node, dimensions, callEnv, lineFile);
-//        return null;
-////        return SplArray.createArray(arrayType, dimensions, callEnv);
-//    }
+        if (node.getArgs().getChildren().size() == 1) {
+            Int length = (Int) node.getArgs().getChildren().get(0).evaluate(callEnv);
+            return SplArray.createArray(node.getCallObj(), (int) length.value, callEnv);
+        } else {
+            throw new SplException("Array creation must take exactly one int as argument. ", lineFile);
+        }
+//        return SplArray.createArray(arrayType, dimensions, callEnv);
+    }
+
+//    private static
+
 //
 //    private static void traverseArrayCreation(IndexingNode node,
 //                                              List<Integer> dimensions,
