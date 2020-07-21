@@ -2,9 +2,13 @@ package ast;
 
 import interpreter.SplException;
 import interpreter.env.Environment;
+import interpreter.primitives.Bool;
 import interpreter.primitives.SplElement;
 import interpreter.primitives.Pointer;
+import interpreter.splObjects.Instance;
+import interpreter.splObjects.NativeFunction;
 import interpreter.splObjects.SplClass;
+import interpreter.splObjects.SplObject;
 import parser.ParseError;
 import util.Constants;
 import util.LineFile;
@@ -16,10 +20,6 @@ public class ClassStmt extends Node {
 
     private final String className;
     private List<Node> superclassesNodes;
-    //    private TypeRepresent superclass;
-//    private final boolean isInterface;
-//    private final boolean isAbstract;
-    //    private TemplateNode templateNode;
     private final BlockStmt body;
 
     /**
@@ -35,27 +35,6 @@ public class ClassStmt extends Node {
         this.superclassesNodes = extensions == null ? null : extensions.getChildren();
         this.body = body;
     }
-
-//    public void setBody(BlockStmt body) {
-//        this.body = body;
-//    }
-//
-////    public void setImplements(Implements implementations) {
-////        this.implementations = implementations;
-////    }
-////
-////    public void setTemplateNode(TemplateNode templateNode) {
-////        this.templateNode = templateNode;
-////    }
-//
-//    public void setSuperclasses(Line extensions) {
-//        this.superclassesNodes = extensions.getChildren();
-////        if (extendNode instanceof Extends) {
-////            superclass = ((Extends) extendNode).getValue();
-////        } else {
-////            throw new ParseError("Superclass must be a class. ", getLineFile());
-////        }
-//    }
 
     private void validateExtending() {
         if (superclassesNodes == null) {
@@ -77,34 +56,28 @@ public class ClassStmt extends Node {
             superclassesPointers.add(scPtr);
         }
 
-//        List<ClassType> interfacePointers = new ArrayList<>();
-//        for (Node node : implementations.getExtending().getChildren()) {
-//            if (node instanceof TypeRepresent) {
-//                ClassType t = (ClassType) ((TypeRepresent) node).evalType(env);
-//                interfacePointers.add(t);
-//            } else {
-//                throw new SplException();
-//            }
-//        }
-
-        // TODO: check implementations
-
-//        List<Node> templateList;
-//        if (templateNode == null) {
-//            templateList = new ArrayList<>();
-//        } else {
-//            templateList = templateNode.value.getChildren();
-//        }
-
         SplClass clazz = new SplClass(className, superclassesPointers, body, env);
-        Pointer clazzPtr = env.getMemory().allocate(1, env);
-        env.getMemory().set(clazzPtr, clazz);
-//        ClassType clazzType = new ClassType(clazzPtr);
+        Pointer clazzPtr = env.getMemory().allocateObject(clazz, env);
 
-        env.defineVar(className, getLineFile());
-//        TypeValue typeValue = new TypeValue(clazzType, clazzPtr);
+        env.defineVarAndSet(className, clazzPtr, getLineFile());
 
-        env.setVar(className, clazzPtr, getLineFile());
+        String iofName = className + "?";
+        NativeFunction instanceOfFunc = new NativeFunction(iofName, 1) {
+            @Override
+            protected Bool callFunc(SplElement[] evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs[0];
+                if (arg instanceof Pointer) {
+                    SplObject obj = callingEnv.getMemory().get((Pointer) arg);
+                    if (obj instanceof Instance) {
+                        Pointer argClazzPtr = ((Instance) obj).getClazzPtr();
+                        return Bool.boolValueOf(SplClass.isSuperclassOf(clazzPtr, argClazzPtr, callingEnv.getMemory()));
+                    }
+                }
+                return Bool.FALSE;
+            }
+        };
+        Pointer iofPtr = env.getMemory().allocateFunction(instanceOfFunc, env);
+        env.defineVarAndSet(iofName, iofPtr, getLineFile());
 
         return clazzPtr;
     }

@@ -24,10 +24,44 @@ public abstract class NativeFunction extends SplCallable {
         mostArg = argCount;
     }
 
-    protected abstract SplElement callFunc(Arguments arguments, Environment callingEnv);
+    /**
+     * Override this method only if the function needs unevaluated argument node.
+     * <p>
+     * If the function does not need unevaluated argument node, override {@code callFunc} only.
+     * If the function needs unevaluated argument node, override both {@code callFuncWithNode} and {@code callFunc}.
+     *
+     * @param arguments  arguments line, number of arguments is already checked to be validate.
+     * @param callingEnv the environment where this call is taking place
+     * @return the calling result
+     */
+    protected SplElement callFuncWithNode(Arguments arguments, Environment callingEnv) {
+        SplElement[] evaluatedArgs = arguments.evalArgs(callingEnv);
+
+        return callFunc(evaluatedArgs, callingEnv);
+    }
+
+    /**
+     * Call this function with arguments already evaluated.
+     *
+     * @param evaluatedArgs evaluated arguments
+     * @param callingEnv    the environment where this call is taking place
+     * @return the calling result
+     */
+    protected abstract SplElement callFunc(SplElement[] evaluatedArgs, Environment callingEnv);
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
-        int argc = arguments.getLine().getChildren().size();
+        checkValidArgCount(arguments.getLine().size());
+
+        return callFuncWithNode(arguments, callingEnv);
+    }
+
+    public SplElement call(SplElement[] evaluatedArgs, Environment callingEnv, LineFile lineFile) {
+        checkValidArgCount(evaluatedArgs.length);
+
+        return callFunc(evaluatedArgs, callingEnv);
+    }
+
+    private void checkValidArgCount(int argc) {
         if (argc < leastArg || argc > mostArg) {
             if (leastArg == mostArg) {
                 throw new SplException(
@@ -39,8 +73,6 @@ public abstract class NativeFunction extends SplCallable {
                                 name, leastArg, mostArg, argc));
             }
         }
-
-        return callFunc(arguments, callingEnv);
     }
 
     @Override

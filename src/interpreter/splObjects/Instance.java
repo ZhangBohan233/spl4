@@ -266,7 +266,7 @@ public class Instance extends SplObject {
             } else {
                 // superclass constructor has no parameters
                 if (noLeadingSuperCall(constructor)) {
-                    addDefaultSuperCall(constructor);
+                    addDefaultSuperCall(constructor, lineFile);
                 }
             }
         }
@@ -285,16 +285,16 @@ public class Instance extends SplObject {
         }
     }
 
-    private static void addDefaultSuperCall(Function constructor) {
+    private static void addDefaultSuperCall(Function constructor, LineFile lineFile) {
         Node body = constructor.getBody();
         if (body instanceof BlockStmt) {
             // call super.init()
             // if super.init(...) has arguments, this causes an error intentionally
-            Dot dot = new Dot(LineFile.LF_INTERPRETER);
-            dot.setLeft(new NameNode("super", LineFile.LF_INTERPRETER));
-            FuncCall supInit = new FuncCall(LineFile.LF_INTERPRETER);
-            supInit.setCallObj(new NameNode(Constants.CONSTRUCTOR, LineFile.LF_INTERPRETER));
-            supInit.setArguments(new Arguments(new Line(), LineFile.LF_INTERPRETER));
+            Dot dot = new Dot(lineFile);
+            dot.setLeft(new NameNode("super", lineFile));
+            FuncCall supInit = new FuncCall(lineFile);
+            supInit.setCallObj(new NameNode(Constants.CONSTRUCTOR, lineFile));
+            supInit.setArguments(new Arguments(new Line(lineFile), lineFile));
             dot.setRight(supInit);
 
             Line constLine = new Line();
@@ -319,7 +319,7 @@ public class Instance extends SplObject {
                             Node callObj = ((FuncCall) right).getCallObj();
                             if (callObj instanceof NameNode) {
                                 return !((NameNode) left).getName().equals("super") ||
-                                        !((NameNode) callObj).getName().equals("init");
+                                        !((NameNode) callObj).getName().equals(Constants.CONSTRUCTOR);
                             }
                         }
                     }

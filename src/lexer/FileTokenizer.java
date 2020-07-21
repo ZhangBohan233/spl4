@@ -166,85 +166,6 @@ public class FileTokenizer {
         }
     }
 
-//    private void findImport(int from, int to) throws IOException {
-//        for (int i = from; i < to; ++i) {
-//            Token token = tokens.get(i);
-//            if (token instanceof IdToken && ((IdToken) token).getIdentifier().equals("import")) {
-//                Token nextTk = tokens.get(i + 1);
-//                String name, path;
-//                int removeCount;
-//                boolean namespace = false;
-//
-//                try {
-//                    if (nextTk instanceof StrToken) {
-//                        path = ((StrToken) nextTk).getLiteral();
-//                        name = nameOfPath(path);
-//                        removeCount = 1;
-//                    } else if (nextTk instanceof IdToken && ((IdToken) nextTk).getIdentifier().equals("namespace")) {
-//                        path = ((StrToken) tokens.get(i + 2)).getLiteral();
-//                        name = nameOfPath(path);
-//                        removeCount = 2;
-//                        namespace = true;
-//                    } else {
-//                        throw new SyntaxError(IMPORT_USAGE, nextTk.getLineFile());
-//                    }
-//
-//                    if (!namespace && tokens.size() > i + 2) {
-//                        IdToken asToken = (IdToken) tokens.get(i + 2);
-//                        if (asToken.getIdentifier().equals("as")) {
-//                            removeCount = 3;
-//                            name = ((IdToken) tokens.get(i + 3)).getIdentifier();
-//                        } else {
-//                            throw new SyntaxError(IMPORT_USAGE, nextTk.getLineFile());
-//                        }
-//                    }
-//                } catch (ClassCastException | IndexOutOfBoundsException e) {
-//                    throw new SyntaxError(IMPORT_USAGE, nextTk.getLineFile());
-//                }
-//
-//                for (int j = 0; j < removeCount; ++j) {
-//                    tokens.remove(i + 1);
-//                }
-//
-//                File file;
-//                if (path.endsWith(".sp")) {  // user library
-//                    file = new File(srcFile.getParentFile().getAbsolutePath() + File.separator + path);
-//                } else {
-//                    file = new File("lib" + File.separator + path + ".sp");
-//                }
-//                importFile(file, name, namespace, token.getLineFile());
-//
-//                break;
-//            }
-//        }
-//    }
-
-//    private void importFile(File importedFile, String importName, boolean namespace, LineFile lineFile)
-//            throws IOException {
-//        FileTokenizer tokenizer = new FileTokenizer(importedFile, false, false);
-//        TokenList tokenList = tokenizer.tokenize();
-//        tokens.add(new IdToken(importName, lineFile));
-//        tokens.add(new IdToken("{", lineFile));
-//        tokens.addAll(tokenList.getTokens());
-//        tokens.add(new IdToken("}", lineFile));
-//        if (namespace) {
-//            tokens.add(new IdToken("namespace", lineFile));
-//            tokens.add(new IdToken(importName, lineFile));
-//            tokens.add(new IdToken(";", lineFile));
-//        }
-//    }
-
-//    private static String nameOfPath(String path) {
-//        path = path.replace("/", File.separator);
-//        path = path.replace("\\", File.separator);
-//        if (path.endsWith(".sp")) path = path.substring(0, path.length() - 3);
-//        if (path.contains(File.separator)) {
-//            return path.substring(path.lastIndexOf(File.separator) + 1);
-//        } else {
-//            return path;
-//        }
-//    }
-
     private void proceedLine(String line, LineFile lineFile) {
         boolean inStr = false;
         int len = line.length();
@@ -388,6 +309,7 @@ public class FileTokenizer {
         private static final int OTHER_ARITHMETIC = 23;
         private static final int TYPE = 24;
         private static final int ESCAPE = 25;
+        private static final int QUESTION = 26;
         private static final int UNDEFINED = 0;
 
         private static final int[] SELF_CONCATENATE = {DIGIT, LETTER, GT, EQ, LT, AND, OR, UNDERSCORE, PLUS, MINUS};
@@ -398,8 +320,6 @@ public class FileTokenizer {
                 {UNDERSCORE, DIGIT},
                 {MINUS, GT},
                 {LT, MINUS},
-//                {DIGIT, DOT},
-//                {DOT, DIGIT},
                 {LETTER, DIGIT},
                 {GT, EQ},
                 {LT, EQ},
@@ -408,7 +328,9 @@ public class FileTokenizer {
                 {MINUS, EQ},
                 {OTHER_ARITHMETIC, EQ},
                 {TYPE, EQ},
-                {ESCAPE, L_SQR_BRACKET}
+                {ESCAPE, L_SQR_BRACKET},
+                {LETTER, QUESTION},
+                {DIGIT, QUESTION}
         };
 
         private final char ch;
@@ -422,12 +344,8 @@ public class FileTokenizer {
         static boolean concatenateAble(CharTypeIdentifier left, CharTypeIdentifier right) {
             int leftType = left.type;
             int rightType = right.type;
-            if ((leftType == rightType && Utilities.arrayContains(SELF_CONCATENATE, leftType)) ||
-                    Utilities.arrayContains2D(CROSS_CONCATENATE, new int[]{leftType, rightType})) {
-                return true;
-            } else {
-                return false;
-            }
+            return (leftType == rightType && Utilities.arrayContains(SELF_CONCATENATE, leftType)) ||
+                    Utilities.arrayContains2D(CROSS_CONCATENATE, new int[]{leftType, rightType});
         }
 
         private static int identify(char ch) {
@@ -483,6 +401,8 @@ public class FileTokenizer {
                     return TYPE;
                 case '\\':
                     return ESCAPE;
+                case '?':
+                    return QUESTION;
                 default:
                     return UNDEFINED;
             }
@@ -505,7 +425,8 @@ public class FileTokenizer {
                 int len = s.length();
                 for (int i = 1; i < len; ++i) {
                     char ch = s.charAt(i);
-                    if (!(Character.isAlphabetic(ch) || Character.isDigit(ch) || ch == '_')) return false;
+                    if (!(Character.isAlphabetic(ch) || Character.isDigit(ch) || ch == '_' || ch == '?'))
+                        return false;
                 }
                 return true;
             }

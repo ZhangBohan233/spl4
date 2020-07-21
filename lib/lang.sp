@@ -5,7 +5,7 @@ class Object {
     }
 }
 
-class String(Object) {
+class String {
 
     const chars;
     const length;

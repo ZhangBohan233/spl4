@@ -1,9 +1,10 @@
 package interpreter.splObjects;
 
 import ast.BlockStmt;
-import ast.Node;
+import interpreter.Memory;
 import interpreter.env.Environment;
 import interpreter.primitives.Pointer;
+import interpreter.primitives.SplElement;
 
 import java.util.List;
 
@@ -19,8 +20,6 @@ public class SplClass extends SplObject {
     private final BlockStmt body;
     private final String className;
     private final Environment definitionEnv;
-//    public final boolean isAbstract;
-//    public final boolean isInterface;
 
     public SplClass(String className, List<Pointer> superclassPointers,
                     BlockStmt body, Environment definitionEnv) {
@@ -44,6 +43,21 @@ public class SplClass extends SplObject {
 
     public String getClassName() {
         return className;
+    }
+
+    public static boolean isSuperclassOf(Pointer superclassPtr, SplElement childClassEle, Memory memory) {
+        if (childClassEle instanceof Pointer) {
+            Pointer childClassPtr = (Pointer) childClassEle;
+            if (superclassPtr.getPtr() == childClassPtr.getPtr()) return true;
+            SplObject splObject = memory.get(childClassPtr);
+            if (splObject instanceof SplClass) {
+                SplClass childClazz = (SplClass) splObject;
+                for (Pointer supPtr : childClazz.superclassPointers) {
+                    if (isSuperclassOf(superclassPtr, supPtr, memory)) return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override

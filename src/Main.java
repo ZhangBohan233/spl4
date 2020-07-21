@@ -4,12 +4,14 @@ import interpreter.SplException;
 import interpreter.env.Environment;
 import interpreter.env.GlobalEnvironment;
 import interpreter.invokes.SplInvokes;
+import interpreter.primitives.Bool;
 import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
 import interpreter.splObjects.Function;
 import interpreter.splObjects.NativeFunction;
 import interpreter.splObjects.SplArray;
+import interpreter.splObjects.SplObject;
 import interpreter.types.TypeError;
 import lexer.TokenList;
 import lexer.FileTokenizer;
@@ -103,8 +105,8 @@ public class Main {
     private static void initNativeFunctions(GlobalEnvironment ge) {
         NativeFunction toInt = new NativeFunction("int", 1) {
             @Override
-            protected SplElement callFunc(Arguments arguments, Environment callingEnv) {
-                SplElement arg = arguments.getLine().getChildren().get(0).evaluate(callingEnv);
+            protected SplElement callFunc(SplElement[] evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs[0];
                 if (SplElement.isPrimitive(arg)) {
                     return new Int(arg.intValue());
                 } else {
@@ -113,10 +115,34 @@ public class Main {
             }
         };
 
+        NativeFunction isInt = new NativeFunction("int?", 1) {
+            @Override
+            protected Bool callFunc(SplElement[] evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs[0];
+                return Bool.boolValueOf(arg instanceof Int);
+            }
+        };
+
+        NativeFunction isAbstractObject = new NativeFunction("AbstractObject?", 1) {
+            @Override
+            protected Bool callFunc(SplElement[] evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs[0];
+                if (arg instanceof Pointer) {
+                    SplObject object = callingEnv.getMemory().get((Pointer) arg);
+                    return Bool.boolValueOf(object != null);
+                }
+                return Bool.FALSE;
+            }
+        };
+
         Memory memory = ge.getMemory();
         Pointer ptrInt = memory.allocateFunction(toInt, ge);
+        Pointer ptrIsInt = memory.allocateFunction(isInt, ge);
+        Pointer ptrIsAbsObj = memory.allocateFunction(isAbstractObject, ge);
 
         ge.defineFunction("int", ptrInt, LineFile.LF_INTERPRETER);
+        ge.defineFunction("int?", ptrIsInt, LineFile.LF_INTERPRETER);
+        ge.defineFunction("AbstractObject?", ptrIsAbsObj, LineFile.LF_INTERPRETER);
     }
 
     private static void callMain(String[] args, GlobalEnvironment globalEnvironment) {

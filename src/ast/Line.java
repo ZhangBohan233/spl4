@@ -18,6 +18,18 @@ public class Line extends Node {
         super(LineFile.LF_PARSER);
     }
 
+    public Node get(int index) {
+        return children.get(index);
+    }
+
+    public void add(Node ele) {
+        children.add(ele);
+    }
+
+    public int size() {
+        return children.size();
+    }
+
     public List<Node> getChildren() {
         return children;
     }

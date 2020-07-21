@@ -139,6 +139,12 @@ public class Parser {
                             case ",":
                                 builder.finishPart();
                                 break;
+                            case "true":
+                                builder.addNode(BoolStmt.BOOL_STMT_TRUE);
+                                break;
+                            case "false":
+                                builder.addNode(BoolStmt.BOOL_STMT_FALSE);
+                                break;
                             case "fn":  // function definition
                                 next = parent.get(index++);
                                 BracketList paramList;
@@ -159,6 +165,31 @@ public class Parser {
                                 FuncDefinition def = new FuncDefinition(name, paramBlock, bodyBlock, lineFile);
                                 builder.addNode(def);
 
+                                break;
+                            case "contract":
+                                nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
+                                paramList = (BracketList) parent.get(index++);
+                                BracketList rtnTypeLst = new BracketList(null);
+                                IdToken arrow = ((IdToken) ((AtomicElement) parent.get(index++)).atom);
+                                if (!arrow.getIdentifier().equals("->"))
+                                    throw new SyntaxError("Syntax of contract: " +
+                                            "'contract f(argsContract...) -> rtnContract; '. ", lineFile);
+                                while (!((next = parent.get(index++)) instanceof AtomicElement &&
+                                        ((AtomicElement) next).atom instanceof IdToken &&
+                                        ((IdToken) ((AtomicElement) next).atom).getIdentifier().equals(";"))) {
+                                    rtnTypeLst.add(next);
+                                }
+                                Line rtnLine = parseOneLineBlock(rtnTypeLst);
+                                Line paramLine = parseOneLineBlock(paramList);
+
+                                if (rtnLine.getChildren().size() != 1)
+                                    throw new SyntaxError("Syntax of contract: " +
+                                            "'contract f(argsContract...) -> rtnContract; '. ", lineFile);
+                                Node rtnCon = rtnLine.getChildren().get(0);
+
+                                ContractNode contractNode =
+                                        new ContractNode(nameToken.getIdentifier(), paramLine, rtnCon, lineFile);
+                                builder.addNode(contractNode);
                                 break;
                             case "class":
                                 nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
