@@ -1,0 +1,6 @@
+===== Build 4000 =====
+
+Loop 1000000 time: 272ms
+Array access 1000000 time: 832ms
+fib=75025
+fib 25 time: 250ms

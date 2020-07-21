@@ -31,14 +31,14 @@ public class InstanceEnvironment extends MainAbstractEnvironment {
     }
 
     @Override
-    protected VarEntry innerGet(String name, boolean isFirst, boolean includeConst, LineFile lineFile) {
-        VarEntry tv = searchSuper(name, includeConst, lineFile);
+    protected VarEntry innerGet(String name, boolean isFirst, LineFile lineFile) {
+        VarEntry tv = searchSuper(name, lineFile);
         if (tv == null)
-            return super.innerGet(name, isFirst, includeConst, lineFile);
+            return super.innerGet(name, isFirst, lineFile);
         else return tv;
     }
 
-    private VarEntry searchSuper(String name, boolean includeConst, LineFile lineFile) {
+    private VarEntry searchSuper(String name, LineFile lineFile) {
         VarEntry tv = variables.get(name);
 //        if (!includeConst && tv != null && tv.getValue() != null) {
 //            throw new EnvironmentError("Constant '" + name + "' is not assignable. ", lineFile);
@@ -49,7 +49,7 @@ public class InstanceEnvironment extends MainAbstractEnvironment {
             if (superTv == null) return null;
             else {
                 Instance instance = (Instance) getMemory().get((Pointer) superTv.getValue());
-                return instance.getEnv().searchSuper(name, includeConst, lineFile);
+                return instance.getEnv().searchSuper(name, lineFile);
             }
         } else return tv;
     }

@@ -4,11 +4,7 @@ import interpreter.primitives.SplElement;
 import interpreter.splObjects.Function;
 import interpreter.env.Environment;
 import interpreter.primitives.Pointer;
-import parser.ParseError;
 import util.LineFile;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class FuncDefinition extends Node {
 
@@ -36,7 +32,7 @@ public class FuncDefinition extends Node {
     @Override
     protected SplElement internalEval(Environment env) {
 
-        Function.Parameter[] params = Function.evalParamTypes(parameters, env);
+        Function.Parameter[] params = Function.evalParams(parameters, env);
 //        CallableType funcType = new CallableType();
 
         Function function = new Function(body, params, env, name, getLineFile());

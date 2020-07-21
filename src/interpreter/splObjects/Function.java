@@ -2,7 +2,6 @@ package interpreter.splObjects;
 
 import ast.*;
 import interpreter.ContractError;
-import interpreter.Memory;
 import interpreter.SplException;
 import interpreter.env.Environment;
 import interpreter.env.FunctionEnvironment;
@@ -12,9 +11,6 @@ import interpreter.primitives.SplElement;
 import interpreter.types.*;
 import parser.ParseError;
 import util.LineFile;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Function extends SplCallable {
 
@@ -108,6 +104,10 @@ public class Function extends SplCallable {
     }
 
     public void setContract(Line paramContractLine, Node rtnContractNode, Environment env) {
+        if (contract != null) {
+            throw new SplException("Contract already defined for function '" + definedName + "'. ",
+                    rtnContractNode.getLineFile());
+        }
         if (paramContractLine.size() != params.length) {
             throw new TypeError("Contracts must match the length of parameters. ", rtnContractNode.getLineFile());
         }
@@ -176,14 +176,17 @@ public class Function extends SplCallable {
         for (int i = 0; i < params.length; ++i) {
             Parameter param = params[i];
             String paramName = param.name;
-            scope.defineVar(paramName, lineFile);  // declare param
+
+            if (param.constant) scope.defineConst(paramName, lineFile);
+            else scope.defineVar(paramName, lineFile);  // declare param
+
             if (i < evaluatedArgs.length) {
                 // arg from call
                 scope.setVar(paramName, evaluatedArgs[i], lineFile);
 
             } else if (param.hasDefaultTv()) {
                 // default arg
-                scope.setVar(paramName, param.defaultTv, lineFile);
+                scope.setVar(paramName, param.defaultValue, lineFile);
             } else {
                 throw new SplException("Unexpect argument error. ", lineFile);
             }
@@ -199,48 +202,7 @@ public class Function extends SplCallable {
         checkRtnContract(rtnValue, callingEnv, lineFile);
 
         return rtnValue;
-
-//        if (funcType.getRType().equals(PrimitiveType.TYPE_VOID)) {
-//            if (rtnVal == null) {
-//                return TypeValue.VOID;
-//            } else {
-//                throw new TypeError("Function with void return type returns non-void value. ", lineFile);
-//            }
-//        } else {
-//            if (rtnVal == null) {
-//                throw new TypeError("Function with non-void return type returns nothing. ", lineFile);
-//            } else {
-//                TypeValue realRtnVal;
-//                if (!funcType.getRType().isPrimitive() && rtnVal.getType().isPrimitive()) {
-//                    // Probable primitive wrapper case: example:
-//                    //
-//                    // fn f() Integer {
-//                    //     return 0;
-//                    // }
-//                    realRtnVal = TypeValue.convertPrimitiveToWrapper(rtnVal, scope, lineFile);
-//                } else if (funcType.getRType().isPrimitive() && !rtnVal.getType().isPrimitive()) {
-//                    // Probable primitive wrapper case: example:
-//                    //
-//                    // fn f() int {
-//                    //     return new Integer(0);
-//                    // }
-//                    realRtnVal = TypeValue.convertWrapperToPrimitive(rtnVal, scope, lineFile);
-//                } else {
-//                    realRtnVal = rtnVal;
-//                }
-//
-//                if (!funcType.getRType().isSuperclassOfOrEquals(realRtnVal.getType(), callingEnv)) {
-//                    throw new TypeError("Declared return type: " + funcType.getRType() + ", actual returning " +
-//                            "type: " + realRtnVal.getType() + ". ", argLineFile);
-//                }
-//                return realRtnVal;
-//            }
-//        }
     }
-
-//    private Integer gg() {
-//        return 0;
-//    }
 
     public int minArgCount() {
         int c = 0;
@@ -254,50 +216,82 @@ public class Function extends SplCallable {
         return params.length;  // TODO: check unpack
     }
 
-    public static Parameter[] evalParamTypes(Line parameters, Environment env) {
+    public static Parameter[] evalParams(Line parameters, Environment env) {
         Parameter[] params = new Parameter[parameters.getChildren().size()];
 
-        boolean hasDefault = false;
+        // after first
+        boolean optionalBegins = false;
+
         for (int i = 0; i < parameters.getChildren().size(); ++i) {
             Node node = parameters.getChildren().get(i);
-            if (node instanceof NameNode) {
-                if (hasDefault) {
-                    throw new ParseError("Positional parameter cannot occur behind optional parameter. ",
-                            node.getLineFile());
-                }
-                params[i] = new Parameter(((NameNode) node).getName());
-                continue;
-            } else if (node instanceof Assignment) {
-                hasDefault = true;
-                Assignment assignment = (Assignment) node;
-                if (assignment.getLeft() instanceof NameNode) {
-                    Parameter p = new Parameter(((NameNode) assignment.getLeft()).getName(),
-                            assignment.getRight().evaluate(env));
-                    params[i] = p;
-                    continue;
-                }
-            }
-            throw new ParseError("Unexpected parameter syntax. ", node.getLineFile());
+
+            Parameter param = evalOneParam(node, env, optionalBegins).build();
+            if (param.hasDefaultTv()) optionalBegins = true;
+
+            params[i] = param;
         }
         return params;
     }
 
-    public static class Parameter {
-        public final String name;
-        public final SplElement defaultTv;
+    // Note that for internal recursive calls, optionalBegins is always false since it only used to throw error
+    private static ParameterBuilder evalOneParam(Node node, Environment env, boolean optionalBegins) {
+        if (node instanceof NameNode) {
+            if (optionalBegins) {
+                throw new ParseError("Positional parameter cannot occur behind optional parameter. ",
+                        node.getLineFile());
+            }
+            return new ParameterBuilder().name(((NameNode) node).getName());
+        } else if (node instanceof Declaration) {
+            Declaration dec = (Declaration) node;
+            return new ParameterBuilder()
+                    .name(dec.declaredName)
+                    .constant(dec.level == Declaration.CONST);
+        } else if (node instanceof Assignment) {
+            Assignment assignment = (Assignment) node;
+            ParameterBuilder left = evalOneParam(assignment.getLeft(), env, false);
+            return left.defaultValue(assignment.getRight().evaluate(env));
+        }
+        throw new ParseError("Unexpected parameter syntax. ", node.getLineFile());
+    }
 
-        Parameter(String name, SplElement typeValue) {
+    private static class ParameterBuilder {
+        private String name;
+        private SplElement defaultValue;
+        private boolean constant;
+
+        private ParameterBuilder name(String name) {
             this.name = name;
-            this.defaultTv = typeValue;
+            return this;
         }
 
-        Parameter(String name) {
+        private ParameterBuilder constant(boolean constant) {
+            this.constant = constant;
+            return this;
+        }
+
+        private ParameterBuilder defaultValue(SplElement defaultValue) {
+            this.defaultValue = defaultValue;
+            return this;
+        }
+
+        private Parameter build() {
+            return new Parameter(name, defaultValue, constant);
+        }
+    }
+
+    public static class Parameter {
+        public final String name;
+        public final SplElement defaultValue;
+        public final boolean constant;
+
+        Parameter(String name, SplElement typeValue, boolean constant) {
             this.name = name;
-            this.defaultTv = null;
+            this.defaultValue = typeValue;
+            this.constant = constant;
         }
 
         public boolean hasDefaultTv() {
-            return defaultTv != null;
+            return defaultValue != null;
         }
     }
 

@@ -12,7 +12,7 @@ public class Bool extends SplElement {
 
     public final boolean value;
 
-    public Bool(boolean value) {
+    private Bool(boolean value) {
         this.value = value;
     }
 

@@ -1,8 +1,9 @@
 package interpreter.primitives;
 
+import interpreter.SplThing;
 import interpreter.types.TypeError;
 
-public abstract class SplElement {
+public abstract class SplElement extends SplThing {
 
     public static final int VOID = 0;
     public static final int INT = 1;
@@ -10,6 +11,7 @@ public abstract class SplElement {
     public static final int CHAR = 3;
     public static final int BOOLEAN = 4;
     public static final int POINTER = 5;
+    public static final int UNDEFINED = 6;
 
     public abstract int type();
 
@@ -37,6 +39,8 @@ public abstract class SplElement {
                 return "void";
             case POINTER:
                 return "Object";
+            case UNDEFINED:
+                return "undefined";
             default:
                 throw new TypeError();
         }

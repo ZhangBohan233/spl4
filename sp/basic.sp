@@ -2,6 +2,9 @@
 //import "imp.sp"
 //import namespace "imp2.sp"
 
+class A {
+}
+
 fn any(x) {
     return true;
 }
@@ -27,8 +30,9 @@ fn main() {
 
     var d = "asd" + "efg";
     Invokes.println(d);
-    Invokes.println(AbstractObject?(d));
-    Invokes.println(AbstractObject?(b));
+    Invokes.println(Object?(lsp));
+    Invokes.println(AbstractObject?(lsp));
+    Invokes.println(new A());
 
-    return a + b + c[2] + lsp(1, 2);
+    return a + b + c[2] + lsp(1, 2) + foo();
 }

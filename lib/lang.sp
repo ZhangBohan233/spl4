@@ -1,7 +1,7 @@
 class Object {
 
     fn __str__() {
-        return "Object@";
+        return "Object@" + Invokes.id(this);
     }
 }
 
@@ -27,6 +27,10 @@ class String {
         }
         return new String(array);
     }
+}
+
+fn print(s) {
+    Invokes.println(s);
 }
 
 fn str(obj) {

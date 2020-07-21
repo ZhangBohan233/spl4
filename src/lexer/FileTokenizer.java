@@ -65,9 +65,9 @@ public class FileTokenizer {
     );
 
     public static final Set<String> RESERVED = Set.of(
-            "class", "fn", "if", "else", "new", "extends", "implements", "return", "break",
+            "class", "fn", "if", "else", "new", "return", "break",
             "continue", "true", "false", "null", "while", "for", "import", "namespace",
-            "abstract", "const", "var", "assert", "as", "super", "this", "lambda", "instanceof",
+            "const", "var", "assert", "as", "super", "this", "lambda",
             "cond", "switch", "case", "default", "fallthrough"
     );
 

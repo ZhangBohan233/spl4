@@ -3,6 +3,7 @@ package interpreter.env;
 import interpreter.*;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import interpreter.primitives.Undefined;
 import util.LineFile;
 
 import java.io.File;
@@ -104,15 +105,19 @@ public abstract class Environment {
     }
 
     public void setVar(String name, SplElement value, LineFile lineFile) {
-        VarEntry entry = innerGet(name, true, false, lineFile);
+        VarEntry entry = innerGet(name, true, lineFile);
         if (entry == null)
             throw new EnvironmentError("Variable '" + name + "' is not defined in this scope. ", lineFile);
+
+        if (entry.constant && entry.getValue() != Undefined.UNDEFINED) {
+            throw new EnvironmentError("Constant '" + name + "' is not assignable. ", lineFile);
+        }
 
         entry.setValue(value);
     }
 
     public SplElement get(String name, LineFile lineFile) {
-        VarEntry se = innerGet(name, true, true, lineFile);
+        VarEntry se = innerGet(name, true, lineFile);
         if (se == null) {
             throw new EnvironmentError("Name '" + name + "' not found. ", lineFile);
         }
@@ -121,7 +126,7 @@ public abstract class Environment {
     }
 
     public boolean hasName(String name, LineFile lineFile) {
-        return innerGet(name, true, true, lineFile) != null;
+        return innerGet(name, true, lineFile) != null;
     }
 
     /**
@@ -131,16 +136,15 @@ public abstract class Environment {
      *
      * @param name         the name
      * @param isFirst      whether this is called by another function. {@code false} if this call is self recursion
-     * @param includeConst whether allowing to set the uninitialized constants
      * @param lineFile     line and file for error information
      * @return the value
      */
-    protected VarEntry innerGet(String name, boolean isFirst, boolean includeConst, LineFile lineFile) {
+    protected VarEntry innerGet(String name, boolean isFirst, LineFile lineFile) {
         VarEntry tv = variables.get(name);
 
         if (tv == null) {
             if (outer != null) {
-                tv = outer.innerGet(name, false, includeConst, lineFile);
+                tv = outer.innerGet(name, false, lineFile);
             }
             if (isFirst && tv == null) {
                 tv = searchInNamespaces(name);

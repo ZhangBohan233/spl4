@@ -1,6 +1,8 @@
 package interpreter.splObjects;
 
-public class SplObject {
+import interpreter.SplThing;
+
+public class SplObject extends SplThing {
 
     private int gcCount;
 

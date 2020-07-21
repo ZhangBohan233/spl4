@@ -2,6 +2,7 @@ package interpreter.env;
 
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import interpreter.primitives.Undefined;
 
 public class VarEntry {
 
@@ -13,7 +14,7 @@ public class VarEntry {
     }
 
     public static VarEntry varEntry() {
-        return new VarEntry(Pointer.NULL_PTR, false);
+        return new VarEntry(Undefined.UNDEFINED, false);
     }
 
     public static VarEntry constEntry(SplElement value) {
@@ -21,7 +22,7 @@ public class VarEntry {
     }
 
     public static VarEntry constEntry() {
-        return new VarEntry(Pointer.NULL_PTR, true);
+        return new VarEntry(Undefined.UNDEFINED, true);
     }
 
     private VarEntry(SplElement value, boolean constant) {

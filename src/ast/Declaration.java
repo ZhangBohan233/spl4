@@ -14,7 +14,7 @@ public class Declaration extends Node {
 
     public final String declaredName;
 
-    private final int level;
+    public final int level;
 
     public Declaration(int level, String name, LineFile lineFile) {
         super(lineFile);

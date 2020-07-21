@@ -204,13 +204,13 @@ public class AstBuilder {
         }
     }
 
-    void addFuncTypeNode(LineFile lineFile) {
-        if (inner == null) {
-            stack.add(new FuncTypeNode(lineFile));
-        } else {
-            inner.addFuncTypeNode(lineFile);
-        }
-    }
+//    void addFuncTypeNode(LineFile lineFile) {
+//        if (inner == null) {
+//            stack.add(new FuncTypeNode(lineFile));
+//        } else {
+//            inner.addFuncTypeNode(lineFile);
+//        }
+//    }
 
     void addAnonymousClass(LineFile lineFile) {
         if (inner == null) {

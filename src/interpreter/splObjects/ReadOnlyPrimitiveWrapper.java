@@ -24,7 +24,7 @@ public class ReadOnlyPrimitiveWrapper extends SplObject {
     }
 
     public static ReadOnlyPrimitiveWrapper booleanFalseWrapper() {
-        return new ReadOnlyPrimitiveWrapper(new Bool(false));
+        return new ReadOnlyPrimitiveWrapper(Bool.FALSE);
     }
 
     public final SplElement value;

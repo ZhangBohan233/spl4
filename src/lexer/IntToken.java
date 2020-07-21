@@ -5,13 +5,13 @@ import util.LineFile;
 
 public class IntToken extends Token {
 
-    private long value;
+    private final long value;
 //    private byte[] bytes = new byte[8];
 
     public IntToken(String numStr, LineFile lineFile) {
         super(lineFile);
 
-        value = Long.parseLong(numStr);
+        value = Long.parseLong(numStr.replace("_", ""));
 //        Bytes.longToBytes(num, bytes, 0);
     }
 

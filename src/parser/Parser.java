@@ -359,8 +359,14 @@ public class Parser {
                             lineFile);
                     builder.addNode(call);
                     return index;
-                } else if (probCallObj instanceof BracketList) {
-
+                } else if (probCallObj instanceof BracketList || probCallObj instanceof SqrBracketList) {
+                    LineFile lineFile = LineFile.LF_PARSER;
+                    Line argLine = parseOneLineBlock(bracketList);
+                    Node callObj = builder.removeLast();
+                    FuncCall call = new FuncCall(callObj,
+                            new Arguments(argLine, lineFile),
+                            lineFile);
+                    builder.addNode(call);
                     return index;
                 }
             }
@@ -378,8 +384,12 @@ public class Parser {
                     IndexingNode indexingNode = new IndexingNode(callObj, argLine, lineFile);
                     builder.addNode(indexingNode);
                     return index;
-                } else if (probCallObj instanceof BracketList) {
-
+                } else if (probCallObj instanceof BracketList || probCallObj instanceof SqrBracketList) {
+                    LineFile lineFile = LineFile.LF_PARSER;
+                    Line argLine = parseSqrBracket(bracketList);
+                    Node callObj = builder.removeLast();
+                    IndexingNode indexingNode = new IndexingNode(callObj, argLine, lineFile);
+                    builder.addNode(indexingNode);
                     return index;
                 }
             }
@@ -867,10 +877,8 @@ public class Parser {
     private static boolean isCall(Token token) {
         if (token instanceof IdToken) {
             String identifier = ((IdToken) token).getIdentifier();
-            if (FileTokenizer.StringTypes.isIdentifier(identifier) &&
-                    !FileTokenizer.RESERVED.contains(identifier))
-                return true;
-            else return identifier.equals(")") || identifier.equals("]");
+            return FileTokenizer.StringTypes.isIdentifier(identifier) &&
+                    !FileTokenizer.RESERVED.contains(identifier);
         }
         return false;
     }
