@@ -317,58 +317,58 @@ public class AstBuilder {
 //        }
 //    }
 
-    void addLambdaHeader(LineFile lineFile) {
-        if (inner == null) {
-            stack.add(new LambdaExpr(lineFile));
-        } else {
-            inner.addLambdaHeader(lineFile);
-        }
-    }
+//    void addLambdaHeader(LineFile lineFile) {
+//        if (inner == null) {
+//            stack.add(new LambdaExpr(lineFile));
+//        } else {
+//            inner.addLambdaHeader(lineFile);
+//        }
+//    }
+//
+//    void addParameterBracket() {
+//        if (inner == null) {
+//            inner = new AstBuilder();
+//        } else {
+//            inner.addParameterBracket();
+//        }
+//    }
 
-    void addParameterBracket() {
-        if (inner == null) {
-            inner = new AstBuilder();
-        } else {
-            inner.addParameterBracket();
-        }
-    }
+//    void buildParameterBracket() {
+//        if (inner.inner == null) {
+//            Node lastNode = stack.get(stack.size() - 1);
+//            inner.finishPart();
+//            Line line = inner.getLine();
+//            if (lastNode instanceof FuncDefinition) {
+//                FuncDefinition defNode = (FuncDefinition) lastNode;
+//                defNode.setParameters(line);
+//            } else if (lastNode instanceof LambdaExpr) {
+//                LambdaExpr lambdaExpr = (LambdaExpr) lastNode;
+//                lambdaExpr.setParameters(line);
+//            } else {
+//                throw new ParseError("Unexpected syntax. ", lastNode.getLineFile());
+//            }
+//            inner = null;
+//        } else {
+//            inner.buildParameterBracket();
+//        }
+//    }
 
-    void buildParameterBracket() {
-        if (inner.inner == null) {
-            Node lastNode = stack.get(stack.size() - 1);
-            inner.finishPart();
-            Line line = inner.getLine();
-            if (lastNode instanceof FuncDefinition) {
-                FuncDefinition defNode = (FuncDefinition) lastNode;
-                defNode.setParameters(line);
-            } else if (lastNode instanceof LambdaExpr) {
-                LambdaExpr lambdaExpr = (LambdaExpr) lastNode;
-                lambdaExpr.setParameters(line);
-            } else {
-                throw new ParseError("Unexpected syntax. ", lastNode.getLineFile());
-            }
-            inner = null;
-        } else {
-            inner.buildParameterBracket();
-        }
-    }
-
-    void addFnRType(LineFile lineFile) {
-        if (inner == null) {
-            finishPart();
-            int count = activeLine.getChildren().size();
-            if (count < 2) {
-                System.err.println(activeLine.getChildren());
-                throw new ParseError("Function must have a return type. ", lineFile);
-            }
-//            System.out.println(activeLine);
-            FuncDefinition def = (FuncDefinition) activeLine.getChildren().get(count - 2);
-            Node rType = activeLine.getChildren().remove(count - 1);
-//            def.setRType(rType);
-        } else {
-            inner.addFnRType(lineFile);
-        }
-    }
+//    void addFnRType(LineFile lineFile) {
+//        if (inner == null) {
+//            finishPart();
+//            int count = activeLine.getChildren().size();
+//            if (count < 2) {
+//                System.err.println(activeLine.getChildren());
+//                throw new ParseError("Function must have a return type. ", lineFile);
+//            }
+////            System.out.println(activeLine);
+//            FuncDefinition def = (FuncDefinition) activeLine.getChildren().get(count - 2);
+//            Node rType = activeLine.getChildren().remove(count - 1);
+////            def.setRType(rType);
+//        } else {
+//            inner.addFnRType(lineFile);
+//        }
+//    }
 
     void addCall(LineFile lineFile) {
         if (inner == null) {

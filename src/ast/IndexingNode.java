@@ -1,6 +1,5 @@
 package ast;
 
-import interpreter.SplException;
 import interpreter.env.Environment;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
@@ -10,7 +9,7 @@ import util.LineFile;
 
 import java.util.List;
 
-public class IndexingNode extends Node  {
+public class IndexingNode extends AbstractExpression  {
 
     private final Node callObj;
     private final Line args;

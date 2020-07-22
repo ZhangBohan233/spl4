@@ -196,7 +196,7 @@ public class SplInvokes extends NativeObject {
                     return extractFromSplString(strIns, environment, lineFile);
                 }
             } else {
-                return environment.getMemory().get(ptr).toString();
+                return environment.getMemory().get(ptr).toString() + "@" + ptr.getPtr();
             }
         }
     }

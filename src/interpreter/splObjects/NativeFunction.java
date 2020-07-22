@@ -50,33 +50,29 @@ public abstract class NativeFunction extends SplCallable {
     protected abstract SplElement callFunc(SplElement[] evaluatedArgs, Environment callingEnv);
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
-        checkValidArgCount(arguments.getLine().size());
+        checkValidArgCount(arguments.getLine().size(), name);
 
         return callFuncWithNode(arguments, callingEnv);
     }
 
     public SplElement call(SplElement[] evaluatedArgs, Environment callingEnv, LineFile lineFile) {
-        checkValidArgCount(evaluatedArgs.length);
+        checkValidArgCount(evaluatedArgs.length, name);
 
         return callFunc(evaluatedArgs, callingEnv);
-    }
-
-    private void checkValidArgCount(int argc) {
-        if (argc < leastArg || argc > mostArg) {
-            if (leastArg == mostArg) {
-                throw new SplException(
-                        String.format("Function '%s' expects %d argument(s), got %d. ",
-                                name, leastArg, argc));
-            } else {
-                throw new SplException(
-                        String.format("Function '%s' expects %d to %d arguments, got %d. ",
-                                name, leastArg, mostArg, argc));
-            }
-        }
     }
 
     @Override
     public String toString() {
         return "NativeFunction{" + name + "}";
+    }
+
+    @Override
+    public int maxArgCount() {
+        return mostArg;
+    }
+
+    @Override
+    public int minArgCount() {
+        return leastArg;
     }
 }

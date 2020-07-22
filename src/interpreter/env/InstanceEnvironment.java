@@ -40,10 +40,7 @@ public class InstanceEnvironment extends MainAbstractEnvironment {
 
     private VarEntry searchSuper(String name, LineFile lineFile) {
         VarEntry tv = variables.get(name);
-//        if (!includeConst && tv != null && tv.getValue() != null) {
-//            throw new EnvironmentError("Constant '" + name + "' is not assignable. ", lineFile);
-//        }
-//        if (tv == null) tv = variables.get(name);
+
         if (tv == null) {
             VarEntry superTv = variables.get("super");
             if (superTv == null) return null;

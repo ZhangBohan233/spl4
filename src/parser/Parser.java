@@ -8,7 +8,6 @@ import util.LineFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
@@ -23,7 +22,7 @@ public class Parser {
      * Since a same file should always have same content (unless they have different 'importLang'). This is used to
      * eliminate the duplicate tokenize-parse process.
      */
-    private Map<String, BlockStmt> importedPathsAndContents = new HashMap<>();
+    private final Map<String, BlockStmt> importedPathsAndContents = new HashMap<>();
 
     public Parser(TokenizeResult tokenizeResult, boolean importLang) {
         this.rootList = tokenizeResult.rootList;
@@ -51,6 +50,14 @@ public class Parser {
         return builder.getLine();
     }
 
+    private AbstractExpression parseOnePartBlock(BracketList bracketList, LineFile lineFile) throws IOException {
+        Line line = parseOneLineBlock(bracketList);
+        if (line.size() != 1) {
+            throw new SyntaxError("Expected 1 part in line, got " + line.size() + ": " + line + ". ", lineFile);
+        }
+        return (AbstractExpression) line.get(0);
+    }
+
     private Line parseSqrBracket(SqrBracketList sqrBracketList) throws IOException {
         AstBuilder builder = new AstBuilder();
         int i = 0;
@@ -61,14 +68,8 @@ public class Parser {
         return builder.getLine();
     }
 
-    private Node parseParenthesis(BracketList bracketList) throws IOException {
-        AstBuilder builder = new AstBuilder();
-        int i = 0;
-        while (i < bracketList.size()) {
-            i = parseOne(bracketList, i, builder);
-        }
-        builder.finishPart();
-        return builder.getLine().getChildren().get(0);
+    private AbstractExpression parseParenthesis(BracketList bracketList) throws IOException {
+        return parseOnePartBlock(bracketList, LineFile.LF_INTERPRETER);
     }
 
     /**
@@ -140,10 +141,13 @@ public class Parser {
                                 builder.finishPart();
                                 break;
                             case "true":
-                                builder.addNode(BoolStmt.BOOL_STMT_TRUE);
+                                builder.addNode(new BoolStmt(true, lineFile));
                                 break;
                             case "false":
-                                builder.addNode(BoolStmt.BOOL_STMT_FALSE);
+                                builder.addNode(new BoolStmt(false, lineFile));
+                                break;
+                            case "null":
+                                builder.addNode(new NullStmt(lineFile));
                                 break;
                             case "fn":  // function definition
                                 next = parent.get(index++);
@@ -166,6 +170,22 @@ public class Parser {
                                 builder.addNode(def);
 
                                 break;
+                            case "lambda":
+                                paramList = new BracketList(null);
+                                while (notIdentifierOf(next = parent.get(index++), "->")) {
+                                    paramList.add(next);
+                                }
+                                BracketList singleBodyList = new BracketList(null);
+                                while (index < parent.size() &&
+                                        notIdentifierOf(next = parent.get(index++), ";")) {
+                                    singleBodyList.add(next);
+                                }
+                                paramBlock = parseOneLineBlock(paramList);
+                                AbstractExpression bodyNode = parseOnePartBlock(singleBodyList, lineFile);
+                                LambdaExpressinDef lambdaFunctionDef =
+                                        new LambdaExpressinDef(paramBlock, bodyNode, lineFile);
+                                builder.addNode(lambdaFunctionDef);
+                                break;
                             case "contract":
                                 nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
                                 paramList = (BracketList) parent.get(index++);
@@ -174,9 +194,7 @@ public class Parser {
                                 if (!arrow.getIdentifier().equals("->"))
                                     throw new SyntaxError("Syntax of contract: " +
                                             "'contract f(argsContract...) -> rtnContract; '. ", lineFile);
-                                while (!((next = parent.get(index++)) instanceof AtomicElement &&
-                                        ((AtomicElement) next).atom instanceof IdToken &&
-                                        ((IdToken) ((AtomicElement) next).atom).getIdentifier().equals(";"))) {
+                                while (notIdentifierOf(next = parent.get(index++), ";")) {
                                     rtnTypeLst.add(next);
                                 }
                                 Line rtnLine = parseOneLineBlock(rtnTypeLst);
@@ -238,9 +256,7 @@ public class Parser {
                                 builder.addNode(ifStmt);
                                 if (index < parent.size()) {
                                     next = parent.get(index);
-                                    if (next instanceof AtomicElement &&
-                                            ((AtomicElement) next).atom instanceof IdToken &&
-                                            ((IdToken) ((AtomicElement) next).atom).getIdentifier().equals("else")) {
+                                    if (!notIdentifierOf(next, "else")) {
                                         BraceList elseList = (BraceList) parent.get(index + 1);
                                         index += 2;
                                         ifStmt.setElseBlock(parseBlock(elseList));
@@ -342,7 +358,7 @@ public class Parser {
                     throw new ParseError("Unexpected token type. ", lineFile);
                 }
             } catch (ClassCastException cce) {
-                throw new SyntaxError("Syntax error.", lineFile);
+                throw new SyntaxError("Syntax error, caused by " + cce, lineFile);
             }
         } else if (ele instanceof BracketList) {
             BracketList bracketList = (BracketList) ele;
@@ -401,6 +417,12 @@ public class Parser {
     public BlockStmt parse() throws IOException {
 
         return parseBlock(rootList);
+    }
+
+    private static boolean notIdentifierOf(Element element, String expectedName) {
+        return !((element instanceof AtomicElement) &&
+                (((AtomicElement) element).atom instanceof IdToken) &&
+                ((IdToken) ((AtomicElement) element).atom).getIdentifier().equals(expectedName));
     }
 
     private static String nameOfPath(String path) {

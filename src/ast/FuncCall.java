@@ -9,7 +9,7 @@ import interpreter.primitives.Pointer;
 import interpreter.types.TypeError;
 import util.LineFile;
 
-public class FuncCall extends Node {
+public class FuncCall extends AbstractExpression {
 
     Node callObj;
     Arguments arguments;

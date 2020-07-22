@@ -4,9 +4,10 @@ import interpreter.primitives.SplElement;
 import interpreter.splObjects.Function;
 import interpreter.env.Environment;
 import interpreter.primitives.Pointer;
+import interpreter.splObjects.SplCallable;
 import util.LineFile;
 
-public class FuncDefinition extends Node {
+public class FuncDefinition extends AbstractExpression {
 
     public final String name;
 //    private TypeRepresent rType;
@@ -32,7 +33,7 @@ public class FuncDefinition extends Node {
     @Override
     protected SplElement internalEval(Environment env) {
 
-        Function.Parameter[] params = Function.evalParams(parameters, env);
+        Function.Parameter[] params = SplCallable.evalParams(parameters, env);
 //        CallableType funcType = new CallableType();
 
         Function function = new Function(body, params, env, name, getLineFile());

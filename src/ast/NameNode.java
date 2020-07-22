@@ -9,7 +9,7 @@ import util.LineFile;
 
 import java.util.List;
 
-public class NameNode extends Node {
+public class NameNode extends AbstractExpression {
     private final String name;
 //    private TemplateNode templateNode;
 

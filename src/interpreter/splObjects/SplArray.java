@@ -6,9 +6,7 @@ import interpreter.AttributeError;
 import interpreter.Memory;
 import interpreter.SplException;
 import interpreter.env.Environment;
-import interpreter.primitives.Int;
-import interpreter.primitives.Pointer;
-import interpreter.primitives.SplElement;
+import interpreter.primitives.*;
 import interpreter.types.*;
 import util.LineFile;
 
@@ -38,7 +36,7 @@ public class SplArray extends SplObject {
 
     @Override
     public String toString() {
-        return "SplArray{" + length + '}';
+        return SplElement.typeToString(elementTypeCode) + "[" + length + "]";
     }
 
 //    public static Pointer createArray(List<Integer> dimensions, Environment env) {
@@ -105,30 +103,30 @@ public class SplArray extends SplObject {
 
     public static void fillInitValue(int eleType, Pointer arrayPtr, Memory memory, int arrayLength) {
         int firstEleAddr = arrayPtr.getPtr() + 1;
-        ReadOnlyPrimitiveWrapper wrapper;
+        SplElement defaultValue;
 
         switch (eleType) {
             case SplElement.INT:
-                wrapper = ReadOnlyPrimitiveWrapper.intZeroWrapper();
+                defaultValue = Int.ZERO;
                 break;
             case SplElement.FLOAT:
-                wrapper = ReadOnlyPrimitiveWrapper.floatZeroWrapper();
+                defaultValue = SplFloat.ZERO;
                 break;
             case SplElement.BOOLEAN:
-                wrapper = ReadOnlyPrimitiveWrapper.booleanFalseWrapper();
+                defaultValue = Bool.FALSE;
                 break;
             case SplElement.CHAR:
-                wrapper = ReadOnlyPrimitiveWrapper.charZeroWrapper();
+                defaultValue = Char.NULL_TERMINATOR;
                 break;
             case SplElement.POINTER:
-                wrapper = ReadOnlyPrimitiveWrapper.nullWrapper();
+                defaultValue = Pointer.NULL_PTR;
                 break;
             default:
                 throw new TypeError();
         }
 
         for (int i = 0; i < arrayLength; ++i) {
-            memory.set(firstEleAddr + i, wrapper);
+            memory.set(firstEleAddr + i, defaultValue);
         }
     }
 
@@ -137,8 +135,7 @@ public class SplArray extends SplObject {
         if (index < 0 || index >= array.length) {
             throw new SplException("Index " + index + " out of array length " + array.length + ". ", lineFile);
         }
-        ReadOnlyPrimitiveWrapper wrapper = (ReadOnlyPrimitiveWrapper) memory.get(arrPtr.getPtr() + index + 1);
-        return wrapper.value;
+        return memory.getPrimitive(arrPtr.getPtr() + index + 1);
     }
 
     public static void setItemAtIndex(Pointer arrPtr,
@@ -151,7 +148,7 @@ public class SplArray extends SplObject {
             if (index < 0 || index >= array.length) {
                 throw new SplException("Index " + index + " out of array length " + array.length + ". ", lineFile);
             }
-            env.getMemory().set(arrPtr.getPtr() + index + 1, new ReadOnlyPrimitiveWrapper(value));
+            env.getMemory().set(arrPtr.getPtr() + index + 1, value);
         } else {
             throw new TypeError(String.format("Array element type: %s, argument type: %s. ",
                     SplElement.typeToString(array.elementTypeCode), SplElement.typeToString(value.type())));
@@ -164,8 +161,8 @@ public class SplArray extends SplObject {
         char[] javaCharArray = new char[lenPtr[0]];
 
         for (int j = 0; j < javaCharArray.length; ++j) {
-            ReadOnlyPrimitiveWrapper wrapper = (ReadOnlyPrimitiveWrapper) memory.get(lenPtr[1] + j);
-            javaCharArray[j] = (char) wrapper.value.intValue();
+            SplElement value = memory.getPrimitive(lenPtr[1] + j);
+            javaCharArray[j] = (char) value.intValue();
         }
 
         return javaCharArray;
@@ -173,15 +170,6 @@ public class SplArray extends SplObject {
 
     private static int[] toJavaArrayCommon(Pointer arrPtr, Memory memory) {
         SplArray array = (SplArray) memory.get(arrPtr);
-//        if (((PointerType) arrayTv.getType()).getPointerType() != PointerType.ARRAY_TYPE) {
-//            throw new TypeError("Cannot convert to java array. ");
-//        }
-//        ArrayType arrayType = (ArrayType) arrayTv.getType();
-//        if (!arrayType.getEleType().isPrimitive()) {
-//            throw new TypeError("Only primitive array can be converted to java array. ");
-//        }
-//        Pointer arrPtr = (Pointer) arrayTv.getValue();
-//        SplArray charArray = (SplArray) memory.get(arrPtr);
 
         int firstEleAddr = arrPtr.getPtr() + 1;
 

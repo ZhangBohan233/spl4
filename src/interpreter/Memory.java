@@ -17,7 +17,7 @@ public class Memory {
     private int stackSize;
     private int stackLimit = 1000;
 
-    private final SplObject[] heap;
+    private final SplThing[] heap;
 
     private AvailableList available;
     private final Set<Environment> temporaryEnvs = new HashSet<>();
@@ -29,7 +29,7 @@ public class Memory {
 
     public Memory() {
         heapSize = DEFAULT_HEAP_SIZE;
-        heap = new SplObject[heapSize];
+        heap = new SplThing[heapSize];
 
         initAvailable();
     }
@@ -78,16 +78,24 @@ public class Memory {
         heap[ptr.getPtr()] = obj;
     }
 
-    public void set(int addr, SplObject obj) {
+    public void set(int addr, SplThing obj) {
         heap[addr] = obj;
     }
 
     public SplObject get(Pointer ptr) {
-        return heap[ptr.getPtr()];
+        return (SplObject) heap[ptr.getPtr()];
     }
 
     public SplObject get(int addr) {
+        return (SplObject) heap[addr];
+    }
+
+    public SplThing getRaw(int addr) {
         return heap[addr];
+    }
+
+    public SplElement getPrimitive(int addr) {
+        return (SplElement) heap[addr];
     }
 
     public void free(Pointer ptr, int length) {
@@ -198,8 +206,6 @@ public class Memory {
 
             // temp object roots
             for (Pointer tempPtr : temporaryPointers) {
-//                Pointer ptr = (Pointer) typeValue.getValue();
-//                PointerType type = (PointerType) typeValue.getType();
                 SplObject obj = get(tempPtr);
                 markObjectAsUsed(obj, tempPtr.getPtr());
             }
@@ -213,8 +219,9 @@ public class Memory {
         }
 
         private void initMarks() {
-            for (SplObject obj : heap) {
-                if (obj != null) obj.clearGcCount();
+            for (SplThing obj : heap) {
+                if (obj instanceof SplObject)
+                    ((SplObject) obj).clearGcCount();
             }
         }
 
@@ -229,12 +236,8 @@ public class Memory {
                     Pointer ptr = (Pointer) ele;
 
                     // the null case represent those constants which has not been set yet
-                    if (ptr != null) {
-                        SplObject obj = get(ptr);
-
-//                        PointerType type = (PointerType) tv.getType();
-                        markObjectAsUsed(obj, ptr.getPtr());
-                    }
+                    SplObject obj = get(ptr);
+                    markObjectAsUsed(obj, ptr.getPtr());
                 }
             }
             mark(env.outer);
@@ -260,27 +263,14 @@ public class Memory {
             if (obj instanceof SplArray) {
                 int arrBegin = objAddr + 1;
                 SplArray array = (SplArray) obj;
-//                Type valueType = ((ArrayType) type).getEleType();
-//                if (!valueType.isPrimitive()) {
-//                    PointerType valuePtrType = (PointerType) valueType;
-                    for (int i = 0; i < array.length; i++) {
-                        int p = arrBegin + i;
-                        ReadOnlyPrimitiveWrapper ele = (ReadOnlyPrimitiveWrapper) get(p);
-                        if (ele != null) {
-                            ele.incrementGcCount();
-                            SplObject pointed = get((Pointer) ele.value);
-                            markObjectAsUsed(pointed, p);
-                        }
+                for (int i = 0; i < array.length; i++) {
+                    int p = arrBegin + i;
+                    SplElement ele = getPrimitive(p);
+                    if (ele instanceof Pointer) {
+                        SplObject pointed = get((Pointer) ele);
+                        markObjectAsUsed(pointed, p);
                     }
-//                } else {
-//                    for (int i = 0; i < array.length; i++) {
-//                        int p = arrBegin + i;
-//                        ReadOnlyPrimitiveWrapper ele = (ReadOnlyPrimitiveWrapper) get(p);
-//                        if (ele != null) {
-//                            ele.incrementGcCount();
-//                        }
-//                    }
-//                }
+                }
             } else if (obj instanceof SplModule) {
                 SplModule module = (SplModule) obj;
                 mark(module.getEnv());
@@ -296,14 +286,16 @@ public class Memory {
             available.clear();
             AvailableList.LnkNode curLast = null;
             for (int p = 1; p < heapSize; ++p) {
-                SplObject obj = get(p);
-                if (obj != null) {
-//                if (obj instanceof ReadOnlyPrimitiveWrapper) {
-//                    System.out.println(obj.getGcCount());
-//                }
-                    if (!obj.isGcMarked()) {
+                SplThing thing = getRaw(p);
+                if (thing instanceof SplObject) {
+                    SplObject obj = (SplObject) thing;
+                    if (obj.isGcMarked()) {
+                        if (obj instanceof SplArray) {
+                            p += ((SplArray) obj).length;  // do not add any addresses in this array to available list
+                        }
+                    } else {
                         curLast = available.addLast(p, curLast);
-                        set(p, null);
+                        set(p, null);  // just for visual clearance, not necessary
                     }
                 } else {
                     curLast = available.addLast(p, curLast);

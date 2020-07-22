@@ -2,7 +2,7 @@ package ast;
 
 import util.LineFile;
 
-public abstract class Expr extends Node {
+public abstract class Expr extends AbstractExpression {
 
     public Expr(LineFile lineFile) {
         super(lineFile);

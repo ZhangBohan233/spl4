@@ -8,10 +8,7 @@ import interpreter.primitives.Bool;
 import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
-import interpreter.splObjects.Function;
-import interpreter.splObjects.NativeFunction;
-import interpreter.splObjects.SplArray;
-import interpreter.splObjects.SplObject;
+import interpreter.splObjects.*;
 import interpreter.types.TypeError;
 import lexer.TokenList;
 import lexer.FileTokenizer;
@@ -135,14 +132,28 @@ public class Main {
             }
         };
 
+        NativeFunction isCallable = new NativeFunction("Callable?", 1) {
+            @Override
+            protected Bool callFunc(SplElement[] evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs[0];
+                if (arg instanceof Pointer) {
+                    SplObject object = callingEnv.getMemory().get((Pointer) arg);
+                    return Bool.boolValueOf(object instanceof SplCallable);
+                }
+                return Bool.FALSE;
+            }
+        };
+
         Memory memory = ge.getMemory();
         Pointer ptrInt = memory.allocateFunction(toInt, ge);
         Pointer ptrIsInt = memory.allocateFunction(isInt, ge);
         Pointer ptrIsAbsObj = memory.allocateFunction(isAbstractObject, ge);
+        Pointer ptrIsCallable = memory.allocateFunction(isCallable, ge);
 
         ge.defineFunction("int", ptrInt, LineFile.LF_INTERPRETER);
         ge.defineFunction("int?", ptrIsInt, LineFile.LF_INTERPRETER);
         ge.defineFunction("AbstractObject?", ptrIsAbsObj, LineFile.LF_INTERPRETER);
+        ge.defineFunction("Callable?", ptrIsCallable, LineFile.LF_INTERPRETER);
     }
 
     private static void callMain(String[] args, GlobalEnvironment globalEnvironment) {
