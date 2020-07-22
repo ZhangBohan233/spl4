@@ -16,17 +16,13 @@ import util.LineFile;
 
 public class ForLoopStmt extends ConditionalStmt {
 
-    private BlockStmt condition;
+    private final BlockStmt condition;
 
     private final static String forEachSyntaxMsg = "Syntax of for-each loop: for ele: T; collection {...}";
 
     public ForLoopStmt(BlockStmt condition, BlockStmt bodyBlock, LineFile lineFile) {
         super(bodyBlock, lineFile);
 
-        this.condition = condition;
-    }
-
-    public void setCondition(BlockStmt condition) {
         this.condition = condition;
     }
 
@@ -45,8 +41,8 @@ public class ForLoopStmt extends ConditionalStmt {
             );
         } else if (condition.getLines().size() == 3) {  // regular for loop
             forLoop3Parts(
-                    condition.getLines().get(0),
-                    condition.getLines().get(1),
+                    (AbstractExpression) condition.getLines().get(0).get(0),
+                    (AbstractExpression) condition.getLines().get(1).get(0),
                     condition.getLines().get(2),
                     env,
                     titleEnv,
@@ -59,7 +55,7 @@ public class ForLoopStmt extends ConditionalStmt {
         return null;
     }
 
-    private void forLoop3Parts(Line init, Line end, Line step, Environment parentEnv,
+    private void forLoop3Parts(AbstractExpression init, AbstractExpression end, Line step, Environment parentEnv,
                                LoopTitleEnvironment titleEnv, BlockEnvironment bodyEnv) {
         init.evaluate(titleEnv);
         Bool bool = Bool.evalBoolean(end, titleEnv, getLineFile());

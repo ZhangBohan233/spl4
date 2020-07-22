@@ -9,7 +9,9 @@ var yy = lambda x -> fn(y) {var g = 1; return x + y + g};
 
 fn main() {
     var x = foo(1)(2);
-    Invokes.println(x);
-    Invokes.println(yy(4)(3));
-    Invokes.println(xx(5) (6));
+    var arr = new Object[3];
+    arr[0] = foo(2);
+    arr[1] = xx;
+    arr[2] = yy;
+    return arr[0](2);
 }

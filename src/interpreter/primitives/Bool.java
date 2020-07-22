@@ -1,5 +1,6 @@
 package interpreter.primitives;
 
+import ast.AbstractExpression;
 import ast.Node;
 import interpreter.env.Environment;
 import interpreter.types.TypeError;
@@ -59,7 +60,7 @@ public class Bool extends SplElement {
         return b ? Bool.TRUE : Bool.FALSE;
     }
 
-    public static Bool evalBoolean(Node node, Environment env, LineFile lineFile) {
+    public static Bool evalBoolean(AbstractExpression node, Environment env, LineFile lineFile) {
         SplElement cond = node.evaluate(env);
         if (cond instanceof Bool)
             return (Bool) cond;

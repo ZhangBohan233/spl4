@@ -35,7 +35,7 @@ public class RegularUnaryOperator extends UnaryExpr {
             }
         } else if (type == LOGICAL) {
             if (valueTv instanceof Bool) {
-                if (operator.equals("!")) {
+                if (operator.equals("not")) {
                     return Bool.boolValueOf(!((Bool) valueTv).value);
                 }
             }

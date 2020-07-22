@@ -37,7 +37,9 @@ public class AstBuilder {
             ">=", 25,
             "<=", 25,
             "==", 20,
-            "!=", 20
+            "!=", 20,
+            "is", 20,
+            "is not", 20
     );
 
     private static final Map<String, Integer> PCD_BIN_SPECIAL = Map.of(
@@ -45,8 +47,10 @@ public class AstBuilder {
 //            "<>", 400,
             "<-", 160,  // must bigger than 'new'
             "->", 4,
-            "?", 2,
+//            "?", 2,
             ":", 3,
+            "_else_", 3,
+            "_if_", 2,
             ":=", 1,
             "=", 1
     );
@@ -69,8 +73,8 @@ public class AstBuilder {
     );
 
     private static final Map<String, Integer> PCD_BIN_LAZY = Map.of(
-            "&&", 6,
-            "||", 5
+            "and", 6,
+            "or", 5
     );
 
     private static final Map<String, Integer> PCD_UNARY_NUMERIC = Map.of(
@@ -78,7 +82,7 @@ public class AstBuilder {
     );
 
     private static final Map<String, Integer> PCD_UNARY_LOGICAL = Map.of(
-            "!", 200
+            "not", 200
     );
 
     private static final Map<String, Integer> PCD_UNARY_SPECIAL = Map.of(
@@ -103,9 +107,9 @@ public class AstBuilder {
     private Line activeLine = new Line();
     private AstBuilder inner;
 
-    private void setIndependence(boolean independence) {
-        baseBlock.setIndependence(independence);
-    }
+//    private void setIndependence(boolean independence) {
+//        baseBlock.setIndependence(independence);
+//    }
 
     Node getLastAddedNode() {
         if (inner == null) {
@@ -113,6 +117,14 @@ public class AstBuilder {
             return stack.get(stack.size() - 1);
         } else {
             return inner.getLastAddedNode();
+        }
+    }
+
+    boolean exprIsEmpty() {
+        if (inner == null) {
+            return stack.isEmpty();
+        } else {
+            return inner.exprIsEmpty();
         }
     }
 
@@ -254,7 +266,7 @@ public class AstBuilder {
 
     void addFakeTernary(String op, LineFile lineFile) {
         if (inner == null) {
-            stack.add(new FakeTernaryOperator(op, lineFile));
+            stack.add(new ConditionalExpr(op, lineFile));
         } else {
             inner.addFakeTernary(op, lineFile);
         }
@@ -426,33 +438,33 @@ public class AstBuilder {
         }
     }
 
-    void addIndependenceBraceBlock() {
-        if (inner == null) {
-            inner = new AstBuilder();
-            inner.setIndependence(true);
-        } else {
-            inner.addIndependenceBraceBlock();
-        }
-    }
-
-    void buildBraceBlock() {
-        if (inner.inner == null) {
-            BlockStmt innerBlock = inner.getBaseBlock();
-            stack.add(innerBlock);
-
-            inner = null;
-        } else {
-            inner.buildBraceBlock();
-        }
-    }
-
-    void addArrayLiteral(LineFile lineFile) {
-        if (inner == null) {
-            stack.add(new ArrayLiteral(lineFile));
-        } else {
-            inner.addArrayLiteral(lineFile);
-        }
-    }
+//    void addIndependenceBraceBlock() {
+//        if (inner == null) {
+//            inner = new AstBuilder();
+//            inner.setIndependence(true);
+//        } else {
+//            inner.addIndependenceBraceBlock();
+//        }
+//    }
+//
+//    void buildBraceBlock() {
+//        if (inner.inner == null) {
+//            BlockStmt innerBlock = inner.getBaseBlock();
+//            stack.add(innerBlock);
+//
+//            inner = null;
+//        } else {
+//            inner.buildBraceBlock();
+//        }
+//    }
+//
+//    void addArrayLiteral(LineFile lineFile) {
+//        if (inner == null) {
+//            stack.add(new ArrayLiteral(lineFile));
+//        } else {
+//            inner.addArrayLiteral(lineFile);
+//        }
+//    }
 
     void buildArrayLiteral(LineFile lineFile) {
         if (inner.inner == null) {

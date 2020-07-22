@@ -98,6 +98,14 @@ public class Parser {
                             // subtraction
                             builder.addBinaryOperator("-", BinaryOperator.NUMERIC, lineFile);
                         }
+                    } else if (identifier.equals("is")) {
+                        Element next = parent.get(index);
+                        if (notIdentifierOf(next, "not")) {
+                            builder.addBinaryOperator("is", BinaryOperator.LOGICAL, lineFile);
+                        } else {
+                            index++;
+                            builder.addBinaryOperator("is not", BinaryOperator.LOGICAL, lineFile);
+                        }
                     } else if (FileTokenizer.LOGICAL_UNARY.contains(identifier)) {
                         builder.addUnaryOperator(identifier, RegularUnaryOperator.LOGICAL, lineFile);
                     } else if (FileTokenizer.NUMERIC_BINARY.contains(identifier)) {
@@ -118,11 +126,15 @@ public class Parser {
                         BraceList bodyList;
                         BlockStmt bodyBlock;
                         BracketList conditionList;
-                        Line condition;
+                        AbstractExpression condition;
+                        BracketList singleBodyList;
 
                         switch (identifier) {
                             case "=":
                                 builder.addNode(new Assignment(lineFile));
+                                break;
+                            case ":=":
+                                builder.addNode(new QuickAssignment(lineFile));
                                 break;
                             case ".":
                                 builder.addNode(new Dot(lineFile));
@@ -175,7 +187,7 @@ public class Parser {
                                 while (notIdentifierOf(next = parent.get(index++), "->")) {
                                     paramList.add(next);
                                 }
-                                BracketList singleBodyList = new BracketList(null);
+                                singleBodyList = new BracketList(null);
                                 while (index < parent.size() &&
                                         notIdentifierOf(next = parent.get(index++), ";")) {
                                     singleBodyList.add(next);
@@ -247,20 +259,42 @@ public class Parser {
                                 break;
                             case "if":
                                 conditionList = new BracketList(null);
-                                while (!((next = parent.get(index++)) instanceof BraceList)) {
-                                    conditionList.add(next);
-                                }
-                                bodyList = (BraceList) next;
-                                condition = parseOneLineBlock(conditionList);
-                                IfStmt ifStmt = new IfStmt(condition, parseBlock(bodyList), lineFile);
-                                builder.addNode(ifStmt);
-                                if (index < parent.size()) {
-                                    next = parent.get(index);
-                                    if (!notIdentifierOf(next, "else")) {
-                                        BraceList elseList = (BraceList) parent.get(index + 1);
-                                        index += 2;
-                                        ifStmt.setElseBlock(parseBlock(elseList));
+                                if (builder.exprIsEmpty()) {
+                                    while (!((next = parent.get(index++)) instanceof BraceList)) {
+                                        conditionList.add(next);
                                     }
+                                    bodyList = (BraceList) next;
+                                    condition = parseOnePartBlock(conditionList, lineFile);
+                                    IfStmt ifStmt = new IfStmt(condition, parseBlock(bodyList), lineFile);
+                                    builder.addNode(ifStmt);
+                                    if (index < parent.size()) {
+                                        next = parent.get(index);
+                                        if (!notIdentifierOf(next, "else")) {
+                                            BraceList elseList = (BraceList) parent.get(index + 1);
+                                            index += 2;
+                                            ifStmt.setElseBlock(parseBlock(elseList));
+                                        }
+                                    }
+                                } else {
+                                    while (notIdentifierOf(next = parent.get(index++), "else")) {
+                                        conditionList.add(next);
+                                    }
+                                    singleBodyList = new BracketList(null);  // else part
+                                    while (index < parent.size() &&
+                                            notIdentifierOf(next = parent.get(index), ";")) {
+                                        singleBodyList.add(next);
+                                        index++;  // this step is to ensure that ';' will not be omitted
+                                    }
+                                    condition = parseOnePartBlock(conditionList, lineFile);
+                                    AbstractExpression elseBodyExpr = parseOnePartBlock(singleBodyList, lineFile);
+                                    ConditionalExpr elseExpr =
+                                            new ConditionalExpr("_else_", lineFile);
+                                    ConditionalExpr ifExpr = new ConditionalExpr("_if_", lineFile);
+
+                                    builder.addNode(ifExpr);
+                                    builder.addNode(condition);
+                                    builder.addNode(elseExpr);
+                                    builder.addNode(elseBodyExpr);
                                 }
                                 break;
                             case "for":

@@ -49,17 +49,17 @@ public class CondCaseStmt extends Node {
     @Override
     protected SplElement internalEval(Environment env) {
         boolean execDefault = true;
-        for (CaseStmt caseStmt: cases) {
-            Bool caseCondition = Bool.evalBoolean(caseStmt.getCondition(), env, getLineFile());
-            if (caseCondition.value) {
-                CaseBlockEnvironment blockEnv = new CaseBlockEnvironment(env);
-                caseStmt.evaluate(blockEnv);
-                if (!blockEnv.isFallingThrough()) {
-                    execDefault = false;
-                    break;
-                }
-            }
-        }
+//        for (CaseStmt caseStmt: cases) {
+//            Bool caseCondition = Bool.evalBoolean(caseStmt.getCondition(), env, getLineFile());
+//            if (caseCondition.value) {
+//                CaseBlockEnvironment blockEnv = new CaseBlockEnvironment(env);
+//                caseStmt.evaluate(blockEnv);
+//                if (!blockEnv.isFallingThrough()) {
+//                    execDefault = false;
+//                    break;
+//                }
+//            }
+//        }
         if (execDefault) {
             CaseBlockEnvironment blockEnv = new CaseBlockEnvironment(env);
             defaultCase.evaluate(blockEnv);

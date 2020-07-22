@@ -9,7 +9,7 @@ import util.LineFile;
 
 public class WhileStmt extends ConditionalStmt {
 
-    private Line condition;
+    private AbstractExpression condition;
 
     public WhileStmt(LineFile lineFile) {
         super(lineFile);
@@ -34,7 +34,7 @@ public class WhileStmt extends ConditionalStmt {
         return null;
     }
 
-    public void setCondition(Line condition) {
+    public void setCondition(AbstractExpression condition) {
         this.condition = condition;
     }
 

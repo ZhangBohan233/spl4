@@ -8,11 +8,11 @@ import util.LineFile;
 
 public class IfStmt extends ConditionalStmt {
 
-    private final Line condition;
+    private final AbstractExpression condition;
     private BlockStmt elseBlock;
     private boolean hasElse;
 
-    public IfStmt(Line condition, BlockStmt bodyBlock, LineFile lineFile) {
+    public IfStmt(AbstractExpression condition, BlockStmt bodyBlock, LineFile lineFile) {
         super(bodyBlock, lineFile);
 
         this.condition = condition;

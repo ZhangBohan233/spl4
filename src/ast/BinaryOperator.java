@@ -10,7 +10,6 @@ import lexer.SyntaxError;
 import util.LineFile;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 public class BinaryOperator extends BinaryExpr {
@@ -25,6 +24,10 @@ public class BinaryOperator extends BinaryExpr {
             "*", "__mul__",
             "/", "__div__",
             "%", "__mod__"
+    );
+
+    private static final Map<String, String> LOGICAL_OP_MAP = Map.of(
+            "==", "__eq__"
     );
 
     private static final Set<String> UNCHANGED_LOGICAL = Set.of(
@@ -122,41 +125,40 @@ public class BinaryOperator extends BinaryExpr {
                     throw new TypeError();
                 }
             } else {  // is pointer type
-                Pointer ptr = (Pointer) leftTv;
+                Pointer leftPtr = (Pointer) leftTv;
                 if (SplElement.isPrimitive(rightTv))
                     throw new TypeError("Cannot compare primitive type to pointer type. ", getLineFile());
                 Pointer rightPtr = (Pointer) rightTv;
-                result = integerLogical(operator, ptr.getPtr(), rightPtr.getPtr(), getLineFile());
+                result = pointerLogical(operator, leftPtr, rightPtr, env, getLineFile());
             }
             return Bool.boolValueOf(result);
         } else if (type == LAZY) {
-            // a && b = a ? b : false
-            // a || b = a ? true : b
-            FakeTernaryOperator fto = new FakeTernaryOperator("?", getLineFile());
-            fto.setLeft(left);
-
-            Declaration d = new Declaration(Declaration.USELESS, "ss", getLineFile());
-//            if (operator.equals("&&")) {
-//                d.setLeft(right);
-//                d.setRight(BoolStmt.BOOL_STMT_FALSE);
-//            } else if (operator.equals("||")) {
-//                d.setLeft(BoolStmt.BOOL_STMT_TRUE);
-//                d.setRight(right);
-//            } else {
-//                throw new SyntaxError("Unsupported lazy binary operator '" + operator +
-//                        ". ", getLineFile());
-//            }
-            fto.setRight(d);
-            return fto.evaluate(env);
+            // a and b = b if a else false
+            // a or b  = true if a else b
+            if (operator.equals("and")) {
+                Bool leftRes = Bool.evalBoolean((AbstractExpression) left, env, getLineFile());
+                if (leftRes.value) {
+                    return Bool.evalBoolean((AbstractExpression) right, env, getLineFile());
+                } else {
+                    return Bool.FALSE;
+                }
+            } else if (operator.equals("or")) {
+                Bool leftRes = Bool.evalBoolean((AbstractExpression) left, env, getLineFile());
+                if (!leftRes.value) {
+                    return Bool.evalBoolean((AbstractExpression) right, env, getLineFile());
+                } else {
+                    return Bool.TRUE;
+                }
+            }
         }
         throw new SyntaxError("Unexpected error. ", getLineFile());
     }
 
     private static SplElement pointerTypeNumericArithmetic(Pointer leftPtr,
-                                                        SplElement rightEle,
-                                                        String operator,
-                                                        Environment env,
-                                                        LineFile lineFile) {
+                                                           SplElement rightEle,
+                                                           String operator,
+                                                           Environment env,
+                                                           LineFile lineFile) {
         SplObject leftObj = env.getMemory().get(leftPtr);
         if (leftObj instanceof Instance) {
             String fnName = ARITHMETIC_OP_MAP.get(operator);
@@ -213,6 +215,27 @@ public class BinaryOperator extends BinaryExpr {
             default:
                 throw new TypeError("Unsupported operation '" + op + "'. ", lineFile);
         }
+    }
+
+    private static boolean pointerLogical(String op, Pointer l, Pointer r, Environment env, LineFile lineFile) {
+        if (op.equals("is")) {
+            return l.getPtr() == r.getPtr();
+        } else if (op.equals("is not")) {
+            return l.getPtr() != r.getPtr();
+        } else {
+            SplObject leftObj = env.getMemory().get(l);
+            if (leftObj instanceof Instance) {
+                String fnName = LOGICAL_OP_MAP.get(op);
+                Environment instanceEnv = ((Instance) leftObj).getEnv();
+                Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
+                Function opFn = (Function) env.getMemory().get(fnPtr);
+                SplElement res = opFn.call(new SplElement[]{r}, env, lineFile);
+                if (res instanceof Bool) {
+                    return ((Bool) res).value;
+                }
+            }
+        }
+        throw new TypeError();
     }
 
     private static boolean integerLogical(String op, long l, long r, LineFile lineFile) {

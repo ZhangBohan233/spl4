@@ -23,7 +23,7 @@ public class FileTokenizer {
     );
 
     public static final Set<String> LOGICAL_BINARY = Set.of(
-            ">", "<", "==", "!=", ">=", "<="
+            ">", "<", "==", "!=", ">=", "<=", "is", "is not"
     );
 
     public static final Set<String> FAKE_TERNARY = Set.of(
@@ -31,11 +31,11 @@ public class FileTokenizer {
     );
 
     public static final Set<String> LAZY_BINARY = Set.of(
-            "&&", "||"
+            "and", "or"
     );
 
     public static final Set<String> LOGICAL_UNARY = Set.of(
-            "!"
+            "not"
     );
 
     public static final Set<String> SYMBOLS = Set.of(
