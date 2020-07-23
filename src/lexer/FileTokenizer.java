@@ -97,6 +97,7 @@ public class FileTokenizer {
             tokens.add(new IdToken("import", lineFile0));
             tokens.add(new IdToken("namespace", lineFile0));
             tokens.add(new IdToken("lang", lineFile0));
+            tokens.add(new IdToken(";", lineFile0));
         }
 
         int lineNum = 1;

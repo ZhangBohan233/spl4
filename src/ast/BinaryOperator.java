@@ -1,5 +1,6 @@
 package ast;
 
+import interpreter.EvaluatedArguments;
 import interpreter.primitives.*;
 import interpreter.splObjects.Function;
 import interpreter.splObjects.Instance;
@@ -165,7 +166,7 @@ public class BinaryOperator extends BinaryExpr {
             Environment instanceEnv = ((Instance) leftObj).getEnv();
             Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
             Function opFn = (Function) env.getMemory().get(fnPtr);
-            return opFn.call(new SplElement[]{rightEle}, env, lineFile);
+            return opFn.call(EvaluatedArguments.of(rightEle), env, lineFile);
         } else {
             throw new TypeError();
         }
@@ -229,7 +230,7 @@ public class BinaryOperator extends BinaryExpr {
                 Environment instanceEnv = ((Instance) leftObj).getEnv();
                 Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
                 Function opFn = (Function) env.getMemory().get(fnPtr);
-                SplElement res = opFn.call(new SplElement[]{r}, env, lineFile);
+                SplElement res = opFn.call(EvaluatedArguments.of(r), env, lineFile);
                 if (res instanceof Bool) {
                     return ((Bool) res).value;
                 }

@@ -2,6 +2,7 @@ package interpreter.invokes;
 
 import ast.Arguments;
 import ast.StringLiteral;
+import interpreter.EvaluatedArguments;
 import interpreter.SplException;
 import interpreter.env.Environment;
 import interpreter.primitives.Int;
@@ -154,13 +155,14 @@ public class SplInvokes extends NativeObject {
     }
 
     private static String getPrintString(Arguments arguments, Environment environment, LineFile lineFile) {
-        SplElement[] args = arguments.evalArgs(environment);
+        EvaluatedArguments args = arguments.evalArgs(environment);
+        int argc = args.positionalArgs.size();
 
         Pointer stringPtr = (Pointer) environment.get(Constants.STRING_CLASS, lineFile);
 
-        String[] resArr = new String[args.length];
-        for (int i = 0; i < args.length; ++i) {
-            resArr[i] = getString(args[i], environment, lineFile, stringPtr);
+        String[] resArr = new String[argc];
+        for (int i = 0; i < argc; ++i) {
+            resArr[i] = getString(args.positionalArgs.get(i), environment, lineFile, stringPtr);
         }
         return String.join(", ", resArr);
     }
@@ -189,7 +191,7 @@ public class SplInvokes extends NativeObject {
                 } else {
                     Pointer toStrPtr = (Pointer) instance.getEnv().get(Constants.TO_STRING_FN, lineFile);
                     Function toStrFtn = (Function) environment.getMemory().get(toStrPtr);
-                    Pointer toStrRes = (Pointer) toStrFtn.call(new SplElement[0], environment, lineFile);
+                    Pointer toStrRes = (Pointer) toStrFtn.call(EvaluatedArguments.of(), environment, lineFile);
 //                    assert stringType.isSuperclassOfOrEquals(toStrRes.getType(), environment);
 
                     Instance strIns = (Instance) environment.getMemory().get(toStrRes);

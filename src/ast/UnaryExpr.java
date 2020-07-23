@@ -43,4 +43,8 @@ public abstract class UnaryExpr extends Expr {
     public void setValue(Node value) {
         this.value = value;
     }
+
+    public Node getValue() {
+        return value;
+    }
 }

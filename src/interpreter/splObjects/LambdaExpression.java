@@ -2,6 +2,7 @@ package interpreter.splObjects;
 
 import ast.AbstractExpression;
 import ast.BlockStmt;
+import interpreter.EvaluatedArguments;
 import interpreter.env.Environment;
 import interpreter.env.FunctionEnvironment;
 import interpreter.primitives.SplElement;
@@ -26,13 +27,13 @@ public class LambdaExpression extends UserFunction {
     }
 
     @Override
-    public SplElement call(SplElement[] evaluatedArgs, Environment callingEnv, LineFile lineFile) {
+    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile lineFile) {
         String name = toString();
         FunctionEnvironment scope = new FunctionEnvironment(definitionEnv, callingEnv, name);
 
-        checkValidArgCount(evaluatedArgs.length, name);
+        checkValidArgCount(evaluatedArgs.positionalArgs.size(), name);
 
-        putArgsToScope(evaluatedArgs, scope);
+        setArgs(evaluatedArgs, scope);
 
         scope.getMemory().pushStack(scope);
         SplElement evalResult = body.evaluate(scope);

@@ -11,18 +11,12 @@ public class BlockStmt extends Node {
 
     private final List<Line> children = new ArrayList<>();
 
-    private boolean independence;
-
     public BlockStmt(LineFile lineFile) {
         super(lineFile);
     }
 
     public BlockStmt() {
         super(LineFile.LF_PARSER);
-    }
-
-    public void setIndependence(boolean independence) {
-        this.independence = independence;
     }
 
     public void addLine(Line line) {

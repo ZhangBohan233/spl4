@@ -1,5 +1,6 @@
 package ast;
 
+import interpreter.EvaluatedArguments;
 import interpreter.SplException;
 import interpreter.env.Environment;
 import interpreter.primitives.Bool;
@@ -64,8 +65,8 @@ public class ClassStmt extends Node {
         String iofName = className + "?";
         NativeFunction instanceOfFunc = new NativeFunction(iofName, 1) {
             @Override
-            protected Bool callFunc(SplElement[] evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs[0];
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 if (arg instanceof Pointer) {
                     SplObject obj = callingEnv.getMemory().get((Pointer) arg);
                     if (obj instanceof Instance) {

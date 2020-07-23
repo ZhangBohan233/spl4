@@ -2,6 +2,7 @@ package interpreter.splObjects;
 
 import ast.*;
 import interpreter.ContractError;
+import interpreter.EvaluatedArguments;
 import interpreter.SplException;
 import interpreter.env.Environment;
 import interpreter.env.FunctionEnvironment;
@@ -19,7 +20,7 @@ public class Function extends UserFunction {
     private final Node body;
     private final String definedName;
 
-    private SplElement[] contractArgs;
+    private EvaluatedArguments contractArgs;
 
     /**
      * Constructor for regular function.
@@ -64,19 +65,19 @@ public class Function extends UserFunction {
 
         this.contract = new Contract(paramContracts, rtnConFnPtr);
 
-        this.contractArgs = new SplElement[1];
+        this.contractArgs = new EvaluatedArguments();
     }
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
-        SplElement[] evaluatedArgs = arguments.evalArgs(callingEnv);
+        EvaluatedArguments evaluatedArgs = arguments.evalArgs(callingEnv);
 
         return call(evaluatedArgs, callingEnv, arguments.getLineFile());
     }
 
-    private void checkParamContracts(SplElement[] evaluatedArgs, Environment callingEnv, LineFile lineFile) {
+    private void checkParamContracts(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile lineFile) {
         if (contract != null) {
-            for (int i = 0; i < evaluatedArgs.length; i++) {
-                callContract(contract.paramContracts[i], evaluatedArgs[i], callingEnv, lineFile);
+            for (int i = 0; i < evaluatedArgs.positionalArgs.size(); i++) {
+                callContract(contract.paramContracts[i], evaluatedArgs.positionalArgs.get(i), callingEnv, lineFile);
             }
         }
     }
@@ -89,7 +90,7 @@ public class Function extends UserFunction {
 
     private void callContract(Pointer conFnPtr, SplElement arg, Environment callingEnv, LineFile lineFile) {
         SplCallable callable = (SplCallable) callingEnv.getMemory().get(conFnPtr);
-        contractArgs[0] = arg;
+        contractArgs.positionalArgs.set(0, arg);
 
         SplElement result = callable.call(contractArgs, callingEnv, lineFile);
         if (result instanceof Bool) {
@@ -101,15 +102,15 @@ public class Function extends UserFunction {
         }
     }
 
-    public SplElement call(SplElement[] evaluatedArgs, Environment callingEnv, LineFile argLineFile) {
+    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile argLineFile) {
 
         FunctionEnvironment scope = new FunctionEnvironment(definitionEnv, callingEnv, definedName);
-        checkValidArgCount(evaluatedArgs.length, definedName);
+        checkValidArgCount(evaluatedArgs.positionalArgs.size(), definedName);
 
         // TODO: variable length params
         checkParamContracts(evaluatedArgs, callingEnv, argLineFile);
 
-        putArgsToScope(evaluatedArgs, scope);
+        setArgs(evaluatedArgs, scope);
 
         scope.getMemory().pushStack(scope);
         body.evaluate(scope);

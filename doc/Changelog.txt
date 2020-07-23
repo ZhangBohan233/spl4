@@ -1,3 +1,18 @@
+===== Build 4003 =====
+2020/07/23
+
+* New Syntax:
+    * '*args'
+    * '**kwargs' (not implemented)
+* Primitive wrapper:
+    * Integer, Float, Boolean, Character
+* Implementation change:
+    * Changed implementation of 'var', 'const'
+    * Functions now all take 'EvaluatedArgument' as arguments instead of 'SplElements[]'
+* Bug fixes:
+    * For loop init part now not have to be 'AbstractExpression'
+
+
 ===== Build 4002 =====
 2020/07/22
 

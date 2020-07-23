@@ -24,34 +24,41 @@ public class Parser {
      */
     private final Map<String, BlockStmt> importedPathsAndContents = new HashMap<>();
 
+    private int varLevel = Declaration.USELESS;
+
     public Parser(TokenizeResult tokenizeResult, boolean importLang) {
         this.rootList = tokenizeResult.rootList;
         this.importLang = importLang;
     }
 
-    private BlockStmt parseBlock(CollectiveElement collectiveElement) throws IOException {
+    private AstBuilder parseSomeBlock(CollectiveElement collectiveElement) throws IOException {
         AstBuilder builder = new AstBuilder();
         int i = 0;
         while (i < collectiveElement.size()) {
             i = parseOne(collectiveElement, i, builder);
         }
+        return builder;
+    }
+
+    private BlockStmt parseBlock(CollectiveElement collectiveElement) throws IOException {
+        AstBuilder builder = parseSomeBlock(collectiveElement);
+        varLevel = Declaration.USELESS;
         builder.finishPart();
         builder.finishLine();
         return builder.getBaseBlock();
     }
 
     private Line parseOneLineBlock(BracketList bracketList) throws IOException {
-        AstBuilder builder = new AstBuilder();
-        int i = 0;
-        while (i < bracketList.size()) {
-            i = parseOne(bracketList, i, builder);
-        }
+        AstBuilder builder = parseSomeBlock(bracketList);
+        varLevel = Declaration.USELESS;
         builder.finishPart();
         return builder.getLine();
     }
 
     private AbstractExpression parseOnePartBlock(BracketList bracketList, LineFile lineFile) throws IOException {
-        Line line = parseOneLineBlock(bracketList);
+        AstBuilder builder = parseSomeBlock(bracketList);
+        builder.finishPart();
+        Line line = builder.getLine();
         if (line.size() != 1) {
             throw new SyntaxError("Expected 1 part in line, got " + line.size() + ": " + line + ". ", lineFile);
         }
@@ -59,11 +66,7 @@ public class Parser {
     }
 
     private Line parseSqrBracket(SqrBracketList sqrBracketList) throws IOException {
-        AstBuilder builder = new AstBuilder();
-        int i = 0;
-        while (i < sqrBracketList.size()) {
-            i = parseOne(sqrBracketList, i, builder);
-        }
+        AstBuilder builder = parseSomeBlock(sqrBracketList);
         builder.finishPart();
         return builder.getLine();
     }
@@ -91,14 +94,23 @@ public class Parser {
 
                     if (identifier.equals("-")) {
                         // special case, since "-" can both binary (subtraction) or unary (negation)
-                        if (index > 0 && isUnary(parent.get(index - 2))) {
+                        if (index < 2 || isUnary(parent.get(index - 2))) {
                             // negation
                             builder.addUnaryOperator("neg", RegularUnaryOperator.NUMERIC, lineFile);
                         } else {
                             // subtraction
                             builder.addBinaryOperator("-", BinaryOperator.NUMERIC, lineFile);
                         }
-                    } else if (identifier.equals("is")) {
+                    } else if (identifier.equals("*")) {
+                        // special case, since "*" can both binary (multiplication) or unary (star)
+                        if (index < 2 || isUnary(parent.get(index - 2))) {
+                            // star
+                            builder.addNode(new StarExpr(lineFile));
+                        } else {
+                            // multiplication
+                            builder.addBinaryOperator("*", BinaryOperator.NUMERIC, lineFile);
+                        }
+                    }  else if (identifier.equals("is")) {
                         Element next = parent.get(index);
                         if (notIdentifierOf(next, "not")) {
                             builder.addBinaryOperator("is", BinaryOperator.LOGICAL, lineFile);
@@ -131,9 +143,11 @@ public class Parser {
 
                         switch (identifier) {
                             case "=":
+                                varLevel = Declaration.USELESS;
                                 builder.addNode(new Assignment(lineFile));
                                 break;
                             case ":=":
+                                varLevel = Declaration.USELESS;
                                 builder.addNode(new QuickAssignment(lineFile));
                                 break;
                             case ".":
@@ -146,10 +160,12 @@ public class Parser {
                                 builder.addNode(new IncDecOperator(false, lineFile));
                                 break;
                             case ";":
+                                varLevel = Declaration.USELESS;
                                 builder.finishPart();
                                 builder.finishLine();
                                 break;
                             case ",":
+                                varLevel = Declaration.USELESS;
                                 builder.finishPart();
                                 break;
                             case "true":
@@ -244,12 +260,14 @@ public class Parser {
                                 builder.addNode(classStmt);
                                 break;
                             case "const":
-                                nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
-                                builder.addNode(new Declaration(Declaration.CONST, nameToken.getIdentifier(), lineFile));
+                                varLevel = Declaration.CONST;
+//                                nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
+//                                builder.addNode(new Declaration(Declaration.CONST, nameToken.getIdentifier(), lineFile));
                                 break;
                             case "var":
-                                nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
-                                builder.addNode(new Declaration(Declaration.VAR, nameToken.getIdentifier(), lineFile));
+                                varLevel = Declaration.VAR;
+//                                nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
+//                                builder.addNode(new Declaration(Declaration.VAR, nameToken.getIdentifier(), lineFile));
                                 break;
                             case "return":
                                 builder.addNode(new ReturnStmt(lineFile));
@@ -375,8 +393,14 @@ public class Parser {
                                 }
                                 break;
                             default:
-                                builder.addNode(new NameNode(identifier, lineFile));
+                                if (varLevel == Declaration.VAR) {
+                                    builder.addNode(new Declaration(Declaration.VAR, identifier, lineFile));
+                                } else if (varLevel == Declaration.CONST) {
+                                    builder.addNode(new Declaration(Declaration.CONST, identifier, lineFile));
+                                } else {
+                                    builder.addNode(new NameNode(identifier, lineFile));
 //                                builder.addName(identifier, lineFile);
+                                }
                                 break;
                         }
                     }

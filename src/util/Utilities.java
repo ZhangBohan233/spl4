@@ -1,9 +1,15 @@
 package util;
 
+import interpreter.EvaluatedArguments;
+import interpreter.env.Environment;
 import interpreter.primitives.Int;
+import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import interpreter.splObjects.Instance;
+import interpreter.splObjects.SplClass;
 
 import java.util.*;
+import java.util.function.BiFunction;
 
 public class Utilities {
 
@@ -63,5 +69,18 @@ public class Utilities {
 
     public static String typeName(SplElement element) {
         return element.getClass().toString();
+    }
+
+    public static Pointer primitiveToWrapper(SplElement prim, Environment env, LineFile lineFile) {
+        String wrapperName = Constants.WRAPPERS.get(prim.type());
+        Pointer clazzPtr = (Pointer) env.get(wrapperName, lineFile);
+        Instance.InstanceAndPtr wrapperIns = Instance.createInstanceAndAllocate(clazzPtr, env, lineFile);
+        Instance.callInit(wrapperIns.instance, EvaluatedArguments.of(prim), env, lineFile);
+        return wrapperIns.pointer;
+    }
+
+    public static SplElement wrapperToPrimitive(Pointer wrapperPtr, Environment env, LineFile lineFile) {
+        Instance wrapperIns = (Instance) env.getMemory().get(wrapperPtr);
+        return wrapperIns.getEnv().get(Constants.WRAPPER_ATTR, lineFile);
     }
 }

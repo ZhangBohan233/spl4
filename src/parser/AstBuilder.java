@@ -44,10 +44,8 @@ public class AstBuilder {
 
     private static final Map<String, Integer> PCD_BIN_SPECIAL = Map.of(
             ".", 500,
-//            "<>", 400,
             "<-", 160,  // must bigger than 'new'
             "->", 4,
-//            "?", 2,
             ":", 3,
             "_else_", 3,
             "_if_", 2,
@@ -88,11 +86,10 @@ public class AstBuilder {
     private static final Map<String, Integer> PCD_UNARY_SPECIAL = Map.of(
             "++", 300,
             "--", 300,
+            "star", 200,
             "as", 150,
             "new", 150,
             "namespace", 150,
-            "extends", 150,
-            "instanceof", 25,
             "return", 0
     );
 
@@ -978,17 +975,24 @@ public class AstBuilder {
                 int maxPre = -1;
                 int index = 0;
 
-                for (int i = 0; i < list.size(); ++i) {
+                for (int i = 0; i < list.size(); i++) {
+//                for (int i = list.size() - 1; i >= 0; i--) {
                     Node node = list.get(i);
                     if (node instanceof Expr && ((Expr) node).notFulfilled()) {
                         if (node instanceof UnaryExpr) {
                             int pre = PRECEDENCES.get(((UnaryExpr) node).getOperator());
-                            if (pre > maxPre) {
+
+                            // eval right side unary operator first
+                            // for example, "- -3" is -(-3)
+                            if (pre >= maxPre) {
                                 maxPre = pre;
                                 index = i;
                             }
                         } else if (node instanceof BinaryExpr) {
                             int pre = PRECEDENCES.get(((BinaryExpr) node).getOperator());
+
+                            // eval left side binary operator first
+                            // for example, "2 * 8 / 4" is (2 * 8) / 4
                             if (pre > maxPre) {
                                 maxPre = pre;
                                 index = i;

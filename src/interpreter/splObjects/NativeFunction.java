@@ -1,6 +1,7 @@
 package interpreter.splObjects;
 
 import ast.Arguments;
+import interpreter.EvaluatedArguments;
 import interpreter.SplException;
 import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
@@ -35,7 +36,7 @@ public abstract class NativeFunction extends SplCallable {
      * @return the calling result
      */
     protected SplElement callFuncWithNode(Arguments arguments, Environment callingEnv) {
-        SplElement[] evaluatedArgs = arguments.evalArgs(callingEnv);
+        EvaluatedArguments evaluatedArgs = arguments.evalArgs(callingEnv);
 
         return callFunc(evaluatedArgs, callingEnv);
     }
@@ -47,7 +48,7 @@ public abstract class NativeFunction extends SplCallable {
      * @param callingEnv    the environment where this call is taking place
      * @return the calling result
      */
-    protected abstract SplElement callFunc(SplElement[] evaluatedArgs, Environment callingEnv);
+    protected abstract SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv);
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
         checkValidArgCount(arguments.getLine().size(), name);
@@ -55,8 +56,8 @@ public abstract class NativeFunction extends SplCallable {
         return callFuncWithNode(arguments, callingEnv);
     }
 
-    public SplElement call(SplElement[] evaluatedArgs, Environment callingEnv, LineFile lineFile) {
-        checkValidArgCount(evaluatedArgs.length, name);
+    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile lineFile) {
+        checkValidArgCount(evaluatedArgs.positionalArgs.size(), name);
 
         return callFunc(evaluatedArgs, callingEnv);
     }

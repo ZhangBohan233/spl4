@@ -1,6 +1,7 @@
 package interpreter.splObjects;
 
 import ast.*;
+import interpreter.EvaluatedArguments;
 import interpreter.SplException;
 import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
@@ -9,7 +10,7 @@ import util.LineFile;
 
 public abstract class SplCallable extends SplObject {
 
-    public abstract SplElement call(SplElement[] evaluatedArgs, Environment callingEnv, LineFile lineFile);
+    public abstract SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile lineFile);
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
         return call(arguments.evalArgs(callingEnv), callingEnv, arguments.getLineFile());
@@ -39,23 +40,38 @@ public abstract class SplCallable extends SplObject {
         Parameter[] params = new Parameter[parameters.getChildren().size()];
 
         // after first
-        boolean optionalBegins = false;
+        int optionalLevel = 0;
 
         for (int i = 0; i < parameters.getChildren().size(); ++i) {
             Node node = parameters.getChildren().get(i);
 
-            Parameter param = evalOneParam(node, env, optionalBegins).build();
-            if (param.hasDefaultValue()) optionalBegins = true;
+            Parameter param = evalOneParam(node, env, optionalLevel).build();
+            if (param.hasDefaultValue()) {
+                optionalLevel = 1;
+            } else if (param.noneAble()) {
+                optionalLevel = param.unpackCount + 1;
+            }
 
             params[i] = param;
         }
         return params;
     }
 
-    // Note that for internal recursive calls, optionalBegins is always false since it only used to throw error
-    private static ParameterBuilder evalOneParam(Node node, Environment env, boolean optionalBegins) {
+    /**
+     * Note that for internal recursive calls, optionalLevel is always 0 since it only used to throw error
+     *
+     * @param node          the node to be evaluated
+     * @param env           the function definition environment
+     * @param optionalLevel a level controller,
+     *                      0 if previous params are all regular
+     *                      1 if there are at least one optional param occurs
+     *                      2 if *args occurs
+     *                      3 if **kwargs occurs
+     * @return the param builder
+     */
+    private static ParameterBuilder evalOneParam(Node node, Environment env, int optionalLevel) {
         if (node instanceof NameNode) {
-            if (optionalBegins) {
+            if (optionalLevel > 0) {
                 throw new ParseError("Positional parameter cannot occur behind optional parameter. ",
                         node.getLineFile());
             }
@@ -66,9 +82,20 @@ public abstract class SplCallable extends SplObject {
                     .name(dec.declaredName)
                     .constant(dec.level == Declaration.CONST);
         } else if (node instanceof Assignment) {
+            if (optionalLevel > 1) {
+                throw new ParseError("Optional parameter cannot occur behind *args/**kwargs. ",
+                        node.getLineFile());
+            }
             Assignment assignment = (Assignment) node;
-            ParameterBuilder left = evalOneParam(assignment.getLeft(), env, false);
+            ParameterBuilder left = evalOneParam(assignment.getLeft(), env, 0);
             return left.defaultValue(assignment.getRight().evaluate(env));
+        } else if (node instanceof StarExpr) {
+            ParameterBuilder builder = evalOneParam(((StarExpr) node).getValue(), env, 0).unpack();
+            if (optionalLevel >= builder.unpackCount + 1) {
+                throw new ParseError("*args cannot occurs behind another *args or **kwargs. ",
+                        node.getLineFile());
+            }
+            return builder;
         }
         throw new ParseError("Unexpected parameter syntax. ", node.getLineFile());
     }
@@ -77,6 +104,7 @@ public abstract class SplCallable extends SplObject {
         private String name;
         private SplElement defaultValue;
         private boolean constant;
+        private int unpackCount = 0;
 
         private ParameterBuilder name(String name) {
             this.name = name;
@@ -93,8 +121,15 @@ public abstract class SplCallable extends SplObject {
             return this;
         }
 
+        private ParameterBuilder unpack() {
+            this.unpackCount++;
+            return this;
+        }
+
         private Parameter build() {
-            return new Parameter(name, defaultValue, constant);
+            if (unpackCount > 0 && defaultValue != null)
+                throw new SplException("Unexpected parameter combination. ");
+            return new Parameter(name, defaultValue, constant, unpackCount);
         }
     }
 
@@ -102,15 +137,21 @@ public abstract class SplCallable extends SplObject {
         public final String name;
         public final SplElement defaultValue;
         public final boolean constant;
+        public final int unpackCount;
 
-        Parameter(String name, SplElement typeValue, boolean constant) {
+        Parameter(String name, SplElement typeValue, boolean constant, int unpackCount) {
             this.name = name;
             this.defaultValue = typeValue;
             this.constant = constant;
+            this.unpackCount = unpackCount;
         }
 
         public boolean hasDefaultValue() {
             return defaultValue != null;
+        }
+
+        private boolean noneAble() {
+            return unpackCount > 0;
         }
 
         @Override

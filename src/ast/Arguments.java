@@ -1,7 +1,9 @@
 package ast;
 
+import interpreter.EvaluatedArguments;
 import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
+import lexer.SyntaxError;
 import util.LineFile;
 
 import java.util.Arrays;
@@ -20,14 +22,28 @@ public class Arguments extends Node {
         return line;
     }
 
-    public SplElement[] evalArgs(Environment callingEnv) {
-        SplElement[] res = new SplElement[getLine().getChildren().size()];
+    public EvaluatedArguments evalArgs(Environment callingEnv) {
+        EvaluatedArguments evaluatedArguments = new EvaluatedArguments();
 
-        for (int i = 0; i < res.length; ++i) {
-            Node argNode = getLine().getChildren().get(i);
-            res[i] = argNode.evaluate(callingEnv);
+        boolean kwargBegins = false;
+
+        int argc = getLine().size();
+        for (int i = 0; i < argc; ++i) {
+            Node argNode = getLine().get(i);
+
+            if (argNode instanceof Assignment) {
+                NameNode leftNode = (NameNode) ((Assignment) argNode).getLeft();
+                evaluatedArguments.keywordArgs.put(
+                        leftNode.getName(), ((Assignment) argNode).getRight().evaluate(callingEnv));
+                kwargBegins = true;
+            } else {
+                if (kwargBegins)
+                    throw new SyntaxError("Positional arguments follows keyword arguments. ",
+                            argNode.getLineFile());
+                evaluatedArguments.positionalArgs.add(argNode.evaluate(callingEnv));
+            }
         }
-        return res;
+        return evaluatedArguments;
     }
 
     @Override

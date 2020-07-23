@@ -1,10 +1,17 @@
 package interpreter.splObjects;
 
+import interpreter.EvaluatedArguments;
 import interpreter.SplException;
 import interpreter.env.Environment;
 import interpreter.env.FunctionEnvironment;
+import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
 import util.LineFile;
+import util.Utilities;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public abstract class UserFunction extends SplCallable {
 
@@ -16,14 +23,25 @@ public abstract class UserFunction extends SplCallable {
     protected final Function.Parameter[] params;
     protected final LineFile lineFile;
 
+    private int minArg;
+    private int maxArg;
+
     protected UserFunction(Function.Parameter[] parameters, Environment definitionEnv, LineFile lineFile) {
         this.params = parameters;
         this.definitionEnv = definitionEnv;
         this.lineFile = lineFile;
+
+        minArg = maxArg = 0;
+        for (SplCallable.Parameter param : params) {
+            if (param.unpackCount == 0) {
+                if (param.defaultValue == null) minArg++;
+            } else maxArg = Integer.MAX_VALUE;
+        }
+        if (maxArg == 0) maxArg = parameters.length;
     }
 
-
-    void putArgsToScope(SplElement[] evaluatedArgs, FunctionEnvironment scope) {
+    void setArgs(EvaluatedArguments evaluatedArgs, FunctionEnvironment scope) {
+        int argIndex = 0;
         for (int i = 0; i < params.length; ++i) {
             Function.Parameter param = params[i];
             String paramName = param.name;
@@ -31,30 +49,69 @@ public abstract class UserFunction extends SplCallable {
             if (param.constant) scope.defineConst(paramName, lineFile);
             else scope.defineVar(paramName, lineFile);  // declare param
 
-            if (i < evaluatedArgs.length) {
-                // arg from call
-                scope.setVar(paramName, evaluatedArgs[i], lineFile);
+            if (param.unpackCount == 0) {
+                if (argIndex < evaluatedArgs.positionalArgs.size()) {
+                    scope.setVar(paramName, evaluatedArgs.positionalArgs.get(argIndex++), lineFile);
+                } else if (param.defaultValue != null) {
+                    scope.setVar(paramName, param.defaultValue, lineFile);
+                } else {
+                    throw new SplException("Unexpected error. ", lineFile);
+                }
+            } else if (param.unpackCount == 1) {
+                int posArgc = evaluatedArgs.positionalArgs.size();
+                final int unpackArgBegin = argIndex;
+                SplElement[] unpackArgs = new SplElement[posArgc - unpackArgBegin];
+                for (; argIndex < posArgc; argIndex++) {
+                    unpackArgs[argIndex - unpackArgBegin] = evaluatedArgs.positionalArgs.get(argIndex);
+                }
 
-            } else if (param.hasDefaultValue()) {
-                // default arg
-                scope.setVar(paramName, param.defaultValue, lineFile);
-            } else {
-                throw new SplException("Unexpect argument error. ", lineFile);
+                Pointer arrPtr = SplArray.createArray(SplElement.POINTER, unpackArgs.length, scope);
+                for (int j = 0; j < unpackArgs.length; j++) {
+                    SplElement arg = unpackArgs[j];
+                    if (arg instanceof Pointer) {
+                        SplArray.setItemAtIndex(arrPtr, j, arg, scope, lineFile);
+                    } else {
+                        SplArray.setItemAtIndex(arrPtr, j,
+                                Utilities.primitiveToWrapper(arg, scope, lineFile), scope, lineFile);
+                    }
+                }
+                scope.setVar(paramName, arrPtr, lineFile);
             }
         }
     }
 
+//    void putArgsToScope(SplElement[] evaluatedArgs, FunctionEnvironment scope) {
+//        int argIndex = 0;
+//        for (int i = 0; i < params.length; ++i) {
+//            Function.Parameter param = params[i];
+//            String paramName = param.name;
+//
+//            if (param.constant) scope.defineConst(paramName, lineFile);
+//            else scope.defineVar(paramName, lineFile);  // declare param
+//
+//            if (i < evaluatedArgs.length) {
+//                // arg from call
+//                scope.setVar(paramName, evaluatedArgs[argIndex], lineFile);
+//
+//            } else if (param.hasDefaultValue()) {
+//                // default arg
+//                scope.setVar(paramName, param.defaultValue, lineFile);
+//            } else if (param.unpackCount == 1) {
+//
+//            } else {
+//                throw new SplException("Unexpect argument error. ", lineFile);
+//            }
+//            argIndex++;
+//        }
+//    }
+
     @Override
     public int minArgCount() {
-        int c = 0;
-        for (SplCallable.Parameter param : params) {
-            if (!param.hasDefaultValue()) c++;
-        }
-        return c;
+        return minArg;
     }
 
     @Override
     public int maxArgCount() {
-        return params.length;  // TODO: check unpack
+        return maxArg;
     }
 }

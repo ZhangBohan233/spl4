@@ -1,5 +1,6 @@
 package ast;
 
+import interpreter.EvaluatedArguments;
 import interpreter.env.Environment;
 import interpreter.primitives.Char;
 import interpreter.primitives.Pointer;
@@ -61,7 +62,7 @@ public class StringLiteral extends LiteralNode {
 //        ClassType classType = (ClassType) clazzNode.evalType(env);
         Instance.InstanceAndPtr instanceTv = Instance.createInstanceAndAllocate(strPtr, env, lineFile);
 
-        Instance.callInit(instanceTv.instance, new SplElement[]{arrPtr}, env, lineFile);
+        Instance.callInit(instanceTv.instance, EvaluatedArguments.of(arrPtr), env, lineFile);
 
         return instanceTv.pointer;
     }

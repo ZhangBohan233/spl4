@@ -1,4 +1,5 @@
 import ast.*;
+import interpreter.EvaluatedArguments;
 import interpreter.Memory;
 import interpreter.SplException;
 import interpreter.env.Environment;
@@ -102,8 +103,8 @@ public class Main {
     private static void initNativeFunctions(GlobalEnvironment ge) {
         NativeFunction toInt = new NativeFunction("int", 1) {
             @Override
-            protected SplElement callFunc(SplElement[] evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs[0];
+            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 if (SplElement.isPrimitive(arg)) {
                     return new Int(arg.intValue());
                 } else {
@@ -114,16 +115,16 @@ public class Main {
 
         NativeFunction isInt = new NativeFunction("int?", 1) {
             @Override
-            protected Bool callFunc(SplElement[] evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs[0];
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 return Bool.boolValueOf(arg instanceof Int);
             }
         };
 
         NativeFunction isAbstractObject = new NativeFunction("AbstractObject?", 1) {
             @Override
-            protected Bool callFunc(SplElement[] evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs[0];
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 if (arg instanceof Pointer) {
                     SplObject object = callingEnv.getMemory().get((Pointer) arg);
                     return Bool.boolValueOf(object != null);
@@ -134,8 +135,8 @@ public class Main {
 
         NativeFunction isCallable = new NativeFunction("Callable?", 1) {
             @Override
-            protected Bool callFunc(SplElement[] evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs[0];
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 if (arg instanceof Pointer) {
                     SplObject object = callingEnv.getMemory().get((Pointer) arg);
                     return Bool.boolValueOf(object instanceof SplCallable);
@@ -159,8 +160,8 @@ public class Main {
     private static void callMain(String[] args, GlobalEnvironment globalEnvironment) {
         if (globalEnvironment.hasName("main", LF_MAIN)) {
             Pointer mainPtr = (Pointer) globalEnvironment.get("main", LF_MAIN);
-            SplElement[] splArg =
-                    args == null ? new SplElement[0] : makeSplArgArray(args, globalEnvironment);
+            EvaluatedArguments splArg =
+                    args == null ? new EvaluatedArguments() : makeSplArgArray(args, globalEnvironment);
 
 //            if (!(mainTv.getType() instanceof CallableType)) {
 //                throw new TypeError("Main function must be callable. ");
@@ -176,7 +177,7 @@ public class Main {
         }
     }
 
-    private static SplElement[] makeSplArgArray(String[] args, GlobalEnvironment globalEnvironment) {
+    private static EvaluatedArguments makeSplArgArray(String[] args, GlobalEnvironment globalEnvironment) {
 //        SplElement stringTv = globalEnvironment.get(Constants.STRING_CLASS, LF_MAIN);
         Pointer argPtr = SplArray.createArray(SplElement.POINTER, args.length, globalEnvironment);
         for (int i = 0; i < args.length; ++i) {
@@ -192,7 +193,7 @@ public class Main {
             );
             SplArray.setItemAtIndex(argPtr, i, strIns, globalEnvironment, LineFile.LF_INTERPRETER);
         }
-        return new SplElement[]{argPtr};
+        return EvaluatedArguments.of(argPtr);
     }
 }
 

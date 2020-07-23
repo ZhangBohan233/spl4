@@ -5,6 +5,52 @@ class Object {
     }
 }
 
+class Wrapper {
+    const value;
+
+    fn __init__(value) {
+        this.value = value;
+    }
+
+    fn __str__() {
+        return str(value);
+    }
+}
+
+class Integer(Wrapper) {
+    fn __init__(value) {
+        super.__init__(value);
+    }
+}
+
+class Float(Wrapper) {
+    fn __init__(value) {
+        super.__init__(value);
+    }
+}
+
+class Boolean(Wrapper) {
+    fn __init__(value) {
+        super.__init__(value);
+    }
+}
+
+class Character(Wrapper) {
+    fn __init__(value) {
+        super.__init__(value);
+    }
+}
+
+class Iterable {
+
+}
+
+class List(Iterable) {
+    fn __init__() {
+
+    }
+}
+
 class String {
 
     const chars;
