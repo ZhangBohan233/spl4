@@ -277,7 +277,7 @@ public class Parser {
                                 break;
                             case "if":
                                 conditionList = new BracketList(null);
-                                if (builder.exprIsEmpty()) {
+                                if (builder.exprIsEmpty()) {  // regular if-stmt
                                     while (!((next = parent.get(index++)) instanceof BraceList)) {
                                         conditionList.add(next);
                                     }
@@ -293,6 +293,8 @@ public class Parser {
                                             ifStmt.setElseBlock(parseBlock(elseList));
                                         }
                                     }
+                                    builder.finishPart();
+                                    builder.finishLine();
                                 } else {
                                     while (notIdentifierOf(next = parent.get(index++), "else")) {
                                         conditionList.add(next);
@@ -325,6 +327,8 @@ public class Parser {
                                 ForLoopStmt forLoopStmt =
                                         new ForLoopStmt(conditionLines, parseBlock(bodyList), lineFile);
                                 builder.addNode(forLoopStmt);
+                                builder.finishPart();
+                                builder.finishLine();
                                 break;
                             case "import":
                                 AtomicElement probNamespaceEle = (AtomicElement) parent.get(index++);

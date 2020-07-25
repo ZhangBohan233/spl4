@@ -181,11 +181,6 @@ public class Main {
 //        SplElement stringTv = globalEnvironment.get(Constants.STRING_CLASS, LF_MAIN);
         Pointer argPtr = SplArray.createArray(SplElement.POINTER, args.length, globalEnvironment);
         for (int i = 0; i < args.length; ++i) {
-//            // create spl char array
-//            TypeValue charArrTv = StringLiteral.createCharArrayAndAllocate(
-//                    args[i].toCharArray(),
-//                    globalEnvironment,
-//                    LineFile.LF_INTERPRETER);
 
             // create String instance
             Pointer strIns = StringLiteral.createString(

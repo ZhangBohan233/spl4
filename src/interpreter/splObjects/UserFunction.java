@@ -1,17 +1,21 @@
 package interpreter.splObjects;
 
+import ast.LiteralNode;
+import ast.StringLiteral;
 import interpreter.EvaluatedArguments;
 import interpreter.SplException;
 import interpreter.env.Environment;
 import interpreter.env.FunctionEnvironment;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import util.Constants;
 import util.LineFile;
 import util.Utilities;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public abstract class UserFunction extends SplCallable {
 
@@ -57,7 +61,7 @@ public abstract class UserFunction extends SplCallable {
                 } else {
                     throw new SplException("Unexpected error. ", lineFile);
                 }
-            } else if (param.unpackCount == 1) {
+            } else if (param.unpackCount == 1) {  // *args
                 int posArgc = evaluatedArgs.positionalArgs.size();
                 final int unpackArgBegin = argIndex;
                 SplElement[] unpackArgs = new SplElement[posArgc - unpackArgBegin];
@@ -76,6 +80,30 @@ public abstract class UserFunction extends SplCallable {
                     }
                 }
                 scope.setVar(paramName, arrPtr, lineFile);
+            } else if (param.unpackCount == 2) {  // **kwargs
+                int size = evaluatedArgs.keywordArgs.size();
+                Pointer keyArrPtr = SplArray.createArray(SplElement.POINTER, size, scope);
+                scope.getMemory().addTempPtr(keyArrPtr);
+                Pointer valueArrPtr = SplArray.createArray(SplElement.POINTER, size, scope);
+                scope.getMemory().addTempPtr(valueArrPtr);
+
+                Instance.InstanceAndPtr dict =
+                        Instance.createInstanceAndAllocate(Constants.NAIVE_DICT, scope, lineFile);
+                Instance.callInit(dict.instance, EvaluatedArguments.of(keyArrPtr, valueArrPtr), scope, lineFile);
+                scope.setVar(paramName, dict.pointer, lineFile);
+
+                scope.getMemory().removeTempPtr(valueArrPtr);
+                scope.getMemory().removeTempPtr(keyArrPtr);
+
+                int j = 0;
+                for (Map.Entry<String, SplElement> argEntry : evaluatedArgs.keywordArgs.entrySet()) {
+                    SplElement keyStr = StringLiteral.createString(argEntry.getKey().toCharArray(), scope, lineFile);
+                    SplArray.setItemAtIndex(keyArrPtr, j, keyStr, scope, lineFile);
+                    SplElement val = argEntry.getValue();
+                    if (SplElement.isPrimitive(val)) val = Utilities.primitiveToWrapper(val, scope, lineFile);
+                    SplArray.setItemAtIndex(valueArrPtr, j, val, scope, lineFile);
+                    j++;
+                }
             }
         }
     }

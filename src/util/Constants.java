@@ -9,6 +9,7 @@ public class Constants {
     public static final String OBJECT_CLASS = "Object";
     public static final String STRING_CLASS = "String";
     public static final String ITERABLE = "Iterable";
+    public static final String NAIVE_DICT = "NaiveDict";
     public static final String THIS = "this";
     public static final String SUPER = "super";
     public static final String CONSTRUCTOR = "__init__";

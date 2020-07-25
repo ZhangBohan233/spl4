@@ -1,3 +1,14 @@
+===== Build 4004 =====
+2020/07/25
+
+* Syntax implementation:
+    * '**kwargs'
+* New library class:
+    * NaiveDict
+* Bug fixes:
+    * Continuous if-statements
+
+
 ===== Build 4003 =====
 2020/07/23
 

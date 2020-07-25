@@ -35,6 +35,14 @@ public class Instance extends SplObject {
         return "Instance to<" + clazzPtr.getPtr() + ">";
     }
 
+    public static InstanceAndPtr createInstanceAndAllocate(String className,
+                                                           Environment creationEnv,
+                                                           LineFile lineFile) {
+        Pointer clazzPtr = (Pointer) creationEnv.get(className, lineFile);
+        return createInstanceAndAllocate(
+                clazzPtr, creationEnv, lineFile, true);
+    }
+
     public static InstanceAndPtr createInstanceAndAllocate(Pointer clazzPtr,
                                                            Environment creationEnv,
                                                            LineFile lineFile) {

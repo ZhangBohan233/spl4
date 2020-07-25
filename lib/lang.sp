@@ -51,6 +51,28 @@ class List(Iterable) {
     }
 }
 
+class NaiveDict {
+
+    const keys;
+    const values;
+    const length;
+
+    fn __init__(keys, values) {
+        this.keys = keys;
+        this.values = values;
+        this.length = keys.length;
+    }
+
+    fn get(key) {
+        for var i = 0; i < length; i++ {
+            if (keys[i] == key) {
+                return values[i];
+            }
+        }
+        return null;
+    }
+}
+
 class String {
 
     const chars;
@@ -72,6 +94,21 @@ class String {
             array[index] = otherStr.chars[index - length];
         }
         return new String(array);
+    }
+
+    fn __eq__(other) {
+        if not String? (other) {
+            return false;
+        }
+        if other.length != length {
+            return false;
+        }
+        for var i = 0; i < length; i++ {
+            if chars[i] != other.chars[i] {
+                return false;
+            }
+        }
+        return true;
     }
 }
 
