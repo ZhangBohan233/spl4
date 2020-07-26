@@ -8,6 +8,7 @@ import interpreter.env.Environment;
 import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import interpreter.primitives.SplFloat;
 import interpreter.splObjects.*;
 import interpreter.types.*;
 import util.Constants;
@@ -122,6 +123,27 @@ public class SplInvokes extends NativeObject {
         String s = getString(typeValue, environment, lineFile);
 
         return StringLiteral.createString(s.toCharArray(), environment, lineFile);
+    }
+
+    public SplElement log(Arguments arguments, Environment env, LineFile lineFile) {
+        checkArgCount(arguments, 1, "log", lineFile);
+
+        SplElement arg = arguments.getLine().getChildren().get(0).evaluate(env);
+
+        double res = Math.log(arg.floatValue());
+
+        return new SplFloat(res);
+    }
+
+    public SplElement pow(Arguments arguments, Environment env, LineFile lineFile) {
+        checkArgCount(arguments, 2, "pow", lineFile);
+
+        SplElement base = arguments.getLine().getChildren().get(0).evaluate(env);
+        SplElement power = arguments.getLine().getChildren().get(1).evaluate(env);
+
+        double res = Math.pow(base.floatValue(), power.floatValue());
+
+        return new SplFloat(res);
     }
 
 //    public SplElement typeName(Arguments arguments, Environment environment, LineFile lineFile) {

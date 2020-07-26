@@ -4,30 +4,32 @@ import interpreter.Memory;
 import interpreter.env.Environment;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import interpreter.splObjects.Instance;
+import util.Constants;
 import util.LineFile;
 
 import java.util.List;
 
-public class ArrayLiteral extends NonEvaluate {
+public class ArrayLiteral extends AbstractExpression {
 
-    private Line content;
+    private final Arguments content;
 
-    public ArrayLiteral(LineFile lineFile) {
+    public ArrayLiteral(Arguments content, LineFile lineFile) {
         super(lineFile);
-    }
 
-    public void setContent(Line content) {
         this.content = content;
     }
 
-//    public SplElement createAndAllocate(Type atomType, Environment env) {
-//        int[][] a = new int[][]{};
-//        // TODO: temporarily 不想写
-//        return null;
-//    }
-
     @Override
     public String toString() {
-        return "ArrayCreation" + content;
+        return "list[" + content + "]";
+    }
+
+    @Override
+    protected SplElement internalEval(Environment env) {
+        Instance.InstanceAndPtr iap = Instance.createInstanceAndAllocate(Constants.LIST_CLASS, env, getLineFile());
+        Instance.callInit(iap.instance, content, env, getLineFile());
+
+        return iap.pointer;
     }
 }

@@ -5,10 +5,7 @@ import interpreter.SplException;
 import interpreter.env.Environment;
 import interpreter.env.GlobalEnvironment;
 import interpreter.invokes.SplInvokes;
-import interpreter.primitives.Bool;
-import interpreter.primitives.Int;
-import interpreter.primitives.Pointer;
-import interpreter.primitives.SplElement;
+import interpreter.primitives.*;
 import interpreter.splObjects.*;
 import interpreter.types.TypeError;
 import lexer.TokenList;
@@ -121,6 +118,42 @@ public class Main {
             }
         };
 
+        NativeFunction toFloat = new NativeFunction("float", 1) {
+            @Override
+            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (SplElement.isPrimitive(arg)) {
+                    return new SplFloat(arg.floatValue());
+                } else {
+                    throw new TypeError("Cannot convert pointer type to float. ");
+                }
+            }
+        };
+
+        NativeFunction isFloat = new NativeFunction("float?", 1) {
+            @Override
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                return Bool.boolValueOf(arg instanceof SplFloat);
+            }
+        };
+
+        NativeFunction isChar = new NativeFunction("char?", 1) {
+            @Override
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                return Bool.boolValueOf(arg instanceof Char);
+            }
+        };
+
+        NativeFunction isBool = new NativeFunction("boolean?", 1) {
+            @Override
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                return Bool.boolValueOf(arg instanceof Bool);
+            }
+        };
+
         NativeFunction isAbstractObject = new NativeFunction("AbstractObject?", 1) {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
@@ -148,11 +181,19 @@ public class Main {
         Memory memory = ge.getMemory();
         Pointer ptrInt = memory.allocateFunction(toInt, ge);
         Pointer ptrIsInt = memory.allocateFunction(isInt, ge);
+        Pointer ptrFloat = memory.allocateFunction(toFloat, ge);
+        Pointer ptrIsFloat = memory.allocateFunction(isFloat, ge);
+        Pointer ptrIsChar = memory.allocateFunction(isChar, ge);
+        Pointer ptrIsBool = memory.allocateFunction(isBool, ge);
         Pointer ptrIsAbsObj = memory.allocateFunction(isAbstractObject, ge);
         Pointer ptrIsCallable = memory.allocateFunction(isCallable, ge);
 
         ge.defineFunction("int", ptrInt, LineFile.LF_INTERPRETER);
         ge.defineFunction("int?", ptrIsInt, LineFile.LF_INTERPRETER);
+        ge.defineFunction("float", ptrFloat, LineFile.LF_INTERPRETER);
+        ge.defineFunction("float?", ptrIsFloat, LineFile.LF_INTERPRETER);
+        ge.defineFunction("char?", ptrIsChar, LineFile.LF_INTERPRETER);
+        ge.defineFunction("boolean?", ptrIsBool, LineFile.LF_INTERPRETER);
         ge.defineFunction("AbstractObject?", ptrIsAbsObj, LineFile.LF_INTERPRETER);
         ge.defineFunction("Callable?", ptrIsCallable, LineFile.LF_INTERPRETER);
     }

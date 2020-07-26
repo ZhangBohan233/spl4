@@ -199,11 +199,11 @@ public class Parser {
 
                                 break;
                             case "lambda":
-                                paramList = new BracketList(null);
+                                paramList = new BracketList(null, lineFile);
                                 while (notIdentifierOf(next = parent.get(index++), "->")) {
                                     paramList.add(next);
                                 }
-                                singleBodyList = new BracketList(null);
+                                singleBodyList = new BracketList(null, lineFile);
                                 while (index < parent.size() &&
                                         notIdentifierOf(next = parent.get(index++), ";")) {
                                     singleBodyList.add(next);
@@ -217,7 +217,7 @@ public class Parser {
                             case "contract":
                                 nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
                                 paramList = (BracketList) parent.get(index++);
-                                BracketList rtnTypeLst = new BracketList(null);
+                                BracketList rtnTypeLst = new BracketList(null, lineFile);
                                 IdToken arrow = ((IdToken) ((AtomicElement) parent.get(index++)).atom);
                                 if (!arrow.getIdentifier().equals("->"))
                                     throw new SyntaxError("Syntax of contract: " +
@@ -269,6 +269,10 @@ public class Parser {
 //                                nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
 //                                builder.addNode(new Declaration(Declaration.VAR, nameToken.getIdentifier(), lineFile));
                                 break;
+//                            case "as":
+//                                CastExpr castExpr = new CastExpr(lineFile);
+//                                builder.addNode(castExpr);
+//                                break;
                             case "return":
                                 builder.addNode(new ReturnStmt(lineFile));
                                 break;
@@ -276,8 +280,9 @@ public class Parser {
                                 builder.addNode(new NewStmt(lineFile));
                                 break;
                             case "if":
-                                conditionList = new BracketList(null);
-                                if (builder.exprIsEmpty()) {  // regular if-stmt
+                                conditionList = new BracketList(null, lineFile);
+                                Node lastAddedNode = builder.getLastAddedNode();
+                                if (!(lastAddedNode instanceof AbstractExpression)) {  // regular if-stmt
                                     while (!((next = parent.get(index++)) instanceof BraceList)) {
                                         conditionList.add(next);
                                     }
@@ -299,7 +304,7 @@ public class Parser {
                                     while (notIdentifierOf(next = parent.get(index++), "else")) {
                                         conditionList.add(next);
                                     }
-                                    singleBodyList = new BracketList(null);  // else part
+                                    singleBodyList = new BracketList(null, lineFile);  // else part
                                     while (index < parent.size() &&
                                             notIdentifierOf(next = parent.get(index), ";")) {
                                         singleBodyList.add(next);
@@ -317,8 +322,34 @@ public class Parser {
                                     builder.addNode(elseBodyExpr);
                                 }
                                 break;
+                            case "cond":
+                                bodyList = (BraceList) parent.get(index++);
+                                bodyBlock = parseBlock(bodyList);
+                                CondCaseStmt ccs = new CondCaseStmt(bodyBlock, lineFile);
+                                builder.addNode(ccs);
+                                break;
+                            case "case":
+                                conditionList = new BracketList(null, lineFile);
+                                while (!((next = parent.get(index++)) instanceof BraceList)) {
+                                    conditionList.add(next);
+                                }
+                                bodyList = (BraceList) next;
+                                condition = parseOnePartBlock(conditionList, lineFile);
+                                bodyBlock = parseBlock(bodyList);
+                                CaseStmt caseStmt = new CaseStmt(condition, bodyBlock, lineFile);
+                                builder.addNode(caseStmt);
+                                break;
+                            case "default":
+                                bodyList = (BraceList) parent.get(index++);
+                                bodyBlock = parseBlock(bodyList);
+                                caseStmt = new CaseStmt(null, bodyBlock, lineFile);
+                                builder.addNode(caseStmt);
+                                break;
+                            case "fallthrough":
+                                builder.addNode(new FallthroughStmt(lineFile));
+                                break;
                             case "for":
-                                conditionList = new BracketList(null);
+                                conditionList = new BracketList(null, lineFile);
                                 while (!((next = parent.get(index++)) instanceof BraceList)) {
                                     conditionList.add(next);
                                 }
@@ -424,12 +455,12 @@ public class Parser {
             }
         } else if (ele instanceof BracketList) {
             BracketList bracketList = (BracketList) ele;
+            LineFile lineFile = bracketList.lineFile;
             if (index > 1) {
                 Element probCallObj = parent.get(index - 2);
                 if (probCallObj instanceof AtomicElement && isCall(((AtomicElement) probCallObj).atom)) {
 
                     // is a call to an identifier
-                    LineFile lineFile = ((AtomicElement) probCallObj).atom.getLineFile();
                     Line argLine = parseOneLineBlock(bracketList);
                     Node callObj = builder.removeLast();
                     FuncCall call = new FuncCall(callObj,
@@ -438,7 +469,6 @@ public class Parser {
                     builder.addNode(call);
                     return index;
                 } else if (probCallObj instanceof BracketList || probCallObj instanceof SqrBracketList) {
-                    LineFile lineFile = LineFile.LF_PARSER;
                     Line argLine = parseOneLineBlock(bracketList);
                     Node callObj = builder.removeLast();
                     FuncCall call = new FuncCall(callObj,
@@ -452,26 +482,28 @@ public class Parser {
             builder.addNode(node);
         } else if (ele instanceof SqrBracketList) {
             SqrBracketList bracketList = (SqrBracketList) ele;
+            LineFile lineFile = bracketList.lineFile;
             if (index > 1) {
                 Element probCallObj = parent.get(index - 2);
                 if (probCallObj instanceof AtomicElement && isCall(((AtomicElement) probCallObj).atom)) {
                     // is an indexing to an identifier
-                    LineFile lineFile = ((AtomicElement) probCallObj).atom.getLineFile();
                     Line argLine = parseSqrBracket(bracketList);
                     Node callObj = builder.removeLast();
                     IndexingNode indexingNode = new IndexingNode(callObj, argLine, lineFile);
                     builder.addNode(indexingNode);
                     return index;
                 } else if (probCallObj instanceof BracketList || probCallObj instanceof SqrBracketList) {
-                    LineFile lineFile = LineFile.LF_PARSER;
                     Line argLine = parseSqrBracket(bracketList);
                     Node callObj = builder.removeLast();
-                    IndexingNode indexingNode = new IndexingNode(callObj, argLine, lineFile);
+                    IndexingNode indexingNode = new IndexingNode(callObj, argLine, bracketList.lineFile);
                     builder.addNode(indexingNode);
                     return index;
                 }
             }
-            // todo: direct list initialization
+            Line contentLine = parseSqrBracket((SqrBracketList) ele);
+            Arguments arguments = new Arguments(contentLine, lineFile);
+            ArrayLiteral arrayLiteral = new ArrayLiteral(arguments, lineFile);
+            builder.addNode(arrayLiteral);
         }
         return index;
     }

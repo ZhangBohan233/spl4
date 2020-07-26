@@ -1,3 +1,20 @@
+===== Build 4006 =====
+ 2020/07/26
+
+* New syntax:
+    * Direct list creation '[arg1, arg2, ...]'
+* Parser update:
+    * 'CollectiveElements' now stores traceback information
+
+
+===== Build 4005 =====
+2020/07/26
+
+* Syntax implemented:
+    * 'cond', 'case', 'default'
+* Library implementations:
+    * List
+
 ===== Build 4004 =====
 2020/07/25
 

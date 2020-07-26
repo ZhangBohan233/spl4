@@ -6,21 +6,21 @@ import util.LineFile;
 
 public class CaseStmt extends ConditionalStmt {
 
-    final boolean isDefault;
-    private Line condition;
+    private final AbstractExpression condition;
 
-    public CaseStmt(LineFile lineFile, boolean isDefault) {
+    public CaseStmt(AbstractExpression condition, BlockStmt bodyBlock, LineFile lineFile) {
         super(lineFile);
 
-        this.isDefault = isDefault;
+        this.condition = condition;
+        this.bodyBlock = bodyBlock;
     }
 
-    public Line getCondition() {
+    public AbstractExpression getCondition() {
         return condition;
     }
 
-    public void setCondition(Line condition) {
-        this.condition = condition;
+    public boolean isDefault() {
+        return condition == null;
     }
 
     @Override
@@ -30,6 +30,6 @@ public class CaseStmt extends ConditionalStmt {
 
     @Override
     public String toString() {
-        return "case" + condition + " then " + bodyBlock;
+        return isDefault() ? ("default: " + bodyBlock) : ("case " + condition + " then " + bodyBlock);
     }
 }

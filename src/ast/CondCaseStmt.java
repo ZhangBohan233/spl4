@@ -17,17 +17,19 @@ public class CondCaseStmt extends Node {
     private final List<CaseStmt> cases = new ArrayList<>();
     private BlockStmt defaultCase;
 
-    public CondCaseStmt(LineFile lineFile) {
+    public CondCaseStmt(BlockStmt bodyBlock, LineFile lineFile) {
         super(lineFile);
+
+        setCases(bodyBlock);
     }
 
-    public void setCases(BlockStmt body) {
-        for (Line line : body.getLines()) {
-            if (line.getChildren().size() == 1) {
-                Node node = line.getChildren().get(0);
+    private void setCases(BlockStmt body) {
+        if (body.getLines().size() > 0) {
+            Line line0 = body.getLines().get(0);
+            for (Node node : line0.getChildren()) {
                 if (node instanceof CaseStmt) {
                     CaseStmt caseStmt = (CaseStmt) node;
-                    if (caseStmt.isDefault) {
+                    if (caseStmt.isDefault()) {
                         if (defaultCase == null) {
                             defaultCase = caseStmt.bodyBlock;
                         } else {
@@ -40,8 +42,6 @@ public class CondCaseStmt extends Node {
                     throw new ParseError("'cond' statement must only contain 'case' statementes.",
                             getLineFile());
                 }
-            } else {
-                throw new ParseError("Unexpected case content. ", getLineFile());
             }
         }
     }
@@ -49,18 +49,18 @@ public class CondCaseStmt extends Node {
     @Override
     protected SplElement internalEval(Environment env) {
         boolean execDefault = true;
-//        for (CaseStmt caseStmt: cases) {
-//            Bool caseCondition = Bool.evalBoolean(caseStmt.getCondition(), env, getLineFile());
-//            if (caseCondition.value) {
-//                CaseBlockEnvironment blockEnv = new CaseBlockEnvironment(env);
-//                caseStmt.evaluate(blockEnv);
-//                if (!blockEnv.isFallingThrough()) {
-//                    execDefault = false;
-//                    break;
-//                }
-//            }
-//        }
-        if (execDefault) {
+        for (CaseStmt caseStmt: cases) {
+            Bool caseCondition = Bool.evalBoolean(caseStmt.getCondition(), env, getLineFile());
+            if (caseCondition.value) {
+                CaseBlockEnvironment blockEnv = new CaseBlockEnvironment(env);
+                caseStmt.evaluate(blockEnv);
+                if (!blockEnv.isFallingThrough()) {
+                    execDefault = false;
+                    break;
+                }
+            }
+        }
+        if (execDefault && defaultCase != null) {
             CaseBlockEnvironment blockEnv = new CaseBlockEnvironment(env);
             defaultCase.evaluate(blockEnv);
         }

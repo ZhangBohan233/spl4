@@ -41,13 +41,64 @@ class Character(Wrapper) {
     }
 }
 
+class Exception {
+
+}
+
+class Iterator {
+
+}
+
 class Iterable {
 
 }
 
 class List(Iterable) {
-    fn __init__() {
+    var array;
+    var size;
 
+    fn __init__(*args) {
+        initCapacity := _calculateCapacity(args.length) if args.length > 8 else 8;
+        array = new Object[initCapacity];
+        size = args.length;
+        for var i = 0; i < size; i++ {
+            set(i, args[i]);
+        }
+    }
+
+    fn __str__() {
+        result := "[";
+        for i := 0; i < size; i++ {
+            result += (str(array[i]) + ", ");
+        }
+        return result + "]";
+    }
+
+    fn append() {
+
+    }
+
+    fn get(index) {
+
+    }
+
+    fn set(index, value) {
+        wrapper := wrap(value);
+        array[index] = wrapper;
+    }
+
+    fn _expand() {
+
+    }
+
+    fn _collapse() {
+
+    }
+
+    fn _calculateCapacity(inputSize) {
+        logVal := Invokes.log(inputSize) / Invokes.log(2);
+        exp := int(logVal) + 1;
+        return int(Invokes.pow(2, exp));
     }
 }
 
@@ -118,4 +169,20 @@ fn print(s) {
 
 fn str(obj) {
     return Invokes.string(obj);
+}
+
+fn wrap(value) {
+    cond {
+        case int?(value) {
+            return new Integer(value);
+        } case float?(value) {
+            return new Float(value);
+        } case char?(value) {
+            return new Character(value);
+        } case boolean?(value) {
+            return new Boolean(value);
+        } default {
+            return value;
+        }
+    }
 }

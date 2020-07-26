@@ -3,7 +3,7 @@ package lexer;
 import util.LineFile;
 
 public abstract class Token {
-    private LineFile lineFile;
+    private final LineFile lineFile;
 
     public Token(LineFile lineFile) {
         this.lineFile = lineFile;

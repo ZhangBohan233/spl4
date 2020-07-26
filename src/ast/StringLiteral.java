@@ -57,10 +57,8 @@ public class StringLiteral extends LiteralNode {
     }
 
     private static Pointer createStringInstance(Pointer arrPtr, Environment env, LineFile lineFile) {
-        NameNode clazzNode = new NameNode(Constants.STRING_CLASS, lineFile);
-        Pointer strPtr = (Pointer) clazzNode.evaluate(env);
-//        ClassType classType = (ClassType) clazzNode.evalType(env);
-        Instance.InstanceAndPtr instanceTv = Instance.createInstanceAndAllocate(strPtr, env, lineFile);
+        Instance.InstanceAndPtr instanceTv =
+                Instance.createInstanceAndAllocate(Constants.STRING_CLASS, env, lineFile);
 
         Instance.callInit(instanceTv.instance, EvaluatedArguments.of(arrPtr), env, lineFile);
 

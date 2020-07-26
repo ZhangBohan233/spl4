@@ -114,7 +114,7 @@ public class FileTokenizer {
     }
 
     private static BraceList makeTreeList(List<Token> tokenList) {
-        BraceList root = new BraceList(null);
+        BraceList root = new BraceList(null, LineFile.LF_TOKENIZER);
         CollectiveElement currentActive = root;
         for (int i = 0; i < tokenList.size(); ++i) {
             currentActive = makeTreeListRec(currentActive, tokenList, i);
@@ -128,7 +128,7 @@ public class FileTokenizer {
             String symbol = ((IdToken) tk).getIdentifier();
             switch (symbol) {
                 case "(":
-                    return new BracketList(currentActive);
+                    return new BracketList(currentActive, tk.getLineFile());
                 case ")":
                     if (currentActive instanceof BracketList) {
                         currentActive.parentElement.add(currentActive);
@@ -138,7 +138,7 @@ public class FileTokenizer {
                                 tk.getLineFile());
                     }
                 case "[":
-                    return new SqrBracketList(currentActive);
+                    return new SqrBracketList(currentActive, tk.getLineFile());
                 case "]":
                     if (currentActive instanceof SqrBracketList) {
                         currentActive.parentElement.add(currentActive);
@@ -148,7 +148,7 @@ public class FileTokenizer {
                                 tk.getLineFile());
                     }
                 case "{":
-                    return new BraceList(currentActive);
+                    return new BraceList(currentActive, tk.getLineFile());
                 case "}":
                     if (currentActive instanceof BraceList) {
                         currentActive.parentElement.add(currentActive);

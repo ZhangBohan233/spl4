@@ -1,8 +1,10 @@
 package lexer.treeList;
 
+import util.LineFile;
+
 public class BracketList extends CollectiveElement {
-    public BracketList(CollectiveElement parentElement) {
-        super(parentElement);
+    public BracketList(CollectiveElement parentElement, LineFile lineFile) {
+        super(parentElement, lineFile);
     }
 
     @Override
