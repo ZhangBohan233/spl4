@@ -1,3 +1,13 @@
+===== Build 4007 =====
+2020/07/28
+
+* New syntax:
+    * Throw statement: 'throw ...'
+    * try-catch-finally statement (not implemented)
+* Better stack traces
+* Function without return statement now returns null
+
+
 ===== Build 4006 =====
  2020/07/26
 
