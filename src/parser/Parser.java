@@ -55,12 +55,13 @@ public class Parser {
         return builder.getLine();
     }
 
-    private AbstractExpression parseOnePartBlock(BracketList bracketList, LineFile lineFile) throws IOException {
+    private AbstractExpression parseOnePartBlock(BracketList bracketList) throws IOException {
         AstBuilder builder = parseSomeBlock(bracketList);
         builder.finishPart();
         Line line = builder.getLine();
         if (line.size() != 1) {
-            throw new SyntaxError("Expected 1 part in line, got " + line.size() + ": " + line + ". ", lineFile);
+            throw new SyntaxError("Expected 1 part in line, got " + line.size() + ": " + line + ". ",
+                    bracketList.lineFile);
         }
         return (AbstractExpression) line.get(0);
     }
@@ -72,7 +73,7 @@ public class Parser {
     }
 
     private AbstractExpression parseParenthesis(BracketList bracketList) throws IOException {
-        return parseOnePartBlock(bracketList, LineFile.LF_INTERPRETER);
+        return parseOnePartBlock(bracketList);
     }
 
     /**
@@ -209,7 +210,7 @@ public class Parser {
                                     singleBodyList.add(next);
                                 }
                                 paramBlock = parseOneLineBlock(paramList);
-                                AbstractExpression bodyNode = parseOnePartBlock(singleBodyList, lineFile);
+                                AbstractExpression bodyNode = parseOnePartBlock(singleBodyList);
                                 LambdaExpressinDef lambdaFunctionDef =
                                         new LambdaExpressinDef(paramBlock, bodyNode, lineFile);
                                 builder.addNode(lambdaFunctionDef);
@@ -269,15 +270,18 @@ public class Parser {
 //                                nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
 //                                builder.addNode(new Declaration(Declaration.VAR, nameToken.getIdentifier(), lineFile));
                                 break;
-//                            case "as":
-//                                CastExpr castExpr = new CastExpr(lineFile);
-//                                builder.addNode(castExpr);
-//                                break;
+                            case "as":
+                                AsExpr asExpr = new AsExpr(lineFile);
+                                builder.addNode(asExpr);
+                                break;
                             case "return":
                                 builder.addNode(new ReturnStmt(lineFile));
                                 break;
                             case "new":
                                 builder.addNode(new NewStmt(lineFile));
+                                break;
+                            case "throw":
+                                builder.addNode(new ThrowStmt(lineFile));
                                 break;
                             case "if":
                                 conditionList = new BracketList(null, lineFile);
@@ -287,7 +291,7 @@ public class Parser {
                                         conditionList.add(next);
                                     }
                                     bodyList = (BraceList) next;
-                                    condition = parseOnePartBlock(conditionList, lineFile);
+                                    condition = parseOnePartBlock(conditionList);
                                     IfStmt ifStmt = new IfStmt(condition, parseBlock(bodyList), lineFile);
                                     builder.addNode(ifStmt);
                                     if (index < parent.size()) {
@@ -310,8 +314,8 @@ public class Parser {
                                         singleBodyList.add(next);
                                         index++;  // this step is to ensure that ';' will not be omitted
                                     }
-                                    condition = parseOnePartBlock(conditionList, lineFile);
-                                    AbstractExpression elseBodyExpr = parseOnePartBlock(singleBodyList, lineFile);
+                                    condition = parseOnePartBlock(conditionList);
+                                    AbstractExpression elseBodyExpr = parseOnePartBlock(singleBodyList);
                                     ConditionalExpr elseExpr =
                                             new ConditionalExpr("_else_", lineFile);
                                     ConditionalExpr ifExpr = new ConditionalExpr("_if_", lineFile);
@@ -334,7 +338,7 @@ public class Parser {
                                     conditionList.add(next);
                                 }
                                 bodyList = (BraceList) next;
-                                condition = parseOnePartBlock(conditionList, lineFile);
+                                condition = parseOnePartBlock(conditionList);
                                 bodyBlock = parseBlock(bodyList);
                                 CaseStmt caseStmt = new CaseStmt(condition, bodyBlock, lineFile);
                                 builder.addNode(caseStmt);
@@ -360,6 +364,28 @@ public class Parser {
                                 builder.addNode(forLoopStmt);
                                 builder.finishPart();
                                 builder.finishLine();
+                                break;
+                            case "try":
+                                bodyList = (BraceList) parent.get(index++);
+                                bodyBlock = parseBlock(bodyList);
+                                TryStmt tryStmt = new TryStmt(bodyBlock, lineFile);
+                                builder.addNode(tryStmt);
+                                break;
+                            case "catch":
+                                conditionList = new BracketList(null, lineFile);
+                                while (!((next = parent.get(index++)) instanceof BraceList)) {
+                                    conditionList.add(next);
+                                }
+                                condition = parseOnePartBlock(conditionList);
+                                bodyBlock = parseBlock((BraceList) next);
+                                CatchStmt catchStmt = new CatchStmt(condition, bodyBlock, lineFile);
+                                tryStmt = (TryStmt) builder.getLastAddedNode();
+                                tryStmt.addCatch(catchStmt);
+                                break;
+                            case "finally":
+                                bodyBlock = parseBlock((CollectiveElement) parent.get(index++));
+                                tryStmt = (TryStmt) builder.getLastAddedNode();
+                                tryStmt.setFinallyBlock(bodyBlock);
                                 break;
                             case "import":
                                 AtomicElement probNamespaceEle = (AtomicElement) parent.get(index++);

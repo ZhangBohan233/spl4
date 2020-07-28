@@ -19,14 +19,15 @@ public abstract class Environment {
     private final int envId;
 
     public final Environment outer;
+    public final GlobalEnvironment globalEnv;
     protected Memory memory;
 
     protected Map<String, VarEntry> variables = new HashMap<>();
-//    protected Map<String, VarEntry> constants = new HashMap<>();
 
     public Environment(Memory memory, Environment outer) {
         this.memory = memory;
         this.outer = outer;
+        this.globalEnv = outer == null ? (GlobalEnvironment) this : outer.globalEnv;
         this.envId = envCount++;
     }
 
@@ -63,6 +64,14 @@ public abstract class Environment {
     public abstract void fallthrough();
 
     public abstract boolean isFallingThrough();
+
+    public void throwException(Pointer exceptionPtr) {
+        globalEnv.throwException(exceptionPtr);
+    }
+
+    public boolean hasException() {
+        return globalEnv.hasException();
+    }
 
     public Set<SplElement> attributes() {
         Set<SplElement> set = new HashSet<>();

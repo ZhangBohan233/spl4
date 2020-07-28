@@ -42,7 +42,29 @@ class Character(Wrapper) {
 }
 
 class Exception {
+    const cause;
+    const msg;
+    var traceMsg;
 
+    fn __init__(msg="", cause=null) {
+        this.cause = cause;
+        this.msg = msg;
+    }
+
+    fn __str__() {
+        return "Exception " + msg;
+    }
+
+    fn printStackTrace() {
+        Invokes.printErr(getClass().name + ": " + msg + " ");
+        Invokes.printErr(traceMsg);
+    }
+}
+
+class IndexException(Exception) {
+    fn __init__(msg="", cause=null) {
+        super.__init__(msg, cause);
+    }
 }
 
 class Iterator {
@@ -74,12 +96,15 @@ class List(Iterable) {
         return result + "]";
     }
 
-    fn append() {
-
+    fn append(value) {
+        set(size++, value);
+        if size == array.length {
+            _expand();
+        }
     }
 
     fn get(index) {
-
+        return array[index];
     }
 
     fn set(index, value) {
@@ -88,7 +113,11 @@ class List(Iterable) {
     }
 
     fn _expand() {
-
+        newArray := new Object[array.length * 2];
+        for i := 0; i < size; i++ {
+            newArray[i] = array[i];
+        }
+        array = newArray;
     }
 
     fn _collapse() {

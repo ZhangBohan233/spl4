@@ -29,7 +29,7 @@ public class Pointer extends SplElement {
 
     @Override
     public String toString() {
-        return "Ptr<" + ptr + ">";
+        return ptr == 0 ? "null" : "Ptr<" + ptr + ">";
     }
 
     public int getPtr() {

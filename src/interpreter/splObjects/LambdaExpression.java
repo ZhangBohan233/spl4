@@ -35,7 +35,7 @@ public class LambdaExpression extends UserFunction {
 
         setArgs(evaluatedArgs, scope);
 
-        scope.getMemory().pushStack(scope);
+        scope.getMemory().pushStack(scope, lineFile);
         SplElement evalResult = body.evaluate(scope);
         scope.getMemory().decreaseStack();
 

@@ -1,10 +1,17 @@
 package interpreter.splObjects;
 
 import ast.BlockStmt;
+import ast.NameNode;
+import ast.Node;
+import ast.StringLiteral;
+import interpreter.AttributeError;
 import interpreter.Memory;
 import interpreter.env.Environment;
+import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import util.Constants;
+import util.LineFile;
 
 import java.util.List;
 
@@ -58,6 +65,14 @@ public class SplClass extends SplObject {
             }
         }
         return false;
+    }
+
+    public SplElement getAttr(Node attrNode, Environment env, LineFile lineFile) {
+        if (attrNode instanceof NameNode && ((NameNode) attrNode).getName().equals(Constants.CLASS_NAME)) {
+            return StringLiteral.createString(className.toCharArray(), env, lineFile);
+        } else {
+            throw new AttributeError("Class does not have attribute '" + attrNode + "'. ", lineFile);
+        }
     }
 
     @Override

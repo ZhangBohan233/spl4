@@ -49,6 +49,7 @@ public class AstBuilder {
             ":", 3,
             "_else_", 3,
             "_if_", 2,
+            "as", 2,
             ":=", 1,
             "=", 1
     );
@@ -87,9 +88,9 @@ public class AstBuilder {
             "++", 300,
             "--", 300,
             "star", 200,
-            "as", 150,
             "new", 150,
             "namespace", 150,
+            "throw", 100,
             "return", 0
     );
 

@@ -8,6 +8,7 @@ import interpreter.SplException;
 import interpreter.env.Environment;
 import interpreter.primitives.*;
 import interpreter.types.*;
+import util.Constants;
 import util.LineFile;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class SplArray extends SplObject {
     }
 
     public SplElement getAttr(Node attrNode, LineFile lineFile) {
-        if (attrNode instanceof NameNode && ((NameNode) attrNode).getName().equals("length")) {
+        if (attrNode instanceof NameNode && ((NameNode) attrNode).getName().equals(Constants.ARRAY_LENGTH)) {
             return new Int(length);
         } else {
             throw new AttributeError("Array does not have attribute '" + attrNode + "'. ", lineFile);

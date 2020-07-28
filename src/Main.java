@@ -214,7 +214,22 @@ public class Main {
             }
             SplElement rtn = mainFunc.call(splArg, globalEnvironment, LF_MAIN);
 
-            System.out.println("Process finished with exit value " + rtn);
+            if (globalEnvironment.hasException()) {
+                Pointer errPtr = globalEnvironment.getExceptionPtr();
+                globalEnvironment.removeException();
+
+                Instance errIns = (Instance) globalEnvironment.getMemory().get(errPtr);
+//                String errStr = SplInvokes.pointerToSting(
+//                        errPtr,
+//                        globalEnvironment,
+//                        LineFile.LF_INTERPRETER);
+
+                Pointer stackTraceFtnPtr = (Pointer) errIns.getEnv().get("printStackTrace", LF_MAIN);
+                Function stackTraceFtn = (Function) globalEnvironment.getMemory().get(stackTraceFtnPtr);
+                stackTraceFtn.call(EvaluatedArguments.of(), globalEnvironment, LF_MAIN);
+            } else {
+                System.out.println("Process finished with exit value " + rtn);
+            }
         }
     }
 

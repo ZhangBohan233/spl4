@@ -1,11 +1,13 @@
 package interpreter;
 
+import ast.Node;
 import interpreter.env.Environment;
 import interpreter.env.FunctionEnvironment;
 import interpreter.env.InstanceEnvironment;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
 import interpreter.splObjects.*;
+import util.LineFile;
 
 import java.util.*;
 
@@ -22,7 +24,8 @@ public class Memory {
     private AvailableList available;
     private final Set<Environment> temporaryEnvs = new HashSet<>();
     private final Set<Pointer> temporaryPointers = new HashSet<>();
-    private final Deque<FunctionEnvironment> callStack = new ArrayDeque<>();
+    private final Deque<StackTraceNode> callStack = new ArrayDeque<>();
+//    private final Deque<Node> stackTrace = new ArrayDeque<>();
 
     private final GarbageCollector garbageCollector = new GarbageCollector();
     public final DebugAttributes debugs = new DebugAttributes();
@@ -34,9 +37,9 @@ public class Memory {
         initAvailable();
     }
 
-    public void pushStack(FunctionEnvironment newCallEnv) {
+    public void pushStack(FunctionEnvironment newCallEnv, LineFile lineFile) {
         stackSize++;
-        callStack.push(newCallEnv);
+        callStack.push(new StackTraceNode(newCallEnv, lineFile));
         if (stackSize > stackLimit) {
             throw new MemoryError("Stack overflow. ");
         }
@@ -45,6 +48,22 @@ public class Memory {
     public void decreaseStack() {
         stackSize--;
         callStack.pop();
+    }
+
+//    public void enterNode(Node node) {
+//        stackTrace.addLast(node);
+//    }
+//
+//    public void exitNode() {
+//        stackTrace.removeLast();
+//    }
+//
+//    public Deque<Node> getStackTrace() {
+//        return stackTrace;
+//    }
+
+    public Deque<StackTraceNode> getCallStack() {
+        return callStack;
     }
 
     private void initAvailable() {
@@ -194,9 +213,9 @@ public class Memory {
             mark(baseEnv);
 
             // call stack roots
-            for (FunctionEnvironment env : callStack) {
+            for (StackTraceNode stn : callStack) {
 //            System.out.println("===" + env);
-                mark(env);
+                mark(stn.env);
             }
 
             // other roots
@@ -457,6 +476,16 @@ public class Memory {
 
         public void setPrintGcTrigger(boolean printGcTrigger) {
             this.printGcTrigger = printGcTrigger;
+        }
+    }
+
+    public static class StackTraceNode {
+        public final FunctionEnvironment env;
+        public final LineFile callLineFile;
+
+        StackTraceNode(FunctionEnvironment env, LineFile callLineFile) {
+            this.env = env;
+            this.callLineFile = callLineFile;
         }
     }
 }

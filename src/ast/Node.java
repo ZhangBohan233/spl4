@@ -8,7 +8,7 @@ import interpreter.primitives.SplElement;
 import util.LineFile;
 
 public abstract class Node {
-    private final LineFile lineFile;
+    public final LineFile lineFile;
 
     static int spaceCount = 0;  // used for printing ast
 
@@ -18,12 +18,14 @@ public abstract class Node {
 
     public final SplElement evaluate(Environment env) {
         // pre
-        if (env.interrupted()) return Pointer.NULL_PTR;
+        if (env.interrupted() || env.hasException()) return Pointer.NULL_PTR;
+//        env.getMemory().enterNode(this);
 
         // essential
         SplElement res = internalEval(env);
 
         // post
+//        env.getMemory().exitNode();
 
         return res;
     }

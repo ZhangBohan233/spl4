@@ -1,0 +1,3 @@
+fn map(ftn, lst) {
+    
+}

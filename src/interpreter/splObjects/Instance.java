@@ -77,7 +77,18 @@ public class Instance extends SplObject {
         Pointer instancePtr = outerEnv.getMemory().allocate(1, instanceEnv);
         outerEnv.getMemory().set(instancePtr, instance);
 
+        // define "this"
         instance.getEnv().directDefineConstAndSet(Constants.THIS, instancePtr);
+
+        // define "getClass"
+        NativeFunction getClassFtn = new NativeFunction(Constants.GET_CLASS, 0) {
+            @Override
+            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                return clazzPtr;
+            }
+        };
+        Pointer getClassPtr = instanceEnv.getMemory().allocateFunction(getClassFtn, instanceEnv);
+        instance.getEnv().directDefineConstAndSet(Constants.GET_CLASS, getClassPtr);
 
         // evaluate superclasses
         List<Pointer> scPointers = clazz.getSuperclassPointers();

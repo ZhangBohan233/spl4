@@ -33,6 +33,8 @@ public class Dot extends BinaryExpr  {
                 return ((SplArray) leftObj).getAttr(right, getLineFile());
             } else if (leftObj instanceof NativeObject) {
                 return ((NativeObject) leftObj).invoke(right, env, getLineFile());
+            } else if (leftObj instanceof SplClass) {
+                return ((SplClass) leftObj).getAttr(right, env, lineFile);
             } else {
                 throw new TypeError("Object '" + leftObj + "' does not support attributes operation. ",
                             getLineFile());

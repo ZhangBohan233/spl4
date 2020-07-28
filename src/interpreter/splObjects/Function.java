@@ -17,7 +17,7 @@ public class Function extends UserFunction {
 
     private Contract contract;
 
-    private final Node body;
+    private final BlockStmt body;
     private final String definedName;
 
     private EvaluatedArguments contractArgs;
@@ -41,9 +41,9 @@ public class Function extends UserFunction {
     @Override
     public String toString() {
         if (definedName.isEmpty()) {
-            return "Anonymous function: {" + "}";
+            return "Anonymous function";
         } else {
-            return "Function " + definedName + ": {" + "}";
+            return "Function " + definedName + ": {" + body.getLines().size() + " lines}";
         }
     }
 
@@ -112,7 +112,7 @@ public class Function extends UserFunction {
 
         setArgs(evaluatedArgs, scope);
 
-        scope.getMemory().pushStack(scope);
+        scope.getMemory().pushStack(scope, argLineFile);
         body.evaluate(scope);
         scope.getMemory().decreaseStack();
 

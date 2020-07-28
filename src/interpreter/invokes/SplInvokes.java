@@ -54,6 +54,12 @@ public class SplInvokes extends NativeObject {
         return Pointer.NULL_PTR;
     }
 
+    public SplElement printErr(Arguments arguments, Environment environment, LineFile lineFile) {
+        stderr.print(getPrintString(arguments, environment, lineFile));
+
+        return Pointer.NULL_PTR;
+    }
+
     public SplElement clock(Arguments arguments, Environment environment, LineFile lineFile) {
         if (arguments.getLine().getChildren().size() != 0) {
             throw new SplException("System.clock() takes 0 arguments, " +
@@ -146,14 +152,14 @@ public class SplInvokes extends NativeObject {
         return new SplFloat(res);
     }
 
-//    public SplElement typeName(Arguments arguments, Environment environment, LineFile lineFile) {
-//        checkArgCount(arguments, 1, "typeName", lineFile);
-//
-//        SplElement element = arguments.getLine().getChildren().get(0).evaluate(environment);
-//
-//        String s = element.toString();
-//        return StringLiteral.createString(s.toCharArray(), environment, lineFile);
-//    }
+    public SplElement typeName(Arguments arguments, Environment environment, LineFile lineFile) {
+        checkArgCount(arguments, 1, "typeName", lineFile);
+
+        SplElement element = arguments.getLine().getChildren().get(0).evaluate(environment);
+
+        String s = element.toString();
+        return StringLiteral.createString(s.toCharArray(), environment, lineFile);
+    }
 
     private static void checkArgCount(Arguments arguments, int expectArgc, String fnName, LineFile lineFile) {
         if (arguments.getLine().getChildren().size() != expectArgc) {
@@ -189,9 +195,9 @@ public class SplInvokes extends NativeObject {
         return String.join(", ", resArr);
     }
 
-    private static String pointerToSting(Pointer ptr,
-                                         Environment environment,
-                                         LineFile lineFile) {
+    public static String pointerToSting(Pointer ptr,
+                                        Environment environment,
+                                        LineFile lineFile) {
 
         Pointer stringPtr = (Pointer) environment.get(Constants.STRING_CLASS, lineFile);
         return pointerToSting(ptr, environment, lineFile, stringPtr);

@@ -1,6 +1,9 @@
 package interpreter.env;
 
+import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+
+import java.util.Objects;
 
 public class FunctionEnvironment extends MainAbstractEnvironment {
 
@@ -16,7 +19,7 @@ public class FunctionEnvironment extends MainAbstractEnvironment {
     }
 
     public SplElement getReturnValue() {
-        return returnValue;
+        return Objects.requireNonNullElse(returnValue, Pointer.NULL_PTR);
     }
 
     @Override

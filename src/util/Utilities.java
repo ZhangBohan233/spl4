@@ -2,10 +2,12 @@ package util;
 
 import interpreter.EvaluatedArguments;
 import interpreter.env.Environment;
+import interpreter.primitives.Bool;
 import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
 import interpreter.splObjects.Instance;
+import interpreter.splObjects.SplCallable;
 import interpreter.splObjects.SplClass;
 
 import java.util.*;
@@ -82,5 +84,12 @@ public class Utilities {
     public static SplElement wrapperToPrimitive(Pointer wrapperPtr, Environment env, LineFile lineFile) {
         Instance wrapperIns = (Instance) env.getMemory().get(wrapperPtr);
         return wrapperIns.getEnv().get(Constants.WRAPPER_ATTR, lineFile);
+    }
+
+    public static boolean isInstancePtr(SplElement element, String className, Environment env, LineFile lineFile) {
+        Pointer insFtnPtr = (Pointer) env.get(className + "?", lineFile);
+        SplCallable insFtn = (SplCallable) env.getMemory().get(insFtnPtr);
+        Bool res = (Bool) insFtn.call(EvaluatedArguments.of(element), env, lineFile);
+        return res.value;
     }
 }
