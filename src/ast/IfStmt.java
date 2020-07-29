@@ -35,7 +35,7 @@ public class IfStmt extends ConditionalStmt {
     }
 
     @Override
-    protected SplElement internalEval(Environment env) {
+    protected void internalProcess(Environment env) {
         Bool bool = Bool.evalBoolean(condition, env, getLineFile());
         BlockEnvironment blockEnvironment;
         if (bool.booleanValue()) {
@@ -45,7 +45,6 @@ public class IfStmt extends ConditionalStmt {
             blockEnvironment = new BlockEnvironment(env);
             elseBlock.evaluate(blockEnvironment);
         }
-        return null;
     }
 
     @Override

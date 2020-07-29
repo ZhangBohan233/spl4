@@ -45,14 +45,6 @@ public class Declaration extends AbstractExpression {
         } else {
             throw new SyntaxError("Unknown declaration type. ", lineFile);
         }
-//        Type rightEv = getRightTypeRep().evalType(env);
-//        if (level == VAR) {
-//            env.defineVar(getLeftName().getName(), rightEv, getLineFile());
-//        } else if (level == CONST) {
-//            env.defineConst(getLeftName().getName(), rightEv, getLineFile());
-//        } else {
-//            throw new SplException("Unknown declaration type. ", getLineFile());
-//        }
         return Undefined.UNDEFINED;
     }
 

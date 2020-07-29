@@ -6,7 +6,7 @@ import interpreter.primitives.SplElement;
 import interpreter.splObjects.SplModule;
 import util.LineFile;
 
-public class NamespaceNode extends UnaryExpr {
+public class NamespaceNode extends UnaryStmt {
 
     public NamespaceNode(String name, LineFile lineFile) {
         super("namespace", true, lineFile);
@@ -15,11 +15,10 @@ public class NamespaceNode extends UnaryExpr {
     }
 
     @Override
-    protected SplElement internalEval(Environment env) {
+    protected void internalProcess(Environment env) {
 
         SplElement moduleTv = value.evaluate(env);
         SplModule module = (SplModule) env.getMemory().get((Pointer) moduleTv);
         env.addNamespace(module.getEnv());
-        return null;
     }
 }

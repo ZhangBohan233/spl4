@@ -16,7 +16,7 @@ public class WhileStmt extends ConditionalStmt {
     }
 
     @Override
-    protected SplElement internalEval(Environment env) {
+    protected void internalProcess(Environment env) {
 
         LoopTitleEnvironment titleEnv = new LoopTitleEnvironment (env);
         BlockEnvironment bodyEnv = new BlockEnvironment(titleEnv);
@@ -30,8 +30,6 @@ public class WhileStmt extends ConditionalStmt {
             titleEnv.resumeLoop();
             bool = Bool.evalBoolean(condition, titleEnv, getLineFile());
         }
-
-        return null;
     }
 
     public void setCondition(AbstractExpression condition) {

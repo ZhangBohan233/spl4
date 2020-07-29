@@ -8,7 +8,7 @@ import util.LineFile;
 
 import java.util.Arrays;
 
-public class Arguments extends Node {
+public class Arguments extends NonEvaluate {
 
     private final Line line;
 
@@ -44,11 +44,6 @@ public class Arguments extends Node {
             }
         }
         return evaluatedArguments;
-    }
-
-    @Override
-    protected SplElement internalEval(Environment env) {
-        return null;
     }
 
     @Override

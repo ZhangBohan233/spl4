@@ -8,12 +8,12 @@ import interpreter.splObjects.LambdaExpression;
 import interpreter.splObjects.SplCallable;
 import util.LineFile;
 
-public class LambdaExpressinDef extends AbstractExpression {
+public class LambdaExpressionDef extends AbstractExpression {
 
     private final Line parameters;
     private final AbstractExpression body;
 
-    public LambdaExpressinDef(Line parameters, AbstractExpression body, LineFile lineFile) {
+    public LambdaExpressionDef(Line parameters, AbstractExpression body, LineFile lineFile) {
         super(lineFile);
 
         this.parameters = parameters;

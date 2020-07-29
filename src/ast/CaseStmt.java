@@ -24,8 +24,8 @@ public class CaseStmt extends ConditionalStmt {
     }
 
     @Override
-    protected SplElement internalEval(Environment env) {
-        return bodyBlock.evaluate(env);
+    protected void internalProcess(Environment env) {
+        bodyBlock.evaluate(env);
     }
 
     @Override

@@ -7,7 +7,7 @@ import util.LineFile;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BlockStmt extends Node {
+public class BlockStmt extends AbstractStatement {
 
     private final List<Line> children = new ArrayList<>();
 
@@ -41,12 +41,10 @@ public class BlockStmt extends Node {
     }
 
     @Override
-    protected SplElement internalEval(Environment env) {
-
+    protected void internalProcess(Environment env) {
         for (Line line : children) {
             line.evaluate(env);
         }
-        return null;
     }
 
 }

@@ -211,8 +211,8 @@ public class Parser {
                                 }
                                 paramBlock = parseOneLineBlock(paramList);
                                 AbstractExpression bodyNode = parseOnePartBlock(singleBodyList);
-                                LambdaExpressinDef lambdaFunctionDef =
-                                        new LambdaExpressinDef(paramBlock, bodyNode, lineFile);
+                                LambdaExpressionDef lambdaFunctionDef =
+                                        new LambdaExpressionDef(paramBlock, bodyNode, lineFile);
                                 builder.addNode(lambdaFunctionDef);
                                 break;
                             case "contract":

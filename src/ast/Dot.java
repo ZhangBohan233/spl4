@@ -8,7 +8,7 @@ import interpreter.types.*;
 import interpreter.primitives.Pointer;
 import util.LineFile;
 
-public class Dot extends BinaryExpr  {
+public class Dot extends BinaryExpr {
     public Dot(LineFile lineFile) {
         super(".", lineFile);
     }
@@ -37,7 +37,7 @@ public class Dot extends BinaryExpr  {
                 return ((SplClass) leftObj).getAttr(right, env, lineFile);
             } else {
                 throw new TypeError("Object '" + leftObj + "' does not support attributes operation. ",
-                            getLineFile());
+                        getLineFile());
             }
 //            switch (type.getPointerType()) {
 //                case PointerType.CLASS_TYPE:

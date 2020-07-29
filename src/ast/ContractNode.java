@@ -6,7 +6,7 @@ import interpreter.primitives.SplElement;
 import interpreter.splObjects.Function;
 import util.LineFile;
 
-public class ContractNode extends Node {
+public class ContractNode extends AbstractStatement {
 
     private final String fnName;
     private final Line paramContracts;
@@ -21,11 +21,10 @@ public class ContractNode extends Node {
     }
 
     @Override
-    protected SplElement internalEval(Environment env) {
+    protected void internalProcess(Environment env) {
         Pointer fnPtr = (Pointer) env.get(fnName, getLineFile());
         Function function = (Function) env.getMemory().get(fnPtr);
         function.setContract(paramContracts, rtnContract, env);
-        return null;
     }
 
     @Override

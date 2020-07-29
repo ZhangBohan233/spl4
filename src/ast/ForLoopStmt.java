@@ -21,7 +21,7 @@ public class ForLoopStmt extends ConditionalStmt {
     }
 
     @Override
-    protected SplElement internalEval(Environment env) {
+    protected void internalProcess(Environment env) {
         LoopTitleEnvironment titleEnv = new LoopTitleEnvironment(env);
         BlockEnvironment bodyEnv = new BlockEnvironment(titleEnv);
 
@@ -45,8 +45,6 @@ public class ForLoopStmt extends ConditionalStmt {
         } else {
             throw new NativeError("For loop takes 2 or 3 condition parts. ", getLineFile());
         }
-
-        return null;
     }
 
     private void forLoop3Parts(Line init, AbstractExpression end, Line step, Environment parentEnv,

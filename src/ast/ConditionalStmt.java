@@ -2,7 +2,7 @@ package ast;
 
 import util.LineFile;
 
-public abstract class ConditionalStmt extends Node {
+public abstract class ConditionalStmt extends AbstractStatement {
 
     protected BlockStmt bodyBlock;
 

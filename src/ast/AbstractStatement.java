@@ -11,7 +11,7 @@ public abstract class AbstractStatement extends Node {
     }
 
     @Override
-    protected SplElement internalEval(Environment env) {
+    protected final SplElement internalEval(Environment env) {
         internalProcess(env);
         return null;
     }

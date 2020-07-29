@@ -15,7 +15,7 @@ import util.LineFile;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClassStmt extends Node {
+public class ClassStmt extends AbstractExpression {
 
     private final String className;
     private List<Node> superclassesNodes;

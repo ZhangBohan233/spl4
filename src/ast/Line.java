@@ -7,7 +7,7 @@ import util.LineFile;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Line extends Node {
+public class Line extends AbstractExpression {
     private final List<Node> children = new ArrayList<>();
 
     public Line(LineFile lineFile) {
