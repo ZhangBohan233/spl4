@@ -7,7 +7,7 @@ Escape characters '\\' not working properly.
 
 ### Class and inheritance
 
-**ISSUE C01** \
+~~**ISSUE C01**~~ **_FIXED_** \
 Call method overridden in child class from method in superclass.
 ```
 class A {

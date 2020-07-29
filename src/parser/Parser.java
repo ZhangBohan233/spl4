@@ -197,7 +197,8 @@ public class Parser {
 
                                 FuncDefinition def = new FuncDefinition(name, paramBlock, bodyBlock, lineFile);
                                 builder.addNode(def);
-
+//                                builder.finishPart();
+//                                builder.finishLine();
                                 break;
                             case "lambda":
                                 paramList = new BracketList(null, lineFile);
@@ -273,6 +274,10 @@ public class Parser {
                             case "as":
                                 AsExpr asExpr = new AsExpr(lineFile);
                                 builder.addNode(asExpr);
+                                break;
+                            case "in":
+                                builder.addNode(new InExpr(lineFile));
+                                varLevel = Declaration.USELESS;
                                 break;
                             case "return":
                                 builder.addNode(new ReturnStmt(lineFile));
@@ -351,6 +356,12 @@ public class Parser {
                                 break;
                             case "fallthrough":
                                 builder.addNode(new FallthroughStmt(lineFile));
+                                break;
+                            case "break":
+                                builder.addNode(new BreakStmt(lineFile));
+                                break;
+                            case "continue":
+                                builder.addNode(new ContinueStmt(lineFile));
                                 break;
                             case "for":
                                 conditionList = new BracketList(null, lineFile);

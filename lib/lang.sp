@@ -67,12 +67,44 @@ class IndexException(Exception) {
     }
 }
 
-class Iterator {
+class NotImplementedError(Exception) {
+    fn __init__(msg="", cause=null) {
+        super.__init__(msg, cause);
+    }
+}
 
+class Iterator {
+    fn __hasNext__() {
+        throw new NotImplementedError();
+    }
+
+    fn __next__() {
+        throw new NotImplementedError();
+    }
 }
 
 class Iterable {
+    fn __iter__() {
+        throw new NotImplementedError();
+    }
+}
 
+class ArrayIterator(Iterator) {
+
+    const array;
+    var index = 0;
+
+    fn __init__(array) {
+        this.array = array;
+    }
+
+    fn __hasNext__() {
+        return index < array.length;
+    }
+
+    fn __next__() {
+        return array[index++];
+    }
 }
 
 class List(Iterable) {

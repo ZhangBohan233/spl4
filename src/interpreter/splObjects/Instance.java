@@ -7,6 +7,8 @@ import interpreter.env.Environment;
 import interpreter.env.InstanceEnvironment;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import interpreter.splErrors.RuntimeSyntaxError;
+import lexer.SyntaxError;
 import util.Constants;
 import util.LineFile;
 
@@ -40,27 +42,29 @@ public class Instance extends SplObject {
                                                            LineFile lineFile) {
         Pointer clazzPtr = (Pointer) creationEnv.get(className, lineFile);
         return createInstanceAndAllocate(
-                clazzPtr, creationEnv, lineFile, true);
+                clazzPtr, creationEnv, new HashMap<>(), lineFile, true);
     }
 
     public static InstanceAndPtr createInstanceAndAllocate(Pointer clazzPtr,
                                                            Environment creationEnv,
                                                            LineFile lineFile) {
         return createInstanceAndAllocate(
-                clazzPtr, creationEnv, lineFile, true);
+                clazzPtr, creationEnv, new HashMap<>(), lineFile, true);
     }
 
     /**
      * Creates an instance and allocate it in memory.
      *
-     * @param clazzPtr              pointer to class
-     * @param outerEnv              env where the new instance is created, not the class definition env
-     * @param lineFile              error traceback info of code where instance creation
-     * @param isFirstCall           whether the currently creating instance is the actual instance
+     * @param clazzPtr          pointer to class
+     * @param outerEnv          env where the new instance is created, not the class definition env
+     * @param superclassMethods methods definitions of superclasses, will be overridden
+     * @param lineFile          error traceback info of code where instance creation
+     * @param isFirstCall       whether the currently creating instance is the actual instance
      * @return the tuple of the newly created instance, and the {@code TypeValue} contains the pointer to this instance
      */
     private static InstanceAndPtr createInstanceAndAllocate(Pointer clazzPtr,
                                                             Environment outerEnv,
+                                                            Map<String, FuncDefinition> superclassMethods,
                                                             LineFile lineFile,
                                                             boolean isFirstCall) {
 
@@ -94,12 +98,30 @@ public class Instance extends SplObject {
         List<Pointer> scPointers = clazz.getSuperclassPointers();
         Instance currentChild = instance;
         for (Pointer scPtr : scPointers) {
-            InstanceAndPtr scInsPtr = createInstanceAndAllocate(scPtr, outerEnv, lineFile, false);
+            InstanceAndPtr scInsPtr =
+                    createInstanceAndAllocate(scPtr, outerEnv, superclassMethods, lineFile, false);
             currentChild.getEnv().directDefineConstAndSet(Constants.SUPER, scInsPtr.pointer);
             currentChild = scInsPtr.instance;
         }
 
-        clazz.getBody().evaluate(instanceEnv);  // most important step
+        // define all methods from superclasses
+        for (Map.Entry<String, FuncDefinition> entry : superclassMethods.entrySet()) {
+            entry.getValue().evaluate(instanceEnv);
+        }
+
+        // evaluate class body, also override methods
+        for (Line line : clazz.getBody().getLines()) {
+            for (Node lineNode : line.getChildren()) {
+                if (lineNode instanceof Declaration || lineNode instanceof Assignment) {
+                    lineNode.evaluate(instanceEnv);
+                } else if (lineNode instanceof FuncDefinition) {
+                    FuncDefinition fd = (FuncDefinition) lineNode;
+                    fd.evaluate(instanceEnv);
+                    superclassMethods.put(fd.name, fd);
+                } else
+                    throw new RuntimeSyntaxError("Invalid class body. ", line.lineFile);
+            }
+        }
 
         if (!instanceEnv.selfContains(Constants.CONSTRUCTOR)) {
             // If class no constructor, put an empty default constructor

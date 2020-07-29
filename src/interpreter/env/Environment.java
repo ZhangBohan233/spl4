@@ -36,7 +36,7 @@ public abstract class Environment {
     }
 
     public void defineFunction(String name, Pointer funcPtr, LineFile lineFile) {
-        defineVarAndSet(name, funcPtr, lineFile);
+        variables.put(name, VarEntry.varEntry(funcPtr));
     }
 
     public Pointer getImportedModulePtr(File moduleFile) {

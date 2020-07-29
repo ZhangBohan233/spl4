@@ -55,9 +55,14 @@ public class Main {
 //            new C().printThis();
 
             long runBegin = System.currentTimeMillis();
-            root.evaluate(globalEnvironment);
 
-            callMain(argumentParser.getSplArgs(), globalEnvironment);
+            try {
+                root.evaluate(globalEnvironment);
+
+                callMain(argumentParser.getSplArgs(), globalEnvironment);
+            } catch (ClassCastException cce) {
+                throw new TypeError();
+            }
 
 //            globalEnvironment.printVars();
 

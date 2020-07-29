@@ -45,6 +45,7 @@ public class AstBuilder {
             ".", 500,
             "<-", 160,  // must bigger than 'new'
             "->", 4,
+            "in", 3,
             ":", 3,
             "_else_", 3,
             "_if_", 2,

@@ -16,5 +16,4 @@ public class TypeError extends NativeError {
     public TypeError(String msg, LineFile lineFile) {
         super(msg, lineFile);
     }
-
 }

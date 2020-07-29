@@ -1,3 +1,12 @@
+===== Version 4011 =====
+2020/07/29
+
+* Syntax implementation:
+    * For each loop
+* Bug fixes:
+    * Fixed ISSUE C01 (method inheritance and override)
+
+
 ===== Version 4010 =====
 2020/07/28
 

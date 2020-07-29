@@ -1,3 +1,10 @@
+===== Version 4010 =====
+
+Loop 1000000 time: 228ms
+Array access 1000000 time: 625ms
+fib=75025
+fib 25 time: 179ms
+
 ===== Build 4003 =====
 
 Loop 1000000 time: 221ms
