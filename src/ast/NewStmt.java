@@ -1,6 +1,6 @@
 package ast;
 
-import interpreter.SplException;
+import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
@@ -9,9 +9,6 @@ import interpreter.splObjects.*;
 import interpreter.types.*;
 import parser.ParseError;
 import util.LineFile;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class NewStmt extends UnaryExpr {
 
@@ -72,7 +69,7 @@ public class NewStmt extends UnaryExpr {
             SplModule module = (SplModule) classDefEnv.getMemory().get((Pointer) dotLeft);
             return directInitClass(dot.right, module.getEnv(), callEnv, lineFile);
         } else {
-            throw new SplException("Class instantiation must be a call. Got " + node + " instead. ", lineFile);
+            throw new NativeError("Class instantiation must be a call. Got " + node + " instead. ", lineFile);
         }
     }
 
@@ -181,7 +178,7 @@ public class NewStmt extends UnaryExpr {
             Int length = (Int) node.getArgs().getChildren().get(0).evaluate(callEnv);
             return SplArray.createArray(node.getCallObj(), (int) length.value, callEnv);
         } else {
-            throw new SplException("Array creation must take exactly one int as argument. ", lineFile);
+            throw new NativeError("Array creation must take exactly one int as argument. ", lineFile);
         }
 //        return SplArray.createArray(arrayType, dimensions, callEnv);
     }

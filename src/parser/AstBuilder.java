@@ -1,7 +1,6 @@
 package parser;
 
 import ast.*;
-import lexer.SyntaxError;
 import util.LineFile;
 import util.Utilities;
 
@@ -240,7 +239,7 @@ public class AstBuilder {
             if (!stack.isEmpty()) {
                 boolean hasExpr = false;
                 for (Node node : stack) {
-                    if (node instanceof Expr && ((Expr) node).notFulfilled()) hasExpr = true;
+                    if (node instanceof Buildable && ((Buildable) node).notFulfilled()) hasExpr = true;
                 }
                 if (hasExpr) {
                     buildExpr(stack);
@@ -263,9 +262,9 @@ public class AstBuilder {
                 for (int i = 0; i < list.size(); i++) {
 //                for (int i = list.size() - 1; i >= 0; i--) {
                     Node node = list.get(i);
-                    if (node instanceof Expr && ((Expr) node).notFulfilled()) {
-                        if (node instanceof UnaryExpr) {
-                            int pre = PRECEDENCES.get(((UnaryExpr) node).getOperator());
+                    if (node instanceof Buildable && ((Buildable) node).notFulfilled()) {
+                        int pre = PRECEDENCES.get(((Buildable) node).getOperator());
+                        if (node instanceof UnaryExpr || node instanceof UnaryStmt) {
 
                             // eval right side unary operator first
                             // for example, "- -3" is -(-3)
@@ -274,7 +273,6 @@ public class AstBuilder {
                                 index = i;
                             }
                         } else if (node instanceof BinaryExpr) {
-                            int pre = PRECEDENCES.get(((BinaryExpr) node).getOperator());
 
                             // eval left side binary operator first
                             // for example, "2 * 8 / 4" is (2 * 8) / 4
@@ -283,12 +281,11 @@ public class AstBuilder {
                                 index = i;
                             }
                         } else if (node instanceof IncDecOperator) {
-                            int pre;
-                            if (((IncDecOperator) node).isIncrement) {
-                                pre = PRECEDENCES.get("++");
-                            } else {
-                                pre = PRECEDENCES.get("--");
-                            }
+//                            if (((IncDecOperator) node).isIncrement) {
+//                                pre = PRECEDENCES.get("++");
+//                            } else {
+//                                pre = PRECEDENCES.get("--");
+//                            }
                             if (pre > maxPre) {
                                 maxPre = pre;
                                 index = i;
@@ -299,11 +296,11 @@ public class AstBuilder {
 
                 if (maxPre == -1) break;  // no expr found
 
-                Expr expr = (Expr) list.get(index);
-                if (expr instanceof UnaryExpr) {
-                    UnaryExpr ue = (UnaryExpr) expr;
+                Buildable expr = (Buildable) list.get(index);
+                if (expr instanceof UnaryBuildable) {
+                    UnaryBuildable ue = (UnaryBuildable) expr;
                     Node value;
-                    if (ue.atLeft) {
+                    if (ue.operatorAtLeft()) {
                         if (list.size() <= index + 1 && ue.voidAble()) {
                             value = VoidNode.VOID_NODE;
                         } else {
@@ -316,8 +313,8 @@ public class AstBuilder {
                 } else if (expr instanceof BinaryExpr) {
                     Node right = list.remove(index + 1);
                     Node left = list.remove(index - 1);
-                    ((BinaryExpr) expr).setLeft(left);
-                    ((BinaryExpr) expr).setRight(right);
+                    ((BinaryExpr) expr).setLeft((AbstractExpression) left);
+                    ((BinaryExpr) expr).setRight((AbstractExpression) right);
                 } else if (expr instanceof IncDecOperator) {
                     boolean post = true;
                     if (index < list.size() - 1) {

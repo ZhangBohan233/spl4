@@ -2,7 +2,7 @@ package interpreter.splObjects;
 
 import ast.*;
 import interpreter.EvaluatedArguments;
-import interpreter.SplException;
+import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.env.InstanceEnvironment;
 import interpreter.primitives.Pointer;
@@ -149,7 +149,7 @@ public class Instance extends SplObject {
             if (supConst.minArgCount() > 0) {
                 // superclass has a non-trivial constructor
                 if (noLeadingSuperCall(constructor)) {
-                    throw new SplException("Constructor of child class must first call super.__init__() with matching " +
+                    throw new NativeError("Constructor of child class must first call super.__init__() with matching " +
                             "arguments. ", lineFile);
                 }
             } else {
@@ -170,7 +170,7 @@ public class Instance extends SplObject {
             if (node instanceof Line) return extractOnlyElementFromLine((Line) node);
             else return node;
         } else {
-            throw new SplException("Too many elements in one line. ", line.getChildren().get(0).getLineFile());
+            throw new NativeError("Too many elements in one line. ", line.getChildren().get(0).getLineFile());
         }
     }
 
@@ -190,7 +190,7 @@ public class Instance extends SplObject {
             constLine.getChildren().add(dot);
             ((BlockStmt) body).getLines().add(0, constLine);
         } else {
-            throw new SplException("Unexpected syntax. ");
+            throw new NativeError("Unexpected syntax. ");
         }
     }
 

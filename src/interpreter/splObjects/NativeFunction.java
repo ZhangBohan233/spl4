@@ -2,7 +2,6 @@ package interpreter.splObjects;
 
 import ast.Arguments;
 import interpreter.EvaluatedArguments;
-import interpreter.SplException;
 import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
 import util.LineFile;

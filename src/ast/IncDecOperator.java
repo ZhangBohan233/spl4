@@ -1,6 +1,6 @@
 package ast;
 
-import interpreter.SplException;
+import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.primitives.Int;
 import interpreter.primitives.SplElement;
@@ -8,7 +8,7 @@ import interpreter.primitives.SplFloat;
 import util.LineFile;
 import util.Utilities;
 
-public class IncDecOperator extends Expr {
+public class IncDecOperator extends AbstractExpression implements Buildable {
 
     /**
      * Is increment or not.
@@ -62,7 +62,7 @@ public class IncDecOperator extends Expr {
             }
         }
         if (result == null) {
-            throw new SplException("Increment/decrement operator is not applicable to type " +
+            throw new NativeError("Increment/decrement operator is not applicable to type " +
                     Utilities.typeName(current),
                     getLineFile());
         }
@@ -87,5 +87,10 @@ public class IncDecOperator extends Expr {
         } else {
             return isPost ? value + "--" : "--" + value;
         }
+    }
+
+    @Override
+    public String getOperator() {
+        return isIncrement ? "++" : "--";
     }
 }

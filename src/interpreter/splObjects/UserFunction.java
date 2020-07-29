@@ -1,9 +1,8 @@
 package interpreter.splObjects;
 
-import ast.LiteralNode;
 import ast.StringLiteral;
 import interpreter.EvaluatedArguments;
-import interpreter.SplException;
+import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.env.FunctionEnvironment;
 import interpreter.primitives.Pointer;
@@ -12,9 +11,6 @@ import util.Constants;
 import util.LineFile;
 import util.Utilities;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 public abstract class UserFunction extends SplCallable {
@@ -59,7 +55,7 @@ public abstract class UserFunction extends SplCallable {
                 } else if (param.defaultValue != null) {
                     scope.setVar(paramName, param.defaultValue, lineFile);
                 } else {
-                    throw new SplException("Unexpected error. ", lineFile);
+                    throw new NativeError("Unexpected error. ", lineFile);
                 }
             } else if (param.unpackCount == 1) {  // *args
                 int posArgc = evaluatedArgs.positionalArgs.size();

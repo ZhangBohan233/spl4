@@ -1,7 +1,6 @@
 package ast;
 
 import interpreter.EvaluatedArguments;
-import interpreter.SplException;
 import interpreter.env.Environment;
 import interpreter.primitives.Bool;
 import interpreter.primitives.SplElement;
@@ -10,7 +9,6 @@ import interpreter.splObjects.Instance;
 import interpreter.splObjects.NativeFunction;
 import interpreter.splObjects.SplClass;
 import interpreter.splObjects.SplObject;
-import parser.ParseError;
 import util.Constants;
 import util.LineFile;
 

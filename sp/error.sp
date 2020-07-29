@@ -11,9 +11,9 @@ fn main() {
 
     try {
         test(5);
-    } catch IndexException or Exception as e {
+    } catch IndexException? or Exception? as e {
 
-    } catch Error {
+    } catch NativeError {
 
     } finally {
 

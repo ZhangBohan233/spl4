@@ -2,11 +2,11 @@ package ast;
 
 import util.LineFile;
 
-public abstract class UnaryExpr extends Expr {
+public abstract class UnaryExpr extends AbstractExpression implements UnaryBuildable {
 
     protected final String operator;
-    protected Node value;
-    public final boolean atLeft;
+    protected AbstractExpression value;
+    private final boolean atLeft;
 
     public UnaryExpr(String operator, boolean operatorAtLeft, LineFile lineFile) {
         super(lineFile);
@@ -36,12 +36,19 @@ public abstract class UnaryExpr extends Expr {
         }
     }
 
+    @Override
+    public boolean operatorAtLeft() {
+        return atLeft;
+    }
+
+    @Override
     public String getOperator() {
         return operator;
     }
 
+    @Override
     public void setValue(Node value) {
-        this.value = value;
+        this.value = (AbstractExpression) value;
     }
 
     public Node getValue() {

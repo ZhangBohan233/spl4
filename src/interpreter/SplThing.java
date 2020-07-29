@@ -1,4 +1,4 @@
 package interpreter;
 
-public abstract class SplThing {
+public interface SplThing {
 }

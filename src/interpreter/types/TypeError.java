@@ -1,9 +1,9 @@
 package interpreter.types;
 
-import interpreter.SplException;
+import interpreter.splErrors.NativeError;
 import util.LineFile;
 
-public class TypeError extends SplException {
+public class TypeError extends NativeError {
 
     public TypeError() {
         super();

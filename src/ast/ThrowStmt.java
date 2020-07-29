@@ -14,14 +14,14 @@ import util.Utilities;
 
 import java.util.Deque;
 
-public class ThrowStmt extends UnaryExpr {
+public class ThrowStmt extends UnaryStmt {
 
     public ThrowStmt(LineFile lineFile) {
         super("throw", true, lineFile);
     }
 
     @Override
-    protected SplElement internalEval(Environment env) {
+    protected void internalProcess(Environment env) {
         SplElement content = value.evaluate(env);
         if (Utilities.isInstancePtr(content, Constants.EXCEPTION_CLASS, env, lineFile)) {
             Instance excIns = (Instance) env.getMemory().get((Pointer) content);
@@ -34,8 +34,6 @@ public class ThrowStmt extends UnaryExpr {
             excIns.getEnv().setVar("traceMsg", tracePtr, lineFile);
 
             env.throwException((Pointer) content);
-
-            return null;
         } else {
             throw new TypeError("Only classes extends 'Exception' can be thrown. ", lineFile);
         }

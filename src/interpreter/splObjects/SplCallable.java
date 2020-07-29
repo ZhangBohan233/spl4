@@ -2,7 +2,7 @@ package interpreter.splObjects;
 
 import ast.*;
 import interpreter.EvaluatedArguments;
-import interpreter.SplException;
+import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
 import parser.ParseError;
@@ -25,11 +25,11 @@ public abstract class SplCallable extends SplObject {
         int mostArg = maxArgCount();
         if (argc < leastArg || argc > mostArg) {
             if (leastArg == mostArg) {
-                throw new SplException(
+                throw new NativeError(
                         String.format("Function '%s' expects %d argument(s), got %d. ",
                                 fnName, leastArg, argc));
             } else {
-                throw new SplException(
+                throw new NativeError(
                         String.format("Function '%s' expects %d to %d arguments, got %d. ",
                                 fnName, leastArg, mostArg, argc));
             }
@@ -128,7 +128,7 @@ public abstract class SplCallable extends SplObject {
 
         private Parameter build() {
             if (unpackCount > 0 && defaultValue != null)
-                throw new SplException("Unexpected parameter combination. ");
+                throw new NativeError("Unexpected parameter combination. ");
             return new Parameter(name, defaultValue, constant, unpackCount);
         }
     }

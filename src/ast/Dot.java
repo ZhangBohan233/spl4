@@ -1,6 +1,6 @@
 package ast;
 
-import interpreter.SplException;
+import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
 import interpreter.splObjects.*;
@@ -21,7 +21,7 @@ public class Dot extends BinaryExpr  {
 //            PointerType type = (PointerType) leftTv.getType();
             Pointer ptr = (Pointer) leftTv;
             if (ptr.getPtr() == 0) {
-                throw new SplException("Pointer to null does not support attributes operation. ",
+                throw new NativeError("Pointer to null does not support attributes operation. ",
                         getLineFile());
             }
             SplObject leftObj = env.getMemory().get(ptr);
@@ -80,7 +80,7 @@ public class Dot extends BinaryExpr  {
 //            SplElement
             return ((IndexingNode) right).crossEnvEval(objEnv, oldEnv);
         } else {
-            throw new SplException("Unexpected right side type of dot '" + right.getClass() + "' ", lineFile);
+            throw new NativeError("Unexpected right side type of dot '" + right.getClass() + "' ", lineFile);
         }
     }
 

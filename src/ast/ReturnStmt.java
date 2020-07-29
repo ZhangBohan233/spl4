@@ -4,7 +4,7 @@ import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
 import util.LineFile;
 
-public class ReturnStmt extends UnaryExpr {
+public class ReturnStmt extends UnaryStmt {
 
     public ReturnStmt(LineFile lineFile) {
         super("return", true, lineFile);
@@ -16,8 +16,7 @@ public class ReturnStmt extends UnaryExpr {
     }
 
     @Override
-    protected SplElement internalEval(Environment env) {
+    protected void internalProcess(Environment env) {
         env.setReturn(value.evaluate(env));
-        return null;
     }
 }

@@ -2,7 +2,7 @@ package interpreter.splObjects;
 
 import interpreter.SplThing;
 
-public class SplObject extends SplThing {
+public class SplObject implements SplThing {
 
     private int gcCount;
 

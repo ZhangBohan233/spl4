@@ -2,9 +2,9 @@ package ast;
 
 import util.LineFile;
 
-public abstract class BinaryExpr extends Expr {
-    protected Node left;
-    protected Node right;
+public abstract class BinaryExpr extends AbstractExpression implements Buildable {
+    protected AbstractExpression left;
+    protected AbstractExpression right;
     protected String operator;
 
     public BinaryExpr(String operator, LineFile lineFile) {
@@ -34,11 +34,11 @@ public abstract class BinaryExpr extends Expr {
         return operator;
     }
 
-    public void setLeft(Node left) {
+    public void setLeft(AbstractExpression left) {
         this.left = left;
     }
 
-    public void setRight(Node right) {
+    public void setRight(AbstractExpression right) {
         this.right = right;
     }
 }

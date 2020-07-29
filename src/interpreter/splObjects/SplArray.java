@@ -4,14 +4,12 @@ import ast.NameNode;
 import ast.Node;
 import interpreter.AttributeError;
 import interpreter.Memory;
-import interpreter.SplException;
+import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.primitives.*;
 import interpreter.types.*;
 import util.Constants;
 import util.LineFile;
-
-import java.util.List;
 
 public class SplArray extends SplObject {
 
@@ -134,7 +132,7 @@ public class SplArray extends SplObject {
     public static SplElement getItemAtIndex(Pointer arrPtr, int index, Memory memory, LineFile lineFile) {
         SplArray array = (SplArray) memory.get(arrPtr);
         if (index < 0 || index >= array.length) {
-            throw new SplException("Index " + index + " out of array length " + array.length + ". ", lineFile);
+            throw new NativeError("Index " + index + " out of array length " + array.length + ". ", lineFile);
         }
         return memory.getPrimitive(arrPtr.getPtr() + index + 1);
     }
@@ -147,7 +145,7 @@ public class SplArray extends SplObject {
         SplArray array = (SplArray) env.getMemory().get(arrPtr);
         if (value.type() == array.elementTypeCode) {
             if (index < 0 || index >= array.length) {
-                throw new SplException("Index " + index + " out of array length " + array.length + ". ", lineFile);
+                throw new NativeError("Index " + index + " out of array length " + array.length + ". ", lineFile);
             }
             env.getMemory().set(arrPtr.getPtr() + index + 1, value);
         } else {

@@ -1,11 +1,7 @@
 package ast;
 
-import interpreter.SplException;
 import interpreter.env.Environment;
-import interpreter.primitives.Char;
-import interpreter.primitives.Int;
 import interpreter.primitives.SplElement;
-import interpreter.primitives.SplFloat;
 import util.LineFile;
 
 public class CastExpr extends BinaryExpr {

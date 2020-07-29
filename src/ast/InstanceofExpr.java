@@ -1,12 +1,7 @@
 package ast;
 
-import interpreter.SplException;
 import interpreter.env.Environment;
-import interpreter.primitives.Bool;
-import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
-import interpreter.splObjects.Instance;
-import interpreter.splObjects.SplObject;
 import util.LineFile;
 
 public class InstanceofExpr extends BinaryExpr {

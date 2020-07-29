@@ -1,23 +1,19 @@
 import ast.*;
 import interpreter.EvaluatedArguments;
 import interpreter.Memory;
-import interpreter.SplException;
+import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.env.GlobalEnvironment;
 import interpreter.invokes.SplInvokes;
 import interpreter.primitives.*;
 import interpreter.splObjects.*;
 import interpreter.types.TypeError;
-import lexer.TokenList;
 import lexer.FileTokenizer;
 import lexer.TokenizeResult;
 import lexer.treeList.BraceList;
 import parser.Parser;
 import util.ArgumentParser;
-import util.Constants;
 import util.LineFile;
-
-import java.util.List;
 
 public class Main {
 
@@ -210,7 +206,7 @@ public class Main {
 
             Function mainFunc = (Function) globalEnvironment.getMemory().get(mainPtr);
             if (mainFunc.minArgCount() > 1) {
-                throw new SplException("Function main takes 0 or 1 arguments.");
+                throw new NativeError("Function main takes 0 or 1 arguments.");
             }
             SplElement rtn = mainFunc.call(splArg, globalEnvironment, LF_MAIN);
 

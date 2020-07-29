@@ -1,8 +1,9 @@
 package interpreter;
 
+import interpreter.splErrors.NativeError;
 import util.LineFile;
 
-public class AttributeError extends SplException {
+public class AttributeError extends NativeError {
 
     public AttributeError() {
         super();

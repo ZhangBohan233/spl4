@@ -1,13 +1,8 @@
 package ast;
 
-import interpreter.SplException;
 import interpreter.env.Environment;
-import interpreter.env.EnvironmentError;
 import interpreter.primitives.SplElement;
-import interpreter.types.*;
 import util.LineFile;
-
-import java.util.List;
 
 public class NameNode extends AbstractExpression {
     private final String name;

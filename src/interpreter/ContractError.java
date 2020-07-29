@@ -1,8 +1,9 @@
 package interpreter;
 
+import interpreter.splErrors.NativeError;
 import util.LineFile;
 
-public class ContractError extends SplException {
+public class ContractError extends NativeError {
 
     public ContractError() {
         super("Contract violation. ");

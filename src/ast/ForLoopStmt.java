@@ -1,17 +1,11 @@
 package ast;
 
-import interpreter.Memory;
-import interpreter.SplException;
+import interpreter.splErrors.NativeError;
 import interpreter.env.BlockEnvironment;
 import interpreter.env.Environment;
 import interpreter.env.LoopTitleEnvironment;
 import interpreter.primitives.Bool;
-import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
-import interpreter.splObjects.Function;
-import interpreter.splObjects.Instance;
-import interpreter.splObjects.SplArray;
-import interpreter.types.*;
 import util.LineFile;
 
 public class ForLoopStmt extends ConditionalStmt {
@@ -49,7 +43,7 @@ public class ForLoopStmt extends ConditionalStmt {
                     bodyEnv
             );
         } else {
-            throw new SplException("For loop takes 2 or 3 condition parts. ", getLineFile());
+            throw new NativeError("For loop takes 2 or 3 condition parts. ", getLineFile());
         }
 
         return null;

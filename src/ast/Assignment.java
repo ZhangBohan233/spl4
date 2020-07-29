@@ -1,6 +1,6 @@
 package ast;
 
-import interpreter.SplException;
+import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
@@ -8,8 +8,6 @@ import interpreter.primitives.SplElement;
 import interpreter.splObjects.*;
 import interpreter.types.*;
 import util.LineFile;
-
-import java.util.List;
 
 public class Assignment extends BinaryExpr {
     public Assignment(LineFile lineFile) {
@@ -57,10 +55,10 @@ public class Assignment extends BinaryExpr {
                 if (obj instanceof SplArray) {
                     SplArray.setItemAtIndex(arrPtr, (int) index.value, value, env, lineFile);
                 } else {
-                    throw new SplException("Object '" + obj + "' does not support set-item. ", lineFile);
+                    throw new NativeError("Object '" + obj + "' does not support set-item. ", lineFile);
                 }
             } else {
-                throw new SplException("Array creation must take exactly one int as argument. ", lineFile);
+                throw new NativeError("Array creation must take exactly one int as argument. ", lineFile);
             }
 //            TypeValue leftCallRes = ((IndexingNode) key).getCallObj().evaluate(env);
 //            List<Node> arguments = ((IndexingNode) key).getArgs().getChildren();
@@ -75,7 +73,7 @@ public class Assignment extends BinaryExpr {
 //                    env,
 //                    lineFile);
         } else {
-            throw new SplException();
+            throw new NativeError();
         }
     }
 }

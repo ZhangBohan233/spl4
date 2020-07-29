@@ -3,7 +3,7 @@ package interpreter.primitives;
 import interpreter.SplThing;
 import interpreter.types.TypeError;
 
-public abstract class SplElement extends SplThing {
+public abstract class SplElement implements SplThing {
 
     public static final int VOID = 0;
     public static final int INT = 1;

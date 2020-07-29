@@ -20,6 +20,11 @@ public class TryEnvironment extends SubAbstractEnvironment {
     }
 
     @Override
+    public boolean hasException() {
+        return exceptionPtr != null;
+    }
+
+    @Override
     public boolean interrupted() {
         return outer.interrupted();
     }

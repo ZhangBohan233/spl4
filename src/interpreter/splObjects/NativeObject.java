@@ -5,7 +5,6 @@ import ast.FuncCall;
 import ast.NameNode;
 import ast.Node;
 import interpreter.AttributeError;
-import interpreter.SplException;
 import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
 import interpreter.types.TypeError;

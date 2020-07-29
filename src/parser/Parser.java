@@ -176,7 +176,7 @@ public class Parser {
                                 builder.addNode(new BoolStmt(false, lineFile));
                                 break;
                             case "null":
-                                builder.addNode(new NullStmt(lineFile));
+                                builder.addNode(new NullExpr(lineFile));
                                 break;
                             case "fn":  // function definition
                                 next = parent.get(index++);

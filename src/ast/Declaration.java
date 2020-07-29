@@ -4,9 +4,11 @@ package ast;
 import interpreter.primitives.SplElement;
 
 import interpreter.env.Environment;
+import interpreter.primitives.Undefined;
+import lexer.SyntaxError;
 import util.LineFile;
 
-public class Declaration extends Node {
+public class Declaration extends AbstractExpression {
 
     public static final int VAR = 1;
     public static final int CONST = 2;
@@ -36,7 +38,13 @@ public class Declaration extends Node {
 
     //    @Override
     protected SplElement internalEval(Environment env) {
-        env.defineVar(declaredName, getLineFile());
+        if (level == VAR) {
+            env.defineVar(declaredName, lineFile);
+        } else if (level == CONST) {
+            env.defineConst(declaredName, lineFile);
+        } else {
+            throw new SyntaxError("Unknown declaration type. ", lineFile);
+        }
 //        Type rightEv = getRightTypeRep().evalType(env);
 //        if (level == VAR) {
 //            env.defineVar(getLeftName().getName(), rightEv, getLineFile());
@@ -45,7 +53,7 @@ public class Declaration extends Node {
 //        } else {
 //            throw new SplException("Unknown declaration type. ", getLineFile());
 //        }
-        return null;
+        return Undefined.UNDEFINED;
     }
 
 }

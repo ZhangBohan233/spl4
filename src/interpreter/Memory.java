@@ -1,11 +1,10 @@
 package interpreter;
 
-import ast.Node;
 import interpreter.env.Environment;
 import interpreter.env.FunctionEnvironment;
-import interpreter.env.InstanceEnvironment;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import interpreter.splErrors.NativeError;
 import interpreter.splObjects.*;
 import util.LineFile;
 
@@ -460,7 +459,7 @@ public class Memory {
         }
     }
 
-    public static class MemoryError extends SplException {
+    public static class MemoryError extends NativeError {
         MemoryError(String msg) {
             super(msg);
         }

@@ -6,9 +6,9 @@ import interpreter.primitives.SplElement;
 import interpreter.types.*;
 import util.LineFile;
 
-public class NullStmt extends LiteralNode {
+public class NullExpr extends LiteralNode {
 
-    public NullStmt(LineFile lineFile) {
+    public NullExpr(LineFile lineFile) {
         super(lineFile);
     }
 

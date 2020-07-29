@@ -9,7 +9,7 @@ import util.LineFile;
 
 import java.io.File;
 
-public class ImportStmt extends Node {
+public class ImportStmt extends AbstractStatement {
 
     private final String importName;
     private final File file;
@@ -24,7 +24,7 @@ public class ImportStmt extends Node {
     }
 
     @Override
-    protected SplElement internalEval(Environment env) {
+    protected void internalProcess(Environment env) {
 
         // This step is to avoid duplicate module creation.
         // Any import from a same file should point to a same module
@@ -41,8 +41,6 @@ public class ImportStmt extends Node {
         }
 
         env.defineVarAndSet(importName, ptr, getLineFile());
-
-        return null;
     }
 
     @Override

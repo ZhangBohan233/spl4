@@ -3,7 +3,7 @@ package interpreter.invokes;
 import ast.Arguments;
 import ast.StringLiteral;
 import interpreter.EvaluatedArguments;
-import interpreter.SplException;
+import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
@@ -62,7 +62,7 @@ public class SplInvokes extends NativeObject {
 
     public SplElement clock(Arguments arguments, Environment environment, LineFile lineFile) {
         if (arguments.getLine().getChildren().size() != 0) {
-            throw new SplException("System.clock() takes 0 arguments, " +
+            throw new NativeError("System.clock() takes 0 arguments, " +
                     arguments.getLine().getChildren().size() + " given. ", lineFile);
         }
         return new Int(System.currentTimeMillis());
@@ -70,7 +70,7 @@ public class SplInvokes extends NativeObject {
 
     public SplElement free(Arguments arguments, Environment environment, LineFile lineFile) {
         if (arguments.getLine().getChildren().size() != 1) {
-            throw new SplException("System.free(ptr) takes 1 argument, " +
+            throw new NativeError("System.free(ptr) takes 1 argument, " +
                     arguments.getLine().getChildren().size() + " given. ", lineFile);
         }
         Pointer ptr = (Pointer) arguments.getLine().getChildren().get(0).evaluate(environment);
@@ -94,7 +94,7 @@ public class SplInvokes extends NativeObject {
 
     public SplElement gc(Arguments arguments, Environment environment, LineFile lineFile) {
         if (arguments.getLine().getChildren().size() != 0) {
-            throw new SplException("System.gc() takes 0 arguments, " +
+            throw new NativeError("System.gc() takes 0 arguments, " +
                     arguments.getLine().getChildren().size() + " given. ", lineFile);
         }
 
@@ -163,7 +163,7 @@ public class SplInvokes extends NativeObject {
 
     private static void checkArgCount(Arguments arguments, int expectArgc, String fnName, LineFile lineFile) {
         if (arguments.getLine().getChildren().size() != expectArgc) {
-            throw new SplException("System." + fnName + "() takes " + expectArgc + " arguments, " +
+            throw new NativeError("System." + fnName + "() takes " + expectArgc + " arguments, " +
                     arguments.getLine().getChildren().size() + " given. ", lineFile);
         }
     }

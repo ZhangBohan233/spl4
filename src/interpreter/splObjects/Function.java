@@ -3,14 +3,13 @@ package interpreter.splObjects;
 import ast.*;
 import interpreter.ContractError;
 import interpreter.EvaluatedArguments;
-import interpreter.SplException;
+import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.env.FunctionEnvironment;
 import interpreter.primitives.Bool;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
 import interpreter.types.*;
-import parser.ParseError;
 import util.LineFile;
 
 public class Function extends UserFunction {
@@ -20,7 +19,7 @@ public class Function extends UserFunction {
     private final BlockStmt body;
     private final String definedName;
 
-    private EvaluatedArguments contractArgs;
+//    private EvaluatedArguments contractArgs;
 
     /**
      * Constructor for regular function.
@@ -49,7 +48,7 @@ public class Function extends UserFunction {
 
     public void setContract(Line paramContractLine, Node rtnContractNode, Environment env) {
         if (contract != null) {
-            throw new SplException("Contract already defined for function '" + definedName + "'. ",
+            throw new NativeError("Contract already defined for function '" + definedName + "'. ",
                     rtnContractNode.getLineFile());
         }
         if (paramContractLine.size() != params.length) {
@@ -64,8 +63,6 @@ public class Function extends UserFunction {
         Pointer rtnConFnPtr = (Pointer) rtnContractNode.evaluate(env);
 
         this.contract = new Contract(paramContracts, rtnConFnPtr);
-
-        this.contractArgs = new EvaluatedArguments();
     }
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
@@ -90,7 +87,8 @@ public class Function extends UserFunction {
 
     private void callContract(Pointer conFnPtr, SplElement arg, Environment callingEnv, LineFile lineFile) {
         SplCallable callable = (SplCallable) callingEnv.getMemory().get(conFnPtr);
-        contractArgs.positionalArgs.set(0, arg);
+//        contractArgs.positionalArgs.set(0, arg);
+        EvaluatedArguments contractArgs = EvaluatedArguments.of(arg);
 
         SplElement result = callable.call(contractArgs, callingEnv, lineFile);
         if (result instanceof Bool) {
