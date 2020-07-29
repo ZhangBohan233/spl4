@@ -2,12 +2,8 @@ package interpreter.env;
 
 import interpreter.Memory;
 import interpreter.primitives.SplElement;
-import interpreter.types.TypeError;
-import util.LineFile;
-import util.Utilities;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public abstract class MainAbstractEnvironment extends Environment {

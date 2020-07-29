@@ -1,9 +1,17 @@
 package ast;
 
+import interpreter.EvaluatedArguments;
+import interpreter.env.BlockEnvironment;
 import interpreter.env.Environment;
+import interpreter.env.FunctionEnvironment;
 import interpreter.env.TryEnvironment;
+import interpreter.primitives.Bool;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import interpreter.splErrors.ArrayIndexError;
+import interpreter.splErrors.NativeError;
+import interpreter.splErrors.TypeError;
+import interpreter.splObjects.SplCallable;
 import util.LineFile;
 
 import java.util.ArrayList;
@@ -36,11 +44,72 @@ public class TryStmt extends AbstractStatement {
             body.evaluate(tryEnv);
             if (tryEnv.hasException()) {
                 Pointer exceptionPtr = tryEnv.getExceptionPtr();
+                ExceptionContainer[][] exceptionsArr = evalExceptions(env);
+                boolean caught = false;
+                OUT_LOOP:
+                for (int i = 0; i < exceptionsArr.length; i++) {
+                    for (int j = 0; j < exceptionsArr[i].length; j++) {
+                        ExceptionContainer ec = exceptionsArr[i][j];
+                        if (ec.userError != null) {
+                            Bool bool = (Bool) ec.userError.call(EvaluatedArguments.of(exceptionPtr), env, lineFile);
+                            if (bool.value) {
+                                caught = true;
+                                CatchStmt caughtError = catchStmts.get(i);
+                                BlockEnvironment catchEnv = new BlockEnvironment(env);
+                                if (caughtError.condition instanceof AsExpr) {
+                                    String name = ((AsExpr) caughtError.condition).getRight().getName();
+                                    catchEnv.defineVarAndSet(name, exceptionPtr, lineFile);
+                                }
+                                caughtError.evaluate(catchEnv);
+                                break OUT_LOOP;
+                            }
+                        }
+                    }
+                }
+
+                if (!caught)
+                    // Exception not caught, throw it to outer
+                    ThrowStmt.throwException(exceptionPtr, env, lineFile);
             }
         } catch (Exception e) {
+            ExceptionContainer[][] exceptionsArr = evalExceptions(env);
+            boolean caught = false;
+            OUT_LOOP:
+            for (int i = 0; i < exceptionsArr.length; i++) {
+                for (int j = 0; j < exceptionsArr[i].length; j++) {
+                    ExceptionContainer ec = exceptionsArr[i][j];
+                    if (ec.nativeError != null) {
 
+                        if (ec.nativeError.isInstance(e)) {
+                            caught = true;
+                            CatchStmt caughtError = catchStmts.get(i);
+                            BlockEnvironment catchEnv = new BlockEnvironment(env);
+
+                            // TODO: catch NativeErr as e
+//                            if (caught.condition instanceof AsExpr) {
+//                                String name = ((AsExpr) caught.condition).getRight().getName();
+//                                catchEnv.defineVarAndSet(name, exceptionPtr, lineFile);
+//                            }
+                            caughtError.evaluate(catchEnv);
+                            break OUT_LOOP;
+                        }
+                    }
+                }
+            }
+
+            if (!caught) throw e;
         } finally {
-
+            if (finallyBlock != null) {
+                Environment env2 = env;
+                while (!(env2 instanceof FunctionEnvironment)) {
+                    env2 = env2.outer;
+                }
+                FunctionEnvironment fe = (FunctionEnvironment) env2;
+                SplElement rtn = fe.temporaryRemoveRtn();
+                BlockEnvironment finallyEnv = new BlockEnvironment(env);
+                finallyBlock.evaluate(finallyEnv);
+                fe.setReturn(rtn);
+            }
         }
     }
 
@@ -49,22 +118,80 @@ public class TryStmt extends AbstractStatement {
         return String.format("try %s %s finally %s", body, catchStmts, finallyBlock);
     }
 
-    private ExceptionContainer[][] evalExceptions() {
-        ExceptionContainer[][] containers = new ExceptionContainer[catchStmts.size()][];
+    private ExceptionContainer[][] evalExceptions(Environment outerEnv) {
+        ExceptionContainer[][] containersArray = new ExceptionContainer[catchStmts.size()][];
+        int index = 0;
         for (CatchStmt catchStmt : catchStmts) {
-
+            int size = getExprSize(catchStmt.condition);
+            ExceptionContainer[] containers = new ExceptionContainer[size];
+            fillExceptionContainer(catchStmt.condition, containers, outerEnv, 0);
+            containersArray[index++] = containers;
         }
-        return null;
+        return containersArray;
+    }
+
+    private static int fillExceptionContainer(AbstractExpression expr,
+                                              ExceptionContainer[] containers,
+                                              Environment env,
+                                              int index) {
+        if (expr instanceof AsExpr) {
+            return fillExceptionContainer(((AsExpr) expr).left, containers, env, index);
+        } else if (expr instanceof BinaryExpr) {
+            BinaryExpr binaryExpr = (BinaryExpr) expr;
+            index = fillExceptionContainer(binaryExpr.left, containers, env, index);
+            return fillExceptionContainer(binaryExpr.right, containers, env, index);
+        } else {
+            if (expr instanceof NameNode) {
+                String name = ((NameNode) expr).getName();
+                Class<? extends NativeError> nativeErrorClass;
+                switch (name) {
+                    case "NativeError":
+                        nativeErrorClass = NativeError.class;
+                        break;
+                    case "TypeError":
+                        nativeErrorClass = TypeError.class;
+                        break;
+                    case "ArrayIndexError":
+                        nativeErrorClass = ArrayIndexError.class;
+                        break;
+                    default:
+                        nativeErrorClass = null;
+                        break;
+                }
+                if (nativeErrorClass != null) {
+                    containers[index] = new ExceptionContainer(nativeErrorClass);
+                    return index + 1;
+                }
+            }
+            SplElement value = expr.evaluate(env);
+            SplCallable splCallable = (SplCallable) env.getMemory().get((Pointer) value);
+            containers[index] = new ExceptionContainer(splCallable);
+            return index + 1;
+        }
     }
 
     private static int getExprSize(AbstractExpression expr) {
-        if (expr instanceof BinaryExpr) {
+        if (expr instanceof AsExpr) {
+            return getExprSize(((AsExpr) expr).left);
+        } else if (expr instanceof BinaryExpr) {
             BinaryExpr binaryExpr = (BinaryExpr) expr;
             return getExprSize(binaryExpr.left) + getExprSize(binaryExpr.right);
         } else return 1;
     }
 
     private static class ExceptionContainer {
+        private final Class<? extends NativeError> nativeError;
+        private final SplCallable userError;
 
+        private ExceptionContainer(Class<? extends NativeError> nativeError) {
+            this.nativeError = nativeError;
+            this.userError = null;
+        }
+
+        private ExceptionContainer(SplCallable userError) {
+            this.nativeError = null;
+            this.userError = userError;
+        }
     }
+
 }

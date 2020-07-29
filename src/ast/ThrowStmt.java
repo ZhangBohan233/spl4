@@ -2,17 +2,13 @@ package ast;
 
 import interpreter.Memory;
 import interpreter.env.Environment;
-import interpreter.invokes.SplInvokes;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
 import interpreter.splObjects.Instance;
-import interpreter.splObjects.SplClass;
-import interpreter.types.TypeError;
+import interpreter.splErrors.TypeError;
 import util.Constants;
 import util.LineFile;
 import util.Utilities;
-
-import java.util.Deque;
 
 public class ThrowStmt extends UnaryStmt {
 
@@ -23,23 +19,27 @@ public class ThrowStmt extends UnaryStmt {
     @Override
     protected void internalProcess(Environment env) {
         SplElement content = value.evaluate(env);
-        if (Utilities.isInstancePtr(content, Constants.EXCEPTION_CLASS, env, lineFile)) {
-            Instance excIns = (Instance) env.getMemory().get((Pointer) content);
+        throwException((Pointer) content, env, lineFile);
+    }
+
+    static void throwException(Pointer exceptionClassPtr, Environment env, LineFile lineFile) {
+        if (Utilities.isInstancePtr(exceptionClassPtr, Constants.EXCEPTION_CLASS, env, lineFile)) {
+            Instance excIns = (Instance) env.getMemory().get((Pointer) exceptionClassPtr);
 
             // the order of code matters.
             // if exception is thrown before 'createString' spl string, interpreter would be stopped.
             // if traceMsg is generated after 'createString' call, stack trace would be changed.
-            String traceMsg = makeTraceMsg(env);
+            String traceMsg = makeTraceMsg(env, lineFile);
             Pointer tracePtr = StringLiteral.createString(traceMsg.toCharArray(), env, lineFile);
             excIns.getEnv().setVar("traceMsg", tracePtr, lineFile);
 
-            env.throwException((Pointer) content);
+            env.throwException((Pointer) exceptionClassPtr);
         } else {
             throw new TypeError("Only classes extends 'Exception' can be thrown. ", lineFile);
         }
     }
 
-    private String makeTraceMsg(Environment env) {
+    private static String makeTraceMsg(Environment env, LineFile lineFile) {
         StringBuilder builder = new StringBuilder();
         builder.append(lineFile.toStringFileLine()).append('\n');
         for (Memory.StackTraceNode stn : env.getMemory().getCallStack()) {

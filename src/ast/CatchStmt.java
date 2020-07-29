@@ -4,10 +4,10 @@ import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
 import util.LineFile;
 
-public class CatchStmt extends Node {
+public class CatchStmt extends AbstractStatement {
 
-    private final AbstractExpression condition;
-    private final BlockStmt body;
+    final AbstractExpression condition;
+    final BlockStmt body;
 
     public CatchStmt(AbstractExpression condition, BlockStmt body, LineFile lineFile) {
         super(lineFile);
@@ -17,8 +17,8 @@ public class CatchStmt extends Node {
     }
 
     @Override
-    protected SplElement internalEval(Environment env) {
-        return null;
+    protected void internalProcess(Environment env) {
+        body.evaluate(env);
     }
 
     @Override

@@ -9,8 +9,8 @@ import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
 import interpreter.primitives.SplFloat;
+import interpreter.splErrors.TypeError;
 import interpreter.splObjects.*;
-import interpreter.types.*;
 import util.Constants;
 import util.LineFile;
 

@@ -3,7 +3,6 @@ package ast;
 import interpreter.env.Environment;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
-import interpreter.types.*;
 import util.LineFile;
 
 public class NullExpr extends LiteralNode {

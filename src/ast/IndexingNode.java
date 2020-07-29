@@ -3,8 +3,8 @@ package ast;
 import interpreter.env.Environment;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import interpreter.splErrors.TypeError;
 import interpreter.splObjects.SplArray;
-import interpreter.types.*;
 import util.LineFile;
 
 import java.util.List;

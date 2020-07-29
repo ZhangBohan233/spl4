@@ -1,12 +1,11 @@
 package ast;
 
 import interpreter.primitives.SplElement;
-import interpreter.splObjects.Function;
 import interpreter.env.Environment;
 import interpreter.splObjects.SplCallable;
 import interpreter.splObjects.SplObject;
 import interpreter.primitives.Pointer;
-import interpreter.types.TypeError;
+import interpreter.splErrors.TypeError;
 import util.LineFile;
 
 public class FuncCall extends AbstractExpression {

@@ -2,10 +2,10 @@ package ast;
 
 import interpreter.EvaluatedArguments;
 import interpreter.primitives.*;
+import interpreter.splErrors.TypeError;
 import interpreter.splObjects.Function;
 import interpreter.splObjects.Instance;
 import interpreter.splObjects.SplObject;
-import interpreter.types.*;
 import interpreter.env.Environment;
 import lexer.SyntaxError;
 import util.LineFile;

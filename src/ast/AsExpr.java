@@ -14,4 +14,9 @@ public class AsExpr extends BinaryExpr {
     protected SplElement internalEval(Environment env) {
         return null;
     }
+
+    @Override
+    public NameNode getRight() {
+        return (NameNode) right;
+    }
 }

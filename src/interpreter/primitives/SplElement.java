@@ -1,7 +1,7 @@
 package interpreter.primitives;
 
 import interpreter.SplThing;
-import interpreter.types.TypeError;
+import interpreter.splErrors.TypeError;
 
 public abstract class SplElement implements SplThing {
 

@@ -5,8 +5,8 @@ import interpreter.env.Environment;
 import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import interpreter.splErrors.TypeError;
 import interpreter.splObjects.*;
-import interpreter.types.*;
 import parser.ParseError;
 import util.LineFile;
 

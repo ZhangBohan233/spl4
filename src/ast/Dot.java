@@ -3,8 +3,8 @@ package ast;
 import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
+import interpreter.splErrors.TypeError;
 import interpreter.splObjects.*;
-import interpreter.types.*;
 import interpreter.primitives.Pointer;
 import util.LineFile;
 

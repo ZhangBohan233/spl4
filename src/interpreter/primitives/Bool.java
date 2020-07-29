@@ -1,9 +1,8 @@
 package interpreter.primitives;
 
 import ast.AbstractExpression;
-import ast.Node;
 import interpreter.env.Environment;
-import interpreter.types.TypeError;
+import interpreter.splErrors.TypeError;
 import util.LineFile;
 
 public class Bool extends SplElement {

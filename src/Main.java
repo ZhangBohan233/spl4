@@ -7,7 +7,7 @@ import interpreter.env.GlobalEnvironment;
 import interpreter.invokes.SplInvokes;
 import interpreter.primitives.*;
 import interpreter.splObjects.*;
-import interpreter.types.TypeError;
+import interpreter.splErrors.TypeError;
 import lexer.FileTokenizer;
 import lexer.TokenizeResult;
 import lexer.treeList.BraceList;

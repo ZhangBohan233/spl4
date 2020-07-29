@@ -9,7 +9,7 @@ import interpreter.env.FunctionEnvironment;
 import interpreter.primitives.Bool;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
-import interpreter.types.*;
+import interpreter.splErrors.TypeError;
 import util.LineFile;
 
 public class Function extends UserFunction {

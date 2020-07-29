@@ -4,10 +4,10 @@ import ast.NameNode;
 import ast.Node;
 import interpreter.AttributeError;
 import interpreter.Memory;
-import interpreter.splErrors.NativeError;
+import interpreter.splErrors.ArrayIndexError;
 import interpreter.env.Environment;
 import interpreter.primitives.*;
-import interpreter.types.*;
+import interpreter.splErrors.TypeError;
 import util.Constants;
 import util.LineFile;
 
@@ -75,54 +75,18 @@ public class SplArray extends SplObject {
 
     public static Pointer createArray(Node eleNode, int arrSize, Environment env) {
         return createArray(calculateEleType(eleNode), arrSize, env);
-//        int arrSize = dimensions.get(proceedingIndex);
-//        if (arrSize == -1) {
-//            return Pointer.NULL_PTR;
-//        } else {
-//            int eleType = calculateEleType(eleNode);
-//            Memory memory = env.getMemory();
-//            Pointer arrPtr = memory.allocate(arrSize + 1, env);
-//            SplArray arrIns = new SplArray(eleType, arrSize);
-//            memory.set(arrPtr, arrIns);
-////            if (proceedingIndex == dimensions.size() - 1) {
-//            fillInitValue(eleType, arrPtr, memory, arrSize);
-////            } else{
-////                int firstEleAddr = arrPtr.getPtr() + 1;
-////                for (int i = 0; i < arrSize; ++i) {
-////                    Pointer innerArrPtr = createArray(((ArrayType) eleType).getEleType(),
-////                            dimensions,
-////                            env,
-////                            proceedingIndex + 1);
-////                    memory.set(firstEleAddr + i, new ReadOnlyPrimitiveWrapper(innerArrPtr));
-////                }
-////            }
-//            return arrPtr;
-//        }
     }
 
     public static void fillInitValue(int eleType, Pointer arrayPtr, Memory memory, int arrayLength) {
         int firstEleAddr = arrayPtr.getPtr() + 1;
-        SplElement defaultValue;
-
-        switch (eleType) {
-            case SplElement.INT:
-                defaultValue = Int.ZERO;
-                break;
-            case SplElement.FLOAT:
-                defaultValue = SplFloat.ZERO;
-                break;
-            case SplElement.BOOLEAN:
-                defaultValue = Bool.FALSE;
-                break;
-            case SplElement.CHAR:
-                defaultValue = Char.NULL_TERMINATOR;
-                break;
-            case SplElement.POINTER:
-                defaultValue = Pointer.NULL_PTR;
-                break;
-            default:
-                throw new TypeError();
-        }
+        SplElement defaultValue = switch (eleType) {
+            case SplElement.INT -> Int.ZERO;
+            case SplElement.FLOAT -> SplFloat.ZERO;
+            case SplElement.BOOLEAN -> Bool.FALSE;
+            case SplElement.CHAR -> Char.NULL_TERMINATOR;
+            case SplElement.POINTER -> Pointer.NULL_PTR;
+            default -> throw new TypeError();
+        };
 
         for (int i = 0; i < arrayLength; ++i) {
             memory.set(firstEleAddr + i, defaultValue);
@@ -132,7 +96,7 @@ public class SplArray extends SplObject {
     public static SplElement getItemAtIndex(Pointer arrPtr, int index, Memory memory, LineFile lineFile) {
         SplArray array = (SplArray) memory.get(arrPtr);
         if (index < 0 || index >= array.length) {
-            throw new NativeError("Index " + index + " out of array length " + array.length + ". ", lineFile);
+            throw new ArrayIndexError("Index " + index + " out of array length " + array.length + ". ", lineFile);
         }
         return memory.getPrimitive(arrPtr.getPtr() + index + 1);
     }
@@ -145,7 +109,7 @@ public class SplArray extends SplObject {
         SplArray array = (SplArray) env.getMemory().get(arrPtr);
         if (value.type() == array.elementTypeCode) {
             if (index < 0 || index >= array.length) {
-                throw new NativeError("Index " + index + " out of array length " + array.length + ". ", lineFile);
+                throw new ArrayIndexError("Index " + index + " out of array length " + array.length + ". ", lineFile);
             }
             env.getMemory().set(arrPtr.getPtr() + index + 1, value);
         } else {

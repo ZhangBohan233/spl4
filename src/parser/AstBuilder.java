@@ -302,7 +302,7 @@ public class AstBuilder {
                     Node value;
                     if (ue.operatorAtLeft()) {
                         if (list.size() <= index + 1 && ue.voidAble()) {
-                            value = VoidNode.VOID_NODE;
+                            value = new NullExpr(LineFile.LF_PARSER);
                         } else {
                             value = list.remove(index + 1);
                         }

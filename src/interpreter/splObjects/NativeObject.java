@@ -7,7 +7,7 @@ import ast.Node;
 import interpreter.AttributeError;
 import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
-import interpreter.types.TypeError;
+import interpreter.splErrors.TypeError;
 import util.LineFile;
 import util.SplBaseException;
 

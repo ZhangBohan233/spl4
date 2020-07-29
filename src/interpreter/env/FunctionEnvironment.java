@@ -22,9 +22,28 @@ public class FunctionEnvironment extends MainAbstractEnvironment {
         return Objects.requireNonNullElse(returnValue, Pointer.NULL_PTR);
     }
 
+    /**
+     * Resume this environment after returning.
+     * <p>
+     * This method is only used for 'finally' block in try-catch-finally statement, when a return statement is
+     * executed in the 'try' or 'catch' block.
+     *
+     * @return the previous return value, nullable
+     */
+    public SplElement temporaryRemoveRtn() {
+        SplElement v = returnValue;
+        returnValue = null;
+        return v;
+    }
+
     @Override
     public void setReturn(SplElement typeValue) {
         returnValue = typeValue;
+    }
+
+    @Override
+    public void throwException(Pointer exceptionPtr) {
+        callingEnv.throwException(exceptionPtr);
     }
 
     @Override

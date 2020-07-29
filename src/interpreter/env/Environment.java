@@ -66,7 +66,7 @@ public abstract class Environment {
     public abstract boolean isFallingThrough();
 
     public void throwException(Pointer exceptionPtr) {
-        globalEnv.throwException(exceptionPtr);
+        outer.throwException(exceptionPtr);
     }
 
     public boolean hasException() {

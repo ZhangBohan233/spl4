@@ -1,6 +1,6 @@
 package interpreter.primitives;
 
-import interpreter.types.TypeError;
+import interpreter.splErrors.TypeError;
 
 public class Pointer extends SplElement {
 

@@ -5,8 +5,8 @@ import interpreter.env.Environment;
 import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import interpreter.splErrors.TypeError;
 import interpreter.splObjects.*;
-import interpreter.types.*;
 import util.LineFile;
 
 public class Assignment extends BinaryExpr {
