@@ -16,4 +16,8 @@ fn main() {
     for var i in [3, 4, 5, 6, 7] {
         print(i);
     }
+
+    for var i in range(5, 0, -1) {
+        print(i);
+    }
 }

@@ -92,18 +92,46 @@ class Iterable {
 class ArrayIterator(Iterator) {
 
     const array;
+    const endIndex;
     var index = 0;
 
-    fn __init__(array) {
+    fn __init__(array, endIndex=null) {
         this.array = array;
+        this.endIndex = array.length if endIndex is null else endIndex;
     }
 
     fn __hasNext__() {
-        return index < array.length;
+        return index < endIndex;
     }
 
     fn __next__() {
         return array[index++];
+    }
+}
+
+class RangeIterator(Iterator) {
+    var current;
+    const end;
+    const step;
+
+    fn __init__(begin, end, step) {
+        this.current = begin;
+        this.end = end;
+        this.step = step;
+    }
+
+    fn __hasNext__() {
+        if step >= 0 {
+            return current < end;
+        } else {
+            return current > end;
+        }
+    }
+
+    fn __next__() {
+        val := current;
+        current += step;
+        return val;
     }
 }
 
@@ -118,6 +146,10 @@ class List(Iterable) {
         for var i = 0; i < size; i++ {
             set(i, args[i]);
         }
+    }
+
+    fn __iter__() {
+        return new ArrayIterator(array, size);
     }
 
     fn __str__() {
@@ -226,6 +258,10 @@ class String {
 
 fn print(s) {
     Invokes.println(s);
+}
+
+fn range(begin, end, step=1) {
+    return new RangeIterator(begin, end, step);
 }
 
 fn str(obj) {

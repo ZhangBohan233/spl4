@@ -9,6 +9,7 @@ public class Constants {
     public static final String OBJECT_CLASS = "Object";
     public static final String STRING_CLASS = "String";
     public static final String EXCEPTION_CLASS = "Exception";
+    public static final String ITERATOR_CLASS = "Iterator";
     public static final String ITERABLE_CLASS = "Iterable";
     public static final String ARRAY_ITERATOR_CLASS = "ArrayIterator";
     public static final String LIST_CLASS = "List";

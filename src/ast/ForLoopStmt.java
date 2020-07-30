@@ -86,6 +86,10 @@ public class ForLoopStmt extends ConditionalStmt {
                         titleEnv,
                         bodyEnv);
                 return;
+            } else if (Utilities.isInstancePtr(ptr, Constants.ITERATOR_CLASS, parentEnv, lineFile)) {
+                Instance iterator = (Instance) parentEnv.getMemory().get(ptr);
+                forEachLoopIterator(loopInvariant, iterator, parentEnv, titleEnv, bodyEnv);
+                return;
             } else if (Utilities.isInstancePtr(ptr, Constants.ITERABLE_CLASS, parentEnv, lineFile)) {
                 Instance iterable = (Instance) parentEnv.getMemory().get(ptr);
                 Pointer iterFnPtr = (Pointer) iterable.getEnv().get(Constants.ITER_FN, lineFile);
@@ -97,7 +101,8 @@ public class ForLoopStmt extends ConditionalStmt {
             }
         }
 
-        throw new TypeError("For-each loop only supports array or classes extends 'Iterable'. ", lineFile);
+        throw new TypeError("For-each loop only supports array or classes extends 'Iterable' or 'Iterator', " +
+                "got a '" + probIterable + "'. ", lineFile);
     }
 
     private void forEachLoopIterator(Declaration loopInvariant,

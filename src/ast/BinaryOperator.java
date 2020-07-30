@@ -32,7 +32,7 @@ public class BinaryOperator extends BinaryExpr {
     );
 
     private static final Set<String> UNCHANGED_LOGICAL = Set.of(
-            "is"
+            "is", "is not"
     );
 
     private final int type;
@@ -83,11 +83,16 @@ public class BinaryOperator extends BinaryExpr {
             SplElement rightTv = right.evaluate(env);
             boolean result;
             if (SplElement.isPrimitive(leftTv)) {
-                if (!SplElement.isPrimitive(rightTv))
-                    throw new TypeError("Primitive type cannot compare to pointer type. ",
-                            getLineFile());
-//                PrimitiveType lt = (PrimitiveType) leftTv.getType();
-//                PrimitiveType rt = (PrimitiveType) rightTv.getType();
+                if (!SplElement.isPrimitive(rightTv)) {
+                    if (operator.equals("is")) {
+                        return Bool.FALSE;
+                    } else if (operator.equals("is not")) {
+                        return Bool.TRUE;
+                    } else {
+                        throw new TypeError("Primitive type cannot compare to pointer type. ",
+                                getLineFile());
+                    }
+                }
                 if (leftTv.isIntLike()) {
                     long leftV = leftTv.intValue();
                     if (rightTv.isIntLike()) {
@@ -240,46 +245,32 @@ public class BinaryOperator extends BinaryExpr {
     }
 
     private static boolean integerLogical(String op, long l, long r, LineFile lineFile) {
-        switch (op) {
-            case "==":
-                return l == r;
-            case "!=":
-                return l != r;
-            case ">":
-                return l > r;
-            case "<":
-                return l < r;
-            case ">=":
-                return l >= r;
-            case "<=":
-                return l <= r;
-            default:
-                throw new SyntaxError("Unsupported binary operator '" + op + "' between int and int. ",
-                        lineFile);
-        }
+        return switch (op) {
+            case "==" -> l == r;
+            case "!=" -> l != r;
+            case ">" -> l > r;
+            case "<" -> l < r;
+            case ">=" -> l >= r;
+            case "<=" -> l <= r;
+            default -> throw new SyntaxError("Unsupported binary operator '" + op + "' between int and int. ",
+                    lineFile);
+        };
     }
 
     private static boolean otherLogical(String op, double l, double r, LineFile lineFile) {
-        switch (op) {
-            case "==":
-                return l == r;
-            case "!=":
-                return l != r;
-            case ">":
-                return l > r;
-            case "<":
-                return l < r;
-            case ">=":
-                return l >= r;
-            case "<=":
-                return l <= r;
-            default:
-                throw new SyntaxError(
-                        String.format("Unsupported binary operator '%s'.",
-                                op),
-                        lineFile
-                );
-        }
+        return switch (op) {
+            case "==" -> l == r;
+            case "!=" -> l != r;
+            case ">" -> l > r;
+            case "<" -> l < r;
+            case ">=" -> l >= r;
+            case "<=" -> l <= r;
+            default -> throw new SyntaxError(
+                    String.format("Unsupported binary operator '%s'.",
+                            op),
+                    lineFile
+            );
+        };
     }
 
 }
