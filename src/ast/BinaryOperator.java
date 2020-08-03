@@ -9,6 +9,7 @@ import interpreter.splObjects.SplObject;
 import interpreter.env.Environment;
 import lexer.SyntaxError;
 import util.LineFile;
+import util.Utilities;
 
 import java.util.Map;
 import java.util.Set;
@@ -50,11 +51,12 @@ public class BinaryOperator extends BinaryExpr {
             SplElement rightEle = right.evaluate(env);
 
             if (leftEle instanceof Pointer) {
-                return pointerTypeNumericArithmetic((Pointer) leftEle, rightEle, operator, env, getLineFile());
+                return pointerNumericArithmetic((Pointer) leftEle, rightEle, operator, env, getLineFile());
             } else {
-                if (!SplElement.isPrimitive(rightEle)) {
-                    throw new TypeError("Arithmetic between primitive and pointer is not supported. ",
-                            getLineFile());
+                if (rightEle instanceof Pointer) {
+                    return primitivePointerArithmetic(leftEle, (Pointer) rightEle, operator, env, lineFile);
+//                    throw new TypeError("Arithmetic between primitive and pointer is not supported. ",
+//                            getLineFile());
                 }
 
                 if (leftEle.isIntLike()) {
@@ -160,11 +162,11 @@ public class BinaryOperator extends BinaryExpr {
         throw new SyntaxError("Unexpected error. ", getLineFile());
     }
 
-    private static SplElement pointerTypeNumericArithmetic(Pointer leftPtr,
-                                                           SplElement rightEle,
-                                                           String operator,
-                                                           Environment env,
-                                                           LineFile lineFile) {
+    private static SplElement pointerNumericArithmetic(Pointer leftPtr,
+                                                       SplElement rightEle,
+                                                       String operator,
+                                                       Environment env,
+                                                       LineFile lineFile) {
         SplObject leftObj = env.getMemory().get(leftPtr);
         if (leftObj instanceof Instance) {
             String fnName = ARITHMETIC_OP_MAP.get(operator);
@@ -175,6 +177,13 @@ public class BinaryOperator extends BinaryExpr {
         } else {
             throw new TypeError();
         }
+    }
+
+    private static SplElement primitivePointerArithmetic(SplElement leftEle, Pointer rightEle,
+                                                         String operator, Environment env,
+                                                         LineFile lineFile) {
+        Pointer leftWrpPtr = Utilities.primitiveToWrapper(leftEle, env, lineFile);
+        return pointerNumericArithmetic(leftWrpPtr, rightEle, operator, env, lineFile);
     }
 
     private static long integerArithmetic(String op, long l, long r, boolean rIsInt, LineFile lineFile) {

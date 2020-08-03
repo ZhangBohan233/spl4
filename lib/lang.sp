@@ -1,7 +1,7 @@
 class Object {
 
     fn __str__() {
-        return "Object@" + Invokes.id(this);
+        return getClass().__name__ + "@" + Invokes.id(this);
     }
 }
 
@@ -15,18 +15,46 @@ class Wrapper {
     fn __str__() {
         return str(value);
     }
+
+    fn __add__(other) {
+        return new getClass()(value + other.value);
+    }
+
+    contract __add__(Wrapper?) -> Wrapper?;
+
+
+    fn __sub__(other) {
+        return new getClass()(value - other.value);
+    }
+
+    contract __sub__(Wrapper?) -> Wrapper?;
+
+
+    fn __mul__(other) {
+        return new getClass()(value * other.value);
+    }
+
+    contract __mul__(Wrapper?) -> Wrapper?;
+
+
+    fn __div__(other) {
+        return new getClass()(value / other.value);
+    }
+
+    contract __div__(Wrapper?) -> Wrapper?;
+
+
+    fn __mod__(other) {
+        return new getClass()(value % other.value);
+    }
+
+    contract __mod__(Wrapper?) -> Wrapper?;
 }
 
 class Integer(Wrapper) {
     fn __init__(value) {
         super.__init__(value);
     }
-
-    fn __add__(other) {
-        return new Integer(value + other.value);
-    }
-
-    contract __add__(Wrapper?) -> Wrapper?;
 }
 
 class Float(Wrapper) {

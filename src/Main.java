@@ -14,6 +14,7 @@ import lexer.treeList.BraceList;
 import parser.Parser;
 import util.ArgumentParser;
 import util.LineFile;
+import util.Utilities;
 
 public class Main {
 
@@ -103,10 +104,14 @@ public class Main {
             @Override
             protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (SplElement.isPrimitive(arg)) {
-                    return new Int(arg.intValue());
+                if (arg instanceof Pointer) {
+                    return new Int(
+                            Utilities.wrapperToPrimitive(
+                                    (Pointer) arg,
+                                    callingEnv,
+                                    LineFile.LF_INTERPRETER).intValue());
                 } else {
-                    throw new TypeError("Cannot convert pointer type to int. ");
+                    return new Int(arg.intValue());
                 }
             }
         };
@@ -123,10 +128,14 @@ public class Main {
             @Override
             protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (SplElement.isPrimitive(arg)) {
-                    return new SplFloat(arg.floatValue());
+                if (arg instanceof Pointer) {
+                    return new SplFloat(
+                            Utilities.wrapperToPrimitive(
+                                    (Pointer) arg,
+                                    callingEnv,
+                                    LineFile.LF_INTERPRETER).floatValue());
                 } else {
-                    throw new TypeError("Cannot convert pointer type to float. ");
+                    return new SplFloat(arg.floatValue());
                 }
             }
         };

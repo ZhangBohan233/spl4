@@ -6,9 +6,11 @@ import interpreter.primitives.Bool;
 import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import interpreter.splErrors.TypeError;
 import interpreter.splObjects.Instance;
 import interpreter.splObjects.SplCallable;
 import interpreter.splObjects.SplClass;
+import interpreter.splObjects.SplObject;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -82,8 +84,13 @@ public class Utilities {
     }
 
     public static SplElement wrapperToPrimitive(Pointer wrapperPtr, Environment env, LineFile lineFile) {
-        Instance wrapperIns = (Instance) env.getMemory().get(wrapperPtr);
-        return wrapperIns.getEnv().get(Constants.WRAPPER_ATTR, lineFile);
+        SplObject obj = env.getMemory().get(wrapperPtr);
+        if (obj instanceof Instance) {
+            Instance wrapperIns = (Instance) obj;
+            return wrapperIns.getEnv().get(Constants.WRAPPER_ATTR, lineFile);
+        } else {
+            throw new TypeError("Cannot convert '" + obj + "' to primitive. ", lineFile);
+        }
     }
 
     public static boolean isInstancePtr(SplElement element, String className, Environment env, LineFile lineFile) {

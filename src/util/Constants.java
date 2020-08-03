@@ -23,7 +23,7 @@ public class Constants {
     public static final String HAS_NEXT_FN = "__hasNext__";
     public static final String WRAPPER_ATTR = "value";
     public static final String GET_CLASS = "getClass";
-    public static final String CLASS_NAME = "name";
+    public static final String CLASS_NAME = "__name__";
     public static final String ARRAY_LENGTH = "length";
 
     public static final Map<Integer, String> WRAPPERS = Map.of(
