@@ -72,12 +72,12 @@ public class Main {
                 memory.printMemory();
             }
             if (argumentParser.isTimer()) {
-                System.out.println(String.format(
-                        "Parse time: %d ms, VM startup time: %d ms, running time: %d ms.",
+                System.out.printf(
+                        "Parse time: %d ms, VM startup time: %d ms, running time: %d ms.%n",
                         vmStartBegin - parseBegin,
                         runBegin - vmStartBegin,
                         processEnd - runBegin
-                ));
+                );
             }
         } else {
             System.out.println(argumentParser.getMsg());

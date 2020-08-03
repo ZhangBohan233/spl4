@@ -2,9 +2,17 @@ package ast;
 
 import interpreter.EvaluatedArguments;
 import interpreter.env.Environment;
+import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import interpreter.splErrors.TypeError;
+import interpreter.splObjects.Function;
+import interpreter.splObjects.Instance;
+import interpreter.splObjects.SplArray;
+import interpreter.splObjects.SplObject;
 import lexer.SyntaxError;
+import util.Constants;
 import util.LineFile;
+import util.Utilities;
 
 import java.util.Arrays;
 
@@ -40,10 +48,44 @@ public class Arguments extends NonEvaluate {
                 if (kwargBegins)
                     throw new SyntaxError("Positional arguments follows keyword arguments. ",
                             argNode.getLineFile());
-                evaluatedArguments.positionalArgs.add(argNode.evaluate(callingEnv));
+                if (argNode instanceof StarExpr) {
+                    // unpack list
+                    StarExpr starExpr = (StarExpr) argNode;
+                    if (starExpr.value instanceof StarExpr) {
+                        // unpack dict
+                        // TODO
+                    } else {
+                        SplElement arg = starExpr.value.evaluate(callingEnv);
+                        SplObject obj = callingEnv.getMemory().get((Pointer) arg);
+                        if (obj instanceof SplArray) {
+                            addArrayToArgs((Pointer) arg, evaluatedArguments, callingEnv);
+                        } else if (obj instanceof Instance &&
+                                Utilities.isInstancePtr(arg, Constants.LIST_CLASS, callingEnv, lineFile)) {
+                            Pointer toArrayPtr = (Pointer) ((Instance) obj).getEnv().get("toArray", lineFile);
+                            Function toArrayFtn = (Function) callingEnv.getMemory().get(toArrayPtr);
+                            Pointer arrPtr = (Pointer) toArrayFtn.call(EvaluatedArguments.of(), callingEnv, lineFile);
+                            addArrayToArgs(arrPtr, evaluatedArguments, callingEnv);
+                        } else {
+                            throw new TypeError();
+                        }
+                    }
+                } else {
+                    evaluatedArguments.positionalArgs.add(argNode.evaluate(callingEnv));
+                }
             }
         }
         return evaluatedArguments;
+    }
+
+    private static void addArrayToArgs(Pointer arrayPtr, EvaluatedArguments evaluatedArguments,
+                                       Environment env) {
+        int arrAddr = arrayPtr.getPtr();
+        SplArray array = (SplArray) env.getMemory().get(arrayPtr);
+        for (int j = 0; j < array.length; j++) {
+            evaluatedArguments.positionalArgs.add(
+                    env.getMemory().getPrimitive(arrAddr + j + 1)
+            );
+        }
     }
 
     @Override

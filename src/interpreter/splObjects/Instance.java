@@ -118,6 +118,8 @@ public class Instance extends SplObject {
                     FuncDefinition fd = (FuncDefinition) lineNode;
                     fd.evaluate(instanceEnv);
                     superclassMethods.put(fd.name, fd);
+                } else if (lineNode instanceof ContractNode) {
+                    lineNode.evaluate(instanceEnv);
                 } else
                     throw new RuntimeSyntaxError("Invalid class body. ", line.lineFile);
             }

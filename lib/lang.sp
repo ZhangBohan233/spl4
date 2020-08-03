@@ -21,6 +21,12 @@ class Integer(Wrapper) {
     fn __init__(value) {
         super.__init__(value);
     }
+
+    fn __add__(other) {
+        return new Integer(value + other.value);
+    }
+
+    contract __add__(Wrapper?) -> Wrapper?;
 }
 
 class Float(Wrapper) {
@@ -137,32 +143,32 @@ class RangeIterator(Iterator) {
 
 class List(Iterable) {
     var array;
-    var size;
+    var _size;
 
     fn __init__(*args) {
         initCapacity := _calculateCapacity(args.length) if args.length > 8 else 8;
         array = new Object[initCapacity];
-        size = args.length;
-        for var i = 0; i < size; i++ {
+        _size = args.length;
+        for var i = 0; i < _size; i++ {
             set(i, args[i]);
         }
     }
 
     fn __iter__() {
-        return new ArrayIterator(array, size);
+        return new ArrayIterator(array, _size);
     }
 
     fn __str__() {
         result := "[";
-        for i := 0; i < size; i++ {
+        for i := 0; i < _size; i++ {
             result += (str(array[i]) + ", ");
         }
         return result + "]";
     }
 
     fn append(value) {
-        set(size++, value);
-        if size == array.length {
+        set(_size++, value);
+        if _size == array.length {
             _expand();
         }
     }
@@ -176,9 +182,21 @@ class List(Iterable) {
         array[index] = wrapper;
     }
 
+    fn size() {
+        return _size;
+    }
+
+    fn toArray() {
+        resArray := new Object[_size];
+        for i := 0; i < _size; i++ {
+            resArray[i] = array[i];
+        }
+        return resArray;
+    }
+
     fn _expand() {
         newArray := new Object[array.length * 2];
-        for i := 0; i < size; i++ {
+        for i := 0; i < _size; i++ {
             newArray[i] = array[i];
         }
         array = newArray;

@@ -1,7 +1,7 @@
-fn map(ftn, lst) {
+fn map(ftn, *lists) {
     
 }
 
-fn foldl(ftn, init, *args) {
+fn foldl(ftn, init, *lists) {
 
 }
