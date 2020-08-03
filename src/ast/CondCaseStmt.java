@@ -14,36 +14,14 @@ import java.util.List;
 
 public class CondCaseStmt extends AbstractStatement {
 
-    private final List<CaseStmt> cases = new ArrayList<>();
-    private BlockStmt defaultCase;
+    private final List<CaseStmt> cases;
+    private final CaseStmt defaultCase;
 
-    public CondCaseStmt(BlockStmt bodyBlock, LineFile lineFile) {
+    CondCaseStmt(List<CaseStmt> cases, CaseStmt defaultCase, LineFile lineFile) {
         super(lineFile);
 
-        setCases(bodyBlock);
-    }
-
-    private void setCases(BlockStmt body) {
-        if (body.getLines().size() > 0) {
-            Line line0 = body.getLines().get(0);
-            for (Node node : line0.getChildren()) {
-                if (node instanceof CaseStmt) {
-                    CaseStmt caseStmt = (CaseStmt) node;
-                    if (caseStmt.isDefault()) {
-                        if (defaultCase == null) {
-                            defaultCase = caseStmt.bodyBlock;
-                        } else {
-                            throw new ParseError("Multiple default cases. ", getLineFile());
-                        }
-                    } else {
-                        cases.add(caseStmt);
-                    }
-                } else {
-                    throw new ParseError("'cond' statement must only contain 'case' statementes.",
-                            getLineFile());
-                }
-            }
-        }
+        this.cases = cases;
+        this.defaultCase = defaultCase;
     }
 
     @Override
@@ -52,7 +30,7 @@ public class CondCaseStmt extends AbstractStatement {
         for (CaseStmt caseStmt: cases) {
             Bool caseCondition = Bool.evalBoolean(caseStmt.getCondition(), env, getLineFile());
             if (caseCondition.value) {
-                CaseBlockEnvironment blockEnv = new CaseBlockEnvironment(env);
+                CaseBlockEnvironment blockEnv = new CaseBlockEnvironment(env, false);
                 caseStmt.evaluate(blockEnv);
                 if (!blockEnv.isFallingThrough()) {
                     execDefault = false;
@@ -61,7 +39,7 @@ public class CondCaseStmt extends AbstractStatement {
             }
         }
         if (execDefault && defaultCase != null) {
-            CaseBlockEnvironment blockEnv = new CaseBlockEnvironment(env);
+            CaseBlockEnvironment blockEnv = new CaseBlockEnvironment(env, false);
             defaultCase.evaluate(blockEnv);
         }
     }

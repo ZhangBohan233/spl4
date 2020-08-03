@@ -61,9 +61,13 @@ public abstract class Environment {
 
     public abstract void invalidate();
 
-    public abstract void fallthrough();
+    public abstract void fallthrough(LineFile lineFile);
 
     public abstract boolean isFallingThrough();
+
+    public abstract void yield(SplElement value, LineFile lineFile);
+
+    public abstract SplElement yieldResult();
 
     public void throwException(Pointer exceptionPtr) {
         outer.throwException(exceptionPtr);

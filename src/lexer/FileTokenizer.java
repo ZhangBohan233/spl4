@@ -39,7 +39,7 @@ public class FileTokenizer {
     );
 
     public static final Set<String> SYMBOLS = Set.of(
-            "{", "}", "[", "\\[", "]", "(", ")", ".", ",", ";", ":"
+            "{", "}", "[", "]", "(", ")", ".", ",", ";", ":"
     );
 
     public static final Set<String> OTHERS = Set.of(
@@ -68,7 +68,7 @@ public class FileTokenizer {
             "class", "fn", "if", "else", "new", "return", "break",
             "continue", "true", "false", "null", "while", "for", "import", "namespace",
             "const", "var", "assert", "as", "super", "this", "lambda",
-            "cond", "switch", "case", "default", "fallthrough", "in"
+            "cond", "switch", "case", "default", "fallthrough", "in", "yield"
     );
 
     private static final String IMPORT_USAGE = "Usage of import: 'import \"path\"' or 'import \"path\" as <module>' " +

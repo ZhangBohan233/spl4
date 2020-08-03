@@ -44,12 +44,22 @@ public abstract class SubAbstractEnvironment extends Environment {
     }
 
     @Override
-    public void fallthrough() {
-        outer.fallthrough();
+    public void fallthrough(LineFile lineFile) {
+        outer.fallthrough(lineFile);
     }
 
     @Override
     public boolean isFallingThrough() {
         return outer.isFallingThrough();
+    }
+
+    @Override
+    public void yield(SplElement value, LineFile lineFile) {
+        outer.yield(value, lineFile);
+    }
+
+    @Override
+    public SplElement yieldResult() {
+        return outer.yieldResult();
     }
 }

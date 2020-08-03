@@ -12,6 +12,6 @@ public class FallthroughStmt extends AbstractStatement {
 
     @Override
     protected void internalProcess(Environment env) {
-        env.fallthrough();
+        env.fallthrough(lineFile);
     }
 }

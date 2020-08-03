@@ -1,3 +1,19 @@
+===== Version 4013 =====
+2020/08/02
+
+* New syntax:
+    * New keyword 'yield'
+    * Cond-case expression:
+        ... = cond {
+            case ... -> ...;
+            case ... -> {
+                ...
+                yield ...;
+            }
+            ...
+        }
+
+
 ===== Version 4012 =====
 2020/07/29
 

@@ -2,6 +2,7 @@ package interpreter.env;
 
 import interpreter.Memory;
 import interpreter.primitives.SplElement;
+import util.LineFile;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -79,12 +80,23 @@ public abstract class MainAbstractEnvironment extends Environment {
     }
 
     @Override
-    public void fallthrough() {
-        throw new EnvironmentError("'fallthrough' outside case statements. ");
+    public void fallthrough(LineFile lineFile) {
+        throw new EnvironmentError("'fallthrough' outside case statements. ", lineFile);
     }
 
     @Override
     public boolean isFallingThrough() {
         throw new EnvironmentError("'fallthrough' outside case statements. ");
     }
+
+    @Override
+    public void yield(SplElement value, LineFile lineFile) {
+        throw new EnvironmentError("'yield' outside cond/switch-case expressions. ", lineFile);
+    }
+
+    @Override
+    public SplElement yieldResult() {
+        throw new EnvironmentError("'yield' outside cond/switch-case expressions. ");
+    }
+
 }

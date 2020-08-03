@@ -91,6 +91,7 @@ public class AstBuilder {
             "new", 150,
             "namespace", 150,
             "throw", 100,
+            "yield", 0,
             "return", 0
     );
 

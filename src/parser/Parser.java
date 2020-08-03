@@ -111,7 +111,7 @@ public class Parser {
                             // multiplication
                             builder.addBinaryOperator("*", BinaryOperator.NUMERIC, lineFile);
                         }
-                    }  else if (identifier.equals("is")) {
+                    } else if (identifier.equals("is")) {
                         Element next = parent.get(index);
                         if (notIdentifierOf(next, "not")) {
                             builder.addBinaryOperator("is", BinaryOperator.LOGICAL, lineFile);
@@ -141,6 +141,7 @@ public class Parser {
                         BracketList conditionList;
                         AbstractExpression condition;
                         BracketList singleBodyList;
+                        CaseStmt caseStmt;
 
                         switch (identifier) {
                             case "=":
@@ -334,24 +335,73 @@ public class Parser {
                             case "cond":
                                 bodyList = (BraceList) parent.get(index++);
                                 bodyBlock = parseBlock(bodyList);
-                                CondCaseStmt ccs = new CondCaseStmt(bodyBlock, lineFile);
-                                builder.addNode(ccs);
+                                CondCaseFactory ccf = new CondCaseFactory(bodyBlock);
+                                if (ccf.isExpr()) {
+                                    builder.addNode(ccf.buildExpr(lineFile));
+                                } else {
+                                    builder.addNode(ccf.buildStmt(lineFile));
+                                }
                                 break;
                             case "case":
                                 conditionList = new BracketList(null, lineFile);
-                                while (!((next = parent.get(index++)) instanceof BraceList)) {
+                                while (!((next = parent.get(index++)) instanceof BraceList) &&
+                                        notIdentifierOf(next, "->")) {
                                     conditionList.add(next);
                                 }
-                                bodyList = (BraceList) next;
+
                                 condition = parseOnePartBlock(conditionList);
-                                bodyBlock = parseBlock(bodyList);
-                                CaseStmt caseStmt = new CaseStmt(condition, bodyBlock, lineFile);
+                                if (next instanceof BraceList) {
+                                    // case ... { ... }
+                                    bodyList = (BraceList) next;
+                                    bodyBlock = parseBlock(bodyList);
+                                    caseStmt = new CaseStmt(condition, bodyBlock, false, lineFile);
+                                } else {
+                                    next = parent.get(index);
+                                    if (next instanceof BraceList) {
+                                        // case ... -> { ... }
+                                        index++;
+                                        bodyBlock = parseBlock((CollectiveElement) next);
+                                        caseStmt = new CaseStmt(condition, bodyBlock, true, lineFile);
+                                    } else {
+                                        // case ... -> ...;
+                                        singleBodyList = new BracketList(null, lineFile);
+                                        while (notIdentifierOf(next = parent.get(index++), ";")) {
+                                            singleBodyList.add(next);
+                                        }
+                                        AbstractExpression body = parseOnePartBlock(singleBodyList);
+                                        caseStmt = new CaseStmt(condition, body, true, lineFile);
+                                    }
+                                }
                                 builder.addNode(caseStmt);
                                 break;
                             case "default":
-                                bodyList = (BraceList) parent.get(index++);
-                                bodyBlock = parseBlock(bodyList);
-                                caseStmt = new CaseStmt(null, bodyBlock, lineFile);
+                                next = parent.get(index++);
+
+                                if (next instanceof BraceList) {
+                                    // default { ... }
+                                    bodyList = (BraceList) next;
+                                    bodyBlock = parseBlock(bodyList);
+                                    caseStmt = new CaseStmt(null, bodyBlock, false, lineFile);
+                                } else if (!notIdentifierOf(next, "->")) {
+                                    next = parent.get(index);
+                                    if (next instanceof BraceList) {
+                                        // default -> { ... }
+                                        index++;
+                                        bodyBlock = parseBlock((CollectiveElement) next);
+                                        caseStmt = new CaseStmt(null, bodyBlock, true, lineFile);
+                                    } else {
+                                        // default -> ...;
+                                        singleBodyList = new BracketList(null, lineFile);
+                                        while (notIdentifierOf(next = parent.get(index++), ";")) {
+                                            singleBodyList.add(next);
+                                        }
+                                        AbstractExpression body = parseOnePartBlock(singleBodyList);
+                                        caseStmt = new CaseStmt(null, body, true, lineFile);
+                                    }
+                                } else {
+                                    throw new SyntaxError("Unknown syntax 'default " + next + ". ",
+                                            lineFile);
+                                }
                                 builder.addNode(caseStmt);
                                 break;
                             case "fallthrough":
@@ -362,6 +412,9 @@ public class Parser {
                                 break;
                             case "continue":
                                 builder.addNode(new ContinueStmt(lineFile));
+                                break;
+                            case "yield":
+                                builder.addNode(new YieldStmt(lineFile));
                                 break;
                             case "for":
                                 conditionList = new BracketList(null, lineFile);
