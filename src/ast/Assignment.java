@@ -1,5 +1,6 @@
 package ast;
 
+import interpreter.EvaluatedArguments;
 import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.primitives.Int;
@@ -7,6 +8,7 @@ import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
 import interpreter.splErrors.TypeError;
 import interpreter.splObjects.*;
+import util.Constants;
 import util.LineFile;
 
 public class Assignment extends BinaryExpr {
@@ -51,27 +53,19 @@ public class Assignment extends BinaryExpr {
                 Int index = (Int) indexingNode.getArgs().getChildren().get(0).evaluate(env);
                 SplObject obj = env.getMemory().get(arrPtr);
 
-                // todo: custom class set-item
                 if (obj instanceof SplArray) {
                     SplArray.setItemAtIndex(arrPtr, (int) index.value, value, env, lineFile);
+                } else if (obj instanceof Instance) {
+                    Instance ins = (Instance) obj;
+                    Function setItemFn = (Function)
+                            env.getMemory().get((Pointer) ins.getEnv().get(Constants.SET_ITEM_FN, lineFile));
+                    setItemFn.call(EvaluatedArguments.of(index, value), env, lineFile);
                 } else {
                     throw new NativeError("Object '" + obj + "' does not support set-item. ", lineFile);
                 }
             } else {
                 throw new NativeError("Array creation must take exactly one int as argument. ", lineFile);
             }
-//            TypeValue leftCallRes = ((IndexingNode) key).getCallObj().evaluate(env);
-//            List<Node> arguments = ((IndexingNode) key).getArgs().getChildren();
-//            int index = IndexingNode.getIndex(leftCallRes, arguments, env, lineFile);
-////            System.out.println(key + " " + key.getLineFile().toStringFileLine());
-////            System.out.println("Key is " + leftCallRes + ", Obj is " +
-////                    env.getMemory().get((Pointer) leftCallRes.getValue()));
-//            SplArray.setItemAtIndex((Pointer) leftCallRes.getValue(),
-//                    index,
-//                    (ArrayType) leftCallRes.getType(),
-//                    value,
-//                    env,
-//                    lineFile);
         } else {
             throw new NativeError();
         }

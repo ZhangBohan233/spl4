@@ -11,4 +11,5 @@
 
 ### Phase 2
 
-* Type of arithmetic
+* ~~Type of arithmetic~~ **_DONE_**
+* Pattern matching contract, example: `contract foo(int?, A) -> A`

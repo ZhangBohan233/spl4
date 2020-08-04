@@ -1,24 +1,14 @@
-import function
+import namespace function
 
-class Klass {
-    fn fuck() {
-        d := new getClass()();
-        print(d);
-    }
-
-    fn __str__() {
-        return "ss";
-    }
-}
-
-fn add(x, y, z) {
-    return x + float(y) / z;
+fn add(a, b, c) {
+    return a + b + c;
 }
 
 fn main() {
-    //b := function.foldl(add, 0, [1, 2, 3, 4], [2, 2, 2, 2]);
-    print(add(1, *[12, 5]));
-
-    c := new Klass();
-    c.fuck();
+    print( add(*[1, 2], 3));
+    b := function.foldl(add, -5, [1, 2, 3, 4, 5], [2, 2, 2, 2, 1]);
+    c := function.map(add, [1, 2, 3, 4], [2, 3, 4, 5], [3, 4, 5, 6]);
+    print(b);
+    print(c);
+    print(any(lambda x -> 5 > x, [4, 6, 7, 8]));
 }

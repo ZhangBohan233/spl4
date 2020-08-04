@@ -30,7 +30,9 @@ public class BinaryOperator extends BinaryExpr {
     );
 
     private static final Map<String, String> LOGICAL_OP_MAP = Map.of(
-            "==", "__eq__"
+            "==", "__eq__",
+            ">", "__gt__",
+            "<", "__lt__"
     );
 
     private static final Set<String> UNCHANGED_LOGICAL = Set.of(
@@ -83,14 +85,18 @@ public class BinaryOperator extends BinaryExpr {
             SplElement rightTv = right.evaluate(env);
             boolean result;
             if (SplElement.isPrimitive(leftTv)) {
-                if (!SplElement.isPrimitive(rightTv)) {
+                if (rightTv instanceof Pointer) {
                     if (operator.equals("is")) {
                         return Bool.FALSE;
                     } else if (operator.equals("is not")) {
                         return Bool.TRUE;
                     } else {
-                        throw new TypeError("Primitive type cannot compare to pointer type. ",
-                                getLineFile());
+                        return Bool.boolValueOf(pointerLogical(
+                                operator,
+                                Utilities.primitiveToWrapper(leftTv, env, lineFile),
+                                (Pointer) rightTv, 
+                                env,
+                                lineFile));
                     }
                 }
                 if (leftTv.isIntLike()) {
@@ -132,10 +138,13 @@ public class BinaryOperator extends BinaryExpr {
                 }
             } else {  // is pointer type
                 Pointer leftPtr = (Pointer) leftTv;
-                if (SplElement.isPrimitive(rightTv))
-                    throw new TypeError("Cannot compare primitive type to pointer type. ", getLineFile());
-                Pointer rightPtr = (Pointer) rightTv;
-                result = pointerLogical(operator, leftPtr, rightPtr, env, getLineFile());
+                if (rightTv instanceof Pointer) {
+                    Pointer rightPtr = (Pointer) rightTv;
+                    result = pointerLogical(operator, leftPtr, rightPtr, env, lineFile);
+                } else {
+                    result = pointerLogical(
+                            operator, leftPtr, Utilities.primitiveToWrapper(rightTv, env, lineFile), env, lineFile);
+                }
             }
             return Bool.boolValueOf(result);
         } else if (type == LAZY) {
@@ -176,6 +185,37 @@ public class BinaryOperator extends BinaryExpr {
             throw new TypeError();
         }
     }
+
+//    private static SplElement pointerLogicalCall(Pointer leftPtr,
+//                                                 SplElement rightEle,
+//                                                 String operator,
+//                                                 Environment env,
+//                                                 LineFile lineFile) {
+//        SplObject leftObj = env.getMemory().get(leftPtr);
+//        if (op.equals("is")) {
+//            return l.getPtr() == r.getPtr();
+//        } else if (op.equals("is not")) {
+//            return l.getPtr() != r.getPtr();
+//        } else {
+//            if (leftObj instanceof Instance) {
+//                String fnName = LOGICAL_OP_MAP.get(op);
+//                Environment instanceEnv = ((Instance) leftObj).getEnv();
+//                Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
+//                Function opFn = (Function) env.getMemory().get(fnPtr);
+//                SplElement res = opFn.call(EvaluatedArguments.of(r), env, lineFile);
+//                return res;
+//            }
+//        }
+//        if (leftObj instanceof Instance) {
+//            String fnName = LOGICAL_OP_MAP.get(operator);
+//            Environment instanceEnv = ((Instance) leftObj).getEnv();
+//            Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
+//            Function opFn = (Function) env.getMemory().get(fnPtr);
+//            return opFn.call(EvaluatedArguments.of(rightEle), env, lineFile);
+//        } else {
+//            throw new TypeError();
+//        }
+//    }
 
     private static SplElement primitivePointerArithmetic(SplElement leftEle, Pointer rightEle,
                                                          String operator, Environment env,

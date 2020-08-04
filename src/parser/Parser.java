@@ -212,7 +212,8 @@ public class Parser {
                                 }
                                 singleBodyList = new BracketList(null, lineFile);
                                 while (index < parent.size() &&
-                                        notIdentifierOf(next = parent.get(index++), ";")) {
+                                        notIdentifierOf(next = parent.get(index++), ";") &&
+                                        notIdentifierOf(next, ",")) {
                                     singleBodyList.add(next);
                                 }
                                 paramBlock = parseOneLineBlock(paramList);

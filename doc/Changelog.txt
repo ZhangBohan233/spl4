@@ -1,3 +1,15 @@
+===== Version 4017 =====
+2020/08/04
+
+* Syntax implemented:
+    * Implemented contracts for *args and **kwargs
+    * Set item and get item for custom class
+    * Logical binary operation of pointers and between primitive and pointers
+* Library function implemented:
+    * function.sp:
+        * foldl, map, all, any
+
+
 ===== Version 4016 =====
 2020/08/04
 

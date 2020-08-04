@@ -10,16 +10,17 @@ import util.Constants;
 import util.LineFile;
 import util.Utilities;
 
-public class ThrowStmt extends UnaryStmt {
+public class ThrowStmt extends UnaryExpr {
 
     public ThrowStmt(LineFile lineFile) {
         super("throw", true, lineFile);
     }
 
     @Override
-    protected void internalProcess(Environment env) {
+    protected SplElement internalEval(Environment env) {
         SplElement content = value.evaluate(env);
         throwException((Pointer) content, env, lineFile);
+        return null;
     }
 
     static void throwException(Pointer exceptionClassPtr, Environment env, LineFile lineFile) {

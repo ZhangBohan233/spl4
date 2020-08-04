@@ -1,7 +1,7 @@
 package interpreter.splObjects;
 
 import ast.*;
-import interpreter.ContractError;
+import interpreter.splErrors.ContractError;
 import interpreter.EvaluatedArguments;
 import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
@@ -12,9 +12,13 @@ import interpreter.primitives.SplElement;
 import interpreter.splErrors.TypeError;
 import util.LineFile;
 
+import java.util.Map;
+
 public class Function extends UserFunction {
 
-    private Contract contract;
+    //    private Contract contract;
+    private Pointer rtnContract;
+    private boolean hasContract = false;
 
     private final BlockStmt body;
     private final String definedName;
@@ -47,22 +51,25 @@ public class Function extends UserFunction {
     }
 
     public void setContract(Line paramContractLine, Node rtnContractNode, Environment env) {
-        if (contract != null) {
-            throw new NativeError("Contract already defined for function '" + definedName + "'. ",
-                    rtnContractNode.getLineFile());
-        }
         if (paramContractLine.size() != params.length) {
             throw new TypeError("Contracts must match the length of parameters. ", rtnContractNode.getLineFile());
         }
 
-        Pointer[] paramContracts = new Pointer[paramContractLine.size()];
-        for (int i = 0; i < paramContracts.length; i++) {
-            Pointer conFnPtr = (Pointer) paramContractLine.get(i).evaluate(env);
-            paramContracts[i] = conFnPtr;
+        for (int i = 0; i < paramContractLine.size(); i++) {
+            if (params[i].contract != null) {
+                throw new NativeError("Contract already defined for function '" + definedName + "'. ",
+                        rtnContractNode.getLineFile());
+            }
+            params[i].contract = (Pointer) paramContractLine.get(i).evaluate(env);
         }
-        Pointer rtnConFnPtr = (Pointer) rtnContractNode.evaluate(env);
 
-        this.contract = new Contract(paramContracts, rtnConFnPtr);
+        if (rtnContract != null) {
+            throw new NativeError("Contract already defined for function '" + definedName + "'. ",
+                    rtnContractNode.getLineFile());
+        }
+        rtnContract = (Pointer) rtnContractNode.evaluate(env);
+
+        hasContract = true;
     }
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
@@ -72,16 +79,33 @@ public class Function extends UserFunction {
     }
 
     private void checkParamContracts(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile lineFile) {
-        if (contract != null) {
-            for (int i = 0; i < evaluatedArgs.positionalArgs.size(); i++) {
-                callContract(contract.paramContracts[i], evaluatedArgs.positionalArgs.get(i), callingEnv, lineFile);
+        if (hasContract) {
+            int argIndex = 0;
+            for (Parameter param : params) {
+                if (param.unpackCount == 0) {
+                    callContract(
+                            param.contract,
+                            evaluatedArgs.positionalArgs.get(argIndex++),
+                            callingEnv,
+                            lineFile);
+                } else if (param.unpackCount == 1) {
+                    for (; argIndex < evaluatedArgs.positionalArgs.size(); argIndex++) {
+                        callContract(param.contract, evaluatedArgs.positionalArgs.get(argIndex), callingEnv, lineFile);
+                    }
+                } else if (param.unpackCount == 2) {
+                    for (Map.Entry<String, SplElement> entry : evaluatedArgs.keywordArgs.entrySet()) {
+                        callContract(param.contract, entry.getValue(), callingEnv, lineFile);
+                    }
+                } else {
+                    throw new NativeError("Unexpected error. ");
+                }
             }
         }
     }
 
     private void checkRtnContract(SplElement rtnValue, Environment callingEnv, LineFile lineFile) {
-        if (contract != null) {
-            callContract(contract.rtnContract, rtnValue, callingEnv, lineFile);
+        if (hasContract) {
+            callContract(rtnContract, rtnValue, callingEnv, lineFile);
         }
     }
 
@@ -105,7 +129,6 @@ public class Function extends UserFunction {
         FunctionEnvironment scope = new FunctionEnvironment(definitionEnv, callingEnv, definedName);
         checkValidArgCount(evaluatedArgs.positionalArgs.size(), definedName);
 
-        // TODO: variable length params
         checkParamContracts(evaluatedArgs, callingEnv, argLineFile);
 
         setArgs(evaluatedArgs, scope);
@@ -120,13 +143,13 @@ public class Function extends UserFunction {
         return rtnValue;
     }
 
-    public static class Contract {
-        public final Pointer[] paramContracts;
-        public final Pointer rtnContract;
-
-        public Contract(Pointer[] paramContracts, Pointer rtnContract) {
-            this.paramContracts = paramContracts;
-            this.rtnContract = rtnContract;
-        }
-    }
+//    public static class Contract {
+//        public final Pointer[] paramContracts;
+//        public final Pointer rtnContract;
+//
+//        public Contract(Pointer[] paramContracts, Pointer rtnContract) {
+//            this.paramContracts = paramContracts;
+//            this.rtnContract = rtnContract;
+//        }
+//    }
 }

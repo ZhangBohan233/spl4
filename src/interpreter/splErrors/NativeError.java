@@ -9,6 +9,10 @@ public class NativeError extends SplBaseException {
         super();
     }
 
+    public NativeError(LineFile lineFile) {
+        super(lineFile);
+    }
+
     public NativeError(String msg) {
         super(msg, LineFile.LF_INTERPRETER);
     }

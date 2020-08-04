@@ -1,4 +1,4 @@
-package interpreter;
+package interpreter.splErrors;
 
 import interpreter.splErrors.NativeError;
 import util.LineFile;

@@ -9,6 +9,10 @@ public class TypeError extends NativeError {
         super();
     }
 
+    public TypeError(LineFile lineFile) {
+        super(lineFile);
+    }
+
     public TypeError(String msg) {
         super(msg, LineFile.LF_INTERPRETER);
     }

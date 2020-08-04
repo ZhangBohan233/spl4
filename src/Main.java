@@ -62,6 +62,7 @@ public class Main {
 
                 callMain(argumentParser.getSplArgs(), globalEnvironment);
             } catch (ClassCastException cce) {
+                cce.printStackTrace();
                 throw new TypeError();
             }
 
@@ -192,6 +193,18 @@ public class Main {
             }
         };
 
+        NativeFunction isArray = new NativeFunction("Array?", 1) {
+            @Override
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg instanceof Pointer) {
+                    SplObject object = callingEnv.getMemory().get((Pointer) arg);
+                    return Bool.boolValueOf(object instanceof SplArray);
+                }
+                return Bool.FALSE;
+            }
+        };
+
         NativeFunction isCallable = new NativeFunction("Callable?", 1) {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
@@ -213,6 +226,7 @@ public class Main {
         Pointer ptrIsChar = memory.allocateFunction(isChar, ge);
         Pointer ptrIsBool = memory.allocateFunction(isBool, ge);
         Pointer ptrIsAbsObj = memory.allocateFunction(isAbstractObject, ge);
+        Pointer ptrIsArray = memory.allocateFunction(isArray, ge);
         Pointer ptrIsCallable = memory.allocateFunction(isCallable, ge);
 
         ge.defineFunction("int", ptrInt, LineFile.LF_INTERPRETER);
@@ -223,6 +237,7 @@ public class Main {
         ge.defineFunction("char?", ptrIsChar, LineFile.LF_INTERPRETER);
         ge.defineFunction("boolean?", ptrIsBool, LineFile.LF_INTERPRETER);
         ge.defineFunction("AbstractObject?", ptrIsAbsObj, LineFile.LF_INTERPRETER);
+        ge.defineFunction("Array?", ptrIsArray, LineFile.LF_INTERPRETER);
         ge.defineFunction("Callable?", ptrIsCallable, LineFile.LF_INTERPRETER);
     }
 

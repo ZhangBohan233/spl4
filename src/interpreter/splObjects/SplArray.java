@@ -2,7 +2,7 @@ package interpreter.splObjects;
 
 import ast.NameNode;
 import ast.Node;
-import interpreter.AttributeError;
+import interpreter.splErrors.AttributeError;
 import interpreter.Memory;
 import interpreter.splErrors.ArrayIndexError;
 import interpreter.env.Environment;

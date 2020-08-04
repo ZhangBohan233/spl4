@@ -4,7 +4,7 @@ import ast.Arguments;
 import ast.FuncCall;
 import ast.NameNode;
 import ast.Node;
-import interpreter.AttributeError;
+import interpreter.splErrors.AttributeError;
 import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
 import interpreter.splErrors.TypeError;

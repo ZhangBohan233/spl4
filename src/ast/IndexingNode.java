@@ -1,10 +1,16 @@
 package ast;
 
+import interpreter.EvaluatedArguments;
 import interpreter.env.Environment;
+import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
 import interpreter.splErrors.TypeError;
+import interpreter.splObjects.Function;
+import interpreter.splObjects.Instance;
 import interpreter.splObjects.SplArray;
+import interpreter.splObjects.SplObject;
+import util.Constants;
 import util.LineFile;
 
 import java.util.List;
@@ -29,16 +35,6 @@ public class IndexingNode extends AbstractExpression  {
         return callObj;
     }
 
-//    public Type evalAtomType(Environment env) {
-//        if (callObj instanceof IndexingNode) {
-//            return ((IndexingNode) callObj).evalAtomType(env);
-//        } else if (callObj instanceof TypeRepresent) {
-//            return ((TypeRepresent) callObj).evalType(env);
-//        } else {
-//            throw new SplException("Not a type. ", getLineFile());
-//        }
-//    }
-
     @Override
     protected SplElement internalEval(Environment env) {
 
@@ -50,7 +46,20 @@ public class IndexingNode extends AbstractExpression  {
         List<Node> arguments = getArgs().getChildren();
         int index = getIndex(arguments, callEnv, getLineFile());
 
-        return SplArray.getItemAtIndex((Pointer) callRes, index, callEnv.getMemory(), getLineFile());
+        Pointer objPtr = (Pointer) callRes;
+
+        SplObject obj = callEnv.getMemory().get(objPtr);
+
+        if (obj instanceof SplArray) {
+            return SplArray.getItemAtIndex(objPtr, index, callEnv.getMemory(), lineFile);
+        } else if (obj instanceof Instance) {
+            Instance ins = (Instance) obj;
+            Function getItemFn = (Function)
+                    callEnv.getMemory().get((Pointer) ins.getEnv().get(Constants.GET_ITEM_FN, lineFile));
+            return getItemFn.call(EvaluatedArguments.of(new Int(index)), callEnv, lineFile);
+        } else {
+            throw new TypeError(lineFile);
+        }
     }
 
     @Override
@@ -58,16 +67,7 @@ public class IndexingNode extends AbstractExpression  {
         return callObj + " " + args;
     }
 
-//    @Override
-//    public Type evalType(Environment environment) {
-//        Type ofType = ((TypeRepresent) callObj).evalType(environment);
-//        return new ArrayType(ofType);
-//    }
-
     public static int getIndex(List<Node> arguments, Environment env, LineFile lineFile) {
-//        if (!(arrayTv.getType() instanceof ArrayType)) {
-//            throw new TypeError("Only array type supports indexing. ", lineFile);
-//        }
         if (arguments.size() != 1) {
             throw new TypeError("Indexing must have 1 index. ", lineFile);
         }

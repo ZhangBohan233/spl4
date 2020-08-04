@@ -17,38 +17,50 @@ class Wrapper {
     }
 
     fn __add__(other) {
-        return wrap(value + other.value);
+        return wrap(value + wrap(other).value);
     }
 
     contract __add__(Wrapper?) -> Wrapper?;
 
 
     fn __sub__(other) {
-        return wrap(value - other.value);
+        return wrap(value - wrap(other).value);
     }
 
     contract __sub__(Wrapper?) -> Wrapper?;
 
 
     fn __mul__(other) {
-        return wrap(value * other.value);
+        return wrap(value * wrap(other).value);
     }
 
     contract __mul__(Wrapper?) -> Wrapper?;
 
 
     fn __div__(other) {
-        return wrap(value / other.value);
+        return wrap(value / wrap(other).value);
     }
 
     contract __div__(Wrapper?) -> Wrapper?;
 
 
     fn __mod__(other) {
-        return wrap(value % other.value);
+        return wrap(value % wrap(other).value);
     }
 
     contract __mod__(Wrapper?) -> Wrapper?;
+
+    fn __gt__(other) {
+        return value > wrap(other).value;
+    }
+
+    fn __lt__(other) {
+        return value < wrap(other).value;
+    }
+
+    fn __eq__(other) {
+        return value == wrap(other).value;
+    }
 }
 
 class Integer(Wrapper) {
@@ -104,6 +116,12 @@ class IndexException(Exception) {
 }
 
 class NotImplementedError(Exception) {
+    fn __init__(msg="", cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
+class UnknownTypeError(Exception) {
     fn __init__(msg="", cause=null) {
         super.__init__(msg, cause);
     }
@@ -184,6 +202,14 @@ class List(Iterable) {
         }
     }
 
+    fn __getItem__(index) {
+        return get(index);
+    }
+
+    fn __setItem__(index, value) {
+        return set(index, value);
+    }
+
     fn __iter__() {
         return new ArrayIterator(array, _size);
     }
@@ -204,10 +230,12 @@ class List(Iterable) {
     }
 
     fn get(index) {
+        _checkIndex(index)
         return array[index];
     }
 
     fn set(index, value) {
+        _checkIndex(index)
         wrapper := wrap(value);
         array[index] = wrapper;
     }
@@ -222,6 +250,12 @@ class List(Iterable) {
             resArray[i] = array[i];
         }
         return resArray;
+    }
+
+    fn _checkIndex(index) {
+        if index < 0 or index >= _size {
+            throw new IndexException();
+        }
     }
 
     fn _expand() {
@@ -306,6 +340,18 @@ class String {
 
 fn anyType(_) {
     return true;
+}
+
+fn iter?(x) {
+    return Array?(x) or Iterable?(x) or Iterator?(x);
+}
+
+fn len(x) {
+    return cond {
+        case Array?(x) -> x.length;
+        case List?(x) -> x.size();
+        default -> throw new UnknownTypeError();
+    }
 }
 
 fn print(s) {

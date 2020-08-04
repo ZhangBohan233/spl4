@@ -43,6 +43,15 @@ public abstract class UnaryStmt extends AbstractStatement implements UnaryBuilda
     }
 
     @Override
+    public String toString() {
+        if (atLeft) {
+            return String.format("US(%s %s)", operator, value);
+        } else {
+            return String.format("US(%s %s)", value, operator);
+        }
+    }
+
+    @Override
     public boolean notFulfilled() {
         return value == null;
     }

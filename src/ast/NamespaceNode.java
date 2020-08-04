@@ -21,4 +21,9 @@ public class NamespaceNode extends UnaryStmt {
         SplModule module = (SplModule) env.getMemory().get((Pointer) moduleTv);
         env.addNamespace(module.getEnv());
     }
+
+    @Override
+    public String toString() {
+        return "namespace " + value;
+    }
 }

@@ -2,6 +2,7 @@ package interpreter.splObjects;
 
 import ast.*;
 import interpreter.EvaluatedArguments;
+import interpreter.primitives.Pointer;
 import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
@@ -138,6 +139,7 @@ public abstract class SplCallable extends SplObject {
         public final SplElement defaultValue;
         public final boolean constant;
         public final int unpackCount;
+        Pointer contract;
 
         Parameter(String name, SplElement typeValue, boolean constant, int unpackCount) {
             this.name = name;

@@ -21,6 +21,8 @@ public class Constants {
     public static final String ITER_FN = "__iter__";
     public static final String NEXT_FN = "__next__";
     public static final String HAS_NEXT_FN = "__hasNext__";
+    public static final String GET_ITEM_FN = "__getItem__";
+    public static final String SET_ITEM_FN = "__setItem__";
     public static final String WRAPPER_ATTR = "value";
     public static final String GET_CLASS = "getClass";
     public static final String CLASS_NAME = "__name__";
