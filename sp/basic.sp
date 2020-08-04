@@ -5,15 +5,11 @@
 class A {
 }
 
-fn any(x) {
-    return true;
-}
-
 fn lsp(a, b) {
     return a + b;
 }
 
-contract lsp(int?, int?) -> any;
+contract lsp(int?, int?) -> anyType;
 
 fn foo() {
     return 0;

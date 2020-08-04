@@ -17,35 +17,35 @@ class Wrapper {
     }
 
     fn __add__(other) {
-        return new getClass()(value + other.value);
+        return wrap(value + other.value);
     }
 
     contract __add__(Wrapper?) -> Wrapper?;
 
 
     fn __sub__(other) {
-        return new getClass()(value - other.value);
+        return wrap(value - other.value);
     }
 
     contract __sub__(Wrapper?) -> Wrapper?;
 
 
     fn __mul__(other) {
-        return new getClass()(value * other.value);
+        return wrap(value * other.value);
     }
 
     contract __mul__(Wrapper?) -> Wrapper?;
 
 
     fn __div__(other) {
-        return new getClass()(value / other.value);
+        return wrap(value / other.value);
     }
 
     contract __div__(Wrapper?) -> Wrapper?;
 
 
     fn __mod__(other) {
-        return new getClass()(value % other.value);
+        return wrap(value % other.value);
     }
 
     contract __mod__(Wrapper?) -> Wrapper?;
@@ -53,13 +53,13 @@ class Wrapper {
 
 class Integer(Wrapper) {
     fn __init__(value) {
-        super.__init__(value);
+        super.__init__(int(value));
     }
 }
 
 class Float(Wrapper) {
     fn __init__(value) {
-        super.__init__(value);
+        super.__init__(float(value));
     }
 }
 
@@ -67,11 +67,13 @@ class Boolean(Wrapper) {
     fn __init__(value) {
         super.__init__(value);
     }
+
+    contract __init__(boolean?) -> void;
 }
 
 class Character(Wrapper) {
     fn __init__(value) {
-        super.__init__(value);
+        super.__init__(char(value));
     }
 }
 
@@ -302,6 +304,10 @@ class String {
     }
 }
 
+fn anyType(_) {
+    return true;
+}
+
 fn print(s) {
     Invokes.println(s);
 }
@@ -312,6 +318,10 @@ fn range(begin, end, step=1) {
 
 fn str(obj) {
     return Invokes.string(obj);
+}
+
+fn void(x) {
+    return x is null;
 }
 
 fn wrap(value) {

@@ -148,6 +148,22 @@ public class Main {
             }
         };
 
+        NativeFunction toChar = new NativeFunction("char", 1) {
+            @Override
+            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg instanceof Pointer) {
+                    return new Char(
+                            (char) Utilities.wrapperToPrimitive(
+                                    (Pointer) arg,
+                                    callingEnv,
+                                    LineFile.LF_INTERPRETER).intValue());
+                } else {
+                    return new Char((char) arg.intValue());
+                }
+            }
+        };
+
         NativeFunction isChar = new NativeFunction("char?", 1) {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
@@ -192,6 +208,7 @@ public class Main {
         Pointer ptrInt = memory.allocateFunction(toInt, ge);
         Pointer ptrIsInt = memory.allocateFunction(isInt, ge);
         Pointer ptrFloat = memory.allocateFunction(toFloat, ge);
+        Pointer ptrChar = memory.allocateFunction(toChar, ge);
         Pointer ptrIsFloat = memory.allocateFunction(isFloat, ge);
         Pointer ptrIsChar = memory.allocateFunction(isChar, ge);
         Pointer ptrIsBool = memory.allocateFunction(isBool, ge);
@@ -202,6 +219,7 @@ public class Main {
         ge.defineFunction("int?", ptrIsInt, LineFile.LF_INTERPRETER);
         ge.defineFunction("float", ptrFloat, LineFile.LF_INTERPRETER);
         ge.defineFunction("float?", ptrIsFloat, LineFile.LF_INTERPRETER);
+        ge.defineFunction("char", ptrChar, LineFile.LF_INTERPRETER);
         ge.defineFunction("char?", ptrIsChar, LineFile.LF_INTERPRETER);
         ge.defineFunction("boolean?", ptrIsBool, LineFile.LF_INTERPRETER);
         ge.defineFunction("AbstractObject?", ptrIsAbsObj, LineFile.LF_INTERPRETER);
@@ -213,10 +231,6 @@ public class Main {
             Pointer mainPtr = (Pointer) globalEnvironment.get("main", LF_MAIN);
             EvaluatedArguments splArg =
                     args == null ? new EvaluatedArguments() : makeSplArgArray(args, globalEnvironment);
-
-//            if (!(mainTv.getType() instanceof CallableType)) {
-//                throw new TypeError("Main function must be callable. ");
-//            }
 
             Function mainFunc = (Function) globalEnvironment.getMemory().get(mainPtr);
             if (mainFunc.minArgCount() > 1) {

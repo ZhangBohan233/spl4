@@ -1,3 +1,19 @@
+===== Version 4016 =====
+2020/08/04
+
+* Implemented new binary operator rule:
+    * int int -> int
+    * int float -> float
+    * float int -> float
+    * float float -> float
+* Changed 'any' to 'anyType'
+* Added builtin function 'void'
+* Added native function 'char'
+* Bug fixes:
+    * Fixed that wrapper may contain wrong type of value
+    * Fixed that '_' is identified as int
+
+
 ===== Version 4015 =====
 2020/08/03
 

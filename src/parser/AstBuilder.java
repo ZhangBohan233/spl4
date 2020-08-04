@@ -191,13 +191,13 @@ public class AstBuilder {
         }
     }
 
-    void addBinaryOperatorAssign(String op, LineFile lineFile) {
-        if (inner == null) {
-            stack.add(new BinaryOperatorAssignment(op, lineFile));
-        } else {
-            inner.addBinaryOperatorAssign(op, lineFile);
-        }
-    }
+//    void addBinaryOperatorAssign(String op, int type, LineFile lineFile) {
+//        if (inner == null) {
+//            stack.add(new BinaryOperatorAssignment(op, lineFile));
+//        } else {
+//            inner.addBinaryOperatorAssign(op, lineFile);
+//        }
+//    }
 
     void addFakeTernary(String op, LineFile lineFile) {
         if (inner == null) {

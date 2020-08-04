@@ -100,7 +100,7 @@ public class Parser {
                             builder.addUnaryOperator("neg", RegularUnaryOperator.NUMERIC, lineFile);
                         } else {
                             // subtraction
-                            builder.addBinaryOperator("-", BinaryOperator.NUMERIC, lineFile);
+                            builder.addBinaryOperator("-", BinaryOperator.ARITHMETIC, lineFile);
                         }
                     } else if (identifier.equals("*")) {
                         // special case, since "*" can both binary (multiplication) or unary (star)
@@ -109,7 +109,7 @@ public class Parser {
                             builder.addNode(new StarExpr(lineFile));
                         } else {
                             // multiplication
-                            builder.addBinaryOperator("*", BinaryOperator.NUMERIC, lineFile);
+                            builder.addBinaryOperator("*", BinaryOperator.ARITHMETIC, lineFile);
                         }
                     } else if (identifier.equals("is")) {
                         Element next = parent.get(index);
@@ -122,9 +122,13 @@ public class Parser {
                     } else if (FileTokenizer.LOGICAL_UNARY.contains(identifier)) {
                         builder.addUnaryOperator(identifier, RegularUnaryOperator.LOGICAL, lineFile);
                     } else if (FileTokenizer.NUMERIC_BINARY.contains(identifier)) {
-                        builder.addBinaryOperator(identifier, BinaryOperator.NUMERIC, lineFile);
+                        builder.addBinaryOperator(identifier, BinaryOperator.ARITHMETIC, lineFile);
+                    } else if (FileTokenizer.BITWISE_BINARY.contains(identifier)) {
+                        builder.addBinaryOperator(identifier, BinaryOperator.BITWISE, lineFile);
                     } else if (FileTokenizer.NUMERIC_BINARY_ASSIGN.contains(identifier)) {
-                        builder.addBinaryOperatorAssign(identifier, lineFile);
+                        builder.addNode(new BinaryOperatorAssignment(identifier, BinaryOperator.ARITHMETIC, lineFile));
+                    } else if (FileTokenizer.BITWISE_BINARY_ASSIGN.contains(identifier)) {
+                        builder.addNode(new BinaryOperatorAssignment(identifier, BinaryOperator.BITWISE, lineFile));
                     } else if (FileTokenizer.LOGICAL_BINARY.contains(identifier)) {
                         builder.addBinaryOperator(identifier, BinaryOperator.LOGICAL, lineFile);
                     } else if (FileTokenizer.LAZY_BINARY.contains(identifier)) {
@@ -651,17 +655,11 @@ public class Parser {
             Token token = ((AtomicElement) element).atom;
             if (token instanceof IdToken) {
                 String identifier = ((IdToken) token).getIdentifier();
-                switch (identifier) {
-                    case ";":
-                    case "=":
-                    case "->":
-                    case ".":
-                    case ",":
-                        return true;
-                    default:
-                        return FileTokenizer.ALL_BINARY.contains(identifier) ||
-                                FileTokenizer.RESERVED.contains(identifier);
-                }
+                return switch (identifier) {
+                    case ";", "=", "->", ".", "," -> true;
+                    default -> FileTokenizer.ALL_BINARY.contains(identifier) ||
+                            FileTokenizer.RESERVED.contains(identifier);
+                };
             } else return !(token instanceof IntToken) && !(token instanceof FloatToken);
         } else return !(element instanceof BracketList);
     }
@@ -669,21 +667,11 @@ public class Parser {
     private static boolean isUnary(Token token) {
         if (token instanceof IdToken) {
             String identifier = ((IdToken) token).getIdentifier();
-            switch (identifier) {
-                case ";":
-                case "=":
-                case "->":
-                case "(":
-                case "[":
-                case "{":
-                case "}":
-                case ".":
-                case ",":
-                    return true;
-                default:
-                    return FileTokenizer.ALL_BINARY.contains(identifier) ||
-                            FileTokenizer.RESERVED.contains(identifier);
-            }
+            return switch (identifier) {
+                case ";", "=", "->", "(", "[", "{", "}", ".", "," -> true;
+                default -> FileTokenizer.ALL_BINARY.contains(identifier) ||
+                        FileTokenizer.RESERVED.contains(identifier);
+            };
         } else return !(token instanceof IntToken) && !(token instanceof FloatToken);
     }
 

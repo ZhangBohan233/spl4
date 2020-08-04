@@ -15,11 +15,19 @@ import java.util.Set;
 public class FileTokenizer {
 
     public static final Set<String> NUMERIC_BINARY = Set.of(
-            "+", "-", "*", "/", "%", ">>", ">>>", "<<", "&", "|", "^"
+            "+", "-", "*", "/", "%"
+    );
+
+    public static final Set<String> BITWISE_BINARY = Set.of(
+            ">>", ">>>", "<<", "&", "|", "^"
     );
 
     public static final Set<String> NUMERIC_BINARY_ASSIGN = Set.of(
-            "+=", "-=", "*=", "/=", "%=", ">>=", ">>>=", "<<=", "&=", "|=", "^="
+            "+=", "-=", "*=", "/=", "%="
+    );
+
+    public static final Set<String> BITWISE_BINARY_ASSIGN = Set.of(
+            ">>=", ">>>=", "<<=", "&=", "|=", "^="
     );
 
     public static final Set<String> LOGICAL_BINARY = Set.of(
@@ -48,7 +56,9 @@ public class FileTokenizer {
 
     public static final Set<String> EXTRA_IDENTIFIERS = Utilities.mergeSets(
             NUMERIC_BINARY,
+            BITWISE_BINARY,
             NUMERIC_BINARY_ASSIGN,
+            BITWISE_BINARY_ASSIGN,
             LOGICAL_BINARY,
             LAZY_BINARY,
             LOGICAL_UNARY,
@@ -59,7 +69,9 @@ public class FileTokenizer {
 
     public static final Set<String> ALL_BINARY = Utilities.mergeSets(
             NUMERIC_BINARY,
+            BITWISE_BINARY,
             NUMERIC_BINARY_ASSIGN,
+            BITWISE_BINARY_ASSIGN,
             LOGICAL_BINARY,
             LAZY_BINARY
     );
@@ -274,13 +286,7 @@ public class FileTokenizer {
     }
 
     private static void putString(List<String> list, String string) {
-//        if (string.length() > 1 && string.charAt(string.length() - 1) == '.') {
-//            // Object name ended with a number, like list1.something
-//            list.add(string.substring(0, string.length() - 1));
-//            list.add(".");
-//        } else {
         list.add(string);
-//        }
     }
 
     private static class CharTypeIdentifier {
@@ -313,7 +319,9 @@ public class FileTokenizer {
         private static final int QUESTION = 26;
         private static final int UNDEFINED = 0;
 
-        private static final int[] SELF_CONCATENATE = {DIGIT, LETTER, GT, EQ, LT, AND, OR, UNDERSCORE, PLUS, MINUS};
+        private static final int[] SELF_CONCATENATE = {
+                DIGIT, LETTER, GT, EQ, LT, AND, OR, UNDERSCORE, PLUS, MINUS
+        };
         private static final int[][] CROSS_CONCATENATE = {
                 {LETTER, UNDERSCORE},
                 {UNDERSCORE, LETTER},
@@ -353,60 +361,33 @@ public class FileTokenizer {
             if (Character.isDigit(ch)) return DIGIT;
             else if (Character.isAlphabetic(ch)) return LETTER;
 
-            switch (ch) {
-                case '{':
-                    return L_BRACE;
-                case '}':
-                    return R_BRACE;
-                case '(':
-                    return L_BRACKET;
-                case ')':
-                    return R_BRACKET;
-                case '[':
-                    return L_SQR_BRACKET;
-                case ']':
-                    return R_SQR_BRACKET;
-                case ';':
-                    return EOL;
-                case '\n':
-                    return NEW_LINE;
-                case '>':
-                    return GT;
-                case '<':
-                    return LT;
-                case '=':
-                    return EQ;
-                case '&':
-                    return AND;
-                case '|':
-                    return OR;
-                case '^':
-                    return XOR;
-                case '.':
-                    return DOT;
-                case ',':
-                    return COMMA;
-                case '_':
-                    return UNDERSCORE;
-                case '!':
-                    return NOT;
-                case '+':
-                    return PLUS;
-                case '-':
-                    return MINUS;
-                case '*':
-                case '/':
-                case '%':
-                    return OTHER_ARITHMETIC;
-                case ':':
-                    return TYPE;
-                case '\\':
-                    return ESCAPE;
-                case '?':
-                    return QUESTION;
-                default:
-                    return UNDEFINED;
-            }
+            return switch (ch) {
+                case '{' -> L_BRACE;
+                case '}' -> R_BRACE;
+                case '(' -> L_BRACKET;
+                case ')' -> R_BRACKET;
+                case '[' -> L_SQR_BRACKET;
+                case ']' -> R_SQR_BRACKET;
+                case ';' -> EOL;
+                case '\n' -> NEW_LINE;
+                case '>' -> GT;
+                case '<' -> LT;
+                case '=' -> EQ;
+                case '&' -> AND;
+                case '|' -> OR;
+                case '^' -> XOR;
+                case '.' -> DOT;
+                case ',' -> COMMA;
+                case '_' -> UNDERSCORE;
+                case '!' -> NOT;
+                case '+' -> PLUS;
+                case '-' -> MINUS;
+                case '*', '/', '%' -> OTHER_ARITHMETIC;
+                case ':' -> TYPE;
+                case '\\' -> ESCAPE;
+                case '?' -> QUESTION;
+                default -> UNDEFINED;
+            };
         }
     }
 
@@ -416,7 +397,7 @@ public class FileTokenizer {
             for (char c : s.toCharArray()) {
                 if (!(Character.isDigit(c) || c == '_')) return false;
             }
-            return true;
+            return s.length() > 0 && s.charAt(0) != '_';
         }
 
         public static boolean isIdentifier(String s) {

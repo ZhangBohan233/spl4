@@ -16,9 +16,10 @@ import java.util.Set;
 
 public class BinaryOperator extends BinaryExpr {
 
-    public static final int NUMERIC = 1;
+    public static final int ARITHMETIC = 1;
     public static final int LOGICAL = 2;
     public static final int LAZY = 3;
+    public static final int BITWISE = 4;
 
     private static final Map<String, String> ARITHMETIC_OP_MAP = Map.of(
             "+", "__add__",
@@ -46,40 +47,37 @@ public class BinaryOperator extends BinaryExpr {
 
     @Override
     protected SplElement internalEval(Environment env) {
-        if (type == NUMERIC) {
+        if (type == ARITHMETIC) {
             SplElement leftEle = left.evaluate(env);
             SplElement rightEle = right.evaluate(env);
 
             if (leftEle instanceof Pointer) {
-                return pointerNumericArithmetic((Pointer) leftEle, rightEle, operator, env, getLineFile());
+                return pointerNumericArithmetic((Pointer) leftEle, rightEle, operator, env, lineFile);
             } else {
                 if (rightEle instanceof Pointer) {
                     return primitivePointerArithmetic(leftEle, (Pointer) rightEle, operator, env, lineFile);
-//                    throw new TypeError("Arithmetic between primitive and pointer is not supported. ",
-//                            getLineFile());
                 }
 
+                double res = simpleArithmetic(operator, leftEle.floatValue(), rightEle.floatValue(), lineFile);
+
                 if (leftEle.isIntLike()) {
-                    SplElement result = new Int(integerArithmetic(
-                            operator,
-                            leftEle.intValue(),
-                            rightEle.intValue(),
-                            rightEle.isIntLike(),
-                            getLineFile()
-                    ));
-//                System.out.println(leftEle.getValue() + operator + rightEle.getValue() + '=' + result);
-                    return result;
+                    if (rightEle.isIntLike()) {
+                        return new Int((long) res);
+                    } else if (rightEle instanceof SplFloat) {
+                        return new SplFloat(res);
+                    }
                 } else if (leftEle instanceof SplFloat) {
-                    return new SplFloat(floatArithmetic(
-                            operator,
-                            leftEle.floatValue(),
-                            rightEle.floatValue(),
-                            getLineFile()
-                    ));
-                } else {
-                    throw new TypeError();
+                    return new SplFloat(res);
                 }
+                throw new TypeError();
             }
+        } else if (type == BITWISE) {
+            SplElement leftEle = left.evaluate(env);
+            SplElement rightEle = right.evaluate(env);
+            if (leftEle.isIntLike() && rightEle.isIntLike()) {
+                return new Int(bitwise(operator, leftEle.intValue(), rightEle.intValue(), lineFile));
+            }
+            throw new TypeError();
         } else if (type == LOGICAL) {
             SplElement leftTv = left.evaluate(env);
             SplElement rightTv = right.evaluate(env);
@@ -186,50 +184,27 @@ public class BinaryOperator extends BinaryExpr {
         return pointerNumericArithmetic(leftWrpPtr, rightEle, operator, env, lineFile);
     }
 
-    private static long integerArithmetic(String op, long l, long r, boolean rIsInt, LineFile lineFile) {
-        switch (op) {
-            case "+":
-                return l + r;
-            case "-":
-                return l - r;
-            case "*":
-                return l * r;
-            case "/":
-                return l / r;
-            case "%":
-                return l % r;
-            case "<<":
-                if (rIsInt) return l << r;
-            case ">>":
-                if (rIsInt) return l >> r;
-            case ">>>":
-                if (rIsInt) return l >>> r;
-            case "&":
-                if (rIsInt) return l & r;
-            case "|":
-                if (rIsInt) return l | r;
-            case "^":
-                if (rIsInt) return l ^ r;
-            default:
-                throw new TypeError("Unsupported operation '" + op + "'. ", lineFile);
-        }
+    private static long bitwise(String op, long l, long r, LineFile lineFile) {
+        return switch (op) {
+            case "<<" -> l << r;
+            case ">>" -> l >> r;
+            case ">>>" -> l >>> r;
+            case "&" -> l & r;
+            case "|" -> l | r;
+            case "^" -> l ^ r;
+            default -> throw new TypeError("Unsupported operation '" + op + "'. ", lineFile);
+        };
     }
 
-    private static double floatArithmetic(String op, double l, double r, LineFile lineFile) {
-        switch (op) {
-            case "+":
-                return l + r;
-            case "-":
-                return l - r;
-            case "*":
-                return l * r;
-            case "/":
-                return l / r;
-            case "%":
-                return l % r;
-            default:
-                throw new TypeError("Unsupported operation '" + op + "'. ", lineFile);
-        }
+    private static double simpleArithmetic(String op, double l, double r, LineFile lineFile) {
+        return switch (op) {
+            case "+" -> l + r;
+            case "-" -> l - r;
+            case "*" -> l * r;
+            case "/" -> l / r;
+            case "%" -> l % r;
+            default -> throw new TypeError("Unsupported operation '" + op + "'. ", lineFile);
+        };
     }
 
     private static boolean pointerLogical(String op, Pointer l, Pointer r, Environment env, LineFile lineFile) {
