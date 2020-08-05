@@ -12,6 +12,7 @@ import interpreter.primitives.SplElement;
 import util.Constants;
 import util.LineFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SplClass extends SplObject {
@@ -66,16 +67,42 @@ public class SplClass extends SplObject {
         return false;
     }
 
-    public SplElement getAttr(Node attrNode, Environment env, LineFile lineFile) {
-        if (attrNode instanceof NameNode && ((NameNode) attrNode).getName().equals(Constants.CLASS_NAME)) {
-            return StringLiteral.createString(className.toCharArray(), env, lineFile);
-        } else {
-            throw new AttributeError("Class does not have attribute '" + attrNode + "'. ", lineFile);
+    public SplElement getAttr(Pointer selfPtr, Node attrNode, Environment env, LineFile lineFile) {
+        if (attrNode instanceof NameNode) {
+            String name = ((NameNode) attrNode).getName();
+            if (name.equals(Constants.CLASS_NAME)) {
+                return StringLiteral.createString(className.toCharArray(), env, lineFile);
+            } else if (name.equals(Constants.CLASS_MRO)) {
+                List<Pointer> mroList = new ArrayList<>();
+                addToMroList(mroList, env.getMemory(), selfPtr);
+                return mroListToArray(mroList, lineFile);
+            }
         }
+        throw new AttributeError("Class does not have attribute '" + attrNode + "'. ", lineFile);
     }
 
     @Override
     public String toString() {
         return "Class <" + className + ">";
+    }
+
+    private void addToMroList(List<Pointer> mro, Memory memory, Pointer selfPtr) {
+        mro.add(selfPtr);
+        for (Pointer scPtr: superclassPointers) {
+            SplClass sc = (SplClass) memory.get(scPtr);
+            sc.addToMroList(mro, memory, scPtr);
+        }
+    }
+
+    private void removeDuplicateMro(List<Pointer> mro) {
+
+    }
+
+    private Pointer mroListToArray(List<Pointer> mro, LineFile lineFile) {
+        Pointer mroArrPtr = SplArray.createArray(SplElement.POINTER, mro.size(), definitionEnv);
+        for (int i = 0; i < mro.size(); i++) {
+            SplArray.setItemAtIndex(mroArrPtr, i, mro.get(i), definitionEnv, lineFile);
+        }
+        return mroArrPtr;
     }
 }

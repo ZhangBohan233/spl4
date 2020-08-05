@@ -38,10 +38,6 @@ public class SplArray extends SplObject {
         return SplElement.typeToString(elementTypeCode) + "[" + length + "]";
     }
 
-//    public static Pointer createArray(List<Integer> dimensions, Environment env) {
-//        return createArray(dimensions, env, 0);
-//    }
-
     private static int calculateEleType(Node eleNode) {
         if (eleNode instanceof NameNode) {
             String name = ((NameNode) eleNode).getName();

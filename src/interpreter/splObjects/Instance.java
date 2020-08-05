@@ -42,14 +42,14 @@ public class Instance extends SplObject {
                                                            LineFile lineFile) {
         Pointer clazzPtr = (Pointer) creationEnv.get(className, lineFile);
         return createInstanceAndAllocate(
-                clazzPtr, creationEnv, new HashMap<>(), lineFile, true);
+                clazzPtr, creationEnv, new HashMap<>(), new ArrayList<>(), lineFile);
     }
 
     public static InstanceAndPtr createInstanceAndAllocate(Pointer clazzPtr,
                                                            Environment creationEnv,
                                                            LineFile lineFile) {
         return createInstanceAndAllocate(
-                clazzPtr, creationEnv, new HashMap<>(), lineFile, true);
+                clazzPtr, creationEnv, new HashMap<>(), new ArrayList<>(), lineFile);
     }
 
     /**
@@ -58,15 +58,17 @@ public class Instance extends SplObject {
      * @param clazzPtr          pointer to class
      * @param outerEnv          env where the new instance is created, not the class definition env
      * @param superclassMethods methods definitions of superclasses, will be overridden
+     * @param mro               list of multiple resolution order, child at first
      * @param lineFile          error traceback info of code where instance creation
-     * @param isFirstCall       whether the currently creating instance is the actual instance
      * @return the tuple of the newly created instance, and the {@code TypeValue} contains the pointer to this instance
      */
     private static InstanceAndPtr createInstanceAndAllocate(Pointer clazzPtr,
                                                             Environment outerEnv,
                                                             Map<String, FuncDefinition> superclassMethods,
-                                                            LineFile lineFile,
-                                                            boolean isFirstCall) {
+                                                            List<Pointer> mro,
+                                                            LineFile lineFile) {
+        // add to multiple resolution order
+        mro.add(clazzPtr);
 
         SplObject obj = outerEnv.getMemory().get(clazzPtr);
         SplClass clazz = (SplClass) obj;
@@ -97,12 +99,25 @@ public class Instance extends SplObject {
         // evaluate superclasses
         List<Pointer> scPointers = clazz.getSuperclassPointers();
         Instance currentChild = instance;
+        boolean superNotDefined = true;
         for (Pointer scPtr : scPointers) {
             InstanceAndPtr scInsPtr =
-                    createInstanceAndAllocate(scPtr, outerEnv, superclassMethods, lineFile, false);
-            currentChild.getEnv().directDefineConstAndSet(Constants.SUPER, scInsPtr.pointer);
-            currentChild = scInsPtr.instance;
+                    createInstanceAndAllocate(scPtr, outerEnv, superclassMethods, mro, lineFile);
+
+            // define "super"
+            if (superNotDefined) {
+                superNotDefined = false;
+                currentChild.getEnv().directDefineConstAndSet(Constants.SUPER, scInsPtr.pointer);
+                currentChild = scInsPtr.instance;
+            }
         }
+
+//        // define "__mro__"
+//        Pointer mroArrPtr = SplArray.createArray(SplElement.POINTER, mro.size(), instanceEnv);
+//        instance.getEnv().directDefineConstAndSet(Constants.CLASS_MRO, mroArrPtr);
+//        for (int i = 0; i < mro.size(); i++) {
+//            SplArray.setItemAtIndex(mroArrPtr, i, mro.get(i), instanceEnv, lineFile);
+//        }
 
         // define all methods from superclasses
         for (Map.Entry<String, FuncDefinition> entry : superclassMethods.entrySet()) {

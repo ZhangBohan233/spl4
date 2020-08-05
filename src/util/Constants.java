@@ -16,16 +16,19 @@ public class Constants {
     public static final String NAIVE_DICT = "NaiveDict";
     public static final String THIS = "this";
     public static final String SUPER = "super";
+    public static final String CLASS_NAME = "__name__";
     public static final String CONSTRUCTOR = "__init__";
     public static final String TO_STRING_FN = "__str__";
+    public static final String TO_REPR_FN = "__repr__";
     public static final String ITER_FN = "__iter__";
     public static final String NEXT_FN = "__next__";
     public static final String HAS_NEXT_FN = "__hasNext__";
     public static final String GET_ITEM_FN = "__getItem__";
     public static final String SET_ITEM_FN = "__setItem__";
+    public static final String STRING_CHARS = "__chars__";
+    public static final String CLASS_MRO = "__mro__";
     public static final String WRAPPER_ATTR = "value";
     public static final String GET_CLASS = "getClass";
-    public static final String CLASS_NAME = "__name__";
     public static final String ARRAY_LENGTH = "length";
 
     public static final Map<Integer, String> WRAPPERS = Map.of(

@@ -1,3 +1,13 @@
+===== Version 4018 =====
+2020/08/05
+
+* Separated "__str__" and "__repr__"
+* Implemented class.__mro__ (Not finished)
+* Changed the char array attribute of String to "__chars__"
+* Bug fixes:
+    * "super" now refers to the first superclass
+
+
 ===== Version 4017 =====
 2020/08/04
 

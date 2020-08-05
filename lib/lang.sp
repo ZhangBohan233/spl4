@@ -3,6 +3,10 @@ class Object {
     fn __str__() {
         return getClass().__name__ + "@" + Invokes.id(this);
     }
+
+    fn __repr__() {
+        return getClass().__name__ + "@" + Invokes.id(this);
+    }
 }
 
 class Wrapper {
@@ -14,6 +18,10 @@ class Wrapper {
 
     fn __str__() {
         return str(value);
+    }
+
+    fn __repr__() {
+        return __str__();
     }
 
     fn __add__(other) {
@@ -214,10 +222,14 @@ class List(Iterable) {
         return new ArrayIterator(array, _size);
     }
 
+    fn __repr__() {
+        return __str__();
+    }
+
     fn __str__() {
         result := "[";
         for i := 0; i < _size; i++ {
-            result += (str(array[i]) + ", ");
+            result += (repr(array[i]) + ", ");
         }
         return result + "]";
     }
@@ -301,11 +313,11 @@ class NaiveDict {
 
 class String {
 
-    const chars;
+    const __chars__;
     const length;
 
     fn __init__(charArray) {
-        chars = charArray;
+        __chars__ = charArray;
         length = charArray.length;
     }
 
@@ -314,10 +326,10 @@ class String {
         var array = new char[length + otherStr.length];
         var index = 0;
         for ; index < length; index++ {
-            array[index] = chars[index];
+            array[index] = __chars__[index];
         }
         for ; index < array.length; index++ {
-            array[index] = otherStr.chars[index - length];
+            array[index] = otherStr.__chars__[index - length];
         }
         return new String(array);
     }
@@ -330,7 +342,7 @@ class String {
             return false;
         }
         for var i = 0; i < length; i++ {
-            if chars[i] != other.chars[i] {
+            if __chars__[i] != other.__chars__[i] {
                 return false;
             }
         }
@@ -364,6 +376,10 @@ fn range(begin, end, step=1) {
 
 fn str(obj) {
     return Invokes.string(obj);
+}
+
+fn repr(obj) {
+    return Invokes.repr(obj);
 }
 
 fn void(x) {

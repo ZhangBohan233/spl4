@@ -13,7 +13,7 @@ import java.util.*;
 public class Memory {
 
     public static final int INTERVAL = 1;
-    private static final int DEFAULT_HEAP_SIZE = 2048;
+    private static final int DEFAULT_HEAP_SIZE = 8192;
     private int heapSize;
     private int stackSize;
     private int stackLimit = 1000;
@@ -22,7 +22,11 @@ public class Memory {
 
     private AvailableList available;
     private final Set<Environment> temporaryEnvs = new HashSet<>();
-    private final Set<Pointer> temporaryPointers = new HashSet<>();
+
+    /**
+     * Pointers that are managed by memory directly, not from environemnt.
+     */
+    private final Set<Pointer> managedPointers = new HashSet<>();
     private final Deque<StackTraceNode> callStack = new ArrayDeque<>();
 //    private final Deque<Node> stackTrace = new ArrayDeque<>();
 
@@ -48,18 +52,6 @@ public class Memory {
         stackSize--;
         callStack.pop();
     }
-
-//    public void enterNode(Node node) {
-//        stackTrace.addLast(node);
-//    }
-//
-//    public void exitNode() {
-//        stackTrace.removeLast();
-//    }
-//
-//    public Deque<Node> getStackTrace() {
-//        return stackTrace;
-//    }
 
     public Deque<StackTraceNode> getCallStack() {
         return callStack;
@@ -133,14 +125,15 @@ public class Memory {
     }
 
     public void addTempPtr(Pointer tv) {
-        temporaryPointers.add(tv);
+        managedPointers.add(tv);
     }
 
     public void removeTempPtr(Pointer tv) {
-        temporaryPointers.remove(tv);
+        managedPointers.remove(tv);
     }
 
     public void gc(Environment baseEnv) {
+        System.out.println("gc!!!");
         garbageCollector.garbageCollect(baseEnv);
     }
 
@@ -158,6 +151,7 @@ public class Memory {
     }
 
     public void printMemory() {
+        System.out.println("Heap used: " + (heapSize - available.size));
         System.out.println(Arrays.toString(heap));
     }
 
@@ -223,7 +217,7 @@ public class Memory {
             }
 
             // temp object roots
-            for (Pointer tempPtr : temporaryPointers) {
+            for (Pointer tempPtr : managedPointers) {
                 SplObject obj = get(tempPtr);
                 markObjectAsUsed(obj, tempPtr.getPtr());
             }
