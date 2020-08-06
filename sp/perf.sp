@@ -31,4 +31,12 @@ fn main() {
 
     const t3 = Invokes.clock();
     print("fib " + n + " time: " + (t3 - t2) + "ms");
+
+    lst := [];
+    for i = 0; i < 1000; i++ {
+        lst.append(new Integer(i));
+    }
+
+    const t4 = Invokes.clock();
+    print("List append " + i + " object time (no gc): " + (t4 - t3) + "ms");
 }
