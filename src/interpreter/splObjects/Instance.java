@@ -157,7 +157,7 @@ public class Instance extends SplObject {
     }
 
     public static SplElement callInstanceMethod() {
-        
+
     }
 
     public static void callInit(Instance instance, Arguments arguments, Environment callEnv, LineFile lineFile) {
