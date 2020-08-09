@@ -27,6 +27,11 @@ public class ContractNode extends AbstractStatement {
         function.setContract(paramContracts, rtnContract, env);
     }
 
+    public static void addThisOfMethod(ContractNode contractNode, String className) {
+        contractNode.paramContracts.getChildren().add(0,
+                new NameNode(className + "?", contractNode.lineFile));
+    }
+
 //    public void directEval(Function function) {
 //        function.setContract(paramContracts, rtnContract, env);
 //    }

@@ -48,8 +48,8 @@ public class FuncCall extends AbstractExpression {
         SplCallable function = (SplCallable) obj;
 
         if (function instanceof Method) {
-            InstanceEnvironment methodClassEnv = (InstanceEnvironment) env.getOuterOfType(InstanceEnvironment.class);
-            return ((Method) function).methodCall(arguments.evalArgs(env), env, methodClassEnv, lineFile);
+//            InstanceEnvironment methodClassEnv = (InstanceEnvironment) env.getOuterOfType(InstanceEnvironment.class);
+            return ((Method) function).methodCall(arguments.evalArgs(env), env, null, lineFile);
         } else {
             return function.call(arguments, env);
         }

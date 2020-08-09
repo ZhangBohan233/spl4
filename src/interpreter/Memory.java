@@ -33,6 +33,8 @@ public class Memory {
     private final GarbageCollector garbageCollector = new GarbageCollector();
     public final DebugAttributes debugs = new DebugAttributes();
 
+    private final Deque<Pointer> thisPointers = new ArrayDeque<>();
+
     public Memory() {
         heapSize = DEFAULT_HEAP_SIZE;
         heap = new SplThing[heapSize];
@@ -55,6 +57,19 @@ public class Memory {
 
     public Deque<StackTraceNode> getCallStack() {
         return callStack;
+    }
+
+    public void setCurrentThisPtr(Pointer currentThisPtr) {
+        thisPointers.addLast(currentThisPtr);
+        System.out.println("set to " + get(currentThisPtr));
+    }
+
+    public Pointer getCurrentThisPtr() {
+        return thisPointers.getLast();
+    }
+
+    public Pointer removeThisPtr() {
+        return thisPointers.removeLast();
     }
 
     private void initAvailable() {

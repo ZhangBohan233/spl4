@@ -32,7 +32,7 @@ public class Instance extends SplObject {
 
     @Override
     public String toString() {
-        return "Instance to<" + clazzPtr.getPtr() + ">";
+        return "Instance of<" + env.getMemory().get(clazzPtr.getPtr()) + ">";
     }
 
     public static InstanceAndPtr createInstanceAndAllocate(String className,
@@ -81,8 +81,8 @@ public class Instance extends SplObject {
         Pointer instancePtr = outerEnv.getMemory().allocate(1, instanceEnv);
         outerEnv.getMemory().set(instancePtr, instance);
 
-        // define "this"
-        instance.getEnv().directDefineConstAndSet(Constants.THIS, instancePtr);
+//         define "this"
+//        instance.getEnv().directDefineConstAndSet(Constants.THIS, instancePtr);
 
         // define "getClass"
         NativeFunction getClassFtn = new NativeFunction(Constants.GET_CLASS, 0) {
@@ -165,10 +165,11 @@ public class Instance extends SplObject {
 
         outerEnv.getMemory().removeTempEnv(instanceEnv);
 
+        // tell memory current instance is this
+        outerEnv.getMemory().setCurrentThisPtr(instancePtr);
+
         return new InstanceAndPtr(instance, instancePtr);
     }
-
-//    private static void
 
     public static void callInit(Instance instance, Arguments arguments, Environment callEnv, LineFile lineFile) {
         Method constructor = getConstructor(instance, lineFile);
@@ -195,10 +196,10 @@ public class Instance extends SplObject {
             Instance supIns = (Instance) env.getMemory().get(superPtr);
             InstanceEnvironment supEnv = supIns.getEnv();
             Pointer supConstPtr = (Pointer) supEnv.get(Constants.CONSTRUCTOR, lineFile);
-            Function supConst = (Function) env.getMemory().get(supConstPtr);
+            Method supConst = (Method) env.getMemory().get(supConstPtr);
 //            List<Type> supParamTypes = supConst.getFuncType().getParamTypes();
-            if (supConst.minArgCount() > 0) {
-                // superclass has a non-trivial constructor
+            if (supConst.minArgCount() > 1) {
+                // superclass has a non-trivial constructor. Note that any constructor has default 'this' param
                 if (noLeadingSuperCall(constructor)) {
                     throw new NativeError("Constructor of child class must first call super.__init__() with matching " +
                             "arguments. ", lineFile);
@@ -245,7 +246,7 @@ public class Instance extends SplObject {
         }
     }
 
-    private static boolean noLeadingSuperCall(Function constructor) {
+    private static boolean noLeadingSuperCall(Method constructor) {
         Node body = constructor.getBody();
         if (body instanceof BlockStmt) {
             if (((BlockStmt) body).getLines().size() > 0) {

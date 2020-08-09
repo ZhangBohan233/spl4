@@ -11,6 +11,12 @@ class A {
 
 class B(A) {
     fn what() {
+        //e := new E();
+        //e.cc();
+        return tt();
+    }
+
+    fn tt() {
         return b;
     }
 }
@@ -23,8 +29,17 @@ class D(B, C) {
 
 }
 
+class E {
+    fn cc() {
+        print(getClass());
+    }
+}
+
 fn main() {
-    b := new B();
-    print(b.get());
-    print(b.what());
+    //b := new B();
+    //print(b.get());
+    //print(b.what());
+
+    lst := new List(1);
+    //lst.append(8);
 }

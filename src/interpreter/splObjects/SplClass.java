@@ -58,7 +58,9 @@ public class SplClass extends SplObject {
                     Pointer methodPtr = FuncDefinition.evalMethod(fd, definitionEnv);
                     methods.put(fd.name, methodPtr);
                 } else if (lineNode instanceof ContractNode) {
-                    contractNodes.add((ContractNode) lineNode);
+                    ContractNode contractNode = (ContractNode) lineNode;
+                    ContractNode.addThisOfMethod(contractNode, className);
+                    contractNodes.add(contractNode);
                 } else {
                     throw new RuntimeSyntaxError("Invalid class body. ", line.lineFile);}
             }

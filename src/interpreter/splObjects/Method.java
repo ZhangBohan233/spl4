@@ -5,14 +5,15 @@ import interpreter.EvaluatedArguments;
 import interpreter.env.Environment;
 import interpreter.env.FunctionEnvironment;
 import interpreter.env.InstanceEnvironment;
+import interpreter.env.MethodEnvironment;
 import interpreter.primitives.SplElement;
 import interpreter.splErrors.NativeError;
 import util.LineFile;
 
 public class Method extends Function {
 
-    public Method(BlockStmt body, Parameter[] parameters, String definedName, LineFile lineFile) {
-        super(body, parameters, null, definedName, lineFile);
+    public Method(BlockStmt body, Parameter[] parameters, String definedName, Environment classDefEnv, LineFile lineFile) {
+        super(body, parameters, classDefEnv, definedName, lineFile);
     }
 
     @Override
@@ -24,7 +25,8 @@ public class Method extends Function {
                                  Environment callingEnv,
                                  InstanceEnvironment instanceEnv,
                                  LineFile lineFile) {
-        FunctionEnvironment scope = new FunctionEnvironment(instanceEnv, callingEnv, definedName);
+        MethodEnvironment scope = new MethodEnvironment(definitionEnv, callingEnv, definedName);
+        EvaluatedArguments.insertThisPtr(evaluatedArgs, callingEnv.getMemory().getCurrentThisPtr());
         return callEssential(evaluatedArgs, callingEnv, scope, lineFile);
     }
 }

@@ -51,11 +51,12 @@ public class FuncDefinition extends AbstractExpression {
             return String.format("fn %s(%s): %s", name, parameters, body);
     }
 
-    public static Pointer evalMethod(FuncDefinition definition, Environment anyEnv) {
-        Function.Parameter[] params = SplCallable.evalParams(definition.parameters, anyEnv);
+    public static Pointer evalMethod(FuncDefinition definition, Environment classDefEnv) {
+        Function.Parameter[] params = SplCallable.insertThisToParam(
+                SplCallable.evalParams(definition.parameters, classDefEnv));
 
-        Method method = new Method(definition.body, params, definition.name, definition.lineFile);
+        Method method = new Method(definition.body, params, definition.name, classDefEnv, definition.lineFile);
 
-        return anyEnv.getMemory().allocateFunction(method, anyEnv);
+        return classDefEnv.getMemory().allocateFunction(method, classDefEnv);
     }
 }
