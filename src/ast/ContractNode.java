@@ -27,6 +27,10 @@ public class ContractNode extends AbstractStatement {
         function.setContract(paramContracts, rtnContract, env);
     }
 
+//    public void directEval(Function function) {
+//        function.setContract(paramContracts, rtnContract, env);
+//    }
+
     @Override
     public String toString() {
         return "Contract (" + paramContracts + ") -> " + rtnContract + ";";

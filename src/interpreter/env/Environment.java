@@ -69,6 +69,12 @@ public abstract class Environment {
 
     public abstract SplElement yieldResult();
 
+    public Environment getOuterOfType(Class<? extends Environment> clazz) {
+        if (getClass().equals(clazz)) return this;
+        else if (outer != null) return outer.getOuterOfType(clazz);
+        else throw new EnvironmentError();
+    }
+
     public void throwException(Pointer exceptionPtr) {
         outer.throwException(exceptionPtr);
     }

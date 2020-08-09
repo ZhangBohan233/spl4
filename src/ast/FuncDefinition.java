@@ -1,9 +1,11 @@
 package ast;
 
+import interpreter.Memory;
 import interpreter.primitives.SplElement;
 import interpreter.splObjects.Function;
 import interpreter.env.Environment;
 import interpreter.primitives.Pointer;
+import interpreter.splObjects.Method;
 import interpreter.splObjects.SplCallable;
 import util.LineFile;
 
@@ -31,15 +33,12 @@ public class FuncDefinition extends AbstractExpression {
     }
 
     @Override
-    protected SplElement internalEval(Environment env) {
-
+    protected Pointer internalEval(Environment env) {
         Function.Parameter[] params = SplCallable.evalParams(parameters, env);
-//        CallableType funcType = new CallableType();
 
         Function function = new Function(body, params, env, name, getLineFile());
         Pointer funcPtr = env.getMemory().allocateFunction(function, env);
 
-//        TypeValue funcTv = new TypeValue(funcType, funcPtr);
         env.defineFunction(name, funcPtr, getLineFile());
         return funcPtr;
     }
@@ -52,17 +51,11 @@ public class FuncDefinition extends AbstractExpression {
             return String.format("fn %s(%s): %s", name, parameters, body);
     }
 
-    public boolean doesOverride(FuncDefinition superMethod, Environment env) {
-        return true;
-//        if (parameters.getChildren().size() != superMethod.parameters.getChildren().size()) return false;
-//        for (int i = 0 ; i < parameters.getChildren().size(); ++i) {
-//            Node thisParam = parameters.getChildren().get(i);
-//            Node superParam = superMethod.parameters.getChildren().get(i);
-//            // TODO: check this. Two cases: Declaration and Assignment
-//        }
-//
-//        Type thisRType = rType.evalType(env);
-//        Type superRType = superMethod.rType.evalType(env);
-//        return superRType.isSuperclassOfOrEquals(thisRType, env);
+    public static Pointer evalMethod(FuncDefinition definition, Environment anyEnv) {
+        Function.Parameter[] params = SplCallable.evalParams(definition.parameters, anyEnv);
+
+        Method method = new Method(definition.body, params, definition.name, definition.lineFile);
+
+        return anyEnv.getMemory().allocateFunction(method, anyEnv);
     }
 }

@@ -1,9 +1,10 @@
 package interpreter.env;
 
+import interpreter.splErrors.NativeError;
 import util.LineFile;
 import util.SplBaseException;
 
-public class EnvironmentError extends SplBaseException {
+public class EnvironmentError extends NativeError {
 
     public EnvironmentError() {
         super();

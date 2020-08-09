@@ -14,6 +14,10 @@ public class SplBaseException extends RuntimeException {
         super(cause);
     }
 
+    public SplBaseException(Throwable cause, LineFile lineFile) {
+        super(lineFile.toStringFileLine(), cause);
+    }
+
     public SplBaseException(String msg) {
         super(msg);
     }

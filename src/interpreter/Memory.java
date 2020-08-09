@@ -13,7 +13,7 @@ import java.util.*;
 public class Memory {
 
     public static final int INTERVAL = 1;
-    private static final int DEFAULT_HEAP_SIZE = 81920;
+    private static final int DEFAULT_HEAP_SIZE = 8192;
     private int heapSize;
     private int stackSize;
     private int stackLimit = 1000;

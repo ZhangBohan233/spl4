@@ -47,7 +47,7 @@ public class NativeObject extends SplObject {
             throw new AttributeError("Native class '" + obj.getClass() + "' does not have method '" +
                     methodName + ". ", lineFile);
         } catch (InvocationTargetException e) {
-            throw new SplBaseException(e);
+            throw new SplBaseException(e, lineFile);
         }
     }
 }

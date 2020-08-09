@@ -21,7 +21,7 @@ public class Function extends UserFunction {
     private boolean hasContract = false;
 
     private final BlockStmt body;
-    private final String definedName;
+    protected final String definedName;
 
 //    private EvaluatedArguments contractArgs;
 
@@ -56,17 +56,17 @@ public class Function extends UserFunction {
         }
 
         for (int i = 0; i < paramContractLine.size(); i++) {
-            if (params[i].contract != null) {
-                throw new NativeError("Contract already defined for function '" + definedName + "'. ",
-                        rtnContractNode.getLineFile());
-            }
+//            if (params[i].contract != null) {
+//                throw new NativeError("Contract already defined for function '" + definedName + "'. ",
+//                        rtnContractNode.getLineFile());
+//            }
             params[i].contract = (Pointer) paramContractLine.get(i).evaluate(env);
         }
 
-        if (rtnContract != null) {
-            throw new NativeError("Contract already defined for function '" + definedName + "'. ",
-                    rtnContractNode.getLineFile());
-        }
+//        if (rtnContract != null) {
+//            throw new NativeError("Contract already defined for function '" + definedName + "'. ",
+//                    rtnContractNode.getLineFile());
+//        }
         rtnContract = (Pointer) rtnContractNode.evaluate(env);
 
         hasContract = true;
@@ -125,8 +125,13 @@ public class Function extends UserFunction {
     }
 
     public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile argLineFile) {
-
         FunctionEnvironment scope = new FunctionEnvironment(definitionEnv, callingEnv, definedName);
+        return callEssential(evaluatedArgs, callingEnv, scope, lineFile);
+    }
+
+    protected SplElement callEssential(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                       FunctionEnvironment scope, LineFile argLineFile) {
+
         checkValidArgCount(evaluatedArgs.positionalArgs.size(), definedName);
 
         checkParamContracts(evaluatedArgs, callingEnv, argLineFile);
@@ -142,14 +147,4 @@ public class Function extends UserFunction {
 
         return rtnValue;
     }
-
-//    public static class Contract {
-//        public final Pointer[] paramContracts;
-//        public final Pointer rtnContract;
-//
-//        public Contract(Pointer[] paramContracts, Pointer rtnContract) {
-//            this.paramContracts = paramContracts;
-//            this.rtnContract = rtnContract;
-//        }
-//    }
 }

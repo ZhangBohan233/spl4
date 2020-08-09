@@ -42,8 +42,6 @@ public class Main {
                 System.out.println("===== End of ast =====");
             }
             long vmStartBegin = System.currentTimeMillis();
-//            FakeGlobalEnv environment = new FakeGlobalEnv();
-//            root.preprocess(environment);
             Memory memory = new Memory();
             GlobalEnvironment globalEnvironment = new GlobalEnvironment(memory);
 
@@ -64,6 +62,8 @@ public class Main {
             } catch (ClassCastException cce) {
                 cce.printStackTrace();
                 throw new TypeError();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
 //            globalEnvironment.printVars();

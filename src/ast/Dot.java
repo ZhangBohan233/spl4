@@ -1,5 +1,6 @@
 package ast;
 
+import interpreter.env.InstanceEnvironment;
 import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
@@ -72,12 +73,17 @@ public class Dot extends BinaryExpr {
             return right.evaluate(objEnv);
         } else if (right instanceof FuncCall) {
             SplElement funcTv = ((FuncCall) right).getCallObj().evaluate(objEnv);
-//            if(!(funcTv.getType() instanceof CallableType))
-//                throw new SplException("Class attribute not callable. ", lineFile);
             SplCallable callable = (SplCallable) objEnv.getMemory().get((Pointer) funcTv);
-            return callable.call(((FuncCall) right).getArguments(), oldEnv);
+            Arguments arg = ((FuncCall) right).getArguments();
+            if (callable instanceof Method) {
+                return ((Method) callable).methodCall(arg.evalArgs(oldEnv),
+                        oldEnv,
+                        (InstanceEnvironment) objEnv,
+                        lineFile);
+            } else {
+                return callable.call(arg, oldEnv);
+            }
         } else if (right instanceof IndexingNode) {
-//            SplElement
             return ((IndexingNode) right).crossEnvEval(objEnv, oldEnv);
         } else {
             throw new NativeError("Unexpected right side type of dot '" + right.getClass() + "' ", lineFile);

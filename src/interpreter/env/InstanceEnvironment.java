@@ -6,6 +6,9 @@ import interpreter.primitives.SplElement;
 import interpreter.splObjects.Instance;
 import util.LineFile;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class InstanceEnvironment extends MainAbstractEnvironment {
 
     /**
@@ -50,6 +53,10 @@ public class InstanceEnvironment extends MainAbstractEnvironment {
             }
         } else return tv;
     }
+
+//    private VarEntry searchMethod(String name, LineFile lineFile) {
+//
+//    }
 
     public boolean selfContains(String name) {
         return variables.containsKey(name);

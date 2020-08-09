@@ -9,6 +9,45 @@ class Object {
     }
 }
 
+class String {
+
+    const __chars__;
+    const length;
+
+    fn __init__(charArray) {
+        __chars__ = charArray;
+        length = charArray.length;
+    }
+
+    fn __add__(other) {
+        var otherStr = str(other);
+        var array = new char[length + otherStr.length];
+        var index = 0;
+        for ; index < length; index++ {
+            array[index] = __chars__[index];
+        }
+        for ; index < array.length; index++ {
+            array[index] = otherStr.__chars__[index - length];
+        }
+        return new String(array);
+    }
+
+    fn __eq__(other) {
+        if not String? (other) {
+            return false;
+        }
+        if other.length != length {
+            return false;
+        }
+        for var i = 0; i < length; i++ {
+            if __chars__[i] != other.__chars__[i] {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
 class Wrapper {
     const value;
 
@@ -28,7 +67,7 @@ class Wrapper {
         return wrap(value + wrap(other).value);
     }
 
-    contract __add__(Wrapper?) -> Wrapper?;
+    //contract __add__(Wrapper?) -> Wrapper?;
 
 
     fn __sub__(other) {
@@ -308,45 +347,6 @@ class NaiveDict {
             }
         }
         return null;
-    }
-}
-
-class String {
-
-    const __chars__;
-    const length;
-
-    fn __init__(charArray) {
-        __chars__ = charArray;
-        length = charArray.length;
-    }
-
-    fn __add__(other) {
-        var otherStr = str(other);
-        var array = new char[length + otherStr.length];
-        var index = 0;
-        for ; index < length; index++ {
-            array[index] = __chars__[index];
-        }
-        for ; index < array.length; index++ {
-            array[index] = otherStr.__chars__[index - length];
-        }
-        return new String(array);
-    }
-
-    fn __eq__(other) {
-        if not String? (other) {
-            return false;
-        }
-        if other.length != length {
-            return false;
-        }
-        for var i = 0; i < length; i++ {
-            if __chars__[i] != other.__chars__[i] {
-                return false;
-            }
-        }
-        return true;
     }
 }
 

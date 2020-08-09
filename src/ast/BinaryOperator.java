@@ -5,6 +5,7 @@ import interpreter.primitives.*;
 import interpreter.splErrors.TypeError;
 import interpreter.splObjects.Function;
 import interpreter.splObjects.Instance;
+import interpreter.splObjects.Method;
 import interpreter.splObjects.SplObject;
 import interpreter.env.Environment;
 import lexer.SyntaxError;
@@ -179,8 +180,8 @@ public class BinaryOperator extends BinaryExpr {
             String fnName = ARITHMETIC_OP_MAP.get(operator);
             Environment instanceEnv = ((Instance) leftObj).getEnv();
             Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
-            Function opFn = (Function) env.getMemory().get(fnPtr);
-            return opFn.call(EvaluatedArguments.of(rightEle), env, lineFile);
+            Method opFn = (Method) env.getMemory().get(fnPtr);
+            return opFn.methodCall(EvaluatedArguments.of(rightEle), env, ((Instance) leftObj).getEnv(), lineFile);
         } else {
             throw new TypeError();
         }

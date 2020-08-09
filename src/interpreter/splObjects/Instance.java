@@ -7,8 +7,6 @@ import interpreter.env.Environment;
 import interpreter.env.InstanceEnvironment;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
-import interpreter.splErrors.RuntimeSyntaxError;
-import lexer.SyntaxError;
 import util.Constants;
 import util.LineFile;
 
@@ -124,32 +122,46 @@ public class Instance extends SplObject {
             entry.getValue().evaluate(instanceEnv);
         }
 
-        // evaluate class body, also override methods
-        for (Line line : clazz.getBody().getLines()) {
-            for (Node lineNode : line.getChildren()) {
-                if (lineNode instanceof Declaration || lineNode instanceof Assignment) {
-                    lineNode.evaluate(instanceEnv);
-                } else if (lineNode instanceof FuncDefinition) {
-                    FuncDefinition fd = (FuncDefinition) lineNode;
-                    fd.evaluate(instanceEnv);
-                    superclassMethods.put(fd.name, fd);
-                } else if (lineNode instanceof ContractNode) {
-                    lineNode.evaluate(instanceEnv);
-                } else
-                    throw new RuntimeSyntaxError("Invalid class body. ", line.lineFile);
-            }
+        // evaluate class body
+        for (Node node : clazz.getFieldNodes()) {
+            node.evaluate(instanceEnv);
         }
 
-        if (!instanceEnv.selfContains(Constants.CONSTRUCTOR)) {
-            // If class no constructor, put an empty default constructor
-            FuncDefinition fd = new FuncDefinition(
-                    Constants.CONSTRUCTOR,
-                    new Line(),
-                    new BlockStmt(LineFile.LF_INTERPRETER),
-                    LineFile.LF_INTERPRETER);
-
-            fd.evaluate(instanceEnv);
+        // set pointer of methods
+        for (Map.Entry<String, Pointer> methodEntry : clazz.getMethodDefinitions().entrySet()) {
+            instanceEnv.defineFunction(methodEntry.getKey(), methodEntry.getValue(), lineFile);
         }
+
+        // evaluate contracts, must behind methods
+        for (ContractNode node : clazz.getContractNodes()) {
+            node.evaluate(instanceEnv);
+        }
+
+//        for (Line line : clazz.getBody().getLines()) {
+//            for (Node lineNode : line.getChildren()) {
+//                if (lineNode instanceof Declaration || lineNode instanceof Assignment) {
+//                    lineNode.evaluate(instanceEnv);
+//                } else if (lineNode instanceof FuncDefinition) {
+//                    FuncDefinition fd = (FuncDefinition) lineNode;
+//                    fd.evaluate(instanceEnv);
+//                    superclassMethods.put(fd.name, fd);
+//                } else if (lineNode instanceof ContractNode) {
+//                    lineNode.evaluate(instanceEnv);
+//                } else
+//                    throw new RuntimeSyntaxError("Invalid class body. ", line.lineFile);
+//            }
+//        }
+
+//        if (!instanceEnv.selfContains(Constants.CONSTRUCTOR)) {
+//            // If class no constructor, put an empty default constructor
+//            FuncDefinition fd = new FuncDefinition(
+//                    Constants.CONSTRUCTOR,
+//                    new Line(),
+//                    new BlockStmt(LineFile.LF_INTERPRETER),
+//                    LineFile.LF_INTERPRETER);
+//
+//            FuncDefinition.evalMethod(fd, instanceEnv);
+//        }
 
         outerEnv.getMemory().removeTempEnv(instanceEnv);
 
@@ -159,8 +171,8 @@ public class Instance extends SplObject {
 //    private static void
 
     public static void callInit(Instance instance, Arguments arguments, Environment callEnv, LineFile lineFile) {
-        Function constructor = getConstructor(instance, lineFile);
-        constructor.call(arguments, callEnv);
+        Method constructor = getConstructor(instance, lineFile);
+        constructor.methodCall(arguments.evalArgs(callEnv), callEnv, instance.env, lineFile);
     }
 
     public static void callInit(Instance instance,
@@ -168,14 +180,14 @@ public class Instance extends SplObject {
                                 Environment callEnv,
                                 LineFile lineFile) {
 
-        Function constructor = getConstructor(instance, lineFile);
-        constructor.call(evaluatedArgs, callEnv, lineFile);
+        Method constructor = getConstructor(instance, lineFile);
+        constructor.methodCall(evaluatedArgs, callEnv, instance.env, lineFile);
     }
 
-    private static Function getConstructor(Instance instance, LineFile lineFile) {
+    private static Method getConstructor(Instance instance, LineFile lineFile) {
         InstanceEnvironment env = instance.getEnv();
         Pointer constructorPtr = (Pointer) env.get(Constants.CONSTRUCTOR, lineFile);
-        Function constructor = (Function) env.getMemory().get(constructorPtr);
+        Method constructor = (Method) env.getMemory().get(constructorPtr);
 
         if (env.hasName(Constants.SUPER, lineFile)) {
             // All classes has superclass except class 'Object'
@@ -213,7 +225,7 @@ public class Instance extends SplObject {
         }
     }
 
-    private static void addDefaultSuperCall(Function constructor, LineFile lineFile) {
+    private static void addDefaultSuperCall(Method constructor, LineFile lineFile) {
         Node body = constructor.getBody();
         if (body instanceof BlockStmt) {
             // call super.init()

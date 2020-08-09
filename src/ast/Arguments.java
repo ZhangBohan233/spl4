@@ -5,10 +5,7 @@ import interpreter.env.Environment;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
 import interpreter.splErrors.TypeError;
-import interpreter.splObjects.Function;
-import interpreter.splObjects.Instance;
-import interpreter.splObjects.SplArray;
-import interpreter.splObjects.SplObject;
+import interpreter.splObjects.*;
 import lexer.SyntaxError;
 import util.Constants;
 import util.LineFile;
@@ -62,8 +59,9 @@ public class Arguments extends NonEvaluate {
                         } else if (obj instanceof Instance &&
                                 Utilities.isInstancePtr(arg, Constants.LIST_CLASS, callingEnv, lineFile)) {
                             Pointer toArrayPtr = (Pointer) ((Instance) obj).getEnv().get("toArray", lineFile);
-                            Function toArrayFtn = (Function) callingEnv.getMemory().get(toArrayPtr);
-                            Pointer arrPtr = (Pointer) toArrayFtn.call(EvaluatedArguments.of(), callingEnv, lineFile);
+                            Method toArrayFtn = (Method) callingEnv.getMemory().get(toArrayPtr);
+                            Pointer arrPtr = (Pointer) toArrayFtn.methodCall(EvaluatedArguments.of(),
+                                    callingEnv, ((Instance) obj).getEnv(), lineFile);
                             addArrayToArgs(arrPtr, evaluatedArguments, callingEnv);
                         } else {
                             throw new TypeError();

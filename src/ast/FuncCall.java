@@ -1,7 +1,10 @@
 package ast;
 
+import interpreter.env.InstanceEnvironment;
 import interpreter.primitives.SplElement;
 import interpreter.env.Environment;
+import interpreter.splObjects.Instance;
+import interpreter.splObjects.Method;
 import interpreter.splObjects.SplCallable;
 import interpreter.splObjects.SplObject;
 import interpreter.primitives.Pointer;
@@ -44,7 +47,12 @@ public class FuncCall extends AbstractExpression {
         }
         SplCallable function = (SplCallable) obj;
 
-        return function.call(arguments, env);
+        if (function instanceof Method) {
+            InstanceEnvironment methodClassEnv = (InstanceEnvironment) env.getOuterOfType(InstanceEnvironment.class);
+            return ((Method) function).methodCall(arguments.evalArgs(env), env, methodClassEnv, lineFile);
+        } else {
+            return function.call(arguments, env);
+        }
     }
 
     @Override

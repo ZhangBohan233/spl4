@@ -1,19 +1,19 @@
 package interpreter.splObjects;
 
-import ast.BlockStmt;
-import ast.NameNode;
-import ast.Node;
-import ast.StringLiteral;
+import ast.*;
 import interpreter.splErrors.AttributeError;
 import interpreter.Memory;
 import interpreter.env.Environment;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
+import interpreter.splErrors.RuntimeSyntaxError;
 import util.Constants;
 import util.LineFile;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SplClass extends SplObject {
 
@@ -24,24 +24,80 @@ public class SplClass extends SplObject {
      */
     private final List<Pointer> superclassPointers;
 
-    private final BlockStmt body;
+//    private final BlockStmt body;
     private final String className;
     private final Environment definitionEnv;
+
+    private final List<Node> fieldNodes = new ArrayList<>();
+    private final List<ContractNode> contractNodes = new ArrayList<>();
+    private final Map<String, Pointer> methods = new HashMap<>();
 
     public SplClass(String className, List<Pointer> superclassPointers,
                     BlockStmt body, Environment definitionEnv) {
         this.className = className;
         this.superclassPointers = superclassPointers;
-        this.body = body;
+//        this.body = body;
         this.definitionEnv = definitionEnv;
+
+        evalBody(body);
+        checkConstructor();
+    }
+
+    private void evalBody(BlockStmt body) {
+        for (Line line : body.getLines()) {
+            for (Node lineNode : line.getChildren()) {
+                if (lineNode instanceof Declaration ||
+                        lineNode instanceof Assignment) {
+                    fieldNodes.add(lineNode);
+                } else if (lineNode instanceof FuncDefinition) {
+                    FuncDefinition fd = (FuncDefinition) lineNode;
+                    if (methods.containsKey(fd.name)) {
+                        throw new AttributeError("Method " + fd.name + " already defined in class " +
+                                className + ". ", fd.lineFile);
+                    }
+                    Pointer methodPtr = FuncDefinition.evalMethod(fd, definitionEnv);
+                    methods.put(fd.name, methodPtr);
+                } else if (lineNode instanceof ContractNode) {
+                    contractNodes.add((ContractNode) lineNode);
+                } else {
+                    throw new RuntimeSyntaxError("Invalid class body. ", line.lineFile);}
+            }
+        }
+    }
+
+    private void checkConstructor() {
+        if (!methods.containsKey(Constants.CONSTRUCTOR)) {
+            // If class no constructor, put an empty default constructor
+            FuncDefinition fd = new FuncDefinition(
+                    Constants.CONSTRUCTOR,
+                    new Line(),
+                    new BlockStmt(LineFile.LF_INTERPRETER),
+                    LineFile.LF_INTERPRETER);
+
+            Pointer ptr = FuncDefinition.evalMethod(fd, definitionEnv);
+            methods.put(Constants.CONSTRUCTOR, ptr);
+        }
     }
 
     public List<Pointer> getSuperclassPointers() {
         return superclassPointers;
     }
 
-    public BlockStmt getBody() {
-        return body;
+    public List<ContractNode> getContractNodes() {
+        return contractNodes;
+    }
+
+    //    public BlockStmt getBody() {
+//        return body;
+//    }
+
+
+    public List<Node> getFieldNodes() {
+        return fieldNodes;
+    }
+
+    public Map<String, Pointer> getMethodDefinitions() {
+        return methods;
     }
 
     public Environment getDefinitionEnv() {
