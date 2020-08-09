@@ -162,6 +162,14 @@ public class SplInvokes extends NativeObject {
         return StringLiteral.createString(s.toCharArray(), environment, lineFile);
     }
 
+    public Pointer getClass(Arguments arguments, Environment environment, LineFile lineFile) {
+        checkArgCount(arguments, 1, "getClass", lineFile);
+
+        Pointer insPtr = (Pointer) arguments.getLine().get(0).evaluate(environment);
+        Instance ins = (Instance) environment.getMemory().get(insPtr);
+        return ins.getClazzPtr();
+    }
+
     private static void checkArgCount(Arguments arguments, int expectArgc, String fnName, LineFile lineFile) {
         if (arguments.getLine().getChildren().size() != expectArgc) {
             throw new NativeError("System." + fnName + "() takes " + expectArgc + " arguments, " +
@@ -234,7 +242,7 @@ public class SplInvokes extends NativeObject {
                 } else {
                     Pointer toStrPtr = (Pointer) instance.getEnv().get(Constants.TO_REPR_FN, lineFile);
                     Function toStrFtn = (Function) environment.getMemory().get(toStrPtr);
-                    Pointer toStrRes = (Pointer) toStrFtn.call(EvaluatedArguments.of(), environment, lineFile);
+                    Pointer toStrRes = (Pointer) toStrFtn.call(EvaluatedArguments.of(ptr), environment, lineFile);
 
                     Instance strIns = (Instance) environment.getMemory().get(toStrRes);
                     return extractFromSplString(strIns, environment, lineFile);
@@ -261,7 +269,7 @@ public class SplInvokes extends NativeObject {
                 } else {
                     Pointer toStrPtr = (Pointer) instance.getEnv().get(Constants.TO_STRING_FN, lineFile);
                     Function toStrFtn = (Function) environment.getMemory().get(toStrPtr);
-                    Pointer toStrRes = (Pointer) toStrFtn.call(EvaluatedArguments.of(), environment, lineFile);
+                    Pointer toStrRes = (Pointer) toStrFtn.call(EvaluatedArguments.of(ptr), environment, lineFile);
 
                     Instance strIns = (Instance) environment.getMemory().get(toStrRes);
                     return extractFromSplString(strIns, environment, lineFile);

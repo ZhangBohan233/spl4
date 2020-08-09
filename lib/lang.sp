@@ -1,11 +1,15 @@
 class Object {
 
     fn __str__() {
-        return getClass().__name__ + "@" + Invokes.id(this);
+        return __class__().__name__ + "@" + Invokes.id(this);
     }
 
     fn __repr__() {
-        return getClass().__name__ + "@" + Invokes.id(this);
+        return __class__().__name__ + "@" + Invokes.id(this);
+    }
+
+    fn __class__() {
+        return Invokes.getClass(this);
     }
 }
 
@@ -102,9 +106,9 @@ class Exception {
     const msg;
     var traceMsg;
 
-    fn __init__(msg="", cause=null) {
+    fn __init__(msg=null, cause=null) {
         this.cause = cause;
-        this.msg = msg;
+        this.msg = msg if msg is not null else "";
     }
 
     fn __str__() {
@@ -118,19 +122,19 @@ class Exception {
 }
 
 class IndexException(Exception) {
-    fn __init__(msg="", cause=null) {
+    fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
     }
 }
 
 class NotImplementedError(Exception) {
-    fn __init__(msg="", cause=null) {
+    fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
     }
 }
 
 class UnknownTypeError(Exception) {
-    fn __init__(msg="", cause=null) {
+    fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
     }
 }

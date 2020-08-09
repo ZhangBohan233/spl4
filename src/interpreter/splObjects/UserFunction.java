@@ -85,7 +85,7 @@ public abstract class UserFunction extends SplCallable {
 
                 Instance.InstanceAndPtr dict =
                         Instance.createInstanceAndAllocate(Constants.NAIVE_DICT, scope, lineFile);
-                Instance.callInit(dict.instance, EvaluatedArguments.of(keyArrPtr, valueArrPtr), scope, lineFile);
+                Instance.callInit(dict, EvaluatedArguments.of(keyArrPtr, valueArrPtr), scope, lineFile);
                 scope.setVar(paramName, dict.pointer, lineFile);
 
                 scope.getMemory().removeTempPtr(valueArrPtr);

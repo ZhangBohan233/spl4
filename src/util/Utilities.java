@@ -79,7 +79,7 @@ public class Utilities {
         String wrapperName = Constants.WRAPPERS.get(prim.type());
         Pointer clazzPtr = (Pointer) env.get(wrapperName, lineFile);
         Instance.InstanceAndPtr wrapperIns = Instance.createInstanceAndAllocate(clazzPtr, env, lineFile);
-        Instance.callInit(wrapperIns.instance, EvaluatedArguments.of(prim), env, lineFile);
+        Instance.callInit(wrapperIns, EvaluatedArguments.of(prim), env, lineFile);
         return wrapperIns.pointer;
     }
 

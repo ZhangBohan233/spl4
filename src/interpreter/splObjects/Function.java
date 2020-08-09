@@ -21,7 +21,7 @@ public class Function extends UserFunction {
     private boolean hasContract = false;
 
     private final BlockStmt body;
-    private final String definedName;
+    protected final String definedName;
 
 //    private EvaluatedArguments contractArgs;
 
@@ -125,8 +125,12 @@ public class Function extends UserFunction {
     }
 
     public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile argLineFile) {
-
         FunctionEnvironment scope = new FunctionEnvironment(definitionEnv, callingEnv, definedName);
+        return callEssential(evaluatedArgs, callingEnv, scope, argLineFile);
+    }
+
+    protected SplElement callEssential(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                       FunctionEnvironment scope, LineFile argLineFile) {
         checkValidArgCount(evaluatedArgs.positionalArgs.size(), definedName);
 
         checkParamContracts(evaluatedArgs, callingEnv, argLineFile);

@@ -158,9 +158,9 @@ public class BinaryOperator extends BinaryExpr {
                     return Bool.FALSE;
                 }
             } else if (operator.equals("or")) {
-                Bool leftRes = Bool.evalBoolean((AbstractExpression) left, env, getLineFile());
+                Bool leftRes = Bool.evalBoolean(left, env, getLineFile());
                 if (!leftRes.value) {
-                    return Bool.evalBoolean((AbstractExpression) right, env, getLineFile());
+                    return Bool.evalBoolean(right, env, getLineFile());
                 } else {
                     return Bool.TRUE;
                 }
@@ -180,42 +180,11 @@ public class BinaryOperator extends BinaryExpr {
             Environment instanceEnv = ((Instance) leftObj).getEnv();
             Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
             Function opFn = (Function) env.getMemory().get(fnPtr);
-            return opFn.call(EvaluatedArguments.of(rightEle), env, lineFile);
+            return opFn.call(EvaluatedArguments.of(leftPtr, rightEle), env, lineFile);
         } else {
             throw new TypeError();
         }
     }
-
-//    private static SplElement pointerLogicalCall(Pointer leftPtr,
-//                                                 SplElement rightEle,
-//                                                 String operator,
-//                                                 Environment env,
-//                                                 LineFile lineFile) {
-//        SplObject leftObj = env.getMemory().get(leftPtr);
-//        if (op.equals("is")) {
-//            return l.getPtr() == r.getPtr();
-//        } else if (op.equals("is not")) {
-//            return l.getPtr() != r.getPtr();
-//        } else {
-//            if (leftObj instanceof Instance) {
-//                String fnName = LOGICAL_OP_MAP.get(op);
-//                Environment instanceEnv = ((Instance) leftObj).getEnv();
-//                Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
-//                Function opFn = (Function) env.getMemory().get(fnPtr);
-//                SplElement res = opFn.call(EvaluatedArguments.of(r), env, lineFile);
-//                return res;
-//            }
-//        }
-//        if (leftObj instanceof Instance) {
-//            String fnName = LOGICAL_OP_MAP.get(operator);
-//            Environment instanceEnv = ((Instance) leftObj).getEnv();
-//            Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
-//            Function opFn = (Function) env.getMemory().get(fnPtr);
-//            return opFn.call(EvaluatedArguments.of(rightEle), env, lineFile);
-//        } else {
-//            throw new TypeError();
-//        }
-//    }
 
     private static SplElement primitivePointerArithmetic(SplElement leftEle, Pointer rightEle,
                                                          String operator, Environment env,
@@ -259,7 +228,7 @@ public class BinaryOperator extends BinaryExpr {
                 Environment instanceEnv = ((Instance) leftObj).getEnv();
                 Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
                 Function opFn = (Function) env.getMemory().get(fnPtr);
-                SplElement res = opFn.call(EvaluatedArguments.of(r), env, lineFile);
+                SplElement res = opFn.call(EvaluatedArguments.of(l, r), env, lineFile);
                 if (res instanceof Bool) {
                     return ((Bool) res).value;
                 }

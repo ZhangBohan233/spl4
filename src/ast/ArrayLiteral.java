@@ -28,7 +28,7 @@ public class ArrayLiteral extends AbstractExpression {
     @Override
     protected SplElement internalEval(Environment env) {
         Instance.InstanceAndPtr iap = Instance.createInstanceAndAllocate(Constants.LIST_CLASS, env, getLineFile());
-        Instance.callInit(iap.instance, content, env, getLineFile());
+        Instance.callInit(iap, content, env, getLineFile());
 
         return iap.pointer;
     }

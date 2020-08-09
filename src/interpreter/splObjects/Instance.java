@@ -83,18 +83,18 @@ public class Instance extends SplObject {
         Pointer instancePtr = outerEnv.getMemory().allocate(1, instanceEnv);
         outerEnv.getMemory().set(instancePtr, instance);
 
-        // define "this"
-        instance.getEnv().directDefineConstAndSet(Constants.THIS, instancePtr);
+//        // define "this"
+//        instance.getEnv().directDefineConstAndSet(Constants.THIS, instancePtr);
 
-        // define "getClass"
-        NativeFunction getClassFtn = new NativeFunction(Constants.GET_CLASS, 0) {
-            @Override
-            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-                return clazzPtr;
-            }
-        };
-        Pointer getClassPtr = instanceEnv.getMemory().allocateFunction(getClassFtn, instanceEnv);
-        instance.getEnv().directDefineConstAndSet(Constants.GET_CLASS, getClassPtr);
+//        // define "getClass"
+//        NativeFunction getClassFtn = new NativeFunction(Constants.GET_CLASS, 0) {
+//            @Override
+//            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+//                return clazzPtr;
+//            }
+//        };
+//        Pointer getClassPtr = instanceEnv.getMemory().allocateFunction(getClassFtn, instanceEnv);
+//        instance.getEnv().directDefineConstAndSet(Constants.GET_CLASS, getClassPtr);
 
         // evaluate superclasses
         List<Pointer> scPointers = clazz.getSuperclassPointers();
@@ -124,60 +124,74 @@ public class Instance extends SplObject {
             entry.getValue().evaluate(instanceEnv);
         }
 
-        // evaluate class body, also override methods
-        for (Line line : clazz.getBody().getLines()) {
-            for (Node lineNode : line.getChildren()) {
-                if (lineNode instanceof Declaration || lineNode instanceof Assignment) {
-                    lineNode.evaluate(instanceEnv);
-                } else if (lineNode instanceof FuncDefinition) {
-                    FuncDefinition fd = (FuncDefinition) lineNode;
-                    fd.evaluate(instanceEnv);
-                    superclassMethods.put(fd.name, fd);
-                } else if (lineNode instanceof ContractNode) {
-                    lineNode.evaluate(instanceEnv);
-                } else
-                    throw new RuntimeSyntaxError("Invalid class body. ", line.lineFile);
-            }
+        // define fields
+        for (Node node : clazz.getClassNodes()) {
+            node.evaluate(instanceEnv);
         }
 
-        if (!instanceEnv.selfContains(Constants.CONSTRUCTOR)) {
-            // If class no constructor, put an empty default constructor
-            FuncDefinition fd = new FuncDefinition(
-                    Constants.CONSTRUCTOR,
-                    new Line(),
-                    new BlockStmt(LineFile.LF_INTERPRETER),
-                    LineFile.LF_INTERPRETER);
-
-            fd.evaluate(instanceEnv);
+        // define methods
+        for (Map.Entry<String, Pointer> entry : clazz.getMethodPointers().entrySet()) {
+            instanceEnv.defineFunction(entry.getKey(), entry.getValue(), lineFile);
         }
+
+//        // evaluate class body, also override methods
+//        for (Line line : clazz.getBody().getLines()) {
+//            for (Node lineNode : line.getChildren()) {
+//                if (lineNode instanceof Declaration || lineNode instanceof Assignment) {
+//                    lineNode.evaluate(instanceEnv);
+//                } else if (lineNode instanceof FuncDefinition) {
+//                    FuncDefinition fd = (FuncDefinition) lineNode;
+//                    fd.evaluate(instanceEnv);
+//                    superclassMethods.put(fd.name, fd);
+//                } else if (lineNode instanceof ContractNode) {
+//                    lineNode.evaluate(instanceEnv);
+//                } else
+//                    throw new RuntimeSyntaxError("Invalid class body. ", line.lineFile);
+//            }
+//        }
+
+//        if (!instanceEnv.selfContains(Constants.CONSTRUCTOR)) {
+//            // If class no constructor, put an empty default constructor
+//            FuncDefinition fd = new FuncDefinition(
+//                    Constants.CONSTRUCTOR,
+//                    new Line(),
+//                    new BlockStmt(LineFile.LF_INTERPRETER),
+//                    LineFile.LF_INTERPRETER);
+//
+//            Pointer constructorPtr = fd.evalAsMethod(clazz.getDefinitionEnv());
+//            instanceEnv.defineFunction(Constants.CONSTRUCTOR, constructorPtr, lineFile);
+//        }
 
         outerEnv.getMemory().removeTempEnv(instanceEnv);
 
         return new InstanceAndPtr(instance, instancePtr);
     }
 
-    public static SplElement callInstanceMethod() {
-
+    public static void callInit(InstanceAndPtr iap, Arguments arguments, Environment callEnv, LineFile lineFile) {
+        EvaluatedArguments ea = arguments.evalArgs(callEnv);
+        callInit(iap, ea, callEnv, lineFile);
     }
 
-    public static void callInit(Instance instance, Arguments arguments, Environment callEnv, LineFile lineFile) {
-        Function constructor = getConstructor(instance, lineFile);
-        constructor.call(arguments, callEnv);
-    }
-
-    public static void callInit(Instance instance,
+    /**
+     * @param iap           Instance and instance pointer
+     * @param evaluatedArgs evaluated arguments, without 'this' pointer
+     * @param callEnv       calling environment
+     * @param lineFile      line file
+     */
+    public static void callInit(InstanceAndPtr iap,
                                 EvaluatedArguments evaluatedArgs,
                                 Environment callEnv,
                                 LineFile lineFile) {
 
-        Function constructor = getConstructor(instance, lineFile);
+        Method constructor = getConstructor(iap.instance, lineFile);
+        evaluatedArgs.insertThis(iap.pointer);
         constructor.call(evaluatedArgs, callEnv, lineFile);
     }
 
-    private static Function getConstructor(Instance instance, LineFile lineFile) {
+    private static Method getConstructor(Instance instance, LineFile lineFile) {
         InstanceEnvironment env = instance.getEnv();
         Pointer constructorPtr = (Pointer) env.get(Constants.CONSTRUCTOR, lineFile);
-        Function constructor = (Function) env.getMemory().get(constructorPtr);
+        Method constructor = (Method) env.getMemory().get(constructorPtr);
 
         if (env.hasName(Constants.SUPER, lineFile)) {
             // All classes has superclass except class 'Object'
@@ -185,9 +199,9 @@ public class Instance extends SplObject {
             Instance supIns = (Instance) env.getMemory().get(superPtr);
             InstanceEnvironment supEnv = supIns.getEnv();
             Pointer supConstPtr = (Pointer) supEnv.get(Constants.CONSTRUCTOR, lineFile);
-            Function supConst = (Function) env.getMemory().get(supConstPtr);
+            Method supConst = (Method) env.getMemory().get(supConstPtr);
 //            List<Type> supParamTypes = supConst.getFuncType().getParamTypes();
-            if (supConst.minArgCount() > 0) {
+            if (supConst.minArgCount() > 1) {
                 // superclass has a non-trivial constructor
                 if (noLeadingSuperCall(constructor)) {
                     throw new NativeError("Constructor of child class must first call super.__init__() with matching " +

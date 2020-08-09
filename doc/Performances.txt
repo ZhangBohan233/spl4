@@ -1,3 +1,12 @@
+===== Version 4019 =====
+
+Loop 1000000 time: 220ms
+Array access 1000000 time: 685ms
+fib=75025
+fib 25 time: 218ms
+List append 1000 object time (no gc): 48ms
+
+
 ===== Version 4018 =====
 
 Loop 1000000 time: 205ms

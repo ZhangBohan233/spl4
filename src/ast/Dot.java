@@ -1,5 +1,6 @@
 package ast;
 
+import interpreter.EvaluatedArguments;
 import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
@@ -18,7 +19,6 @@ public class Dot extends BinaryExpr {
 
         SplElement leftTv = left.evaluate(env);
         if (leftTv instanceof Pointer) {
-//            PointerType type = (PointerType) leftTv.getType();
             Pointer ptr = (Pointer) leftTv;
             if (ptr.getPtr() == 0) {
                 throw new NativeError("Pointer to null does not support attributes operation. ",
@@ -26,9 +26,9 @@ public class Dot extends BinaryExpr {
             }
             SplObject leftObj = env.getMemory().get(ptr);
             if (leftObj instanceof Instance) {
-                return crossEnvEval(right, ((Instance) leftObj).getEnv(), env, getLineFile());
+                return crossEnvEval(right, ptr, ((Instance) leftObj).getEnv(), env, getLineFile());
             } else if (leftObj instanceof SplModule) {
-                return crossEnvEval(right, ((SplModule) leftObj).getEnv(), env, getLineFile());
+                return crossEnvEval(right, ptr, ((SplModule) leftObj).getEnv(), env, getLineFile());
             } else if (leftObj instanceof SplArray) {
                 return ((SplArray) leftObj).getAttr(right, getLineFile());
             } else if (leftObj instanceof NativeObject) {
@@ -67,17 +67,19 @@ public class Dot extends BinaryExpr {
         }
     }
 
-    private static SplElement crossEnvEval(Node right, Environment objEnv, Environment oldEnv, LineFile lineFile) {
+    private static SplElement crossEnvEval(Node right, Pointer leftPtr,
+                                           Environment objEnv, Environment oldEnv, LineFile lineFile) {
         if (right instanceof NameNode) {
             return right.evaluate(objEnv);
         } else if (right instanceof FuncCall) {
             SplElement funcTv = ((FuncCall) right).getCallObj().evaluate(objEnv);
-//            if(!(funcTv.getType() instanceof CallableType))
-//                throw new SplException("Class attribute not callable. ", lineFile);
             SplCallable callable = (SplCallable) objEnv.getMemory().get((Pointer) funcTv);
-            return callable.call(((FuncCall) right).getArguments(), oldEnv);
+            EvaluatedArguments ea = ((FuncCall) right).getArguments().evalArgs(oldEnv);
+            if (callable instanceof Method) {
+                ea.insertThis(leftPtr);  // add "this" ptr
+            }
+            return callable.call(ea, oldEnv, lineFile);
         } else if (right instanceof IndexingNode) {
-//            SplElement
             return ((IndexingNode) right).crossEnvEval(objEnv, oldEnv);
         } else {
             throw new NativeError("Unexpected right side type of dot '" + right.getClass() + "' ", lineFile);

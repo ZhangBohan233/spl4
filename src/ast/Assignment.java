@@ -57,9 +57,9 @@ public class Assignment extends BinaryExpr {
                     SplArray.setItemAtIndex(arrPtr, (int) index.value, value, env, lineFile);
                 } else if (obj instanceof Instance) {
                     Instance ins = (Instance) obj;
-                    Function setItemFn = (Function)
+                    Method setItemFn = (Method)
                             env.getMemory().get((Pointer) ins.getEnv().get(Constants.SET_ITEM_FN, lineFile));
-                    setItemFn.call(EvaluatedArguments.of(index, value), env, lineFile);
+                    setItemFn.call(EvaluatedArguments.of(arrPtr, index, value), env, lineFile);
                 } else {
                     throw new NativeError("Object '" + obj + "' does not support set-item. ", lineFile);
                 }

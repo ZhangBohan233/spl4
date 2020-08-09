@@ -139,9 +139,8 @@ public class NewStmt extends UnaryExpr {
 //        ClassType clazzType = ((ClassType) type).copy();  // create a copy to avoid modification
 
         Instance.InstanceAndPtr instanceTv = Instance.createInstanceAndAllocate(clazzPtr, callEnv, lineFile);
-        Instance instance = instanceTv.instance;
 
-        Instance.callInit(instance, call.arguments, callEnv, lineFile);
+        Instance.callInit(instanceTv, call.arguments, callEnv, lineFile);
         return instanceTv.pointer;
     }
 

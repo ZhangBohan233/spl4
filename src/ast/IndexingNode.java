@@ -6,10 +6,7 @@ import interpreter.primitives.Int;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
 import interpreter.splErrors.TypeError;
-import interpreter.splObjects.Function;
-import interpreter.splObjects.Instance;
-import interpreter.splObjects.SplArray;
-import interpreter.splObjects.SplObject;
+import interpreter.splObjects.*;
 import util.Constants;
 import util.LineFile;
 
@@ -54,9 +51,9 @@ public class IndexingNode extends AbstractExpression  {
             return SplArray.getItemAtIndex(objPtr, index, callEnv.getMemory(), lineFile);
         } else if (obj instanceof Instance) {
             Instance ins = (Instance) obj;
-            Function getItemFn = (Function)
+            Method getItemFn = (Method)
                     callEnv.getMemory().get((Pointer) ins.getEnv().get(Constants.GET_ITEM_FN, lineFile));
-            return getItemFn.call(EvaluatedArguments.of(new Int(index)), callEnv, lineFile);
+            return getItemFn.call(EvaluatedArguments.of(objPtr, new Int(index)), callEnv, lineFile);
         } else {
             throw new TypeError(lineFile);
         }

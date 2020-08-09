@@ -1,11 +1,14 @@
 package ast;
 
+import interpreter.EvaluatedArguments;
 import interpreter.primitives.SplElement;
 import interpreter.env.Environment;
+import interpreter.splObjects.Method;
 import interpreter.splObjects.SplCallable;
 import interpreter.splObjects.SplObject;
 import interpreter.primitives.Pointer;
 import interpreter.splErrors.TypeError;
+import util.Constants;
 import util.LineFile;
 
 public class FuncCall extends AbstractExpression {
@@ -44,7 +47,13 @@ public class FuncCall extends AbstractExpression {
         }
         SplCallable function = (SplCallable) obj;
 
-        return function.call(arguments, env);
+        EvaluatedArguments ea = arguments.evalArgs(env);
+        if (function instanceof Method) {
+            // calling a method inside class
+            Pointer thisPtr = (Pointer) env.get(Constants.THIS, lineFile);
+            ea.insertThis(thisPtr);
+        }
+        return function.call(ea, env, lineFile);
     }
 
     @Override

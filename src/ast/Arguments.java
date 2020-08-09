@@ -5,10 +5,7 @@ import interpreter.env.Environment;
 import interpreter.primitives.Pointer;
 import interpreter.primitives.SplElement;
 import interpreter.splErrors.TypeError;
-import interpreter.splObjects.Function;
-import interpreter.splObjects.Instance;
-import interpreter.splObjects.SplArray;
-import interpreter.splObjects.SplObject;
+import interpreter.splObjects.*;
 import lexer.SyntaxError;
 import util.Constants;
 import util.LineFile;
@@ -55,15 +52,15 @@ public class Arguments extends NonEvaluate {
                         // unpack dict
                         // TODO
                     } else {
-                        SplElement arg = starExpr.value.evaluate(callingEnv);
-                        SplObject obj = callingEnv.getMemory().get((Pointer) arg);
+                        Pointer arg = (Pointer) starExpr.value.evaluate(callingEnv);
+                        SplObject obj = callingEnv.getMemory().get(arg);
                         if (obj instanceof SplArray) {
-                            addArrayToArgs((Pointer) arg, evaluatedArguments, callingEnv);
+                            addArrayToArgs(arg, evaluatedArguments, callingEnv);
                         } else if (obj instanceof Instance &&
                                 Utilities.isInstancePtr(arg, Constants.LIST_CLASS, callingEnv, lineFile)) {
                             Pointer toArrayPtr = (Pointer) ((Instance) obj).getEnv().get("toArray", lineFile);
-                            Function toArrayFtn = (Function) callingEnv.getMemory().get(toArrayPtr);
-                            Pointer arrPtr = (Pointer) toArrayFtn.call(EvaluatedArguments.of(), callingEnv, lineFile);
+                            Method toArrayFtn = (Method) callingEnv.getMemory().get(toArrayPtr);
+                            Pointer arrPtr = (Pointer) toArrayFtn.call(EvaluatedArguments.of(arg), callingEnv, lineFile);
                             addArrayToArgs(arrPtr, evaluatedArguments, callingEnv);
                         } else {
                             throw new TypeError();

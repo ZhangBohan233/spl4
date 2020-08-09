@@ -7,6 +7,7 @@ import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
 import parser.ParseError;
+import util.Constants;
 import util.LineFile;
 
 public abstract class SplCallable extends SplObject {
@@ -56,6 +57,13 @@ public abstract class SplCallable extends SplObject {
             params[i] = param;
         }
         return params;
+    }
+
+    public static Parameter[] insertThis(Parameter[] params) {
+        Parameter[] res = new Parameter[params.length + 1];
+        res[0] = new Parameter(Constants.THIS, null, true, 0);
+        System.arraycopy(params, 0, res, 1, params.length);
+        return res;
     }
 
     /**
@@ -141,9 +149,9 @@ public abstract class SplCallable extends SplObject {
         public final int unpackCount;
         Pointer contract;
 
-        Parameter(String name, SplElement typeValue, boolean constant, int unpackCount) {
+        Parameter(String name, SplElement defaultValue, boolean constant, int unpackCount) {
             this.name = name;
-            this.defaultValue = typeValue;
+            this.defaultValue = defaultValue;
             this.constant = constant;
             this.unpackCount = unpackCount;
         }

@@ -9,10 +9,7 @@ import interpreter.env.LoopTitleEnvironment;
 import interpreter.primitives.Bool;
 import interpreter.primitives.SplElement;
 import interpreter.splErrors.TypeError;
-import interpreter.splObjects.Function;
-import interpreter.splObjects.Instance;
-import interpreter.splObjects.SplArray;
-import interpreter.splObjects.SplObject;
+import interpreter.splObjects.*;
 import util.Constants;
 import util.LineFile;
 import util.Utilities;
@@ -79,8 +76,9 @@ public class ForLoopStmt extends ConditionalStmt {
             if (obj instanceof SplArray) {
                 Instance.InstanceAndPtr iterator =
                         Instance.createInstanceAndAllocate(Constants.ARRAY_ITERATOR_CLASS, parentEnv, lineFile);
-                Instance.callInit(iterator.instance, EvaluatedArguments.of(ptr), parentEnv, lineFile);
+                Instance.callInit(iterator, EvaluatedArguments.of(iterator.pointer), parentEnv, lineFile);
                 forEachLoopIterator(loopInvariant,
+                        iterator.pointer,
                         iterator.instance,
                         parentEnv,
                         titleEnv,
@@ -88,15 +86,15 @@ public class ForLoopStmt extends ConditionalStmt {
                 return;
             } else if (Utilities.isInstancePtr(ptr, Constants.ITERATOR_CLASS, parentEnv, lineFile)) {
                 Instance iterator = (Instance) parentEnv.getMemory().get(ptr);
-                forEachLoopIterator(loopInvariant, iterator, parentEnv, titleEnv, bodyEnv);
+                forEachLoopIterator(loopInvariant, ptr, iterator, parentEnv, titleEnv, bodyEnv);
                 return;
             } else if (Utilities.isInstancePtr(ptr, Constants.ITERABLE_CLASS, parentEnv, lineFile)) {
                 Instance iterable = (Instance) parentEnv.getMemory().get(ptr);
                 Pointer iterFnPtr = (Pointer) iterable.getEnv().get(Constants.ITER_FN, lineFile);
-                Function iterFn = (Function) parentEnv.getMemory().get(iterFnPtr);
-                Pointer iteratorPtr = (Pointer) iterFn.call(EvaluatedArguments.of(), parentEnv, lineFile);
+                Method iterFn = (Method) parentEnv.getMemory().get(iterFnPtr);
+                Pointer iteratorPtr = (Pointer) iterFn.call(EvaluatedArguments.of(ptr), parentEnv, lineFile);
                 Instance iterator = (Instance) parentEnv.getMemory().get(iteratorPtr);
-                forEachLoopIterator(loopInvariant, iterator, parentEnv, titleEnv, bodyEnv);
+                forEachLoopIterator(loopInvariant, iteratorPtr, iterator, parentEnv, titleEnv, bodyEnv);
                 return;
             }
         }
@@ -106,22 +104,23 @@ public class ForLoopStmt extends ConditionalStmt {
     }
 
     private void forEachLoopIterator(Declaration loopInvariant,
+                                     Pointer instancePtr,
                                      Instance iterator,
                                      Environment parentEnv,
                                      LoopTitleEnvironment titleEnv,
                                      BlockEnvironment bodyEnv) {
         Pointer nextPtr = (Pointer) iterator.getEnv().get(Constants.NEXT_FN, lineFile);
         Pointer hasNextPtr = (Pointer) iterator.getEnv().get(Constants.HAS_NEXT_FN, lineFile);
-        Function nextFn = (Function) titleEnv.getMemory().get(nextPtr);
-        Function hasNextFn = (Function) titleEnv.getMemory().get(hasNextPtr);
+        Method nextFn = (Method) titleEnv.getMemory().get(nextPtr);
+        Method hasNextFn = (Method) titleEnv.getMemory().get(hasNextPtr);
 
         String liName = loopInvariant.declaredName;
         loopInvariant.evaluate(titleEnv);  // declare loop invariant
 
-        Bool bool = (Bool) hasNextFn.call(EvaluatedArguments.of(), titleEnv, lineFile);
+        Bool bool = (Bool) hasNextFn.call(EvaluatedArguments.of(instancePtr), titleEnv, lineFile);
         while (bool.value) {
             bodyEnv.invalidate();
-            SplElement nextVal = nextFn.call(EvaluatedArguments.of(), bodyEnv, lineFile);
+            SplElement nextVal = nextFn.call(EvaluatedArguments.of(instancePtr), bodyEnv, lineFile);
             titleEnv.setVar(liName, nextVal, lineFile);
 
             bodyBlock.evaluate(bodyEnv);
@@ -129,7 +128,7 @@ public class ForLoopStmt extends ConditionalStmt {
 
             titleEnv.resumeLoop();
 
-            bool = (Bool) hasNextFn.call(EvaluatedArguments.of(), titleEnv, lineFile);
+            bool = (Bool) hasNextFn.call(EvaluatedArguments.of(instancePtr), titleEnv, lineFile);
         }
     }
 
