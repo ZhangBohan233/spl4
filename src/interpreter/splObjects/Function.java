@@ -142,14 +142,4 @@ public class Function extends UserFunction {
 
         return rtnValue;
     }
-
-//    public static class Contract {
-//        public final Pointer[] paramContracts;
-//        public final Pointer rtnContract;
-//
-//        public Contract(Pointer[] paramContracts, Pointer rtnContract) {
-//            this.paramContracts = paramContracts;
-//            this.rtnContract = rtnContract;
-//        }
-//    }
 }

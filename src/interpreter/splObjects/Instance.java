@@ -156,7 +156,9 @@ public class Instance extends SplObject {
         return new InstanceAndPtr(instance, instancePtr);
     }
 
-//    private static void
+    public static SplElement callInstanceMethod() {
+        
+    }
 
     public static void callInit(Instance instance, Arguments arguments, Environment callEnv, LineFile lineFile) {
         Function constructor = getConstructor(instance, lineFile);

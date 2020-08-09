@@ -22,6 +22,7 @@ public class Memory {
 
     private AvailableList available;
     private final Set<Environment> temporaryEnvs = new HashSet<>();
+    private Pointer thisPtr;
 
     /**
      * Pointers that are managed by memory directly, not from environemnt.
@@ -55,6 +56,14 @@ public class Memory {
 
     public Deque<StackTraceNode> getCallStack() {
         return callStack;
+    }
+
+    public void setThisPtr(Pointer thisPtr) {
+        this.thisPtr = thisPtr;
+    }
+
+    public Pointer getThisPtr() {
+        return thisPtr;
     }
 
     private void initAvailable() {
