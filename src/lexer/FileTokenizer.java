@@ -116,10 +116,7 @@ public class FileTokenizer {
         String line;
         while ((line = br.readLine()) != null) {
             LineFile lineFile = new LineFile(lineNum, srcFile);
-//            int index = tokens.size();
             proceedLine(line, lineFile);
-//            findImport(index, tokens.size());
-
             lineNum++;
         }
         return makeTreeList(tokens);
@@ -191,7 +188,6 @@ public class FileTokenizer {
                     // exit doc
                     inDoc = false;
                     i += 2;
-//                    continue;
                 }
             } else {
                 // not in doc
@@ -210,7 +206,6 @@ public class FileTokenizer {
                         // enter doc
                         inDoc = true;
                         i += 1;
-//                        continue;
                     } else if (i < len - 1 && ch == '/' && line.charAt(i + 1) == '/') {
                         // enter comment, end of this line
                         if (nonLiteral.length() > 2)

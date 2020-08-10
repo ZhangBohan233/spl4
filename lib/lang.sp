@@ -13,6 +13,10 @@ class Object {
     }
 }
 
+fn wrapper?(obj) {
+    return (not AbstractObject?(obj)) or Wrapper?(obj);
+}
+
 class Wrapper {
     const value;
 
@@ -32,35 +36,35 @@ class Wrapper {
         return wrap(value + wrap(other).value);
     }
 
-    contract __add__(Wrapper?) -> Wrapper?;
+    contract __add__(wrapper?) -> Wrapper?;
 
 
     fn __sub__(other) {
         return wrap(value - wrap(other).value);
     }
 
-    contract __sub__(Wrapper?) -> Wrapper?;
+    contract __sub__(wrapper?) -> Wrapper?;
 
 
     fn __mul__(other) {
         return wrap(value * wrap(other).value);
     }
 
-    contract __mul__(Wrapper?) -> Wrapper?;
+    contract __mul__(wrapper?) -> Wrapper?;
 
 
     fn __div__(other) {
         return wrap(value / wrap(other).value);
     }
 
-    contract __div__(Wrapper?) -> Wrapper?;
+    contract __div__(wrapper?) -> Wrapper?;
 
 
     fn __mod__(other) {
         return wrap(value % wrap(other).value);
     }
 
-    contract __mod__(Wrapper?) -> Wrapper?;
+    contract __mod__(wrapper?) -> Wrapper?;
 
     fn __gt__(other) {
         return value > wrap(other).value;

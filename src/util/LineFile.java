@@ -7,6 +7,7 @@ public class LineFile {
     public static final LineFile LF_TOKENIZER = new LineFile("Tokenizer");
     public static final LineFile LF_INTERPRETER = new LineFile("Interpreter");
     public static final LineFile LF_PARSER = new LineFile("Parser");
+    public static final LineFile LF_CONSOLE = new LineFile("Console");
 
     private final int line;
     private final String msg;

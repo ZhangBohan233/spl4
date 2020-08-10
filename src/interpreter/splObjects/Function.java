@@ -115,7 +115,8 @@ public class Function extends UserFunction {
         SplElement result = callable.call(contractArgs, callingEnv, lineFile);
         if (result instanceof Bool) {
             if (!((Bool) result).value) {
-                throw new ContractError(lineFile);
+                throw new ContractError("Contract violation when calling '" + definedName + "'. " +
+                        "Got " + arg + ". ", lineFile);
             }
         } else {
             throw new TypeError("Contract function must return a boolean. ", lineFile);

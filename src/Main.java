@@ -18,7 +18,7 @@ import util.Utilities;
 
 public class Main {
 
-    private static final LineFile LF_MAIN = new LineFile("Main");
+    static final LineFile LF_MAIN = new LineFile("Main");
 
     public static void main(String[] args) throws Exception {
         ArgumentParser argumentParser = new ArgumentParser(args);
@@ -30,7 +30,6 @@ public class Main {
                     argumentParser.importLang()
             );
             BraceList rootToken = tokenizer.tokenize();
-//            TokenList tokenList = tokenizer.tokenize();
             if (argumentParser.isPrintTokens()) {
                 System.out.println(rootToken);
             }
@@ -42,31 +41,24 @@ public class Main {
                 System.out.println("===== End of ast =====");
             }
             long vmStartBegin = System.currentTimeMillis();
-//            FakeGlobalEnv environment = new FakeGlobalEnv();
-//            root.preprocess(environment);
             Memory memory = new Memory();
             GlobalEnvironment globalEnvironment = new GlobalEnvironment(memory);
 
             if (argumentParser.isGcInfo()) memory.debugs.setPrintGcRes(true);
             if (argumentParser.isGcTrigger()) memory.debugs.setPrintGcTrigger(true);
 
-            initNatives(globalEnvironment);
-
-//            System.out.println("Java");
-//            new C().printThis();
+            SplInterpreter.initNatives(globalEnvironment);
 
             long runBegin = System.currentTimeMillis();
 
             try {
                 root.evaluate(globalEnvironment);
 
-                callMain(argumentParser.getSplArgs(), globalEnvironment);
+                SplInterpreter.callMain(argumentParser.getSplArgs(), globalEnvironment);
             } catch (ClassCastException cce) {
                 cce.printStackTrace();
                 throw new TypeError();
             }
-
-//            globalEnvironment.printVars();
 
             long processEnd = System.currentTimeMillis();
 
@@ -84,206 +76,6 @@ public class Main {
         } else {
             System.out.println(argumentParser.getMsg());
         }
-    }
-
-    private static void initNatives(GlobalEnvironment globalEnvironment) {
-        initNativeFunctions(globalEnvironment);
-
-        SplInvokes system = new SplInvokes();
-
-        Memory memory = globalEnvironment.getMemory();
-        Pointer sysPtr = memory.allocateObject(system, globalEnvironment);
-
-        globalEnvironment.defineConstAndSet(
-                "Invokes",
-                sysPtr,
-                LineFile.LF_INTERPRETER);
-    }
-
-    private static void initNativeFunctions(GlobalEnvironment ge) {
-        NativeFunction toInt = new NativeFunction("int", 1) {
-            @Override
-            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Pointer) {
-                    return new Int(
-                            Utilities.wrapperToPrimitive(
-                                    (Pointer) arg,
-                                    callingEnv,
-                                    LineFile.LF_INTERPRETER).intValue());
-                } else {
-                    return new Int(arg.intValue());
-                }
-            }
-        };
-
-        NativeFunction isInt = new NativeFunction("int?", 1) {
-            @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                return Bool.boolValueOf(arg instanceof Int);
-            }
-        };
-
-        NativeFunction toFloat = new NativeFunction("float", 1) {
-            @Override
-            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Pointer) {
-                    return new SplFloat(
-                            Utilities.wrapperToPrimitive(
-                                    (Pointer) arg,
-                                    callingEnv,
-                                    LineFile.LF_INTERPRETER).floatValue());
-                } else {
-                    return new SplFloat(arg.floatValue());
-                }
-            }
-        };
-
-        NativeFunction isFloat = new NativeFunction("float?", 1) {
-            @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                return Bool.boolValueOf(arg instanceof SplFloat);
-            }
-        };
-
-        NativeFunction toChar = new NativeFunction("char", 1) {
-            @Override
-            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Pointer) {
-                    return new Char(
-                            (char) Utilities.wrapperToPrimitive(
-                                    (Pointer) arg,
-                                    callingEnv,
-                                    LineFile.LF_INTERPRETER).intValue());
-                } else {
-                    return new Char((char) arg.intValue());
-                }
-            }
-        };
-
-        NativeFunction isChar = new NativeFunction("char?", 1) {
-            @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                return Bool.boolValueOf(arg instanceof Char);
-            }
-        };
-
-        NativeFunction isBool = new NativeFunction("boolean?", 1) {
-            @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                return Bool.boolValueOf(arg instanceof Bool);
-            }
-        };
-
-        NativeFunction isAbstractObject = new NativeFunction("AbstractObject?", 1) {
-            @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Pointer) {
-                    SplObject object = callingEnv.getMemory().get((Pointer) arg);
-                    return Bool.boolValueOf(object != null);
-                }
-                return Bool.FALSE;
-            }
-        };
-
-        NativeFunction isArray = new NativeFunction("Array?", 1) {
-            @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Pointer) {
-                    SplObject object = callingEnv.getMemory().get((Pointer) arg);
-                    return Bool.boolValueOf(object instanceof SplArray);
-                }
-                return Bool.FALSE;
-            }
-        };
-
-        NativeFunction isCallable = new NativeFunction("Callable?", 1) {
-            @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Pointer) {
-                    SplObject object = callingEnv.getMemory().get((Pointer) arg);
-                    return Bool.boolValueOf(object instanceof SplCallable);
-                }
-                return Bool.FALSE;
-            }
-        };
-
-        Memory memory = ge.getMemory();
-        Pointer ptrInt = memory.allocateFunction(toInt, ge);
-        Pointer ptrIsInt = memory.allocateFunction(isInt, ge);
-        Pointer ptrFloat = memory.allocateFunction(toFloat, ge);
-        Pointer ptrChar = memory.allocateFunction(toChar, ge);
-        Pointer ptrIsFloat = memory.allocateFunction(isFloat, ge);
-        Pointer ptrIsChar = memory.allocateFunction(isChar, ge);
-        Pointer ptrIsBool = memory.allocateFunction(isBool, ge);
-        Pointer ptrIsAbsObj = memory.allocateFunction(isAbstractObject, ge);
-        Pointer ptrIsArray = memory.allocateFunction(isArray, ge);
-        Pointer ptrIsCallable = memory.allocateFunction(isCallable, ge);
-
-        ge.defineFunction("int", ptrInt, LineFile.LF_INTERPRETER);
-        ge.defineFunction("int?", ptrIsInt, LineFile.LF_INTERPRETER);
-        ge.defineFunction("float", ptrFloat, LineFile.LF_INTERPRETER);
-        ge.defineFunction("float?", ptrIsFloat, LineFile.LF_INTERPRETER);
-        ge.defineFunction("char", ptrChar, LineFile.LF_INTERPRETER);
-        ge.defineFunction("char?", ptrIsChar, LineFile.LF_INTERPRETER);
-        ge.defineFunction("boolean?", ptrIsBool, LineFile.LF_INTERPRETER);
-        ge.defineFunction("AbstractObject?", ptrIsAbsObj, LineFile.LF_INTERPRETER);
-        ge.defineFunction("Array?", ptrIsArray, LineFile.LF_INTERPRETER);
-        ge.defineFunction("Callable?", ptrIsCallable, LineFile.LF_INTERPRETER);
-    }
-
-    private static void callMain(String[] args, GlobalEnvironment globalEnvironment) {
-        if (globalEnvironment.hasName("main", LF_MAIN)) {
-            Pointer mainPtr = (Pointer) globalEnvironment.get("main", LF_MAIN);
-            EvaluatedArguments splArg =
-                    args == null ? new EvaluatedArguments() : makeSplArgArray(args, globalEnvironment);
-
-            Function mainFunc = (Function) globalEnvironment.getMemory().get(mainPtr);
-            if (mainFunc.minArgCount() > 1) {
-                throw new NativeError("Function main takes 0 or 1 arguments.");
-            }
-            SplElement rtn = mainFunc.call(splArg, globalEnvironment, LF_MAIN);
-
-            if (globalEnvironment.hasException()) {
-                Pointer errPtr = globalEnvironment.getExceptionPtr();
-                globalEnvironment.removeException();
-
-                Instance errIns = (Instance) globalEnvironment.getMemory().get(errPtr);
-//                String errStr = SplInvokes.pointerToSting(
-//                        errPtr,
-//                        globalEnvironment,
-//                        LineFile.LF_INTERPRETER);
-
-                Pointer stackTraceFtnPtr = (Pointer) errIns.getEnv().get("printStackTrace", LF_MAIN);
-                Function stackTraceFtn = (Function) globalEnvironment.getMemory().get(stackTraceFtnPtr);
-                stackTraceFtn.call(EvaluatedArguments.of(), globalEnvironment, LF_MAIN);
-            } else {
-                System.out.println("Process finished with exit value " + rtn);
-            }
-        }
-    }
-
-    private static EvaluatedArguments makeSplArgArray(String[] args, GlobalEnvironment globalEnvironment) {
-//        SplElement stringTv = globalEnvironment.get(Constants.STRING_CLASS, LF_MAIN);
-        Pointer argPtr = SplArray.createArray(SplElement.POINTER, args.length, globalEnvironment);
-        for (int i = 0; i < args.length; ++i) {
-
-            // create String instance
-            Pointer strIns = StringLiteral.createString(
-                    args[i].toCharArray(), globalEnvironment, LineFile.LF_INTERPRETER
-            );
-            SplArray.setItemAtIndex(argPtr, i, strIns, globalEnvironment, LineFile.LF_INTERPRETER);
-        }
-        return EvaluatedArguments.of(argPtr);
     }
 }
 

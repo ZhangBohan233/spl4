@@ -5,6 +5,8 @@ fn add(a, b, c) {
 }
 
 fn main() {
+    g := new Integer(3);
+    print(g + 2);
     print( add(*[1, 2], 3));
     b := function.foldl(add, -5, [1, 2, 3, 4, 5], [2, 2, 2, 2, 1]);
     c := function.map(add, [1, 2, 3, 4], [2, 3, 4, 5], [3, 4, 5, 6]);
