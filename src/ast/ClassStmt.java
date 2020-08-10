@@ -50,13 +50,12 @@ public class ClassStmt extends AbstractExpression {
         validateExtending();
 
         List<Pointer> superclassesPointers = new ArrayList<>();
-        for (int i = superclassesNodes.size() - 1; i >= 0; i--) {
-            Pointer scPtr = (Pointer) superclassesNodes.get(i).evaluate(env);
+        for (Node superclassesNode : superclassesNodes) {
+            Pointer scPtr = (Pointer) superclassesNode.evaluate(env);
             superclassesPointers.add(scPtr);
         }
 
-        SplClass clazz = new SplClass(className, superclassesPointers, body, env);
-        Pointer clazzPtr = env.getMemory().allocateObject(clazz, env);
+        Pointer clazzPtr = SplClass.createClassAndAllocate(className, superclassesPointers, body, env);
 
         env.defineVarAndSet(className, clazzPtr, getLineFile());
 

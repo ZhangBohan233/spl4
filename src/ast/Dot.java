@@ -75,7 +75,7 @@ public class Dot extends BinaryExpr {
             SplElement funcTv = ((FuncCall) right).getCallObj().evaluate(objEnv);
             SplCallable callable = (SplCallable) objEnv.getMemory().get((Pointer) funcTv);
             EvaluatedArguments ea = ((FuncCall) right).getArguments().evalArgs(oldEnv);
-            if (callable instanceof Method) {
+            if (callable instanceof SplMethod) {
                 ea.insertThis(leftPtr);  // add "this" ptr
             }
             return callable.call(ea, oldEnv, lineFile);

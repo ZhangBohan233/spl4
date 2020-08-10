@@ -51,7 +51,7 @@ public class IndexingNode extends AbstractExpression  {
             return SplArray.getItemAtIndex(objPtr, index, callEnv.getMemory(), lineFile);
         } else if (obj instanceof Instance) {
             Instance ins = (Instance) obj;
-            Method getItemFn = (Method)
+            SplMethod getItemFn = (SplMethod)
                     callEnv.getMemory().get((Pointer) ins.getEnv().get(Constants.GET_ITEM_FN, lineFile));
             return getItemFn.call(EvaluatedArguments.of(objPtr, new Int(index)), callEnv, lineFile);
         } else {

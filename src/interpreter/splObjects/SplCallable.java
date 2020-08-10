@@ -147,7 +147,7 @@ public abstract class SplCallable extends SplObject {
         public final SplElement defaultValue;
         public final boolean constant;
         public final int unpackCount;
-        Pointer contract;
+        Node contract;
 
         Parameter(String name, SplElement defaultValue, boolean constant, int unpackCount) {
             this.name = name;

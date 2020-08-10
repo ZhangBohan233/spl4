@@ -77,10 +77,12 @@ public class Utilities {
 
     public static Pointer primitiveToWrapper(SplElement prim, Environment env, LineFile lineFile) {
         String wrapperName = Constants.WRAPPERS.get(prim.type());
-        Pointer clazzPtr = (Pointer) env.get(wrapperName, lineFile);
-        Instance.InstanceAndPtr wrapperIns = Instance.createInstanceAndAllocate(clazzPtr, env, lineFile);
-        Instance.callInit(wrapperIns, EvaluatedArguments.of(prim), env, lineFile);
-        return wrapperIns.pointer;
+        return Instance.createInstanceWithInitCall(
+                wrapperName,
+                EvaluatedArguments.of(prim),
+                env,
+                lineFile
+        ).pointer;
     }
 
     public static SplElement wrapperToPrimitive(Pointer wrapperPtr, Environment env, LineFile lineFile) {

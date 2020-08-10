@@ -288,8 +288,14 @@ public class Memory {
             } else if (obj instanceof Instance) {
                 Instance instance = (Instance) obj;
                 mark(instance.getEnv());
+            } else if (obj instanceof SplClass) {
+                SplClass clazz = (SplClass) obj;
+                List<Pointer> classPointers = clazz.getAllAttrPointers();
+                for (Pointer attrPtr : classPointers) {
+                    SplObject attrObj = get(attrPtr);
+                    markObjectAsUsed(attrObj, attrPtr.getPtr());
+                }
             }
-
         }
 
 

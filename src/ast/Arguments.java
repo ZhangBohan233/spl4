@@ -3,15 +3,12 @@ package ast;
 import interpreter.EvaluatedArguments;
 import interpreter.env.Environment;
 import interpreter.primitives.Pointer;
-import interpreter.primitives.SplElement;
 import interpreter.splErrors.TypeError;
 import interpreter.splObjects.*;
 import lexer.SyntaxError;
 import util.Constants;
 import util.LineFile;
 import util.Utilities;
-
-import java.util.Arrays;
 
 public class Arguments extends NonEvaluate {
 
@@ -59,7 +56,7 @@ public class Arguments extends NonEvaluate {
                         } else if (obj instanceof Instance &&
                                 Utilities.isInstancePtr(arg, Constants.LIST_CLASS, callingEnv, lineFile)) {
                             Pointer toArrayPtr = (Pointer) ((Instance) obj).getEnv().get("toArray", lineFile);
-                            Method toArrayFtn = (Method) callingEnv.getMemory().get(toArrayPtr);
+                            SplMethod toArrayFtn = (SplMethod) callingEnv.getMemory().get(toArrayPtr);
                             Pointer arrPtr = (Pointer) toArrayFtn.call(EvaluatedArguments.of(arg), callingEnv, lineFile);
                             addArrayToArgs(arrPtr, evaluatedArguments, callingEnv);
                         } else {

@@ -74,12 +74,15 @@ public class ForLoopStmt extends ConditionalStmt {
             Pointer ptr = (Pointer) probIterable;
             SplObject obj = parentEnv.getMemory().get(ptr);
             if (obj instanceof SplArray) {
-                Instance.InstanceAndPtr iterator =
-                        Instance.createInstanceAndAllocate(Constants.ARRAY_ITERATOR_CLASS, parentEnv, lineFile);
-                Instance.callInit(iterator, EvaluatedArguments.of(iterator.pointer), parentEnv, lineFile);
+                Instance.InstanceAndPtr arrIterator =
+                        Instance.createInstanceWithInitCall(
+                                Constants.ARRAY_ITERATOR_CLASS,
+                                EvaluatedArguments.of(ptr),
+                                parentEnv,
+                                lineFile);
                 forEachLoopIterator(loopInvariant,
-                        iterator.pointer,
-                        iterator.instance,
+                        arrIterator.pointer,
+                        arrIterator.instance,
                         parentEnv,
                         titleEnv,
                         bodyEnv);
@@ -91,7 +94,7 @@ public class ForLoopStmt extends ConditionalStmt {
             } else if (Utilities.isInstancePtr(ptr, Constants.ITERABLE_CLASS, parentEnv, lineFile)) {
                 Instance iterable = (Instance) parentEnv.getMemory().get(ptr);
                 Pointer iterFnPtr = (Pointer) iterable.getEnv().get(Constants.ITER_FN, lineFile);
-                Method iterFn = (Method) parentEnv.getMemory().get(iterFnPtr);
+                SplMethod iterFn = (SplMethod) parentEnv.getMemory().get(iterFnPtr);
                 Pointer iteratorPtr = (Pointer) iterFn.call(EvaluatedArguments.of(ptr), parentEnv, lineFile);
                 Instance iterator = (Instance) parentEnv.getMemory().get(iteratorPtr);
                 forEachLoopIterator(loopInvariant, iteratorPtr, iterator, parentEnv, titleEnv, bodyEnv);
@@ -111,8 +114,8 @@ public class ForLoopStmt extends ConditionalStmt {
                                      BlockEnvironment bodyEnv) {
         Pointer nextPtr = (Pointer) iterator.getEnv().get(Constants.NEXT_FN, lineFile);
         Pointer hasNextPtr = (Pointer) iterator.getEnv().get(Constants.HAS_NEXT_FN, lineFile);
-        Method nextFn = (Method) titleEnv.getMemory().get(nextPtr);
-        Method hasNextFn = (Method) titleEnv.getMemory().get(hasNextPtr);
+        SplMethod nextFn = (SplMethod) titleEnv.getMemory().get(nextPtr);
+        SplMethod hasNextFn = (SplMethod) titleEnv.getMemory().get(hasNextPtr);
 
         String liName = loopInvariant.declaredName;
         loopInvariant.evaluate(titleEnv);  // declare loop invariant

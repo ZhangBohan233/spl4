@@ -4,7 +4,7 @@ import interpreter.primitives.SplElement;
 import interpreter.splObjects.Function;
 import interpreter.env.Environment;
 import interpreter.primitives.Pointer;
-import interpreter.splObjects.Method;
+import interpreter.splObjects.SplMethod;
 import interpreter.splObjects.SplCallable;
 import util.LineFile;
 
@@ -46,7 +46,7 @@ public class FuncDefinition extends AbstractExpression {
     public Pointer evalAsMethod(Environment classDefEnv) {
         Function.Parameter[] params = SplCallable.insertThis(SplCallable.evalParams(parameters, classDefEnv));
 
-        Method function = new Method(body, params, classDefEnv, name, getLineFile());
+        SplMethod function = new SplMethod(body, params, classDefEnv, name, getLineFile());
 
         return classDefEnv.getMemory().allocateFunction(function, classDefEnv);
     }

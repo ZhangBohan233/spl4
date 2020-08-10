@@ -3,7 +3,7 @@ package ast;
 import interpreter.EvaluatedArguments;
 import interpreter.primitives.SplElement;
 import interpreter.env.Environment;
-import interpreter.splObjects.Method;
+import interpreter.splObjects.SplMethod;
 import interpreter.splObjects.SplCallable;
 import interpreter.splObjects.SplObject;
 import interpreter.primitives.Pointer;
@@ -48,7 +48,7 @@ public class FuncCall extends AbstractExpression {
         SplCallable function = (SplCallable) obj;
 
         EvaluatedArguments ea = arguments.evalArgs(env);
-        if (function instanceof Method) {
+        if (function instanceof SplMethod) {
             // calling a method inside class
             Pointer thisPtr = (Pointer) env.get(Constants.THIS, lineFile);
             ea.insertThis(thisPtr);

@@ -6,9 +6,6 @@ import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.env.InstanceEnvironment;
 import interpreter.primitives.Pointer;
-import interpreter.primitives.SplElement;
-import interpreter.splErrors.RuntimeSyntaxError;
-import lexer.SyntaxError;
 import util.Constants;
 import util.LineFile;
 
@@ -38,90 +35,73 @@ public class Instance extends SplObject {
     }
 
     public static InstanceAndPtr createInstanceAndAllocate(String className,
-                                                           Environment creationEnv,
+                                                           Environment callingEnv,
                                                            LineFile lineFile) {
-        Pointer clazzPtr = (Pointer) creationEnv.get(className, lineFile);
-        return createInstanceAndAllocate(
-                clazzPtr, creationEnv, new HashMap<>(), new ArrayList<>(), lineFile);
+        Pointer clazzPtr = (Pointer) callingEnv.get(className, lineFile);
+        return createInstanceAndAllocate(clazzPtr, callingEnv, lineFile);
     }
 
     public static InstanceAndPtr createInstanceAndAllocate(Pointer clazzPtr,
-                                                           Environment creationEnv,
+                                                           Environment callingEnv,
                                                            LineFile lineFile) {
-        return createInstanceAndAllocate(
-                clazzPtr, creationEnv, new HashMap<>(), new ArrayList<>(), lineFile);
+        SplClass clazz = (SplClass) callingEnv.getMemory().get(clazzPtr);
+        return createInstanceAndAllocate(clazz.getMro(), 0, callingEnv, lineFile);
+    }
+
+    public static InstanceAndPtr createInstanceWithInitCall(String className,
+                                                     EvaluatedArguments evaluatedArgs,
+                                                     Environment callingEnv,
+                                                     LineFile lineFile) {
+        InstanceAndPtr iap = createInstanceAndAllocate(className, callingEnv, lineFile);
+        callInit(iap, evaluatedArgs, callingEnv, lineFile);
+        return iap;
+    }
+
+    public static InstanceAndPtr createInstanceWithInitCall(Pointer clazzPtr,
+                                                     EvaluatedArguments evaluatedArgs,
+                                                     Environment callingEnv,
+                                                     LineFile lineFile) {
+        InstanceAndPtr iap = createInstanceAndAllocate(clazzPtr, callingEnv, lineFile);
+        callInit(iap, evaluatedArgs, callingEnv, lineFile);
+        return iap;
     }
 
     /**
      * Creates an instance and allocate it in memory.
      *
-     * @param clazzPtr          pointer to class
-     * @param outerEnv          env where the new instance is created, not the class definition env
-     * @param superclassMethods methods definitions of superclasses, will be overridden
-     * @param mro               list of multiple resolution order, child at first
-     * @param lineFile          error traceback info of code where instance creation
+     * @param mro        list of multiple resolution order, child at first
+     * @param indexInMro current proceeding index in the mro array
+     * @param callingEnv env where the new instance is created, not the class definition env
+     * @param lineFile   error traceback info of code where instance creation
      * @return the tuple of the newly created instance, and the {@code TypeValue} contains the pointer to this instance
      */
-    private static InstanceAndPtr createInstanceAndAllocate(Pointer clazzPtr,
-                                                            Environment outerEnv,
-                                                            Map<String, FuncDefinition> superclassMethods,
-                                                            List<Pointer> mro,
+    private static InstanceAndPtr createInstanceAndAllocate(Pointer[] mro,
+                                                            int indexInMro,
+                                                            Environment callingEnv,
                                                             LineFile lineFile) {
-        // add to multiple resolution order
-        mro.add(clazzPtr);
 
-        SplObject obj = outerEnv.getMemory().get(clazzPtr);
+        Pointer clazzPtr = mro[indexInMro];
+
+        SplObject obj = callingEnv.getMemory().get(clazzPtr);
         SplClass clazz = (SplClass) obj;
         InstanceEnvironment instanceEnv = new InstanceEnvironment(
                 clazz.getClassName(),
                 clazz.getDefinitionEnv(),
-                outerEnv
+                callingEnv
         );
-        outerEnv.getMemory().addTempEnv(instanceEnv);
+        callingEnv.getMemory().addTempEnv(instanceEnv);
 
         Instance instance = new Instance(clazzPtr, instanceEnv);
-        Pointer instancePtr = outerEnv.getMemory().allocate(1, instanceEnv);
-        outerEnv.getMemory().set(instancePtr, instance);
-
-//        // define "this"
-//        instance.getEnv().directDefineConstAndSet(Constants.THIS, instancePtr);
-
-//        // define "getClass"
-//        NativeFunction getClassFtn = new NativeFunction(Constants.GET_CLASS, 0) {
-//            @Override
-//            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-//                return clazzPtr;
-//            }
-//        };
-//        Pointer getClassPtr = instanceEnv.getMemory().allocateFunction(getClassFtn, instanceEnv);
-//        instance.getEnv().directDefineConstAndSet(Constants.GET_CLASS, getClassPtr);
+        Pointer instancePtr = callingEnv.getMemory().allocate(1, instanceEnv);
+        callingEnv.getMemory().set(instancePtr, instance);
 
         // evaluate superclasses
-        List<Pointer> scPointers = clazz.getSuperclassPointers();
-        Instance currentChild = instance;
-        boolean superNotDefined = true;
-        for (Pointer scPtr : scPointers) {
+        if (indexInMro < mro.length - 1) {
             InstanceAndPtr scInsPtr =
-                    createInstanceAndAllocate(scPtr, outerEnv, superclassMethods, mro, lineFile);
+                    createInstanceAndAllocate(mro, indexInMro + 1, callingEnv, lineFile);
 
             // define "super"
-            if (superNotDefined) {
-                superNotDefined = false;
-                currentChild.getEnv().directDefineConstAndSet(Constants.SUPER, scInsPtr.pointer);
-                currentChild = scInsPtr.instance;
-            }
-        }
-
-//        // define "__mro__"
-//        Pointer mroArrPtr = SplArray.createArray(SplElement.POINTER, mro.size(), instanceEnv);
-//        instance.getEnv().directDefineConstAndSet(Constants.CLASS_MRO, mroArrPtr);
-//        for (int i = 0; i < mro.size(); i++) {
-//            SplArray.setItemAtIndex(mroArrPtr, i, mro.get(i), instanceEnv, lineFile);
-//        }
-
-        // define all methods from superclasses
-        for (Map.Entry<String, FuncDefinition> entry : superclassMethods.entrySet()) {
-            entry.getValue().evaluate(instanceEnv);
+            instance.getEnv().directDefineConstAndSet(Constants.SUPER, scInsPtr.pointer);
         }
 
         // define fields
@@ -134,42 +114,9 @@ public class Instance extends SplObject {
             instanceEnv.defineFunction(entry.getKey(), entry.getValue(), lineFile);
         }
 
-//        // evaluate class body, also override methods
-//        for (Line line : clazz.getBody().getLines()) {
-//            for (Node lineNode : line.getChildren()) {
-//                if (lineNode instanceof Declaration || lineNode instanceof Assignment) {
-//                    lineNode.evaluate(instanceEnv);
-//                } else if (lineNode instanceof FuncDefinition) {
-//                    FuncDefinition fd = (FuncDefinition) lineNode;
-//                    fd.evaluate(instanceEnv);
-//                    superclassMethods.put(fd.name, fd);
-//                } else if (lineNode instanceof ContractNode) {
-//                    lineNode.evaluate(instanceEnv);
-//                } else
-//                    throw new RuntimeSyntaxError("Invalid class body. ", line.lineFile);
-//            }
-//        }
-
-//        if (!instanceEnv.selfContains(Constants.CONSTRUCTOR)) {
-//            // If class no constructor, put an empty default constructor
-//            FuncDefinition fd = new FuncDefinition(
-//                    Constants.CONSTRUCTOR,
-//                    new Line(),
-//                    new BlockStmt(LineFile.LF_INTERPRETER),
-//                    LineFile.LF_INTERPRETER);
-//
-//            Pointer constructorPtr = fd.evalAsMethod(clazz.getDefinitionEnv());
-//            instanceEnv.defineFunction(Constants.CONSTRUCTOR, constructorPtr, lineFile);
-//        }
-
-        outerEnv.getMemory().removeTempEnv(instanceEnv);
+        callingEnv.getMemory().removeTempEnv(instanceEnv);
 
         return new InstanceAndPtr(instance, instancePtr);
-    }
-
-    public static void callInit(InstanceAndPtr iap, Arguments arguments, Environment callEnv, LineFile lineFile) {
-        EvaluatedArguments ea = arguments.evalArgs(callEnv);
-        callInit(iap, ea, callEnv, lineFile);
     }
 
     /**
@@ -178,20 +125,20 @@ public class Instance extends SplObject {
      * @param callEnv       calling environment
      * @param lineFile      line file
      */
-    public static void callInit(InstanceAndPtr iap,
+    private static void callInit(InstanceAndPtr iap,
                                 EvaluatedArguments evaluatedArgs,
                                 Environment callEnv,
                                 LineFile lineFile) {
 
-        Method constructor = getConstructor(iap.instance, lineFile);
+        SplMethod constructor = getConstructor(iap.instance, lineFile);
         evaluatedArgs.insertThis(iap.pointer);
         constructor.call(evaluatedArgs, callEnv, lineFile);
     }
 
-    private static Method getConstructor(Instance instance, LineFile lineFile) {
+    private static SplMethod getConstructor(Instance instance, LineFile lineFile) {
         InstanceEnvironment env = instance.getEnv();
         Pointer constructorPtr = (Pointer) env.get(Constants.CONSTRUCTOR, lineFile);
-        Method constructor = (Method) env.getMemory().get(constructorPtr);
+        SplMethod constructor = (SplMethod) env.getMemory().get(constructorPtr);
 
         if (env.hasName(Constants.SUPER, lineFile)) {
             // All classes has superclass except class 'Object'
@@ -199,7 +146,7 @@ public class Instance extends SplObject {
             Instance supIns = (Instance) env.getMemory().get(superPtr);
             InstanceEnvironment supEnv = supIns.getEnv();
             Pointer supConstPtr = (Pointer) supEnv.get(Constants.CONSTRUCTOR, lineFile);
-            Method supConst = (Method) env.getMemory().get(supConstPtr);
+            SplMethod supConst = (SplMethod) env.getMemory().get(supConstPtr);
 //            List<Type> supParamTypes = supConst.getFuncType().getParamTypes();
             if (supConst.minArgCount() > 1) {
                 // superclass has a non-trivial constructor

@@ -57,7 +57,7 @@ public class Assignment extends BinaryExpr {
                     SplArray.setItemAtIndex(arrPtr, (int) index.value, value, env, lineFile);
                 } else if (obj instanceof Instance) {
                     Instance ins = (Instance) obj;
-                    Method setItemFn = (Method)
+                    SplMethod setItemFn = (SplMethod)
                             env.getMemory().get((Pointer) ins.getEnv().get(Constants.SET_ITEM_FN, lineFile));
                     setItemFn.call(EvaluatedArguments.of(arrPtr, index, value), env, lineFile);
                 } else {

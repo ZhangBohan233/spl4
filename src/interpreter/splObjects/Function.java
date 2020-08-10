@@ -16,14 +16,11 @@ import java.util.Map;
 
 public class Function extends UserFunction {
 
-    //    private Contract contract;
-    private Pointer rtnContract;
+    private Node rtnContract;
     private boolean hasContract = false;
 
-    private final BlockStmt body;
+    protected final BlockStmt body;
     protected final String definedName;
-
-//    private EvaluatedArguments contractArgs;
 
     /**
      * Constructor for regular function.
@@ -50,7 +47,7 @@ public class Function extends UserFunction {
         }
     }
 
-    public void setContract(Line paramContractLine, Node rtnContractNode, Environment env) {
+    public void setContract(Line paramContractLine, Node rtnContractNode) {
         if (paramContractLine.size() != params.length) {
             throw new TypeError("Contracts must match the length of parameters. ", rtnContractNode.getLineFile());
         }
@@ -60,14 +57,15 @@ public class Function extends UserFunction {
                 throw new NativeError("Contract already defined for function '" + definedName + "'. ",
                         rtnContractNode.getLineFile());
             }
-            params[i].contract = (Pointer) paramContractLine.get(i).evaluate(env);
+            params[i].contract = paramContractLine.get(i);
         }
 
         if (rtnContract != null) {
             throw new NativeError("Contract already defined for function '" + definedName + "'. ",
                     rtnContractNode.getLineFile());
         }
-        rtnContract = (Pointer) rtnContractNode.evaluate(env);
+        rtnContract = rtnContractNode;
+//        rtnContract = (Pointer) rtnContractNode.evaluate(env);
 
         hasContract = true;
     }
@@ -109,9 +107,9 @@ public class Function extends UserFunction {
         }
     }
 
-    private void callContract(Pointer conFnPtr, SplElement arg, Environment callingEnv, LineFile lineFile) {
+    private void callContract(Node conNode, SplElement arg, Environment callingEnv, LineFile lineFile) {
+        Pointer conFnPtr = (Pointer) conNode.evaluate(definitionEnv);
         SplCallable callable = (SplCallable) callingEnv.getMemory().get(conFnPtr);
-//        contractArgs.positionalArgs.set(0, arg);
         EvaluatedArguments contractArgs = EvaluatedArguments.of(arg);
 
         SplElement result = callable.call(contractArgs, callingEnv, lineFile);

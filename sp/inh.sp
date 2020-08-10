@@ -1,3 +1,5 @@
+var x = 99;
+
 class A {
     var b = 2;
     fn get() {
@@ -6,6 +8,10 @@ class A {
 
     fn setB(fx) {
         b = 4;
+    }
+
+    fn foo() {
+        return x + 1;
     }
 }
 
@@ -18,14 +24,17 @@ class C(A) {
 }
 
 class D(B, C) {
-
+    fn foo() {
+        return super.foo() - 2;
+    }
 }
 
 fn main() {
     b := new D();
     print(b.get());
-    //b.setB(fn (x, y) {return 0;});
-    print(b.b);
+    print(b.super.super);
     print(D.__mro__);
+    print(b.foo());
     d := new D();
+    //e := new E();
 }

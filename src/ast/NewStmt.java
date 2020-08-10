@@ -19,8 +19,8 @@ public class NewStmt extends UnaryExpr {
     @Override
     protected SplElement internalEval(Environment env) {
         if (value instanceof AnonymousClassExpr) {
-            AnonymousClassExpr ace = (AnonymousClassExpr) value;
-            Node content = ace.getContent();
+//            AnonymousClassExpr ace = (AnonymousClassExpr) value;
+//            Node content = ace.getContent();
 //            if (content instanceof BlockStmt) {
 //                return initAnonymousClass(ace.left, (BlockStmt) content, env, env, getLineFile());
 //            } else
@@ -34,26 +34,6 @@ public class NewStmt extends UnaryExpr {
         }
     }
 
-//    @Override
-//    protected Type inferredType(Environment env) {
-//        return typeInference(value, env, getLineFile());
-//    }
-
-//    private static Type typeInference(Node node, Environment env, LineFile lineFile) {
-//        if (node instanceof FuncCall) {
-//            return  ((TypeRepresent) ((FuncCall) node).callObj).evalType(env);
-//        } else if (node instanceof IndexingNode) {
-//            return ((IndexingNode) node).evalType(env);
-//        } else if (node instanceof Dot) {
-//            Dot dot = (Dot) node;
-//            TypeValue dotLeft = dot.left.evaluate(env);
-//            if (!(dotLeft.getType() instanceof ModuleType)) throw new TypeError();
-//            SplModule module = (SplModule) env.getMemory().get((Pointer) dotLeft.getValue());
-//            return typeInference(dot.right, module.getEnv(), lineFile);
-//        } else {
-//            throw new SplException("Class type must be a call. Got " + node + " instead. ", lineFile);
-//        }
-//    }
 
     private static SplElement directInitClass(Node node, Environment classDefEnv, Environment callEnv,
                                               LineFile lineFile) {
@@ -131,96 +111,21 @@ public class NewStmt extends UnaryExpr {
                                                Environment callEnv,
                                                LineFile lineFile) {
         Pointer clazzPtr = (Pointer) call.callObj.evaluate(classDefEnv);
-//        SplClass clazzObj = (SplClass) callEnv.getMemory().get((Pointer) clazzPtr);
 
-//        Type type = clazzNode.evalType(classDefEnv);
-//        System.out.println(type);
-//        if (!(type instanceof ClassType)) throw new TypeError();
-//        ClassType clazzType = ((ClassType) type).copy();  // create a copy to avoid modification
-
-        Instance.InstanceAndPtr instanceTv = Instance.createInstanceAndAllocate(clazzPtr, callEnv, lineFile);
-
-        Instance.callInit(instanceTv, call.arguments, callEnv, lineFile);
-        return instanceTv.pointer;
+        return Instance.createInstanceWithInitCall(
+                clazzPtr, call.arguments.evalArgs(callEnv), callEnv, lineFile).pointer;
     }
 
-//    private static SplElement createArrayWithLiteral(IndexingNode node,
-//                                                    ArrayLiteral literal,
-//                                                    Environment classDefEnv,
-//                                                    Environment callEnv,
-//                                                    LineFile lineFile) {
-//
-////        Type atomType = node.evalAtomType(classDefEnv);
-//
-//        SplElement literalArray = literal.createAndAllocate(null, callEnv);
-////        System.out.println(atomType);
-//        // TODO: temporarily 不想写
-////        ArrayType arrayType = (ArrayType) node.evalType(classDefEnv);
-////        List<Integer> dimensions = new ArrayList<>();
-////        traverseArrayCreation(node, dimensions, callEnv, lineFile);
-////        Pointer arrPtr = SplArray.createArray(arrayType, dimensions, callEnv);
-////
-////        literal.fillArray(arrayType, arrPtr, dimensions, callEnv.getMemory());
-////        return new TypeValue(arrayType, arrPtr);
-//
-//        return literalArray;
-//    }
-//
     private static Pointer arrayCreation(IndexingNode node,
                                            Environment classDefEnv,
                                            Environment callEnv,
                                            LineFile lineFile) {
-//        ArrayType arrayType = (ArrayType) node.evalType(classDefEnv);
-//        List<Integer> dimensions = new ArrayList<>();
-//        traverseArrayCreation(node, dimensions, callEnv, lineFile);
+
         if (node.getArgs().getChildren().size() == 1) {
             Int length = (Int) node.getArgs().getChildren().get(0).evaluate(callEnv);
             return SplArray.createArray(node.getCallObj(), (int) length.value, callEnv);
         } else {
             throw new NativeError("Array creation must take exactly one int as argument. ", lineFile);
         }
-//        return SplArray.createArray(arrayType, dimensions, callEnv);
     }
-
-//    private static
-
-//
-//    private static void traverseArrayCreation(IndexingNode node,
-//                                              List<Integer> dimensions,
-//                                              Environment env,
-//                                              LineFile lineFile) {
-//        List<Node> argsList = node.getArgs().getChildren();
-//        if (node.getCallObj() instanceof IndexingNode) {
-//
-//            traverseArrayCreation((IndexingNode) node.getCallObj(),
-//                    dimensions,
-//                    env,
-//                    lineFile);
-//
-//            if (argsList.size() == 0) {
-//                dimensions.add(-1);
-//            } else if (argsList.size() == 1) {
-//                TypeValue argument = argsList.get(0).evaluate(env);
-//                if (argument.getType().equals(PrimitiveType.TYPE_INT)) {
-//                    int arrSize = (int) argument.getValue().intValue();
-//                    dimensions.add(arrSize);
-//                } else {
-//                    throw new TypeError();
-//                }
-//            } else {
-//                throw new TypeError("Array creation must have a size argument. ", lineFile);
-//            }
-//        } else {
-//            if (argsList.size() != 1) {
-//                throw new TypeError("Array creation must have a size argument. ", lineFile);
-//            }
-//            TypeValue argument = argsList.get(0).evaluate(env);
-//            if (argument.getType().equals(PrimitiveType.TYPE_INT)) {
-//                int arrSize = (int) argument.getValue().intValue();
-//                dimensions.add(arrSize);
-//            } else {
-//                throw new TypeError();
-//            }
-//        }
-//    }
 }

@@ -56,12 +56,11 @@ public class StringLiteral extends LiteralNode {
     }
 
     private static Pointer createStringInstance(Pointer arrPtr, Environment env, LineFile lineFile) {
-        Instance.InstanceAndPtr instanceTv =
-                Instance.createInstanceAndAllocate(Constants.STRING_CLASS, env, lineFile);
-
-        Instance.callInit(instanceTv, EvaluatedArguments.of(arrPtr), env, lineFile);
-
-        return instanceTv.pointer;
+        return Instance.createInstanceWithInitCall(
+                Constants.STRING_CLASS,
+                EvaluatedArguments.of(arrPtr),
+                env,
+                lineFile).pointer;
     }
 
     @Override

@@ -1,3 +1,15 @@
+===== Version 4020 =====
+2020/08/10
+
+* Implemented method contracts
+* Implemented method resolution order
+* Deprecated public version of 'callInit', used 'createInstanceWithInitCall' instead
+* Changed the evaluation time of contract node, from when it's defined to when it's actually evaluated
+* Bug fixes:
+    * Inheritance order reversal problem
+    * Iterate over array error
+
+
 ===== Version 4019 =====
 2020/08/09
 

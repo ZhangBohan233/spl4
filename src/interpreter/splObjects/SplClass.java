@@ -10,10 +10,7 @@ import interpreter.splErrors.RuntimeSyntaxError;
 import util.Constants;
 import util.LineFile;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SplClass extends SplObject {
 
@@ -24,22 +21,104 @@ public class SplClass extends SplObject {
      */
     private final List<Pointer> superclassPointers;
 
-//    private final BlockStmt body;
     private final String className;
     private final Environment definitionEnv;
+
+    // mro array used by java
+    private Pointer[] mro;
+
+    // mro array used by spl
+    private Pointer mroArrayPointer;
 
     private final List<Node> classNodes = new ArrayList<>();
     private final Map<String, Pointer> methodPointers = new HashMap<>();
 
-    public SplClass(String className, List<Pointer> superclassPointers,
-                    BlockStmt body, Environment definitionEnv) {
+    /**
+     * The private constructor, only for in-class call.
+     * <p>
+     * This is because this constructor only creates the instance, but does not allocate in the memory.
+     * So the mandatory field 'mro' cannot be created due to the lack of class pointer.
+     *
+     * @param className          name of class
+     * @param superclassPointers pointer to direct superclass
+     * @param body               class body
+     * @param definitionEnv      environment of definition
+     */
+    private SplClass(String className, List<Pointer> superclassPointers,
+                     BlockStmt body, Environment definitionEnv) {
         this.className = className;
         this.superclassPointers = superclassPointers;
-//        this.body = body;
         this.definitionEnv = definitionEnv;
 
         evalBody(body);
         checkConstructor();
+    }
+
+    public static Pointer createClassAndAllocate(String className, List<Pointer> superclassPointers,
+                                                 BlockStmt body, Environment definitionEnv) {
+
+        SplClass clazz = new SplClass(className, superclassPointers, body, definitionEnv);
+        Pointer clazzPtr = definitionEnv.getMemory().allocateObject(clazz, definitionEnv);
+        clazz.makeMro(clazzPtr);
+        clazz.updateMethods(clazzPtr);
+
+        return clazzPtr;
+    }
+
+    private void updateMethods(Pointer clazzPtr) {
+        for (Pointer methodPtr : methodPointers.values()) {
+            SplMethod method = (SplMethod) definitionEnv.getMemory().get(methodPtr);
+            method.setClassPtr(clazzPtr);
+        }
+    }
+
+    private void makeMro(Pointer thisClazzPtr) {
+        List<Pointer> mro = new ArrayList<>();
+        fillMro(mro, thisClazzPtr);
+        reduceMro(mro);
+        checkValidMro(mro);
+
+        this.mro = mro.toArray(new Pointer[0]);
+        this.mroArrayPointer = SplArray.createArray(SplElement.POINTER, this.mro.length, definitionEnv);
+        for (int i = 0; i < this.mro.length; i++) {
+            SplArray.setItemAtIndex(mroArrayPointer, i, this.mro[i], definitionEnv, LineFile.LF_INTERPRETER);
+        }
+    }
+
+    private void fillMro(List<Pointer> mro, Pointer thisClassPtr) {
+        mro.add(thisClassPtr);
+        for (Pointer scPtr : superclassPointers) {
+            SplClass sc = (SplClass) definitionEnv.getMemory().get(scPtr);
+            sc.fillMro(mro, scPtr);
+        }
+    }
+
+    /**
+     * Modified the mro list to removes the duplicated mro.
+     * <p>
+     * For example, [D -> B -> A -> Object -> C -> A -> Object] will be reduced to [D -> B -> C -> A -> Object]
+     *
+     * @param mro the mro list to be modified.
+     */
+    private void reduceMro(List<Pointer> mro) {
+        Set<Pointer> superclasses = new HashSet<>();
+        ListIterator<Pointer> reverseIterator = mro.listIterator(mro.size());
+        while (reverseIterator.hasPrevious()) {
+            Pointer ptr = reverseIterator.previous();
+            if (superclasses.contains(ptr)) {
+                reverseIterator.remove();
+            } else {
+                superclasses.add(ptr);
+            }
+        }
+    }
+
+    private void checkValidMro(List<Pointer> mro) {
+
+    }
+
+    public Pointer[] getMro() {
+        return mro;
     }
 
     private void evalBody(BlockStmt body) {
@@ -52,7 +131,7 @@ public class SplClass extends SplObject {
                     Pointer methodPtr = fd.evalAsMethod(definitionEnv);
                     methodPointers.put(fd.name, methodPtr);
                 } else if (lineNode instanceof ContractNode) {
-//                    lineNode.evaluate(instanceEnv);
+                    ((ContractNode) lineNode).evalAsMethod(methodPointers, className, definitionEnv);
                 } else
                     throw new RuntimeSyntaxError("Invalid class body. ", line.lineFile);
             }
@@ -73,14 +152,9 @@ public class SplClass extends SplObject {
         }
     }
 
-    public List<Pointer> getSuperclassPointers() {
-        return superclassPointers;
-    }
-
-//    public BlockStmt getBody() {
-//        return body;
+//    public List<Pointer> getSuperclassPointers() {
+//        return superclassPointers;
 //    }
-
 
     public Map<String, Pointer> getMethodPointers() {
         return methodPointers;
@@ -119,36 +193,27 @@ public class SplClass extends SplObject {
             if (name.equals(Constants.CLASS_NAME)) {
                 return StringLiteral.createString(className.toCharArray(), env, lineFile);
             } else if (name.equals(Constants.CLASS_MRO)) {
-                List<Pointer> mroList = new ArrayList<>();
-                addToMroList(mroList, env.getMemory(), selfPtr);
-                return mroListToArray(mroList, lineFile);
+                return mroArrayPointer;
             }
         }
         throw new AttributeError("Class does not have attribute '" + attrNode + "'. ", lineFile);
     }
 
+    /**
+     * This method is used for gc.
+     * @return a list containing all pointers that should not be collected by gc.
+     *
+     */
+    public List<Pointer> getAllAttrPointers() {
+        List<Pointer> res = new ArrayList<>();
+        res.add(mroArrayPointer);
+        res.addAll(methodPointers.values());
+        return res;
+    }
+
     @Override
     public String toString() {
-        return "Class <" + className + ">";
+        return "Class " + className + " ";
     }
 
-    private void addToMroList(List<Pointer> mro, Memory memory, Pointer selfPtr) {
-        mro.add(selfPtr);
-        for (Pointer scPtr: superclassPointers) {
-            SplClass sc = (SplClass) memory.get(scPtr);
-            sc.addToMroList(mro, memory, scPtr);
-        }
-    }
-
-    private void removeDuplicateMro(List<Pointer> mro) {
-
-    }
-
-    private Pointer mroListToArray(List<Pointer> mro, LineFile lineFile) {
-        Pointer mroArrPtr = SplArray.createArray(SplElement.POINTER, mro.size(), definitionEnv);
-        for (int i = 0; i < mro.size(); i++) {
-            SplArray.setItemAtIndex(mroArrPtr, i, mro.get(i), definitionEnv, lineFile);
-        }
-        return mroArrPtr;
-    }
 }
