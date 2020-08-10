@@ -13,7 +13,7 @@ import java.util.Stack;
 
 public class Parser {
 
-    private final BraceList rootList;
+    private final CollectiveElement rootList;
     private final boolean importLang;
 
     /**
@@ -119,21 +119,21 @@ public class Parser {
                             index++;
                             builder.addBinaryOperator("is not", BinaryOperator.LOGICAL, lineFile);
                         }
-                    } else if (FileTokenizer.LOGICAL_UNARY.contains(identifier)) {
+                    } else if (Tokenizer.LOGICAL_UNARY.contains(identifier)) {
                         builder.addUnaryOperator(identifier, RegularUnaryOperator.LOGICAL, lineFile);
-                    } else if (FileTokenizer.NUMERIC_BINARY.contains(identifier)) {
+                    } else if (Tokenizer.NUMERIC_BINARY.contains(identifier)) {
                         builder.addBinaryOperator(identifier, BinaryOperator.ARITHMETIC, lineFile);
-                    } else if (FileTokenizer.BITWISE_BINARY.contains(identifier)) {
+                    } else if (Tokenizer.BITWISE_BINARY.contains(identifier)) {
                         builder.addBinaryOperator(identifier, BinaryOperator.BITWISE, lineFile);
-                    } else if (FileTokenizer.NUMERIC_BINARY_ASSIGN.contains(identifier)) {
+                    } else if (Tokenizer.NUMERIC_BINARY_ASSIGN.contains(identifier)) {
                         builder.addNode(new BinaryOperatorAssignment(identifier, BinaryOperator.ARITHMETIC, lineFile));
-                    } else if (FileTokenizer.BITWISE_BINARY_ASSIGN.contains(identifier)) {
+                    } else if (Tokenizer.BITWISE_BINARY_ASSIGN.contains(identifier)) {
                         builder.addNode(new BinaryOperatorAssignment(identifier, BinaryOperator.BITWISE, lineFile));
-                    } else if (FileTokenizer.LOGICAL_BINARY.contains(identifier)) {
+                    } else if (Tokenizer.LOGICAL_BINARY.contains(identifier)) {
                         builder.addBinaryOperator(identifier, BinaryOperator.LOGICAL, lineFile);
-                    } else if (FileTokenizer.LAZY_BINARY.contains(identifier)) {
+                    } else if (Tokenizer.LAZY_BINARY.contains(identifier)) {
                         builder.addBinaryOperator(identifier, BinaryOperator.LAZY, lineFile);
-                    } else if (FileTokenizer.FAKE_TERNARY.contains(identifier)) {
+                    } else if (Tokenizer.FAKE_TERNARY.contains(identifier)) {
                         builder.addFakeTernary(identifier, lineFile);
                     } else {
 

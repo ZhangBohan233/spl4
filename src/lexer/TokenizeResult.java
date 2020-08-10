@@ -1,12 +1,13 @@
 package lexer;
 
 import lexer.treeList.BraceList;
+import lexer.treeList.CollectiveElement;
 
 public class TokenizeResult {
 
-    public final BraceList rootList;
+    public final CollectiveElement rootList;
 
-    public TokenizeResult(BraceList rootList) {
+    public TokenizeResult(CollectiveElement rootList) {
         this.rootList = rootList;
     }
 }

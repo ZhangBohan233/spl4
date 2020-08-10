@@ -1,3 +1,10 @@
+===== Version 4022 =====
+2020/08/10
+
+* Console:
+    * Implemented basic console functionalities
+
+
 ===== Version 4021 =====
 2020/08/10
 
