@@ -9,6 +9,10 @@ public class NativeError extends SplBaseException {
         super();
     }
 
+    public NativeError(Throwable cause) {
+        super(cause);
+    }
+
     public NativeError(LineFile lineFile) {
         super(lineFile);
     }

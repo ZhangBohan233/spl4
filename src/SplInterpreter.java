@@ -187,7 +187,7 @@ public class SplInterpreter {
 
                 Pointer stackTraceFtnPtr = (Pointer) errIns.getEnv().get("printStackTrace", Main.LF_MAIN);
                 Function stackTraceFtn = (Function) globalEnvironment.getMemory().get(stackTraceFtnPtr);
-                stackTraceFtn.call(EvaluatedArguments.of(), globalEnvironment, Main.LF_MAIN);
+                stackTraceFtn.call(EvaluatedArguments.of(errPtr), globalEnvironment, Main.LF_MAIN);
             } else {
                 System.out.println("Process finished with exit value " + rtn);
             }

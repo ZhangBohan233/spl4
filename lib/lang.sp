@@ -120,7 +120,7 @@ class Exception {
     }
 
     fn printStackTrace() {
-        Invokes.printErr(getClass().name + ": " + msg + " ");
+        Invokes.printErr(__class__().__name__ + ": " + msg + " ");
         Invokes.printErr(traceMsg);
     }
 }
@@ -254,6 +254,22 @@ class List(Iterable) {
         return array[index];
     }
 
+    fn insert(index, value) {
+        _size++;  // make sure [1,2,3].insert(3, 4) works
+        _checkIndex(index);
+
+        for i := _size - 1; i >= index; i-- {
+            array[i] = array[i - 1];
+        }
+        set(index, value);
+
+        if _size == array.length {
+            _expand();
+        }
+    }
+
+    contract insert(int?, anyType) -> void;
+
     fn set(index, value) {
         _checkIndex(index)
         wrapper := wrap(value);
@@ -263,6 +279,20 @@ class List(Iterable) {
     fn size() {
         return _size;
     }
+
+    fn remove(index) {
+        _checkIndex(index);
+        item := get(index);
+        for i := index; i < _size; i++ {
+            array[i] = array[i + 1];
+        }
+        _size--;
+        if _size < array.length / 4 {
+            _collapse();
+        }
+    }
+
+    contract remove(int?) -> anyType;
 
     fn toArray() {
         resArray := new Object[_size];
@@ -287,7 +317,11 @@ class List(Iterable) {
     }
 
     fn _collapse() {
-
+        newArray := new Object[array.length / 2];
+        for i := 0; i < _size; i++ {
+            newArray[i] = array[i];
+        }
+        array = newArray;
     }
 
     fn _calculateCapacity(inputSize) {

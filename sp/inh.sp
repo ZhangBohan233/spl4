@@ -37,4 +37,5 @@ fn main() {
     print(b.foo());
     d := new D();
     //e := new E();
+    print(Invokes.hasAttr([d], __iter__));
 }

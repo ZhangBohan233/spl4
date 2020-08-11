@@ -1,7 +1,15 @@
 
 fn main() {
     lst := [1, 2, 3, 4, 5, 6, 7];
-    lst.append(8);
-    lst.append(9);
+    //lst.append(8);
+    //lst.append(9);
+    print(lst);
+
+    lst.remove(0);
+    print(lst);
+
+    for var i in range(10, 20) {
+        lst.insert(1, i);
+    }
     print(lst);
 }

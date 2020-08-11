@@ -12,4 +12,6 @@
 ### Phase 2
 
 * ~~Type of arithmetic~~ **_DONE_**
-* Pattern matching contract, example: `contract foo(int?, A) -> A`
+* Pattern matching contract, example: `contract foo(int?, A?) -> A?`
+* ~~Invoke call "hasAttr"~~ **_DONE_**
+* Syntax sugar of unary function, example: `int? or float?`

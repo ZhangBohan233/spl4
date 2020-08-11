@@ -39,29 +39,6 @@ public class Dot extends BinaryExpr {
                 throw new TypeError("Object '" + leftObj + "' does not support attributes operation. ",
                         getLineFile());
             }
-//            switch (type.getPointerType()) {
-//                case PointerType.CLASS_TYPE:
-//                    Instance instance = (Instance) env.getMemory().get(ptr);
-//                    return crossEnvEval(right, instance.getEnv(), env, getLineFile());
-//                case PointerType.MODULE_TYPE:
-//                    SplModule module = (SplModule) env.getMemory().get(ptr);
-//                    return crossEnvEval(right, module.getEnv(), env, getLineFile());
-////                    return right.evaluate(module.getEnv());
-//                case PointerType.ARRAY_TYPE:
-//                    SplArray arr = (SplArray) env.getMemory().get(ptr);
-//                    if (arr == null) {
-//                        System.out.println(ptr);
-//                        System.out.println(left);
-//                        throw new NullPointerException("Array is null. ");
-//                    }
-//                    return arr.getAttr(right, getLineFile());
-//                case PointerType.NATIVE_TYPE:
-//                    NativeObject nativeObject = (NativeObject) env.getMemory().get(ptr);
-//                    return nativeObject.invoke(right, env, getLineFile());
-//                default:
-//                    throw new TypeError("Type '" + type + "' does not support attributes operation. ",
-//                            getLineFile());
-//            }
         } else {
             throw new TypeError("Only pointer type supports attributes operation. ", getLineFile());
         }

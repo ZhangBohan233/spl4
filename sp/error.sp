@@ -13,8 +13,8 @@ fn main() {
     //test(5);
 
     try {
-        test(2);
-        return 1
+        test(5);
+        return 1;
     } catch IndexException? or Exception? as e {
         print("caught!");
     } catch NativeError {

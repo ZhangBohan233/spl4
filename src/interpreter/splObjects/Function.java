@@ -140,6 +140,10 @@ public class Function extends UserFunction {
         body.evaluate(scope);
         scope.getMemory().decreaseStack();
 
+        if (scope.hasException()) {
+            return null;
+        }
+
         SplElement rtnValue = scope.getReturnValue();
         checkRtnContract(rtnValue, callingEnv, lineFile);
 

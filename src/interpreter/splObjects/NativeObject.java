@@ -7,6 +7,7 @@ import ast.Node;
 import interpreter.splErrors.AttributeError;
 import interpreter.env.Environment;
 import interpreter.primitives.SplElement;
+import interpreter.splErrors.NativeError;
 import interpreter.splErrors.TypeError;
 import util.LineFile;
 import util.SplBaseException;
@@ -47,7 +48,7 @@ public class NativeObject extends SplObject {
             throw new AttributeError("Native class '" + obj.getClass() + "' does not have method '" +
                     methodName + ". ", lineFile);
         } catch (InvocationTargetException e) {
-            throw new SplBaseException(e);
+            throw new NativeError(e);
         }
     }
 }

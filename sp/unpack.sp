@@ -1,11 +1,11 @@
-var a = 2.0 * 3 / 4;
-print(- -a);
 
 
 fn foo(a, *args, **kwargs) {
     print(kwargs.get("xs"));
     return a + args.length;
 }
+
+contract foo(int?, anyType, anyType) -> anyType;
 
 fn bar(x) {
 

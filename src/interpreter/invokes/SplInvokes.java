@@ -1,14 +1,12 @@
 package interpreter.invokes;
 
 import ast.Arguments;
+import ast.NameNode;
 import ast.StringLiteral;
 import interpreter.EvaluatedArguments;
+import interpreter.primitives.*;
 import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
-import interpreter.primitives.Int;
-import interpreter.primitives.Pointer;
-import interpreter.primitives.SplElement;
-import interpreter.primitives.SplFloat;
 import interpreter.splErrors.TypeError;
 import interpreter.splObjects.*;
 import util.Constants;
@@ -168,6 +166,16 @@ public class SplInvokes extends NativeObject {
         Pointer insPtr = (Pointer) arguments.getLine().get(0).evaluate(environment);
         Instance ins = (Instance) environment.getMemory().get(insPtr);
         return ins.getClazzPtr();
+    }
+
+    public Bool hasAttr(Arguments arguments, Environment environment, LineFile lineFile) {
+        checkArgCount(arguments, 2, "hasAttr", lineFile);
+
+        Pointer insPtr = (Pointer) arguments.getLine().get(0).evaluate(environment);
+        Instance ins = (Instance) environment.getMemory().get(insPtr);
+
+        NameNode nameNode = (NameNode) arguments.getLine().get(1);
+        return Bool.boolValueOf(ins.getEnv().hasName(nameNode.getName(), lineFile));
     }
 
     private static void checkArgCount(Arguments arguments, int expectArgc, String fnName, LineFile lineFile) {
