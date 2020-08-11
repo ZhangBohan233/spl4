@@ -140,7 +140,7 @@ public class Instance extends SplObject {
         Pointer constructorPtr = (Pointer) env.get(Constants.CONSTRUCTOR, lineFile);
         SplMethod constructor = (SplMethod) env.getMemory().get(constructorPtr);
 
-        if (env.hasName(Constants.SUPER, lineFile)) {
+        if (env.hasName(Constants.SUPER)) {
             // All classes has superclass except class 'Object'
             Pointer superPtr = (Pointer) env.get(Constants.SUPER, lineFile);
             Instance supIns = (Instance) env.getMemory().get(superPtr);

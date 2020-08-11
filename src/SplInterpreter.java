@@ -7,8 +7,12 @@ import interpreter.invokes.SplInvokes;
 import interpreter.primitives.*;
 import interpreter.splErrors.NativeError;
 import interpreter.splObjects.*;
+import util.ArgumentParser;
+import util.Constants;
 import util.LineFile;
 import util.Utilities;
+
+import java.io.File;
 
 public class SplInterpreter {
 
@@ -168,15 +172,16 @@ public class SplInterpreter {
     }
 
     static void callMain(String[] args, GlobalEnvironment globalEnvironment) {
-        if (globalEnvironment.hasName("main", Main.LF_MAIN)) {
-            Pointer mainPtr = (Pointer) globalEnvironment.get("main", Main.LF_MAIN);
-            EvaluatedArguments splArg =
-                    args == null ? new EvaluatedArguments() : makeSplArgArray(args, globalEnvironment);
+        if (globalEnvironment.hasName(Constants.MAIN_FN)) {
+            Pointer mainPtr = (Pointer) globalEnvironment.get(Constants.MAIN_FN, Main.LF_MAIN);
 
             Function mainFunc = (Function) globalEnvironment.getMemory().get(mainPtr);
             if (mainFunc.minArgCount() > 1) {
                 throw new NativeError("Function main takes 0 or 1 arguments.");
             }
+            EvaluatedArguments splArg =
+                    mainFunc.minArgCount() == 0 ? new EvaluatedArguments() : makeSplArgArray(args, globalEnvironment);
+
             SplElement rtn = mainFunc.call(splArg, globalEnvironment, Main.LF_MAIN);
 
             if (globalEnvironment.hasException()) {

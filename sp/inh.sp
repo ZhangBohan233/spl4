@@ -25,17 +25,20 @@ class C(A) {
 
 class D(B, C) {
     fn foo() {
-        return super.foo() - 2;
+        return x -= b;
     }
 }
 
 fn main() {
     b := new D();
     print(b.get());
+    b.setB(null);
     print(b.super.super);
     print(D.__mro__);
     print(b.foo());
     d := new D();
     //e := new E();
     print(Invokes.hasAttr([d], __iter__));
+
+    return d.b;
 }

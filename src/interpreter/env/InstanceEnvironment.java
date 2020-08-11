@@ -31,14 +31,14 @@ public class InstanceEnvironment extends MainAbstractEnvironment {
     }
 
     @Override
-    protected VarEntry innerGet(String name, boolean isFirst, LineFile lineFile) {
-        VarEntry tv = searchSuper(name, lineFile);
+    protected VarEntry innerGet(String name, boolean isFirst) {
+        VarEntry tv = searchSuper(name);
         if (tv == null)
-            return super.innerGet(name, isFirst, lineFile);
+            return super.innerGet(name, isFirst);
         else return tv;
     }
 
-    private VarEntry searchSuper(String name, LineFile lineFile) {
+    private VarEntry searchSuper(String name) {
         VarEntry tv = variables.get(name);
 
         if (tv == null) {
@@ -46,7 +46,7 @@ public class InstanceEnvironment extends MainAbstractEnvironment {
             if (superTv == null) return null;
             else {
                 Instance instance = (Instance) getMemory().get((Pointer) superTv.getValue());
-                return instance.getEnv().searchSuper(name, lineFile);
+                return instance.getEnv().searchSuper(name);
             }
         } else return tv;
     }

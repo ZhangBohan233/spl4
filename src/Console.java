@@ -31,7 +31,7 @@ public class Console {
         SplInterpreter.initNatives(ge);
 
         FileTokenizer fileTokenizer =
-                new FileTokenizer(new File("lib/console.sp"), true, true);
+                new FileTokenizer(new File("lib/console.sp"), true);
         Parser parser = new Parser(new TokenizeResult(fileTokenizer.tokenize()),
                 true);
         BlockStmt root = parser.parse();

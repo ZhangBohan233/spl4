@@ -1,3 +1,11 @@
+===== Version 4025 =====
+2020/08/11
+
+* New library function and native call:
+    * script(path, *args)
+* Changed the argument logic of command line call
+
+
 ===== Version 4024 =====
 2020/08/11
 

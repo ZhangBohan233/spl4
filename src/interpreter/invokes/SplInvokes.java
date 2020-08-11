@@ -1,17 +1,22 @@
 package interpreter.invokes;
 
-import ast.Arguments;
-import ast.NameNode;
-import ast.StringLiteral;
+import ast.*;
 import interpreter.EvaluatedArguments;
+import interpreter.env.BlockEnvironment;
 import interpreter.primitives.*;
 import interpreter.splErrors.NativeError;
 import interpreter.env.Environment;
 import interpreter.splErrors.TypeError;
 import interpreter.splObjects.*;
+import lexer.FileTokenizer;
+import lexer.TokenizeResult;
+import lexer.treeList.BraceList;
+import parser.Parser;
 import util.Constants;
 import util.LineFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 
@@ -60,7 +65,7 @@ public class SplInvokes extends NativeObject {
 
     public SplElement clock(Arguments arguments, Environment environment, LineFile lineFile) {
         if (arguments.getLine().getChildren().size() != 0) {
-            throw new NativeError("System.clock() takes 0 arguments, " +
+            throw new NativeError("Invokes.clock() takes 0 arguments, " +
                     arguments.getLine().getChildren().size() + " given. ", lineFile);
         }
         return new Int(System.currentTimeMillis());
@@ -68,7 +73,7 @@ public class SplInvokes extends NativeObject {
 
     public SplElement free(Arguments arguments, Environment environment, LineFile lineFile) {
         if (arguments.getLine().getChildren().size() != 1) {
-            throw new NativeError("System.free(ptr) takes 1 argument, " +
+            throw new NativeError("Invokes.free(ptr) takes 1 argument, " +
                     arguments.getLine().getChildren().size() + " given. ", lineFile);
         }
         Pointer ptr = (Pointer) arguments.getLine().getChildren().get(0).evaluate(environment);
@@ -87,7 +92,7 @@ public class SplInvokes extends NativeObject {
 
     public SplElement gc(Arguments arguments, Environment environment, LineFile lineFile) {
         if (arguments.getLine().getChildren().size() != 0) {
-            throw new NativeError("System.gc() takes 0 arguments, " +
+            throw new NativeError("Invokes.gc() takes 0 arguments, " +
                     arguments.getLine().getChildren().size() + " given. ", lineFile);
         }
 
@@ -109,7 +114,7 @@ public class SplInvokes extends NativeObject {
 
         SplElement arg = arguments.getLine().getChildren().get(0).evaluate(environment);
         if (SplElement.isPrimitive(arg))
-            throw new TypeError("System.id() takes a pointer as argument. ", lineFile);
+            throw new TypeError("Invokes.id() takes a pointer as argument. ", lineFile);
 
         return new Int(arg.intValue());
     }
@@ -175,13 +180,63 @@ public class SplInvokes extends NativeObject {
         Instance ins = (Instance) environment.getMemory().get(insPtr);
 
         NameNode nameNode = (NameNode) arguments.getLine().get(1);
-        return Bool.boolValueOf(ins.getEnv().hasName(nameNode.getName(), lineFile));
+        return Bool.boolValueOf(ins.getEnv().hasName(nameNode.getName()));
+    }
+
+    public SplElement script(Arguments arguments, Environment environment, LineFile lineFile) {
+        checkArgCount(arguments, 1, SplCallable.MAX_ARGS, "script", lineFile);
+
+        EvaluatedArguments evaluatedArgs = arguments.evalArgs(environment);
+        Instance strIns = (Instance) environment.getMemory().get(
+                (Pointer) evaluatedArgs.positionalArgs.get(0)
+        );
+        String path = extractFromSplString(strIns, environment, lineFile);
+
+        try {
+            FileTokenizer ft = new FileTokenizer(new File(path), false);
+            BraceList braceList = ft.tokenize();
+            Parser parser = new Parser(new TokenizeResult(braceList), false);
+            BlockStmt root = parser.parse();
+            BlockEnvironment subEnv = new BlockEnvironment(environment);
+            root.evaluate(subEnv);
+            if (subEnv.hasName(Constants.MAIN_FN)) {
+                Pointer mainPtr = (Pointer) subEnv.get(Constants.MAIN_FN, lineFile);
+                Function mainFn = (Function) environment.getMemory().get(mainPtr);
+
+                if (mainFn.minArgCount() == 0) {
+                    if (evaluatedArgs.positionalArgs.size() > 1)
+                        throw new NativeError("Main function in script '" + path + "' does not require " +
+                                "command line argument, but arguments are given. ", lineFile);
+                    return mainFn.call(EvaluatedArguments.of(), environment, lineFile);
+                } else {
+                    int mainArgCount = evaluatedArgs.positionalArgs.size();
+                    Pointer argArray = SplArray.createArray(SplElement.POINTER, mainArgCount, environment);
+                    for (int i = 0; i < mainArgCount; i++) {
+                        SplArray.setItemAtIndex(
+                                argArray, i, evaluatedArgs.positionalArgs.get(i), environment, lineFile);
+                    }
+                    EvaluatedArguments targetArgs = EvaluatedArguments.of(argArray);
+                    return mainFn.call(targetArgs, environment, lineFile);
+                }
+            }
+            return Pointer.NULL_PTR;
+        } catch (IOException e) {
+            throw new NativeError(e);
+        }
     }
 
     private static void checkArgCount(Arguments arguments, int expectArgc, String fnName, LineFile lineFile) {
         if (arguments.getLine().getChildren().size() != expectArgc) {
-            throw new NativeError("System." + fnName + "() takes " + expectArgc + " arguments, " +
+            throw new NativeError("Invokes." + fnName + "() takes " + expectArgc + " arguments, " +
                     arguments.getLine().getChildren().size() + " given. ", lineFile);
+        }
+    }
+
+    private static void checkArgCount(Arguments arguments, int minArg, int maxArg, String fnName, LineFile lineFile) {
+        if (arguments.getLine().size() < minArg ||
+                arguments.getLine().size() > maxArg) {
+            throw new NativeError(String.format("Invokes.%s takes %d to %d arguments, %d given. ",
+                    fnName, minArg, maxArg, arguments.getLine().size()), lineFile);
         }
     }
 
@@ -205,7 +260,7 @@ public class SplInvokes extends NativeObject {
     }
 
     private static String getRepr(SplElement element, Environment environment, LineFile lineFile,
-                                    Pointer stringPtr) {
+                                  Pointer stringPtr) {
         if (SplElement.isPrimitive(element)) {
             return element.toString();
         } else {

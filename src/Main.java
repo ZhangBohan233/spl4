@@ -26,7 +26,6 @@ public class Main {
             long parseBegin = System.currentTimeMillis();
             FileTokenizer tokenizer = new FileTokenizer(
                     argumentParser.getMainSrcFile(),
-                    true,
                     argumentParser.importLang()
             );
             BraceList rootToken = tokenizer.tokenize();

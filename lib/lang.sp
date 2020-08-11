@@ -416,6 +416,12 @@ fn range(begin, end, step=1) {
     return new RangeIterator(begin, end, step);
 }
 
+fn script(path, *args) {
+    return Invokes.script(path, *args);
+}
+
+contract script(String?, String?) -> anyType;
+
 fn str(obj) {
     return Invokes.string(obj);
 }

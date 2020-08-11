@@ -118,7 +118,7 @@ public abstract class Environment {
     }
 
     public void setVar(String name, SplElement value, LineFile lineFile) {
-        VarEntry entry = innerGet(name, true, lineFile);
+        VarEntry entry = innerGet(name, true);
         if (entry == null)
             throw new EnvironmentError("Variable '" + name + "' is not defined in this scope. ", lineFile);
 
@@ -130,7 +130,7 @@ public abstract class Environment {
     }
 
     public SplElement get(String name, LineFile lineFile) {
-        VarEntry se = innerGet(name, true, lineFile);
+        VarEntry se = innerGet(name, true);
         if (se == null) {
             throw new EnvironmentError("Name '" + name + "' not found. ", lineFile);
         }
@@ -138,8 +138,8 @@ public abstract class Environment {
         return se.getValue();
     }
 
-    public boolean hasName(String name, LineFile lineFile) {
-        return innerGet(name, true, lineFile) != null;
+    public boolean hasName(String name) {
+        return innerGet(name, true) != null;
     }
 
     /**
@@ -149,15 +149,14 @@ public abstract class Environment {
      *
      * @param name         the name
      * @param isFirst      whether this is called by another function. {@code false} if this call is self recursion
-     * @param lineFile     line and file for error information
      * @return the value
      */
-    protected VarEntry innerGet(String name, boolean isFirst, LineFile lineFile) {
+    protected VarEntry innerGet(String name, boolean isFirst) {
         VarEntry tv = variables.get(name);
 
         if (tv == null) {
             if (outer != null) {
-                tv = outer.innerGet(name, false, lineFile);
+                tv = outer.innerGet(name, false);
             }
             if (isFirst && tv == null) {
                 tv = searchInNamespaces(name);

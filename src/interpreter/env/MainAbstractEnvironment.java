@@ -9,29 +9,11 @@ import java.util.Set;
 
 public abstract class MainAbstractEnvironment extends Environment {
 
-//    public static final Set<String> NON_OVERRIDE_FUNCTIONS = Set.of(
-//            "init"
-//    );
-
     protected Set<ModuleEnvironment> namespaces = new HashSet<>();
 
     public MainAbstractEnvironment(Memory memory, Environment outer) {
         super(memory, outer);
     }
-
-//    @Override
-//    public void defineFunction(String name, TypeValue funcTv, LineFile lineFile) {
-//        if (!NON_OVERRIDE_FUNCTIONS.contains(name) && localHasName(name, lineFile)) {
-//            TypeValue superFn = get(name, lineFile);
-//            // FIXME: this step might not be useful anymore
-//            if (!superFn.getType().equals(funcTv.getType())) {
-//                throw new TypeError("Function '" + name + "' does not overrides its super function, but has " +
-//                        "identical names. ", lineFile);
-//            }
-//        }
-//
-//        variables.put(name, funcTv);
-//    }
 
     @Override
     public boolean isSub() {

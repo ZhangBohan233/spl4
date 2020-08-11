@@ -509,7 +509,7 @@ public class Parser {
                                 BlockStmt rootBlock = importedPathsAndContents.get(path);
                                 if (rootBlock == null) {
                                     FileTokenizer fileTokenizer =
-                                            new FileTokenizer(fileImporting, false, importLang);
+                                            new FileTokenizer(fileImporting, importLang);
                                     Parser fileParser =
                                             new Parser(new TokenizeResult(fileTokenizer.tokenize()), importLang);
                                     rootBlock = fileParser.parse();

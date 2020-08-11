@@ -18,12 +18,10 @@ public class FileTokenizer extends Tokenizer {
             "or 'import namespace \"path\"'";
 
     private final File srcFile;
-    private boolean main;
     private final boolean importLang;
 
-    public FileTokenizer(File srcFile, boolean main, boolean importLang) {
+    public FileTokenizer(File srcFile, boolean importLang) {
         this.srcFile = srcFile;
-        this.main = main;
         this.importLang = importLang;
     }
 

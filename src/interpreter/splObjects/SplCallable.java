@@ -12,6 +12,8 @@ import util.LineFile;
 
 public abstract class SplCallable extends SplObject {
 
+    public static final int MAX_ARGS = 65535;
+
     public abstract SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile lineFile);
 
     public SplElement call(Arguments arguments, Environment callingEnv) {

@@ -25,38 +25,18 @@ public class ArgumentParser {
                 String s = args[i];
                 if (s.length() > 0 && s.charAt(0) == '-') {
                     switch (s) {
-                        case "-nl":
-                        case "--noLang":
-                            noImportLang = true;
-                            break;
-                        case "-ast":
-                            printAst = true;
-                            break;
-                        case "-gc":
+                        case "-nl", "--noLang" -> noImportLang = true;
+                        case "-ast" -> printAst = true;
+                        case "-gc" -> {
                             gcInfo = true;
                             gcTrigger = true;
-                            break;
-                        case "--gci":
-                            gcInfo = true;
-                            break;
-                        case "--gct":
-                            gcTrigger = true;
-                            break;
-                        case "-tk":
-                        case "--tokens":
-                            printTokens = true;
-                            break;
-                        case "-pm":
-                        case "--printMem":
-                            printMem = true;
-                            break;
-                        case "-t":
-                        case "--timer":
-                            timer = true;
-                            break;
-                        default:
-                            System.out.println("Unknown flag '" + s + "'");
-                            break;
+                        }
+                        case "--gci" -> gcInfo = true;
+                        case "--gct" -> gcTrigger = true;
+                        case "-tk", "--tokens" -> printTokens = true;
+                        case "-pm", "--printMem" -> printMem = true;
+                        case "-t", "--timer" -> timer = true;
+                        default -> System.out.println("Unknown flag '" + s + "'");
                     }
                 } else {
                     mainSrcFile = new File(s);
@@ -75,6 +55,10 @@ public class ArgumentParser {
         if (mainSrcFile == null) {
             System.out.println("Source file not specified.");
         } else allValid = true;
+
+        if (splArgs == null) {
+            splArgs = new String[]{mainSrcFile.getAbsolutePath()};
+        }
     }
 
     public File getMainSrcFile() {
