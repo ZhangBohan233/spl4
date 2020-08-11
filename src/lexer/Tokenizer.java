@@ -172,10 +172,24 @@ public abstract class Tokenizer {
                     } else if (ch == '\'') {
                         // enter char literal
                         if (i < len - 2 && line.charAt(i + 2) == '\'') {
+                            // normal char
                             lineTokenize(nonLiteral.toString(), lineFile);
                             nonLiteral.setLength(0);
                             tokens.add(new CharToken(line.charAt(i + 1), lineFile));
                             i += 2;
+                        } else if (i < len - 3 && line.charAt(i + 3) == '\'' && line.charAt(i + 1) == '\\') {
+                            // escape char
+                            lineTokenize(nonLiteral.toString(), lineFile);
+                            nonLiteral.setLength(0);
+                            char escaped = line.charAt(i + 2);
+                            if (escaped == '\\') {
+                                tokens.add(new CharToken('\\', lineFile));
+                            } else if (CharToken.ESCAPES.containsKey(escaped)) {
+                                tokens.add(new CharToken(CharToken.ESCAPES.get(escaped), lineFile));
+                            } else {
+                                throw new SyntaxError("Invalid escape '\\" + escaped + "'. ", lineFile);
+                            }
+                            i += 3;
                         } else {
                             throw new SyntaxError("Char literal must contain exactly one symbol. ", lineFile);
                         }

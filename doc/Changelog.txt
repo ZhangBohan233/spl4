@@ -1,3 +1,9 @@
+===== Version 4023 =====
+2020/08/11
+
+* Implemented string escape and char escape
+
+
 ===== Version 4022 =====
 2020/08/10
 

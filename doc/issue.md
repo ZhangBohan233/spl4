@@ -1,6 +1,6 @@
 ### Tokenizer:
 
-**ISSUE T01** \
+~~**ISSUE T01**~~ **_FIXED_** \
 Escape characters '\\' not working properly.
 
 ### Interpreter:

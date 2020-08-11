@@ -4,8 +4,8 @@
 
 
 * ~~Contract in class body~~ **_DONE_**
-* getitem, setitem
-* ~~error~~   _**DONE**_
+* ~~getitem, setitem~~ **_DONE_**
+* ~~error~~ _**DONE**_
 * ~~Separate UnaryExpr without returning value (return, throw)~~   _**DONE**_
 
 
