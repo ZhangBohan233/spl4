@@ -4,9 +4,7 @@ import ast.Node;
 import interpreter.Memory;
 import interpreter.env.GlobalEnvironment;
 import interpreter.primitives.SplElement;
-import lexer.ConsoleTokenizer;
-import lexer.FileTokenizer;
-import lexer.TokenizeResult;
+import lexer.*;
 import lexer.treeList.BraceList;
 import lexer.treeList.BracketList;
 import parser.Parser;
@@ -26,15 +24,17 @@ public class Console {
     }
 
     private GlobalEnvironment createConsoleEnvironment() throws IOException {
+        FileTokenizer fileTokenizer =
+                new FileTokenizer(new File("lib/console.sp"), true);
+        TextProcessResult tpr =
+                new TextProcessor(fileTokenizer.tokenize(), true).process();
+        Parser parser = new Parser(tpr);
+        BlockStmt root = parser.parse();
+
         Memory memory = new Memory();
         GlobalEnvironment ge = new GlobalEnvironment(memory);
         SplInterpreter.initNatives(ge);
-
-        FileTokenizer fileTokenizer =
-                new FileTokenizer(new File("lib/console.sp"), true);
-        Parser parser = new Parser(new TokenizeResult(fileTokenizer.tokenize()),
-                true);
-        BlockStmt root = parser.parse();
+        SplInterpreter.importModules(ge, tpr.importedPaths);
 
         root.evaluate(ge);
 
@@ -61,7 +61,9 @@ public class Console {
             if (consoleTokenizer.readyToBuild()) {
                 try {
                     BracketList bracketList = consoleTokenizer.build();
-                    Parser parser = new Parser(new TokenizeResult(bracketList), false);
+                    TextProcessResult tpr =
+                            new TextProcessor(new TokenizeResult(bracketList), false).process();
+                    Parser parser = new Parser(tpr);
                     BlockStmt lineExpr = parser.parse();
                     if (lineExpr.getLines().size() > 0 && lineExpr.getLines().get(0).size() > 0) {
                         Node only = lineExpr.getLines().get(0).get(0);

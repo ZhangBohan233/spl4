@@ -39,12 +39,12 @@ public abstract class Environment {
         variables.put(name, VarEntry.varEntry(funcPtr));
     }
 
-    public Pointer getImportedModulePtr(File moduleFile) {
-        return outer.getImportedModulePtr(moduleFile);
+    public Pointer getImportedModulePtr(String modulePath) {
+        return outer.getImportedModulePtr(modulePath);
     }
 
-    public void addImportedModulePtr(File moduleFile, Pointer modulePtr) {
-        outer.addImportedModulePtr(moduleFile, modulePtr);
+    public void addImportedModulePtr(String modulePath, Pointer modulePtr) {
+        outer.addImportedModulePtr(modulePath, modulePtr);
     }
 
     public abstract boolean isSub();

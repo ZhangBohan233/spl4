@@ -13,7 +13,7 @@ public class GlobalEnvironment extends MainAbstractEnvironment {
     /**
      * A map to avoided duplicate module in memory.
      */
-    private final Map<File, Pointer> importedModules = new HashMap<>();
+    private final Map<String, Pointer> importedModules = new HashMap<>();
 
     protected Pointer exceptionPtr;
 
@@ -43,12 +43,12 @@ public class GlobalEnvironment extends MainAbstractEnvironment {
     }
 
     @Override
-    public Pointer getImportedModulePtr(File moduleFile) {
-        return importedModules.get(moduleFile);
+    public Pointer getImportedModulePtr(String modulePath) {
+        return importedModules.get(modulePath);
     }
 
     @Override
-    public void addImportedModulePtr(File moduleFile, Pointer modulePtr) {
-        importedModules.put(moduleFile, modulePtr);
+    public void addImportedModulePtr(String modulePath, Pointer modulePtr) {
+        importedModules.put(modulePath, modulePtr);
     }
 }

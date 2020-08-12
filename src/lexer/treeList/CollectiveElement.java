@@ -24,6 +24,10 @@ public abstract class CollectiveElement extends Element {
         return elements.size();
     }
 
+    public void set(int index, Element element) {
+        elements.set(index, element);
+    }
+
     public Element get(int index) {
         return elements.get(index);
     }

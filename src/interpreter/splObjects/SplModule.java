@@ -4,11 +4,11 @@ import interpreter.env.ModuleEnvironment;
 
 public class SplModule extends SplObject {
 
-    private String importName;
-    private ModuleEnvironment env;
+    private final String importedPath;
+    private final ModuleEnvironment env;
 
-    public SplModule(String importName, ModuleEnvironment env) {
-        this.importName = importName;
+    public SplModule(String importedPath, ModuleEnvironment env) {
+        this.importedPath = importedPath;
         this.env = env;
     }
 
@@ -18,6 +18,6 @@ public class SplModule extends SplObject {
 
     @Override
     public String toString() {
-        return "Module " + importName;
+        return "Module " + importedPath;
     }
 }

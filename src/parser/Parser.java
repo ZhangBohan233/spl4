@@ -14,7 +14,6 @@ import java.util.Stack;
 public class Parser {
 
     private final CollectiveElement rootList;
-    private final boolean importLang;
 
     /**
      * Imported file paths vs its content.
@@ -26,9 +25,8 @@ public class Parser {
 
     private int varLevel = Declaration.USELESS;
 
-    public Parser(TokenizeResult tokenizeResult, boolean importLang) {
-        this.rootList = tokenizeResult.rootList;
-        this.importLang = importLang;
+    public Parser(TextProcessResult textProcessResult) {
+        this.rootList = textProcessResult.rootList;
     }
 
     private AstBuilder parseSomeBlock(CollectiveElement collectiveElement) throws IOException {
@@ -456,71 +454,31 @@ public class Parser {
                                 tryStmt = (TryStmt) builder.getLastAddedNode();
                                 tryStmt.setFinallyBlock(bodyBlock);
                                 break;
+                            case "macro":
+                                // A fake macro
+                                String macroName =
+                                        ((IdToken) ((AtomicElement) parent.get(index++)).atom).getIdentifier();
+                                bodyList = (BraceList) parent.get(index++);
+                                bodyBlock = parseBlock(bodyList);
+                                builder.addNode(new MacroNode(macroName, bodyBlock, lineFile));
+                                break;
+                            case "syntax":
+                                conditionList = new BracketList(null, lineFile);
+                                while (!((next = parent.get(index++)) instanceof BraceList)) {
+                                    conditionList.add(next);
+                                }
+                                bodyList = (BraceList) next;
+                                builder.addNode(new MacroSyntaxNode(conditionList, bodyList, lineFile));
+                                break;
                             case "import":
-                                AtomicElement probNamespaceEle = (AtomicElement) parent.get(index++);
-                                AtomicElement importEle;
-                                boolean nameSpace = false;
-                                if (probNamespaceEle.atom instanceof IdToken) {
-                                    String probNs = ((IdToken) probNamespaceEle.atom).getIdentifier();
-                                    if (probNs.equals("namespace")) {
-                                        importEle = (AtomicElement) parent.get(index++);
-                                        nameSpace = true;
-                                    } else {
-                                        importEle = probNamespaceEle;
-                                    }
-                                } else {
-                                    importEle = probNamespaceEle;
-                                }
-
-                                String path, importName;
-                                // This step can be optimized, but does not due to simplicity.
-                                if (importEle.atom instanceof IdToken) {
-                                    // Library import
-                                    importName = ((IdToken) importEle.atom).getIdentifier();
-                                    path = "lib" + File.separator + importName + ".sp";
-                                } else if (importEle.atom instanceof StrToken) {
-                                    // User file import
-                                    path = lineFile.getFile().getParentFile().getAbsolutePath() +
-                                            File.separator +
-                                            ((StrToken) importEle.atom).getLiteral();
-                                    importName = nameOfPath(path);
-                                } else {
-                                    throw new SyntaxError("Import name must either be a name or a String.",
-                                            lineFile);
-                                }
-
-                                File fileImporting = new File(path);
-//                                System.out.println(fileImporting.getAbsolutePath() + " and " + lineFile.getFile().getAbsolutePath());
-                                if (fileImporting.equals(lineFile.getFile())) {
-                                    break;  // self importing, do not import
-                                }
-
-                                if (index + 2 < parent.size()) {
-                                    next = parent.get(index);
-                                    if (next instanceof AtomicElement &&
-                                            ((AtomicElement) next).atom instanceof IdToken &&
-                                            ((IdToken) ((AtomicElement) next).atom).getIdentifier().equals("as")) {
-                                        AtomicElement customNameEle = (AtomicElement) parent.get(index + 1);
-                                        index += 2;
-                                        importName = ((IdToken) customNameEle.atom).getIdentifier();
-                                    }
-                                }
-
-                                BlockStmt rootBlock = importedPathsAndContents.get(path);
-                                if (rootBlock == null) {
-                                    FileTokenizer fileTokenizer =
-                                            new FileTokenizer(fileImporting, importLang);
-                                    Parser fileParser =
-                                            new Parser(new TokenizeResult(fileTokenizer.tokenize()), importLang);
-                                    rootBlock = fileParser.parse();
-                                    importedPathsAndContents.put(path, rootBlock);
-                                }
-
-                                ImportStmt importStmt = new ImportStmt(importName, fileImporting, rootBlock, lineFile);
+                                String path = ((IdToken) ((AtomicElement) parent.get(index++)).atom).getIdentifier();
+                                String importName = ((IdToken) ((AtomicElement) parent.get(index++)).atom).getIdentifier();
+                                ImportStmt importStmt = new ImportStmt(path, importName, lineFile);
                                 builder.addNode(importStmt);
-                                if (nameSpace) {
-                                    builder.addNode(new NamespaceNode(importName, lineFile));
-                                }
+                                break;
+                            case "namespace":
+                                String namespace = ((IdToken) ((AtomicElement) parent.get(index++)).atom).getIdentifier();
+                                builder.addNode(new NamespaceNode(namespace, lineFile));
                                 break;
                             default:
                                 if (varLevel == Declaration.VAR) {

@@ -25,7 +25,7 @@ public class FileTokenizer extends Tokenizer {
         this.importLang = importLang;
     }
 
-    public BraceList tokenize() throws IOException {
+    public TokenizeResult tokenize() throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(srcFile));
 
         tokens.clear();
@@ -45,7 +45,7 @@ public class FileTokenizer extends Tokenizer {
             proceedLine(line, lineFile);
             lineNum++;
         }
-        return makeTreeList(tokens);
+        return new TokenizeResult(makeTreeList(tokens));
     }
 
     private static BraceList makeTreeList(List<Token> tokenList) {

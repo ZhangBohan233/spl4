@@ -9,6 +9,8 @@ import interpreter.env.Environment;
 import interpreter.splErrors.TypeError;
 import interpreter.splObjects.*;
 import lexer.FileTokenizer;
+import lexer.TextProcessResult;
+import lexer.TextProcessor;
 import lexer.TokenizeResult;
 import lexer.treeList.BraceList;
 import parser.Parser;
@@ -194,8 +196,9 @@ public class SplInvokes extends NativeObject {
 
         try {
             FileTokenizer ft = new FileTokenizer(new File(path), false);
-            BraceList braceList = ft.tokenize();
-            Parser parser = new Parser(new TokenizeResult(braceList), false);
+            TokenizeResult braceList = ft.tokenize();
+            TextProcessResult tpr = new TextProcessor(braceList, false).process();
+            Parser parser = new Parser(tpr);
             BlockStmt root = parser.parse();
             BlockEnvironment subEnv = new BlockEnvironment(environment);
             root.evaluate(subEnv);

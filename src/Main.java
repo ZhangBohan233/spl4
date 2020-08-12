@@ -9,8 +9,11 @@ import interpreter.primitives.*;
 import interpreter.splObjects.*;
 import interpreter.splErrors.TypeError;
 import lexer.FileTokenizer;
+import lexer.TextProcessResult;
+import lexer.TextProcessor;
 import lexer.TokenizeResult;
 import lexer.treeList.BraceList;
+import lexer.treeList.CollectiveElement;
 import parser.Parser;
 import util.ArgumentParser;
 import util.LineFile;
@@ -28,11 +31,13 @@ public class Main {
                     argumentParser.getMainSrcFile(),
                     argumentParser.importLang()
             );
-            BraceList rootToken = tokenizer.tokenize();
+            TokenizeResult rootToken = tokenizer.tokenize();
+            TextProcessResult processed = new TextProcessor(rootToken,
+                    argumentParser.importLang()).process();
             if (argumentParser.isPrintTokens()) {
-                System.out.println(rootToken);
+                System.out.println(processed.rootList);
             }
-            Parser parser = new Parser(new TokenizeResult(rootToken), argumentParser.importLang());
+            Parser parser = new Parser(processed);
             BlockStmt root = parser.parse();
             if (argumentParser.isPrintAst()) {
                 System.out.println("===== Ast =====");
@@ -47,6 +52,7 @@ public class Main {
             if (argumentParser.isGcTrigger()) memory.debugs.setPrintGcTrigger(true);
 
             SplInterpreter.initNatives(globalEnvironment);
+            SplInterpreter.importModules(globalEnvironment, processed.importedPaths);
 
             long runBegin = System.currentTimeMillis();
 

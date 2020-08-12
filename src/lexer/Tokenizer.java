@@ -47,7 +47,7 @@ public abstract class Tokenizer {
     );
 
     public static final Set<String> OTHERS = Set.of(
-            "=", "->", "<-", ":=", "++", "--"
+            "=", "->", "<-", ":=", "++", "--", "...", "$"
     );
 
     public static final Set<String> EXTRA_IDENTIFIERS = Utilities.mergeSets(
@@ -76,7 +76,8 @@ public abstract class Tokenizer {
             "class", "fn", "if", "else", "new", "return", "break",
             "continue", "true", "false", "null", "while", "for", "import", "namespace",
             "const", "var", "assert", "as", "super", "this", "lambda",
-            "cond", "switch", "case", "default", "fallthrough", "in", "yield"
+            "cond", "switch", "case", "default", "fallthrough", "in", "yield",
+            "macro", "syntax"
     );
 
     final List<Token> tokens = new ArrayList<>();
@@ -278,10 +279,11 @@ public abstract class Tokenizer {
         private static final int TYPE = 24;
         private static final int ESCAPE = 25;
         private static final int QUESTION = 26;
+        private static final int DOLLAR = 27;
         private static final int UNDEFINED = 0;
 
         private static final int[] SELF_CONCATENATE = {
-                DIGIT, LETTER, GT, EQ, LT, AND, OR, UNDERSCORE, PLUS, MINUS
+                DIGIT, LETTER, GT, EQ, LT, AND, OR, UNDERSCORE, PLUS, MINUS, DOT
         };
         private static final int[][] CROSS_CONCATENATE = {
                 {LETTER, UNDERSCORE},
@@ -347,6 +349,7 @@ public abstract class Tokenizer {
                 case ':' -> TYPE;
                 case '\\' -> ESCAPE;
                 case '?' -> QUESTION;
+                case '$' -> DOLLAR;
                 default -> UNDEFINED;
             };
         }

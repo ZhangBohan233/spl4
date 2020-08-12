@@ -1,18 +1,25 @@
+import ast.BlockStmt;
 import ast.StringLiteral;
 import interpreter.EvaluatedArguments;
 import interpreter.Memory;
 import interpreter.env.Environment;
 import interpreter.env.GlobalEnvironment;
+import interpreter.env.ModuleEnvironment;
 import interpreter.invokes.SplInvokes;
 import interpreter.primitives.*;
 import interpreter.splErrors.NativeError;
 import interpreter.splObjects.*;
+import lexer.TextProcessResult;
+import lexer.treeList.CollectiveElement;
+import parser.Parser;
 import util.ArgumentParser;
 import util.Constants;
 import util.LineFile;
 import util.Utilities;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Map;
 
 public class SplInterpreter {
 
@@ -28,6 +35,21 @@ public class SplInterpreter {
                 "Invokes",
                 sysPtr,
                 LineFile.LF_INTERPRETER);
+    }
+
+    static void importModules(GlobalEnvironment ge, Map<String, CollectiveElement> imported) throws IOException {
+        for (Map.Entry<String, CollectiveElement> entry : imported.entrySet()) {
+            Parser psr = new Parser(new TextProcessResult(entry.getValue()));
+            BlockStmt ce = psr.parse();
+
+            ModuleEnvironment moduleScope = new ModuleEnvironment(ge);
+            ce.evaluate(moduleScope);
+            SplModule module = new SplModule(entry.getKey(), moduleScope);
+
+            Pointer ptr = ge.getMemory().allocateObject(module, moduleScope);
+
+            ge.addImportedModulePtr(entry.getKey(), ptr);
+        }
     }
 
     private static void initNativeFunctions(GlobalEnvironment ge) {
