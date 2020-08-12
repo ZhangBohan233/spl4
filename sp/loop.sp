@@ -9,15 +9,15 @@ fn main() {
     arr[1] = 2;
     arr[2] = 3;
 
-    for var i in arr {
+    for i in arr {
         print(i);
     }
 
-    for var i in [3, 4, 5, 6, 7] {
+    for i in [3, 4, 5, 6, 7] {
         print(i);
     }
 
-    for var i in range(5, 0, -1) {
+    for i in range(5, 0, -1) {
         print(i);
     }
 }

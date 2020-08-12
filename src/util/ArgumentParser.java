@@ -53,7 +53,7 @@ public class ArgumentParser {
             }
         }
         if (mainSrcFile == null) {
-            System.out.println("Source file not specified.");
+            System.err.println("Source file not specified.");
         } else allValid = true;
 
         if (splArgs == null) {

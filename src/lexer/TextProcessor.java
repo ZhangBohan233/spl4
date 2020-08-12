@@ -1,24 +1,22 @@
 package lexer;
 
-import ast.BlockStmt;
-import ast.ImportStmt;
-import ast.NamespaceNode;
+import ast.*;
 import lexer.treeList.*;
+import parser.ParseError;
 import parser.Parser;
 import util.LineFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class TextProcessor {
 
     private final CollectiveElement root;
     private final boolean importLang;
     private final Map<String, CollectiveElement> importedPaths;
+    private final Map<String, ProcessorModule> importedModules = new HashMap<>();
+    private final ProcessorModule module = new ProcessorModule();
 
     public TextProcessor(TokenizeResult tokenizeResult, boolean importLang) {
         this.root = tokenizeResult.rootList;
@@ -26,11 +24,11 @@ public class TextProcessor {
         this.importedPaths = new HashMap<>();
     }
 
-    public TextProcessor(TokenizeResult tokenizeResult, boolean importLang,
-                         Map<String, CollectiveElement> importedPaths) {
+    private TextProcessor(TokenizeResult tokenizeResult, boolean importLang,
+                         TextProcessor parent) {
         this.root = tokenizeResult.rootList;
         this.importLang = importLang;
-        this.importedPaths = importedPaths;
+        this.importedPaths = parent.importedPaths;
     }
 
     public TextProcessResult process() throws IOException {
@@ -65,7 +63,25 @@ public class TextProcessor {
             LineFile lineFile = token.lineFile;
             if (token instanceof IdToken) {
                 String id = ((IdToken) token).getIdentifier();
+                Element next;
                 switch (id) {
+                    case "macro":
+                        String macroName =
+                                ((IdToken) ((AtomicElement) parent.get(index++)).atom).getIdentifier();
+                        BraceList bodyList = (BraceList) parent.get(index++);
+                        BraceList processedBody = (BraceList) processBlock(bodyList, null);
+                        MacroMatcher matcher = new MacroMatcher(macroName, processedBody);
+                        module.matcherMap.put(macroName, matcher);
+                        return index;
+                    case "syntax":
+                        BracketList conditionList = new BracketList(null, lineFile);
+                        while (!((next = parent.get(index++)) instanceof BraceList)) {
+                            conditionList.add(next);
+                        }
+                        bodyList = (BraceList) next;
+                        processedBody = (BraceList) processBlock(bodyList, null);
+                        resultEle.add(processedBody);
+                        return index;
                     case "import":
                         AtomicElement probNamespaceEle = (AtomicElement) parent.get(index++);
                         AtomicElement importEle;
@@ -105,7 +121,7 @@ public class TextProcessor {
                         }
 
                         if (index + 2 < parent.size()) {
-                            Element next = parent.get(index);
+                            next = parent.get(index);
                             if (next instanceof AtomicElement &&
                                     ((AtomicElement) next).atom instanceof IdToken &&
                                     ((IdToken) ((AtomicElement) next).atom).getIdentifier().equals("as")) {
@@ -120,7 +136,7 @@ public class TextProcessor {
                             FileTokenizer fileTokenizer =
                                     new FileTokenizer(fileImporting, importLang);
                             TextProcessResult fileRes =
-                                    new TextProcessor(fileTokenizer.tokenize(), importLang, importedPaths).process();
+                                    new TextProcessor(fileTokenizer.tokenize(), importLang, this).process();
                             importedPaths.put(path, fileRes.rootList);
                         }
 
@@ -135,11 +151,8 @@ public class TextProcessor {
                             resultEle.add(new AtomicElement(new IdToken(";", lineFile), resultEle));
                         }
 
-//                        ImportStmt importStmt = new ImportStmt(importName, fileImporting, rootBlock, lineFile);
-//                        builder.addNode(importStmt);
-//                        if (nameSpace) {
-//                            builder.addNode(new NamespaceNode(importName, lineFile));
-//                        }
+                        importedModules.put(importName, module);
+
                         return index;
                 }
             }
@@ -163,5 +176,29 @@ public class TextProcessor {
         } else {
             return path;
         }
+    }
+
+    static class MacroMatcher {
+        private final String macroName;
+        private final List<MacroSyntax> syntaxList = new ArrayList<>();
+
+        MacroMatcher(String macroName, BraceList body) {
+            this.macroName = macroName;
+            parseBody(body);
+        }
+
+        private void parseBody(BraceList body) {
+
+        }
+    }
+
+    static class MacroSyntax {
+
+    }
+
+    static class ProcessorModule {
+        private final Map<String, MacroMatcher> matcherMap = new HashMap<>();
+
+
     }
 }

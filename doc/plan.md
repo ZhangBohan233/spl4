@@ -16,3 +16,5 @@
 * ~~Invoke call "hasAttr"~~ **_DONE_**
 * Syntax sugar of unary function, example: `int? or float?`
 * Duplicate literal removal
+* Ast visualizer
+* Resolve primitive wrapper confusion

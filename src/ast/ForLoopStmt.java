@@ -8,6 +8,7 @@ import interpreter.env.Environment;
 import interpreter.env.LoopTitleEnvironment;
 import interpreter.primitives.Bool;
 import interpreter.primitives.SplElement;
+import interpreter.splErrors.RuntimeSyntaxError;
 import interpreter.splErrors.TypeError;
 import interpreter.splObjects.*;
 import util.Constants;
@@ -18,7 +19,7 @@ public class ForLoopStmt extends ConditionalStmt {
 
     private final BlockStmt condition;
 
-    private final static String forEachSyntaxMsg = "Syntax of for-each loop: 'for var i in collection {...}'";
+    private final static String forEachSyntaxMsg = "Syntax of for-each loop: 'for i in collection {...}'";
 
     public ForLoopStmt(BlockStmt condition, BlockStmt bodyBlock, LineFile lineFile) {
         super(bodyBlock, lineFile);
@@ -69,7 +70,15 @@ public class ForLoopStmt extends ConditionalStmt {
                              LoopTitleEnvironment titleEnv,
                              BlockEnvironment bodyEnv) {
         SplElement probIterable = inExpr.right.evaluate(parentEnv);
-        Declaration loopInvariant = (Declaration) inExpr.left;
+
+        Declaration loopInvariant;
+        if (inExpr.left instanceof Declaration)
+            loopInvariant = (Declaration) inExpr.left;
+        else if (inExpr.left instanceof NameNode)
+            loopInvariant = new Declaration(Declaration.VAR, ((NameNode) inExpr.left).getName(), lineFile);
+        else
+            throw new RuntimeSyntaxError("Loop invariant must either be declaration or name. ", lineFile);
+
         if (probIterable instanceof Pointer) {
             Pointer ptr = (Pointer) probIterable;
             SplObject obj = parentEnv.getMemory().get(ptr);

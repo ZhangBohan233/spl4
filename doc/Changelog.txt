@@ -1,3 +1,10 @@
+===== Version 4027 =====
+2020/08/12
+
+* Syntax update:
+    * For each loop without 'var' or 'const'
+
+
 ===== Version 4026 =====
 2020/08/12
 

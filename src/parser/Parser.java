@@ -15,14 +15,6 @@ public class Parser {
 
     private final CollectiveElement rootList;
 
-    /**
-     * Imported file paths vs its content.
-     * <p>
-     * Since a same file should always have same content (unless they have different 'importLang'). This is used to
-     * eliminate the duplicate tokenize-parse process.
-     */
-    private final Map<String, BlockStmt> importedPathsAndContents = new HashMap<>();
-
     private int varLevel = Declaration.USELESS;
 
     public Parser(TextProcessResult textProcessResult) {
@@ -454,22 +446,6 @@ public class Parser {
                                 tryStmt = (TryStmt) builder.getLastAddedNode();
                                 tryStmt.setFinallyBlock(bodyBlock);
                                 break;
-                            case "macro":
-                                // A fake macro
-                                String macroName =
-                                        ((IdToken) ((AtomicElement) parent.get(index++)).atom).getIdentifier();
-                                bodyList = (BraceList) parent.get(index++);
-                                bodyBlock = parseBlock(bodyList);
-                                builder.addNode(new MacroNode(macroName, bodyBlock, lineFile));
-                                break;
-                            case "syntax":
-                                conditionList = new BracketList(null, lineFile);
-                                while (!((next = parent.get(index++)) instanceof BraceList)) {
-                                    conditionList.add(next);
-                                }
-                                bodyList = (BraceList) next;
-                                builder.addNode(new MacroSyntaxNode(conditionList, bodyList, lineFile));
-                                break;
                             case "import":
                                 String path = ((IdToken) ((AtomicElement) parent.get(index++)).atom).getIdentifier();
                                 String importName = ((IdToken) ((AtomicElement) parent.get(index++)).atom).getIdentifier();
@@ -487,7 +463,6 @@ public class Parser {
                                     builder.addNode(new Declaration(Declaration.CONST, identifier, lineFile));
                                 } else {
                                     builder.addNode(new NameNode(identifier, lineFile));
-//                                builder.addName(identifier, lineFile);
                                 }
                                 break;
                         }
@@ -570,22 +545,6 @@ public class Parser {
         return !((element instanceof AtomicElement) &&
                 (((AtomicElement) element).atom instanceof IdToken) &&
                 ((IdToken) ((AtomicElement) element).atom).getIdentifier().equals(expectedName));
-    }
-
-    private static String nameOfPath(String path) {
-        path = path.replace("/", File.separator);
-        path = path.replace("\\", File.separator);
-        if (path.endsWith(".sp")) path = path.substring(0, path.length() - 3);
-        if (path.contains(File.separator)) {
-            return path.substring(path.lastIndexOf(File.separator) + 1);
-        } else {
-            return path;
-        }
-    }
-
-    private static boolean isThisStack(Stack<Integer> stack, int value) {
-        if (stack.empty()) return false;
-        else return stack.peek() == value;
     }
 
     private static boolean isCall(Token token) {
