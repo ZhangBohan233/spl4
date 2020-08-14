@@ -83,13 +83,18 @@ public class ClassStmt extends AbstractExpression {
     @Override
     public String toString() {
         return String.format("class %s(%s)", className, superclassesNodes);
-//        String title = isInterface ? "Interface" : "Class";
-//        if (templateNode == null) {
-//            return String.format("%s %s extends %s implements %s %s",
-//                    title, className, superclass, implementations, body);
-//        } else {
-//            return String.format("%s %s %s extends %s implements %s %s",
-//                    title, className, templateNode, superclass, implementations, body);
-//        }
+    }
+
+    @Override
+    public String reprString() {
+        return "class " + className;
+    }
+
+    public List<Node> getSuperclassesNodes() {
+        return superclassesNodes;
+    }
+
+    public BlockStmt getBody() {
+        return body;
     }
 }

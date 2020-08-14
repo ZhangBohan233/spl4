@@ -31,11 +31,11 @@ public abstract class Node {
 
     protected abstract SplElement internalEval(Environment env);
 
-//    protected Type inferredType(Environment env) {
-//        return PrimitiveType.TYPE_VOID;
-//    }
-
     public LineFile getLineFile() {
         return lineFile;
+    }
+
+    public String reprString() {
+        return toString();
     }
 }

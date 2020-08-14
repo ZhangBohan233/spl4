@@ -34,4 +34,8 @@ public class ImportStmt extends AbstractStatement {
     public String toString() {
         return "Import '" + path + "' as '" + importName + "'";
     }
+
+    public String getPath() {
+        return path;
+    }
 }

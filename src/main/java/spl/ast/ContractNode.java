@@ -42,4 +42,17 @@ public class ContractNode extends AbstractStatement {
     public String toString() {
         return "Contract (" + paramContracts + ") -> " + rtnContract + ";";
     }
+
+    @Override
+    public String reprString() {
+        return "contract " + fnName;
+    }
+
+    public Node getRtnContract() {
+        return rtnContract;
+    }
+
+    public Line getParamContracts() {
+        return paramContracts;
+    }
 }

@@ -7,11 +7,11 @@ public class LineFile {
     public static final LineFile LF_TOKENIZER = new LineFile("Tokenizer");
     public static final LineFile LF_INTERPRETER = new LineFile("Interpreter");
     public static final LineFile LF_PARSER = new LineFile("Parser");
-    public static final LineFile LF_CONSOLE = new LineFile("spl.Console");
+    public static final LineFile LF_CONSOLE = new LineFile("Console");
 
-    private final int line;
-    private final String msg;
-    private final File file;
+    public final int line;
+    public final String msg;
+    public final File file;
 
     public LineFile(String msg) {
         this.line = 0;
@@ -32,10 +32,6 @@ public class LineFile {
     public File getFile() {
         return file;
     }
-
-    //    public String getFileName() {
-//        return fileName;
-//    }
 
     public String toStringFileLine() {
         if (msg == null) {

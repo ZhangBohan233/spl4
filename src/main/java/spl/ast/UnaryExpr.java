@@ -54,4 +54,9 @@ public abstract class UnaryExpr extends AbstractExpression implements UnaryBuild
     public Node getValue() {
         return value;
     }
+
+    @Override
+    public String reprString() {
+        return operator;
+    }
 }

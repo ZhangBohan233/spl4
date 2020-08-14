@@ -54,4 +54,9 @@ public abstract class UnaryStmt extends AbstractStatement implements UnaryBuilda
     public boolean notFulfilled() {
         return value == null;
     }
+
+    @Override
+    public String reprString() {
+        return operator;
+    }
 }

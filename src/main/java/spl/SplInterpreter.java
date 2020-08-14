@@ -19,6 +19,7 @@ import spl.util.LineFile;
 import spl.util.Utilities;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 public class SplInterpreter {
@@ -38,18 +39,27 @@ public class SplInterpreter {
     }
 
     static void importModules(GlobalEnvironment ge, Map<String, CollectiveElement> imported) throws IOException {
-        for (Map.Entry<String, CollectiveElement> entry : imported.entrySet()) {
-            Parser psr = new Parser(new TextProcessResult(entry.getValue()));
-            BlockStmt ce = psr.parse();
-
+        Map<String, BlockStmt> blocks = parseImportedModules(imported);
+        for (Map.Entry<String, BlockStmt> entry : blocks.entrySet()) {
             ModuleEnvironment moduleScope = new ModuleEnvironment(ge);
-            ce.evaluate(moduleScope);
+            entry.getValue().evaluate(moduleScope);
             SplModule module = new SplModule(entry.getKey(), moduleScope);
 
             Pointer ptr = ge.getMemory().allocateObject(module, moduleScope);
 
             ge.addImportedModulePtr(entry.getKey(), ptr);
         }
+    }
+
+    public static Map<String, BlockStmt> parseImportedModules(Map<String, CollectiveElement> imported) throws IOException {
+        Map<String, BlockStmt> result = new HashMap<>();
+        for (Map.Entry<String, CollectiveElement> entry : imported.entrySet()) {
+            Parser psr = new Parser(new TextProcessResult(entry.getValue()));
+            BlockStmt ce = psr.parse();
+
+            result.put(entry.getKey(), ce);
+        }
+        return result;
     }
 
     private static void initNativeFunctions(GlobalEnvironment ge) {

@@ -11,7 +11,6 @@ import spl.util.LineFile;
 public class FuncDefinition extends AbstractExpression {
 
     public final String name;
-//    private TypeRepresent rType;
     private Line parameters;
     private BlockStmt body;
 
@@ -33,7 +32,6 @@ public class FuncDefinition extends AbstractExpression {
 
     @Override
     protected SplElement internalEval(Environment env) {
-
         Function.Parameter[] params = SplCallable.evalParams(parameters, env);
 
         Function function = new Function(body, params, env, name, getLineFile());
@@ -59,17 +57,16 @@ public class FuncDefinition extends AbstractExpression {
             return String.format("fn %s(%s): %s", name, parameters, body);
     }
 
-    public boolean doesOverride(FuncDefinition superMethod, Environment env) {
-        return true;
-//        if (parameters.getChildren().size() != superMethod.parameters.getChildren().size()) return false;
-//        for (int i = 0 ; i < parameters.getChildren().size(); ++i) {
-//            Node thisParam = parameters.getChildren().get(i);
-//            Node superParam = superMethod.parameters.getChildren().get(i);
-//            // TODO: check this. Two cases: Declaration and Assignment
-//        }
-//
-//        Type thisRType = rType.evalType(env);
-//        Type superRType = superMethod.rType.evalType(env);
-//        return superRType.isSuperclassOfOrEquals(thisRType, env);
+    @Override
+    public String reprString() {
+        return "fn " + name;
+    }
+
+    public Line getParameters() {
+        return parameters;
+    }
+
+    public BlockStmt getBody() {
+        return body;
     }
 }

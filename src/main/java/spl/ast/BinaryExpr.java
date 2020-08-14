@@ -41,4 +41,9 @@ public abstract class BinaryExpr extends AbstractExpression implements Buildable
     public void setRight(AbstractExpression right) {
         this.right = right;
     }
+
+    @Override
+    public String reprString() {
+        return operator;
+    }
 }

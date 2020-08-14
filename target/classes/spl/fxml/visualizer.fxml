@@ -6,9 +6,19 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
+<VBox xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="spl.tools.AstVisualizer"
-            prefHeight="400.0" prefWidth="600.0">
+            prefHeight="600.0" prefWidth="800.0">
+    <TreeTableView fx:id="treeView">
+        <columns>
+            <TreeTableColumn fx:id="typeCol" text="Type" prefWidth="200.0"/>
+            <TreeTableColumn fx:id="valueCol" text="Value" prefWidth="200.0"/>
+            <TreeTableColumn fx:id="msgCol" text="Message" prefWidth="200.0"/>
+            <TreeTableColumn fx:id="lineCol" text="Line" prefWidth="50.0"/>
+            <TreeTableColumn fx:id="fileCol" text="File" prefWidth="150.0"/>
+        </columns>
+    </TreeTableView>
 
-</AnchorPane>
+
+</VBox>

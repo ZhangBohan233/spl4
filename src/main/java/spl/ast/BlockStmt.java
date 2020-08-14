@@ -46,4 +46,8 @@ public class BlockStmt extends AbstractStatement {
         }
     }
 
+    @Override
+    public String reprString() {
+        return "Block of " + children.size() + " lines";
+    }
 }

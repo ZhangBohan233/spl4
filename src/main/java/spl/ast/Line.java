@@ -48,4 +48,9 @@ public class Line extends AbstractExpression {
         }
         return res;
     }
+
+    @Override
+    public String reprString() {
+        return "Line of " + children.size() + " Elements";
+    }
 }
