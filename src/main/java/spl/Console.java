@@ -56,7 +56,7 @@ public class Console {
         SplInvokes invokes =
                 (SplInvokes) memory.get((Pointer) globalEnvironment.get(Constants.INVOKES, LineFile.LF_CONSOLE));
         invokes.setOut(out);
-        
+
         root.evaluate(globalEnvironment);
     }
 
