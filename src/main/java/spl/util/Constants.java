@@ -7,6 +7,7 @@ import java.util.Map;
 public class Constants {
 
     public static final String MAIN_FN = "main";
+    public static final String INVOKES = "Invokes";
     public static final String OBJECT_CLASS = "Object";
     public static final String STRING_CLASS = "String";
     public static final String EXCEPTION_CLASS = "Exception";

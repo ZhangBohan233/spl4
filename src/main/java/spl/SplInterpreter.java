@@ -18,6 +18,7 @@ import spl.util.Constants;
 import spl.util.LineFile;
 import spl.util.Utilities;
 
+import java.io.Console;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +34,7 @@ public class SplInterpreter {
         Pointer sysPtr = memory.allocateObject(system, globalEnvironment);
 
         globalEnvironment.defineConstAndSet(
-                "Invokes",
+                Constants.INVOKES,
                 sysPtr,
                 LineFile.LF_INTERPRETER);
     }

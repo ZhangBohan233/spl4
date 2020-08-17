@@ -24,9 +24,13 @@ public class ConsoleTokenizer extends Tokenizer {
 
     public boolean readyToBuild() {
         if (tokens.isEmpty()) return true;
+        System.out.println(tokens);
         if (isClosedBlock()) {
             Token last = tokens.get(tokens.size() - 1);
-            return last instanceof IdToken && ((IdToken) last).getIdentifier().equals(";");
+            if (last instanceof IdToken) {
+                String id = ((IdToken) last).getIdentifier();
+                return id.equals(";") || id.equals("}");
+            } else return false;
         }
         return false;
     }

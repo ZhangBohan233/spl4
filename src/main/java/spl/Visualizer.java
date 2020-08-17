@@ -44,7 +44,7 @@ public class Visualizer extends Application {
         AstVisualizer visualizer = loader.getController();
         visualizer.setup(root, importedModules);
 
-        primaryStage.setTitle("Abstract Syntax Tree spl.Visualizer");
+        primaryStage.setTitle("Abstract Syntax Tree Visualizer");
         primaryStage.setScene(new Scene(parent));
         primaryStage.show();
     }

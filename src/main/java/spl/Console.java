@@ -4,23 +4,43 @@ import spl.ast.BlockStmt;
 import spl.ast.Node;
 import spl.interpreter.Memory;
 import spl.interpreter.env.GlobalEnvironment;
+import spl.interpreter.invokes.SplInvokes;
+import spl.interpreter.primitives.Pointer;
 import spl.interpreter.primitives.SplElement;
 import spl.lexer.*;
 import spl.lexer.treeList.BracketList;
 import spl.parser.Parser;
+import spl.util.Constants;
+import spl.util.LineFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.Scanner;
 
 public class Console {
 
+    private InputStream in = System.in;
+    private PrintStream out = System.out;
+    private final ConsoleTokenizer consoleTokenizer = new ConsoleTokenizer();
+    private GlobalEnvironment globalEnvironment;
+
     public static void main(String[] args) throws IOException {
         Console console = new Console();
-        console.runConsole(console.createConsoleEnvironment());
+        console.runConsole();
     }
 
-    private GlobalEnvironment createConsoleEnvironment() throws IOException {
+    public Console() throws IOException {
+        createConsoleEnvironment();
+    }
+
+    public Console(PrintStream out) throws IOException {
+        this.out = out;
+        createConsoleEnvironment();
+    }
+
+    private void createConsoleEnvironment() throws IOException {
         FileTokenizer fileTokenizer =
                 new FileTokenizer(new File("lib/console.sp"), true);
         TextProcessResult tpr =
@@ -29,56 +49,62 @@ public class Console {
         BlockStmt root = parser.parse();
 
         Memory memory = new Memory();
-        GlobalEnvironment ge = new GlobalEnvironment(memory);
-        SplInterpreter.initNatives(ge);
-        SplInterpreter.importModules(ge, tpr.importedPaths);
+        globalEnvironment = new GlobalEnvironment(memory);
+        SplInterpreter.initNatives(globalEnvironment);
+        SplInterpreter.importModules(globalEnvironment, tpr.importedPaths);
 
-        root.evaluate(ge);
-
-        return ge;
+        SplInvokes invokes =
+                (SplInvokes) memory.get((Pointer) globalEnvironment.get(Constants.INVOKES, LineFile.LF_CONSOLE));
+        invokes.setOut(out);
+        
+        root.evaluate(globalEnvironment);
     }
 
     /**
      * Runs the console in the environment
-     *
-     * @param globalEnv the global environment, with everything set.
      */
-    public void runConsole(GlobalEnvironment globalEnv) throws IOException {
-
-        ConsoleTokenizer consoleTokenizer = new ConsoleTokenizer();
+    public void runConsole() {
 
         String line;
-        Scanner scanner = new Scanner(System.in);
-        System.out.print(">>> ");
+        Scanner scanner = new Scanner(in);
+        out.print(">>> ");
         while ((line = scanner.nextLine()) != null) {
             line = line.trim();
             if (line.equals(":q")) break;
 
-            consoleTokenizer.addLine(line);
-            if (consoleTokenizer.readyToBuild()) {
-                try {
-                    BracketList bracketList = consoleTokenizer.build();
-                    TextProcessResult tpr =
-                            new TextProcessor(new TokenizeResult(bracketList), false).process();
-                    Parser parser = new Parser(tpr);
-                    BlockStmt lineExpr = parser.parse();
-                    if (lineExpr.getLines().size() > 0 && lineExpr.getLines().get(0).size() > 0) {
-                        Node only = lineExpr.getLines().get(0).get(0);
-                        SplElement result = only.evaluate(globalEnv);
-                        if (result != null) {
-                            System.out.println(result);
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    consoleTokenizer.clear();
-                }
-
-                System.out.print(">>> ");
+            if (addCode(line)) {
+                runCode();
+                out.print(">>> ");
             } else {
-                System.out.print("... ");
+                out.print("... ");
             }
 
         }
+    }
+
+    public boolean addCode(String code) {
+        consoleTokenizer.addLine(code);
+        return consoleTokenizer.readyToBuild();
+    }
+
+    public void runCode() {
+        try {
+            BracketList bracketList = consoleTokenizer.build();
+            TextProcessResult tpr =
+                    new TextProcessor(new TokenizeResult(bracketList), false).process();
+            Parser parser = new Parser(tpr);
+            BlockStmt lineExpr = parser.parse();
+            if (lineExpr.getLines().size() > 0 && lineExpr.getLines().get(0).size() > 0) {
+                Node only = lineExpr.getLines().get(0).get(0);
+                SplElement result = only.evaluate(globalEnvironment);
+                if (result != null) {
+                    out.println(result.toString());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            consoleTokenizer.clear();
+        }
+
     }
 }
