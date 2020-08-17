@@ -9,14 +9,16 @@ import spl.util.LineFile;
 
 import java.util.List;
 
-public class CondCaseExpr extends AbstractExpression {
+public class SwitchCaseExpr extends AbstractExpression {
 
+    private final AbstractExpression expr;
     private final List<CaseStmt> cases;
     private final CaseStmt defaultCase;
 
-    CondCaseExpr(List<CaseStmt> cases, CaseStmt defaultCase, LineFile lineFile) {
+    SwitchCaseExpr(AbstractExpression expr, List<CaseStmt> cases, CaseStmt defaultCase, LineFile lineFile) {
         super(lineFile);
 
+        this.expr = expr;
         this.cases = cases;
         this.defaultCase = defaultCase;
     }
@@ -24,8 +26,8 @@ public class CondCaseExpr extends AbstractExpression {
     @Override
     protected SplElement internalEval(Environment env) {
         for (CaseStmt caseStmt: cases) {
-            Bool caseCondition = Bool.evalBoolean(caseStmt.getCondition(), env, getLineFile());
-            if (caseCondition.value) {
+            boolean caseCondition = caseStmt.evalCondition(env);
+            if (caseCondition) {
                 CaseBlockEnvironment blockEnv = new CaseBlockEnvironment(env, true);
                 SplElement result = caseStmt.bodyBlock.evaluate(blockEnv);
                 if (result == null) {

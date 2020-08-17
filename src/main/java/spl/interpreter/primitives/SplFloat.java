@@ -1,5 +1,7 @@
 package spl.interpreter.primitives;
 
+import spl.interpreter.splErrors.TypeError;
+
 public class SplFloat extends SplElement {
 
     public static final SplFloat ZERO = new SplFloat(0.0d);
@@ -28,6 +30,11 @@ public class SplFloat extends SplElement {
     @Override
     public long intValue() {
         return (long) value;
+    }
+
+    @Override
+    public boolean booleanValue() {
+        throw new TypeError("Cannot convert float to boolean. ");
     }
 
     @Override

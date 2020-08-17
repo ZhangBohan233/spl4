@@ -23,6 +23,7 @@ public class Console {
 
     private InputStream in = System.in;
     private PrintStream out = System.out;
+    private PrintStream err = System.err;
     private final ConsoleTokenizer consoleTokenizer = new ConsoleTokenizer();
     private GlobalEnvironment globalEnvironment;
 
@@ -35,8 +36,10 @@ public class Console {
         createConsoleEnvironment();
     }
 
-    public Console(PrintStream out) throws IOException {
+    public Console(InputStream in, PrintStream out, PrintStream err) throws IOException {
         this.out = out;
+        this.err = err;
+        this.in = in;
         createConsoleEnvironment();
     }
 
@@ -102,9 +105,8 @@ public class Console {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(err);
             consoleTokenizer.clear();
         }
-
     }
 }

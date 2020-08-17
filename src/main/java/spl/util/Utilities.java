@@ -10,6 +10,7 @@ import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplCallable;
 import spl.interpreter.splObjects.SplObject;
 
+import java.io.*;
 import java.util.*;
 
 public class Utilities {
@@ -32,6 +33,24 @@ public class Utilities {
     public static boolean arrayContains2D(int[][] array, int[] value) {
         for (int[] a : array) if (Arrays.equals(a, value)) return true;
         return false;
+    }
+
+    public static String readFile(File file) throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(file));
+        StringBuilder builder = new StringBuilder();
+        String line;
+        while ((line = br.readLine()) != null) {
+            builder.append(line).append('\n');
+        }
+        br.close();
+        return builder.toString();
+    }
+
+    public static void writeFile(File file, String text) throws IOException {
+        FileWriter fw = new FileWriter(file);
+        fw.write(text);
+        fw.flush();
+        fw.close();
     }
 
     public static String[] arrayConcatenate(String[]... arrays) {

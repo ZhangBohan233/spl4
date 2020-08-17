@@ -31,6 +31,11 @@ public class Int extends SplElement {
     }
 
     @Override
+    public boolean booleanValue() {
+        return value != 0;
+    }
+
+    @Override
     public double floatValue() {
         return value;
     }

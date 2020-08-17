@@ -72,7 +72,7 @@ public class BinaryOperator extends BinaryExpr {
                 } else if (leftEle instanceof SplFloat) {
                     return new SplFloat(res);
                 }
-                throw new TypeError();
+                throw new TypeError(lineFile);
             }
         } else if (type == BITWISE) {
             SplElement leftEle = left.evaluate(env);
@@ -80,7 +80,7 @@ public class BinaryOperator extends BinaryExpr {
             if (leftEle.isIntLike() && rightEle.isIntLike()) {
                 return new Int(bitwise(operator, leftEle.intValue(), rightEle.intValue(), lineFile));
             }
-            throw new TypeError();
+            throw new TypeError(lineFile);
         } else if (type == LOGICAL) {
             SplElement leftTv = left.evaluate(env);
             SplElement rightTv = right.evaluate(env);
@@ -109,7 +109,8 @@ public class BinaryOperator extends BinaryExpr {
                         double rightV = rightTv.floatValue();
                         result = otherLogical(operator, leftV, rightV, getLineFile());
                     } else {
-                        throw new TypeError();
+                        System.out.println(leftTv + operator + rightTv + lineFile.toStringFileLine());
+                        throw new TypeError(lineFile);
                     }
                 } else if (leftTv instanceof SplFloat) {
                     double leftV = leftTv.floatValue();
@@ -118,24 +119,24 @@ public class BinaryOperator extends BinaryExpr {
                         double rightV = rightTv.intValue();
                         result = otherLogical(operator, leftV, rightV, getLineFile());
                     } else {
-                        throw new TypeError();
+                        throw new TypeError(lineFile);
                     }
                 } else if (leftTv instanceof Bool) {
-                    boolean leftV = ((Bool) leftTv).booleanValue();
+                    boolean leftV = leftTv.booleanValue();
                     if (rightTv instanceof Bool) {
-                        boolean rightV = ((Bool) rightTv).booleanValue();
+                        boolean rightV = (rightTv).booleanValue();
                         if (operator.equals("==")) {
                             result = leftV == rightV;
                         } else if (operator.equals("!=")) {
                             result = leftV != rightV;
                         } else {
-                            throw new TypeError();
+                            throw new TypeError(lineFile);
                         }
                     } else {
-                        throw new TypeError();
+                        throw new TypeError(lineFile);
                     }
                 } else {
-                    throw new TypeError();
+                    throw new TypeError(lineFile);
                 }
             } else {  // is pointer type
                 Pointer leftPtr = (Pointer) leftTv;
@@ -152,9 +153,9 @@ public class BinaryOperator extends BinaryExpr {
             // a and b = b if a else false
             // a or b  = true if a else b
             if (operator.equals("and")) {
-                Bool leftRes = Bool.evalBoolean((AbstractExpression) left, env, getLineFile());
+                Bool leftRes = Bool.evalBoolean(left, env, getLineFile());
                 if (leftRes.value) {
-                    return Bool.evalBoolean((AbstractExpression) right, env, getLineFile());
+                    return Bool.evalBoolean(right, env, getLineFile());
                 } else {
                     return Bool.FALSE;
                 }
@@ -167,7 +168,7 @@ public class BinaryOperator extends BinaryExpr {
                 }
             }
         }
-        throw new SyntaxError("Unexpected error. ", getLineFile());
+        throw new SyntaxError("Unexpected error. ", lineFile);
     }
 
     private static SplElement pointerNumericArithmetic(Pointer leftPtr,
@@ -183,7 +184,7 @@ public class BinaryOperator extends BinaryExpr {
             SplMethod opFn = (SplMethod) env.getMemory().get(fnPtr);
             return opFn.call(EvaluatedArguments.of(leftPtr, rightEle), env, lineFile);
         } else {
-            throw new TypeError();
+            throw new TypeError(lineFile);
         }
     }
 
@@ -228,14 +229,14 @@ public class BinaryOperator extends BinaryExpr {
                 String fnName = LOGICAL_OP_MAP.get(op);
                 Environment instanceEnv = ((Instance) leftObj).getEnv();
                 Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
-                Function opFn = (Function) env.getMemory().get(fnPtr);
+                SplMethod opFn = (SplMethod) env.getMemory().get(fnPtr);
                 SplElement res = opFn.call(EvaluatedArguments.of(l, r), env, lineFile);
                 if (res instanceof Bool) {
                     return ((Bool) res).value;
                 }
             }
         }
-        throw new TypeError();
+        throw new TypeError(lineFile);
     }
 
     private static boolean integerLogical(String op, long l, long r, LineFile lineFile) {

@@ -37,6 +37,11 @@ public class Pointer extends SplElement {
     }
 
     @Override
+    public boolean booleanValue() {
+        throw new TypeError("Cannot convert pointer to boolean. ");
+    }
+
+    @Override
     public boolean isIntLike() {
         return false;
     }

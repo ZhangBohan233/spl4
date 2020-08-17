@@ -17,6 +17,8 @@ public abstract class SplElement implements SplThing {
 
     public abstract long intValue();
 
+    public abstract boolean booleanValue();
+
     public abstract double floatValue();
 
     public abstract boolean isIntLike();
@@ -26,24 +28,16 @@ public abstract class SplElement implements SplThing {
     }
 
     public static String typeToString(int type) {
-        switch (type) {
-            case INT:
-                return "int";
-            case FLOAT:
-                return "float";
-            case CHAR:
-                return "char";
-            case BOOLEAN:
-                return "boolean";
-            case VOID:
-                return "void";
-            case POINTER:
-                return "Object";
-            case UNDEFINED:
-                return "undefined";
-            default:
-                throw new TypeError();
-        }
+        return switch (type) {
+            case INT -> "int";
+            case FLOAT -> "float";
+            case CHAR -> "char";
+            case BOOLEAN -> "boolean";
+            case VOID -> "void";
+            case POINTER -> "Object";
+            case UNDEFINED -> "undefined";
+            default -> throw new TypeError();
+        };
     }
 
     public static boolean isPrimitive(SplElement element) {

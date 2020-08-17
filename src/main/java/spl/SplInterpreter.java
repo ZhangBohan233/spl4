@@ -136,6 +136,22 @@ public class SplInterpreter {
             }
         };
 
+        NativeFunction toBool = new NativeFunction("boolean", 1) {
+            @Override
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg instanceof Pointer) {
+                    return Bool.boolValueOf(
+                            Utilities.wrapperToPrimitive(
+                                    (Pointer) arg,
+                                    callingEnv,
+                                    LineFile.LF_INTERPRETER).booleanValue());
+                } else {
+                    return Bool.boolValueOf(arg.booleanValue());
+                }
+            }
+        };
+
         NativeFunction isBool = new NativeFunction("boolean?", 1) {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
@@ -185,6 +201,7 @@ public class SplInterpreter {
         Pointer ptrIsInt = memory.allocateFunction(isInt, ge);
         Pointer ptrFloat = memory.allocateFunction(toFloat, ge);
         Pointer ptrChar = memory.allocateFunction(toChar, ge);
+        Pointer ptrBool = memory.allocateFunction(toBool, ge);
         Pointer ptrIsFloat = memory.allocateFunction(isFloat, ge);
         Pointer ptrIsChar = memory.allocateFunction(isChar, ge);
         Pointer ptrIsBool = memory.allocateFunction(isBool, ge);
@@ -198,6 +215,7 @@ public class SplInterpreter {
         ge.defineFunction("float?", ptrIsFloat, LineFile.LF_INTERPRETER);
         ge.defineFunction("char", ptrChar, LineFile.LF_INTERPRETER);
         ge.defineFunction("char?", ptrIsChar, LineFile.LF_INTERPRETER);
+        ge.defineFunction("boolean", ptrBool, LineFile.LF_INTERPRETER);
         ge.defineFunction("boolean?", ptrIsBool, LineFile.LF_INTERPRETER);
         ge.defineFunction("AbstractObject?", ptrIsAbsObj, LineFile.LF_INTERPRETER);
         ge.defineFunction("Array?", ptrIsArray, LineFile.LF_INTERPRETER);

@@ -62,22 +62,26 @@ public class TextProcessor {
                 String id = ((IdToken) token).getIdentifier();
                 Element next;
                 switch (id) {
-                    case "macro":
-                        String macroName =
-                                ((IdToken) ((AtomicElement) parent.get(index++)).atom).getIdentifier();
-                        BraceList bodyList = (BraceList) parent.get(index++);
-                        BraceList processedBody = (BraceList) processBlock(bodyList, null);
-                        MacroMatcher matcher = new MacroMatcher(macroName, processedBody);
-                        module.matcherMap.put(macroName, matcher);
-                        return index;
-                    case "syntax":
-                        BracketList conditionList = new BracketList(null, lineFile);
-                        while (!((next = parent.get(index++)) instanceof BraceList)) {
-                            conditionList.add(next);
-                        }
-                        bodyList = (BraceList) next;
-                        processedBody = (BraceList) processBlock(bodyList, null);
-                        resultEle.add(processedBody);
+//                    case "macro":
+//                        String macroName =
+//                                ((IdToken) ((AtomicElement) parent.get(index++)).atom).getIdentifier();
+//                        BraceList bodyList = (BraceList) parent.get(index++);
+//                        BraceList processedBody = (BraceList) processBlock(bodyList, null);
+//                        MacroMatcher matcher = new MacroMatcher(macroName, processedBody);
+//                        module.matcherMap.put(macroName, matcher);
+//                        return index;
+//                    case "syntax":
+//                        BracketList conditionList = new BracketList(null, lineFile);
+//                        while (!((next = parent.get(index++)) instanceof BraceList)) {
+//                            conditionList.add(next);
+//                        }
+//                        bodyList = (BraceList) next;
+//                        processedBody = (BraceList) processBlock(bodyList, null);
+//                        resultEle.add(processedBody);
+//                        return index;
+                    case "cond":
+                        resultEle.add(new AtomicElement(new IdToken("switch", lineFile), resultEle));
+                        resultEle.add(new AtomicElement(new IdToken("true", lineFile), resultEle));
                         return index;
                     case "import":
                         AtomicElement probNamespaceEle = (AtomicElement) parent.get(index++);

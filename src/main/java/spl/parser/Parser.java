@@ -323,10 +323,25 @@ public class Parser {
                                     builder.addNode(elseBodyExpr);
                                 }
                                 break;
-                            case "cond":
-                                bodyList = (BraceList) parent.get(index++);
+//                            case "cond":
+//                                bodyList = (BraceList) parent.get(index++);
+//                                bodyBlock = parseBlock(bodyList);
+//                                SwitchCaseFactory ccf = new SwitchCaseFactory(bodyBlock);
+//                                if (ccf.isExpr()) {
+//                                    builder.addNode(ccf.buildExpr(lineFile));
+//                                } else {
+//                                    builder.addNode(ccf.buildStmt(lineFile));
+//                                }
+//                                break;
+                            case "switch":
+                                conditionList = new BracketList(null, lineFile);
+                                while (!((next = parent.get(index++)) instanceof BraceList)) {
+                                    conditionList.add(next);
+                                }
+                                bodyList = (BraceList) next;
+                                AbstractExpression expression = parseOnePartBlock(conditionList);
                                 bodyBlock = parseBlock(bodyList);
-                                CondCaseFactory ccf = new CondCaseFactory(bodyBlock);
+                                SwitchCaseFactory ccf = new SwitchCaseFactory(expression, bodyBlock);
                                 if (ccf.isExpr()) {
                                     builder.addNode(ccf.buildExpr(lineFile));
                                 } else {

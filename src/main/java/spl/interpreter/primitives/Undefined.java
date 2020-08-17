@@ -23,6 +23,11 @@ public class Undefined extends SplElement {
     }
 
     @Override
+    public boolean booleanValue() {
+        return false;
+    }
+
+    @Override
     public boolean isIntLike() {
         return false;
     }

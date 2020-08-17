@@ -24,7 +24,6 @@ public class ConsoleTokenizer extends Tokenizer {
 
     public boolean readyToBuild() {
         if (tokens.isEmpty()) return true;
-        System.out.println(tokens);
         if (isClosedBlock()) {
             Token last = tokens.get(tokens.size() - 1);
             if (last instanceof IdToken) {

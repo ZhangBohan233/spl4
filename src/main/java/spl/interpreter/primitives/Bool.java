@@ -28,7 +28,7 @@ public class Bool extends SplElement {
 
     @Override
     public int type() {
-        return SplElement.INT;
+        return SplElement.BOOLEAN;
     }
 
     @Override
@@ -41,6 +41,7 @@ public class Bool extends SplElement {
         return intValue();
     }
 
+    @Override
     public boolean booleanValue() {
         return value;
     }

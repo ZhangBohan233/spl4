@@ -1,3 +1,13 @@
+===== Version 4028 =====
+2020/08/17
+
+* Syntax implementation:
+    * switch-case
+* Changed implementation of cond-case
+* Bug fixes:
+    * Fixed error when converting boolean to wrapper (caused by Bool.type())
+
+
 ===== Version 4027 =====
 2020/08/12
 

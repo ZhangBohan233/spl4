@@ -6,14 +6,16 @@ import spl.util.LineFile;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CondCaseFactory {
+public class SwitchCaseFactory {
 
+    private final AbstractExpression expr;
     private final List<CaseStmt> cases = new ArrayList<>();
     private CaseStmt defaultCase = null;
     private int exprLevel = 0;  // 0 for not initialized, 1 for expr, 2 for stmt
 
-    public CondCaseFactory(BlockStmt body) {
+    public SwitchCaseFactory(AbstractExpression expr, BlockStmt body) {
 
+        this.expr = expr;
         analyze(body);
     }
 
@@ -23,6 +25,7 @@ public class CondCaseFactory {
             for (Node node : line0.getChildren()) {
                 if (node instanceof CaseStmt) {
                     CaseStmt caseStmt = (CaseStmt) node;
+                    caseStmt.setSwitchExpr(expr);
 
                     // make sure cases are all expr or all stmt, not mixed
                     if (caseStmt.isExpr) {
@@ -48,7 +51,7 @@ public class CondCaseFactory {
                         cases.add(caseStmt);
                     }
                 } else {
-                    throw new ParseError("'cond' statement must only contain 'case' statements.",
+                    throw new ParseError("'switch/cond' statement must only contain 'case' statements.",
                             node.lineFile);
                 }
             }
@@ -64,11 +67,11 @@ public class CondCaseFactory {
         return exprLevel == 1;
     }
 
-    public CondCaseExpr buildExpr(LineFile lineFile) {
-        return new CondCaseExpr(cases, defaultCase, lineFile);
+    public SwitchCaseExpr buildExpr(LineFile lineFile) {
+        return new SwitchCaseExpr(expr, cases, defaultCase, lineFile);
     }
 
-    public CondCaseStmt buildStmt(LineFile lineFile) {
-        return new CondCaseStmt(cases, defaultCase, lineFile);
+    public SwitchCaseStmt buildStmt(LineFile lineFile) {
+        return new SwitchCaseStmt(expr, cases, defaultCase, lineFile);
     }
 }

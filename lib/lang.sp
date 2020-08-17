@@ -93,10 +93,8 @@ class Float(Wrapper) {
 
 class Boolean(Wrapper) {
     fn __init__(value) {
-        super.__init__(value);
+        super.__init__(boolean(value));
     }
-
-    contract __init__(boolean?) -> void;
 }
 
 class Character(Wrapper) {
