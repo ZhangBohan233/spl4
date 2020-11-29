@@ -1,3 +1,11 @@
+===== Version 4029 =====
+2020/11/30
+
+* New syntax sugar:
+    * contract definition in function header: fn foo(a: int) -> int
+* Bug fixes:
+    * Fixed param contract check out of bound error when default arguments are in use
+
 ===== Version 4028 =====
 2020/08/17
 

@@ -2,9 +2,9 @@ package spl.ast;
 
 import spl.util.LineFile;
 
-public abstract class BinaryExpr extends AbstractExpression implements Buildable {
-    protected AbstractExpression left;
-    protected AbstractExpression right;
+public abstract class BinaryExpr extends Expression implements Buildable {
+    protected Expression left;
+    protected Expression right;
     protected String operator;
 
     public BinaryExpr(String operator, LineFile lineFile) {
@@ -22,11 +22,11 @@ public abstract class BinaryExpr extends AbstractExpression implements Buildable
         return left == null || right == null;
     }
 
-    public Node getLeft() {
+    public Expression getLeft() {
         return left;
     }
 
-    public Node getRight() {
+    public Expression getRight() {
         return right;
     }
 
@@ -34,11 +34,11 @@ public abstract class BinaryExpr extends AbstractExpression implements Buildable
         return operator;
     }
 
-    public void setLeft(AbstractExpression left) {
+    public void setLeft(Expression left) {
         this.left = left;
     }
 
-    public void setRight(AbstractExpression right) {
+    public void setRight(Expression right) {
         this.right = right;
     }
 

@@ -4,14 +4,14 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Bool;
 import spl.util.LineFile;
 
-public class CaseStmt extends AbstractStatement {
+public class CaseStmt extends Statement {
 
     public final Node bodyBlock;
-    private final AbstractExpression condition;
+    private final Expression condition;
     private final BinaryOperator binaryCondition;
     public final boolean isExpr;
 
-    public CaseStmt(AbstractExpression condition, Node bodyBlock, boolean isExpr, LineFile lineFile) {
+    public CaseStmt(Expression condition, Node bodyBlock, boolean isExpr, LineFile lineFile) {
         super(lineFile);
 
         this.condition = condition;
@@ -22,7 +22,7 @@ public class CaseStmt extends AbstractStatement {
         binaryCondition.right = condition;
     }
 
-    public void setSwitchExpr(AbstractExpression switchExpr) {
+    public void setSwitchExpr(Expression switchExpr) {
         binaryCondition.left = switchExpr;
     }
 

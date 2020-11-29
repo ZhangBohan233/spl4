@@ -8,7 +8,7 @@ import spl.interpreter.primitives.Undefined;
 import spl.lexer.SyntaxError;
 import spl.util.LineFile;
 
-public class Declaration extends AbstractExpression {
+public class Declaration extends Expression {
 
     public static final int VAR = 1;
     public static final int CONST = 2;

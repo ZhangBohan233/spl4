@@ -79,6 +79,19 @@ public class TextProcessor {
 //                        processedBody = (BraceList) processBlock(bodyList, null);
 //                        resultEle.add(processedBody);
 //                        return index;
+//                    case "fn":
+//                        next = parent.get(index++);
+//                        BracketList paramList;
+//                        String name;
+//                        if (next instanceof AtomicElement) {
+//                            IdToken nameToken = (IdToken) ((AtomicElement) next).atom;
+//                            name = nameToken.getIdentifier();
+//                            paramList = (BracketList) parent.get(index++);
+//                        } else {
+//                            paramList = (BracketList) next;
+//                            name = "anonymous function";
+//                        }
+//                        break;
                     case "cond":
                         resultEle.add(new AtomicElement(new IdToken("switch", lineFile), resultEle));
                         resultEle.add(new AtomicElement(new IdToken("true", lineFile), resultEle));

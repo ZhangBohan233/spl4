@@ -12,7 +12,7 @@ import spl.util.LineFile;
 
 import java.util.List;
 
-public class IndexingNode extends AbstractExpression  {
+public class IndexingNode extends Expression {
 
     private final Node callObj;
     private final Line args;

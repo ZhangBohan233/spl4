@@ -3,12 +3,12 @@ package spl.ast;
 import spl.interpreter.env.Environment;
 import spl.util.LineFile;
 
-public class CatchStmt extends AbstractStatement {
+public class CatchStmt extends Statement {
 
-    final AbstractExpression condition;
+    final Expression condition;
     final BlockStmt body;
 
-    public CatchStmt(AbstractExpression condition, BlockStmt body, LineFile lineFile) {
+    public CatchStmt(Expression condition, BlockStmt body, LineFile lineFile) {
         super(lineFile);
 
         this.condition = condition;

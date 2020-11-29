@@ -3,7 +3,7 @@ package spl.ast;
 import spl.interpreter.env.Environment;
 import spl.util.LineFile;
 
-public class FallthroughStmt extends AbstractStatement {
+public class FallthroughStmt extends Statement {
 
     public FallthroughStmt(LineFile lineFile) {
         super(lineFile);

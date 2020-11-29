@@ -8,7 +8,7 @@ import spl.interpreter.primitives.SplFloat;
 import spl.util.LineFile;
 import spl.util.Utilities;
 
-public class IncDecOperator extends AbstractExpression implements Buildable {
+public class IncDecOperator extends Expression implements Buildable {
 
     /**
      * Is increment or not.

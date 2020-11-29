@@ -5,7 +5,7 @@ import spl.lexer.treeList.BraceList;
 import spl.lexer.treeList.BracketList;
 import spl.util.LineFile;
 
-public class MacroSyntaxNode extends AbstractStatement {
+public class MacroSyntaxNode extends Statement {
 
     private final BracketList syntaxList;
     private final BraceList bodyList;

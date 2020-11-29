@@ -8,7 +8,7 @@ import spl.util.LineFile;
 
 public class WhileStmt extends ConditionalStmt {
 
-    private AbstractExpression condition;
+    private Expression condition;
 
     public WhileStmt(LineFile lineFile) {
         super(lineFile);
@@ -31,7 +31,7 @@ public class WhileStmt extends ConditionalStmt {
         }
     }
 
-    public void setCondition(AbstractExpression condition) {
+    public void setCondition(Expression condition) {
         this.condition = condition;
     }
 

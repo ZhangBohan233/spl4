@@ -1,6 +1,6 @@
 package spl.interpreter.splObjects;
 
-import spl.ast.AbstractExpression;
+import spl.ast.Expression;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.FunctionEnvironment;
@@ -13,9 +13,9 @@ public class LambdaExpression extends UserFunction {
 
     private final int lambdaId = count++;
 
-    private final AbstractExpression body;
+    private final Expression body;
 
-    public LambdaExpression(AbstractExpression body, SplCallable.Parameter[] params, Environment definitionEnv,
+    public LambdaExpression(Expression body, SplCallable.Parameter[] params, Environment definitionEnv,
                             LineFile lineFile) {
 
         super(params, definitionEnv, lineFile);
@@ -28,7 +28,7 @@ public class LambdaExpression extends UserFunction {
         String name = toString();
         FunctionEnvironment scope = new FunctionEnvironment(definitionEnv, callingEnv, name);
 
-        checkValidArgCount(evaluatedArgs.positionalArgs.size(), name);
+        checkValidArgCount(evaluatedArgs.positionalArgs.size(), name, lineFile);
 
         setArgs(evaluatedArgs, scope);
 

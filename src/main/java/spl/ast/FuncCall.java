@@ -12,7 +12,7 @@ import spl.interpreter.splErrors.TypeError;
 import spl.util.Constants;
 import spl.util.LineFile;
 
-public class FuncCall extends AbstractExpression {
+public class FuncCall extends Expression {
 
     Node callObj;
     Arguments arguments;

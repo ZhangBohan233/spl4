@@ -9,7 +9,7 @@ import spl.util.LineFile;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MacroNode extends AbstractStatement {
+public class MacroNode extends Statement {
 
     private final String macroName;
     private final List<MacroSyntaxNode> syntaxNodes = new ArrayList<>();

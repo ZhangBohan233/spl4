@@ -7,7 +7,7 @@ import spl.util.LineFile;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Line extends AbstractExpression {
+public class Line extends Expression {
     private final List<Node> children = new ArrayList<>();
 
     public Line(LineFile lineFile) {
@@ -20,6 +20,10 @@ public class Line extends AbstractExpression {
 
     public Node get(int index) {
         return children.get(index);
+    }
+
+    public void set(int index, Node value) {
+        children.set(index, value);
     }
 
     public void add(Node ele) {

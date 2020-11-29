@@ -2,7 +2,7 @@ package spl.ast;
 
 import spl.util.LineFile;
 
-public abstract class ConditionalStmt extends AbstractStatement {
+public abstract class ConditionalStmt extends Statement {
 
     protected BlockStmt bodyBlock;
 

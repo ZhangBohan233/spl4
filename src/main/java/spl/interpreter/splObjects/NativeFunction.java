@@ -50,13 +50,13 @@ public abstract class NativeFunction extends SplCallable {
     protected abstract SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv);
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
-        checkValidArgCount(arguments.getLine().size(), name);
+        checkValidArgCount(arguments.getLine().size(), name, arguments.lineFile);
 
         return callFuncWithNode(arguments, callingEnv);
     }
 
     public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile lineFile) {
-        checkValidArgCount(evaluatedArgs.positionalArgs.size(), name);
+        checkValidArgCount(evaluatedArgs.positionalArgs.size(), name, lineFile);
 
         return callFunc(evaluatedArgs, callingEnv);
     }

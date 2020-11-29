@@ -9,13 +9,13 @@ import spl.util.LineFile;
 
 import java.util.Map;
 
-public class ContractNode extends AbstractStatement {
+public class ContractNode extends Statement {
 
     private final String fnName;
     private final Line paramContracts;
-    private final Node rtnContract;
+    private final Expression rtnContract;
 
-    public ContractNode(String fnName, Line paramContracts, Node rtnContract, LineFile lineFile) {
+    public ContractNode(String fnName, Line paramContracts, Expression rtnContract, LineFile lineFile) {
         super(lineFile);
 
         this.fnName = fnName;

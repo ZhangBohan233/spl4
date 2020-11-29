@@ -32,6 +32,7 @@ public class Constants {
     public static final String WRAPPER_ATTR = "value";
     public static final String GET_CLASS = "__class__";
     public static final String ARRAY_LENGTH = "length";
+    public static final String ANY_TYPE = "anyType";
 
     public static final Map<Integer, String> WRAPPERS = Map.of(
             SplElement.INT, "Integer",

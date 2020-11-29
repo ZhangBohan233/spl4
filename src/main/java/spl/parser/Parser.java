@@ -3,6 +3,7 @@ package spl.parser;
 import spl.ast.*;
 import spl.lexer.*;
 import spl.lexer.treeList.*;
+import spl.util.Constants;
 import spl.util.LineFile;
 
 import java.io.IOException;
@@ -41,7 +42,7 @@ public class Parser {
         return builder.getLine();
     }
 
-    private AbstractExpression parseOnePartBlock(BracketList bracketList) throws IOException {
+    private Expression parseOnePartBlock(BracketList bracketList) throws IOException {
         AstBuilder builder = parseSomeBlock(bracketList);
         builder.finishPart();
         Line line = builder.getLine();
@@ -49,7 +50,7 @@ public class Parser {
             throw new SyntaxError("Expected 1 part in line, got " + line.size() + ": " + line + ". ",
                     bracketList.lineFile);
         }
-        return (AbstractExpression) line.get(0);
+        return (Expression) line.get(0);
     }
 
     private Line parseSqrBracket(SqrBracketList sqrBracketList) throws IOException {
@@ -58,7 +59,7 @@ public class Parser {
         return builder.getLine();
     }
 
-    private AbstractExpression parseParenthesis(BracketList bracketList) throws IOException {
+    private Expression parseParenthesis(BracketList bracketList) throws IOException {
         return parseOnePartBlock(bracketList);
     }
 
@@ -129,7 +130,7 @@ public class Parser {
                         BraceList bodyList;
                         BlockStmt bodyBlock;
                         BracketList conditionList;
-                        AbstractExpression condition;
+                        Expression condition;
                         BracketList singleBodyList;
                         CaseStmt caseStmt;
 
@@ -141,6 +142,9 @@ public class Parser {
                             case ":=":
                                 varLevel = Declaration.USELESS;
                                 builder.addNode(new QuickAssignment(lineFile));
+                                break;
+                            case ":":
+                                builder.addNode(new TypeExpr(lineFile));
                                 break;
                             case ".":
                                 builder.addNode(new Dot(lineFile));
@@ -181,13 +185,34 @@ public class Parser {
                                     paramList = (BracketList) next;
                                     name = "anonymous function";
                                 }
-                                bodyList = (BraceList) parent.get(index++);
+                                Expression rtnType = null;
+                                next = parent.get(index++);
+                                if (identifierOf(next, "->")) {
+//                                    System.out.println(123212312);
+                                    BracketList rtnTypeList = new BracketList(null, lineFile);
+//                                    index++;  // skip
+                                    while (!((next = parent.get(index++)) instanceof BraceList)) {
+                                        rtnTypeList.add(next);
+                                    }
+//                                    System.out.println(rtnTypeList);
+                                    rtnType = parseOnePartBlock(rtnTypeList);
+                                }
+                                bodyList = (BraceList) next;
 
                                 Line paramBlock = parseOneLineBlock(paramList);
                                 bodyBlock = parseBlock(bodyList);
+//                                System.out.println(paramBlock);
+//                                System.out.println(rtnType);
+
+                                // this line must before FuncDefinition
+                                ContractNode autoCont = autoContract(name, paramBlock, rtnType, lineFile);
 
                                 FuncDefinition def = new FuncDefinition(name, paramBlock, bodyBlock, lineFile);
                                 builder.addNode(def);
+
+                                if (autoCont != null) {
+                                    builder.addNode(autoCont);
+                                }
 //                                builder.finishPart();
 //                                builder.finishLine();
                                 break;
@@ -203,7 +228,7 @@ public class Parser {
                                     singleBodyList.add(next);
                                 }
                                 paramBlock = parseOneLineBlock(paramList);
-                                AbstractExpression bodyNode = parseOnePartBlock(singleBodyList);
+                                Expression bodyNode = parseOnePartBlock(singleBodyList);
                                 LambdaExpressionDef lambdaFunctionDef =
                                         new LambdaExpressionDef(paramBlock, bodyNode, lineFile);
                                 builder.addNode(lambdaFunctionDef);
@@ -225,7 +250,7 @@ public class Parser {
                                 if (rtnLine.getChildren().size() != 1)
                                     throw new SyntaxError("Syntax of contract: " +
                                             "'contract f(argsContract...) -> rtnContract; '. ", lineFile);
-                                Node rtnCon = rtnLine.getChildren().get(0);
+                                Expression rtnCon = (Expression) rtnLine.getChildren().get(0);
 
                                 ContractNode contractNode =
                                         new ContractNode(nameToken.getIdentifier(), paramLine, rtnCon, lineFile);
@@ -283,7 +308,7 @@ public class Parser {
                             case "if":
                                 conditionList = new BracketList(null, lineFile);
                                 Node lastAddedNode = builder.getLastAddedNode();
-                                if (!(lastAddedNode instanceof AbstractExpression)) {  // regular if-stmt
+                                if (!(lastAddedNode instanceof Expression)) {  // regular if-stmt
                                     while (!((next = parent.get(index++)) instanceof BraceList)) {
                                         conditionList.add(next);
                                     }
@@ -312,7 +337,7 @@ public class Parser {
                                         index++;  // this step is to ensure that ';' will not be omitted
                                     }
                                     condition = parseOnePartBlock(conditionList);
-                                    AbstractExpression elseBodyExpr = parseOnePartBlock(singleBodyList);
+                                    Expression elseBodyExpr = parseOnePartBlock(singleBodyList);
                                     ConditionalExpr elseExpr =
                                             new ConditionalExpr("_else_", lineFile);
                                     ConditionalExpr ifExpr = new ConditionalExpr("_if_", lineFile);
@@ -339,7 +364,7 @@ public class Parser {
                                     conditionList.add(next);
                                 }
                                 bodyList = (BraceList) next;
-                                AbstractExpression expression = parseOnePartBlock(conditionList);
+                                Expression expression = parseOnePartBlock(conditionList);
                                 bodyBlock = parseBlock(bodyList);
                                 SwitchCaseFactory ccf = new SwitchCaseFactory(expression, bodyBlock);
                                 if (ccf.isExpr()) {
@@ -374,7 +399,7 @@ public class Parser {
                                         while (notIdentifierOf(next = parent.get(index++), ";")) {
                                             singleBodyList.add(next);
                                         }
-                                        AbstractExpression body = parseOnePartBlock(singleBodyList);
+                                        Expression body = parseOnePartBlock(singleBodyList);
                                         caseStmt = new CaseStmt(condition, body, true, lineFile);
                                     }
                                 }
@@ -401,7 +426,7 @@ public class Parser {
                                         while (notIdentifierOf(next = parent.get(index++), ";")) {
                                             singleBodyList.add(next);
                                         }
-                                        AbstractExpression body = parseOnePartBlock(singleBodyList);
+                                        Expression body = parseOnePartBlock(singleBodyList);
                                         caseStmt = new CaseStmt(null, body, true, lineFile);
                                     }
                                 } else {
@@ -553,9 +578,13 @@ public class Parser {
     }
 
     private static boolean notIdentifierOf(Element element, String expectedName) {
-        return !((element instanceof AtomicElement) &&
-                (((AtomicElement) element).atom instanceof IdToken) &&
-                ((IdToken) ((AtomicElement) element).atom).getIdentifier().equals(expectedName));
+        return !identifierOf(element, expectedName);
+    }
+
+    public static boolean identifierOf(Element element, String expectedName) {
+        return element instanceof AtomicElement &&
+                ((AtomicElement) element).atom instanceof IdToken &&
+                ((IdToken) ((AtomicElement) element).atom).getIdentifier().equals(expectedName);
     }
 
     private static boolean isCall(Token token) {
@@ -589,7 +618,9 @@ public class Parser {
                     default -> FileTokenizer.ALL_BINARY.contains(identifier) ||
                             FileTokenizer.RESERVED.contains(identifier);
                 };
-            } else return !(token instanceof IntToken) && !(token instanceof FloatToken);
+            } else return !(token instanceof IntToken) &&
+                    !(token instanceof FloatToken) &&
+                    !(token instanceof CharToken);
         } else return !(element instanceof BracketList);
     }
 
@@ -612,6 +643,40 @@ public class Parser {
             else return false;
         } else {
             return false;
+        }
+    }
+
+    private static ContractNode autoContract(String fnName,
+                                             Line paramBlock,
+                                             Expression rtnContract,
+                                             LineFile lineFile) {
+        boolean hasParamContract = false;
+        Line contractLine = new Line(lineFile);
+        for (int i = 0; i < paramBlock.size(); i++) {
+            Node param = paramBlock.get(i);
+            if (param instanceof BinaryExpr) {
+                BinaryExpr be = (BinaryExpr) param;
+                if (be instanceof TypeExpr) {
+                    hasParamContract = true;
+                    contractLine.add(be.getRight());
+                    paramBlock.set(i, be.getLeft());  // replace the contract
+                    continue;
+                } else if (be instanceof Assignment && be.getLeft() instanceof TypeExpr) {
+                    hasParamContract = true;
+                    TypeExpr te = (TypeExpr) be.getLeft();
+                    contractLine.add(te.getRight());
+                    be.setLeft(te.getLeft());
+                    continue;
+                }
+            }
+            contractLine.add(new NameNode(Constants.ANY_TYPE, lineFile));
+        }
+
+        if (rtnContract != null || hasParamContract) {
+            if (rtnContract == null) rtnContract = new NameNode(Constants.ANY_TYPE, lineFile);
+            return new ContractNode(fnName, contractLine, rtnContract, lineFile);
+        } else {
+            return null;
         }
     }
 }

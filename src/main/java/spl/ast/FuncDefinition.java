@@ -8,7 +8,7 @@ import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplCallable;
 import spl.util.LineFile;
 
-public class FuncDefinition extends AbstractExpression {
+public class FuncDefinition extends Expression {
 
     public final String name;
     private Line parameters;
@@ -22,13 +22,13 @@ public class FuncDefinition extends AbstractExpression {
         this.body = body;
     }
 
-    public void setParameters(Line parameters) {
-        this.parameters = parameters;
-    }
+//    public void setParameters(Line parameters) {
+//        this.parameters = parameters;
+//    }
 
-    public void setBody(BlockStmt body) {
-        this.body = body;
-    }
+//    public void setBody(BlockStmt body) {
+//        this.body = body;
+//    }
 
     @Override
     protected SplElement internalEval(Environment env) {

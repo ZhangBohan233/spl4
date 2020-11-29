@@ -15,10 +15,7 @@ public class AstBuilder {
             "/", 100,
             "%", 100,
             "+", 50,
-            "-", 50,
-            ">>", 40,
-            ">>>", 40,
-            "<<", 40
+            "-", 50
     );
 
     private static final Map<String, Integer> PCD_BIN_NUMERIC_BITWISE = Map.of(
@@ -315,8 +312,8 @@ public class AstBuilder {
                 } else if (expr instanceof BinaryExpr) {
                     Node right = list.remove(index + 1);
                     Node left = list.remove(index - 1);
-                    ((BinaryExpr) expr).setLeft((AbstractExpression) left);
-                    ((BinaryExpr) expr).setRight((AbstractExpression) right);
+                    ((BinaryExpr) expr).setLeft((Expression) left);
+                    ((BinaryExpr) expr).setRight((Expression) right);
                 } else if (expr instanceof IncDecOperator) {
                     boolean post = true;
                     if (index < list.size() - 1) {

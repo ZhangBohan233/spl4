@@ -7,12 +7,12 @@ import spl.interpreter.splObjects.LambdaExpression;
 import spl.interpreter.splObjects.SplCallable;
 import spl.util.LineFile;
 
-public class LambdaExpressionDef extends AbstractExpression {
+public class LambdaExpressionDef extends Expression {
 
     private final Line parameters;
-    private final AbstractExpression body;
+    private final Expression body;
 
-    public LambdaExpressionDef(Line parameters, AbstractExpression body, LineFile lineFile) {
+    public LambdaExpressionDef(Line parameters, Expression body, LineFile lineFile) {
         super(lineFile);
 
         this.parameters = parameters;

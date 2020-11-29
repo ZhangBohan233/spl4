@@ -6,7 +6,7 @@ import spl.interpreter.splObjects.Instance;
 import spl.util.Constants;
 import spl.util.LineFile;
 
-public class ArrayLiteral extends AbstractExpression {
+public class ArrayLiteral extends Expression {
 
     private final Arguments content;
 

@@ -17,7 +17,7 @@ import spl.util.LineFile;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TryStmt extends AbstractStatement {
+public class TryStmt extends Statement {
 
     private final List<CatchStmt> catchStmts = new ArrayList<>();
     private final BlockStmt body;
@@ -130,7 +130,7 @@ public class TryStmt extends AbstractStatement {
         return containersArray;
     }
 
-    private static int fillExceptionContainer(AbstractExpression expr,
+    private static int fillExceptionContainer(Expression expr,
                                               ExceptionContainer[] containers,
                                               Environment env,
                                               int index) {
@@ -170,7 +170,7 @@ public class TryStmt extends AbstractStatement {
         }
     }
 
-    private static int getExprSize(AbstractExpression expr) {
+    private static int getExprSize(Expression expr) {
         if (expr instanceof AsExpr) {
             return getExprSize(((AsExpr) expr).left);
         } else if (expr instanceof BinaryExpr) {

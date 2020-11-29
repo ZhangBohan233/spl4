@@ -23,18 +23,18 @@ public abstract class SplCallable extends SplObject {
 
     public abstract int maxArgCount();
 
-    protected void checkValidArgCount(int argc, String fnName) {
+    protected void checkValidArgCount(int argc, String fnName, LineFile callingLf) {
         int leastArg = minArgCount();
         int mostArg = maxArgCount();
         if (argc < leastArg || argc > mostArg) {
             if (leastArg == mostArg) {
                 throw new NativeError(
-                        String.format("Function '%s' expects %d argument(s), got %d. ",
-                                fnName, leastArg, argc));
+                        String.format("Function '%s' expects %d argument(s), got %d. %s\n",
+                                fnName, leastArg, argc, callingLf.toStringFileLine()));
             } else {
                 throw new NativeError(
-                        String.format("Function '%s' expects %d to %d arguments, got %d. ",
-                                fnName, leastArg, mostArg, argc));
+                        String.format("Function '%s' expects %d to %d arguments, got %d. %s\n",
+                                fnName, leastArg, mostArg, argc, callingLf.toStringFileLine()));
             }
         }
     }

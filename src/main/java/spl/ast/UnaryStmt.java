@@ -2,7 +2,7 @@ package spl.ast;
 
 import spl.util.LineFile;
 
-public abstract class UnaryStmt extends AbstractStatement implements UnaryBuildable {
+public abstract class UnaryStmt extends Statement implements UnaryBuildable {
 
     protected final String operator;
     protected Node value;

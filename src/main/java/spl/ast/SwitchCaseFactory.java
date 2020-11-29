@@ -8,12 +8,12 @@ import java.util.List;
 
 public class SwitchCaseFactory {
 
-    private final AbstractExpression expr;
+    private final Expression expr;
     private final List<CaseStmt> cases = new ArrayList<>();
     private CaseStmt defaultCase = null;
     private int exprLevel = 0;  // 0 for not initialized, 1 for expr, 2 for stmt
 
-    public SwitchCaseFactory(AbstractExpression expr, BlockStmt body) {
+    public SwitchCaseFactory(Expression expr, BlockStmt body) {
 
         this.expr = expr;
         analyze(body);

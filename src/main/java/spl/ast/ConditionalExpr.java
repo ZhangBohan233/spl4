@@ -24,7 +24,7 @@ public class ConditionalExpr extends BinaryExpr {
                 throw new SyntaxError(
                         "Usage: 'true_expr if condition else false_expr'. ", getLineFile());
 
-            Bool cond = Bool.evalBoolean((AbstractExpression) rightExpr.left, env, getLineFile());
+            Bool cond = Bool.evalBoolean((Expression) rightExpr.left, env, getLineFile());
             if (cond.value) {
                 return left.evaluate(env);
             } else {

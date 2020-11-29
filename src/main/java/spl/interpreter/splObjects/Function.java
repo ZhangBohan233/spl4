@@ -81,11 +81,23 @@ public class Function extends UserFunction {
             int argIndex = 0;
             for (Parameter param : params) {
                 if (param.unpackCount == 0) {
-                    callContract(
-                            param.contract,
-                            evaluatedArgs.positionalArgs.get(argIndex++),
-                            callingEnv,
-                            lineFile);
+                    if (argIndex < evaluatedArgs.positionalArgs.size()) {
+                        callContract(
+                                param.contract,
+                                evaluatedArgs.positionalArgs.get(argIndex++),
+                                callingEnv,
+                                lineFile);
+                    } else if (param.hasDefaultValue()) {
+                        // use default value
+                        callContract(
+                                param.contract,
+                                param.defaultValue,
+                                callingEnv,
+                                lineFile
+                        );
+                    } else {
+                        throw new NativeError("Unexpected error. ");
+                    }
                 } else if (param.unpackCount == 1) {
                     for (; argIndex < evaluatedArgs.positionalArgs.size(); argIndex++) {
                         callContract(param.contract, evaluatedArgs.positionalArgs.get(argIndex), callingEnv, lineFile);
@@ -130,7 +142,7 @@ public class Function extends UserFunction {
 
     protected SplElement callEssential(EvaluatedArguments evaluatedArgs, Environment callingEnv,
                                        FunctionEnvironment scope, LineFile argLineFile) {
-        checkValidArgCount(evaluatedArgs.positionalArgs.size(), definedName);
+        checkValidArgCount(evaluatedArgs.positionalArgs.size(), definedName, argLineFile);
 
         checkParamContracts(evaluatedArgs, callingEnv, argLineFile);
 

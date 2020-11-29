@@ -1,6 +1,6 @@
 package spl.interpreter.primitives;
 
-import spl.ast.AbstractExpression;
+import spl.ast.Expression;
 import spl.interpreter.env.Environment;
 import spl.interpreter.splErrors.TypeError;
 import spl.util.LineFile;
@@ -60,7 +60,7 @@ public class Bool extends SplElement {
         return b ? Bool.TRUE : Bool.FALSE;
     }
 
-    public static Bool evalBoolean(AbstractExpression node, Environment env, LineFile lineFile) {
+    public static Bool evalBoolean(Expression node, Environment env, LineFile lineFile) {
         SplElement cond = node.evaluate(env);
         if (cond instanceof Bool)
             return (Bool) cond;

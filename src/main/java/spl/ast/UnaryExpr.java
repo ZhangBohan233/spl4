@@ -2,10 +2,10 @@ package spl.ast;
 
 import spl.util.LineFile;
 
-public abstract class UnaryExpr extends AbstractExpression implements UnaryBuildable {
+public abstract class UnaryExpr extends Expression implements UnaryBuildable {
 
     protected final String operator;
-    protected AbstractExpression value;
+    protected Expression value;
     private final boolean atLeft;
 
     public UnaryExpr(String operator, boolean operatorAtLeft, LineFile lineFile) {
@@ -48,7 +48,7 @@ public abstract class UnaryExpr extends AbstractExpression implements UnaryBuild
 
     @Override
     public void setValue(Node value) {
-        this.value = (AbstractExpression) value;
+        this.value = (Expression) value;
     }
 
     public Node getValue() {

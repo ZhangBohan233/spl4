@@ -3,7 +3,7 @@ package spl.ast;
 import spl.interpreter.env.Environment;
 import spl.util.LineFile;
 
-public class BreakStmt extends AbstractStatement {
+public class BreakStmt extends Statement {
 
     public BreakStmt(LineFile lineFile) {
         super(lineFile);

@@ -2,20 +2,19 @@ package spl.ast;
 
 import spl.interpreter.env.CaseBlockEnvironment;
 import spl.interpreter.env.Environment;
-import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Pointer;
 import spl.interpreter.primitives.SplElement;
 import spl.util.LineFile;
 
 import java.util.List;
 
-public class SwitchCaseExpr extends AbstractExpression {
+public class SwitchCaseExpr extends Expression {
 
-    private final AbstractExpression expr;
+    private final Expression expr;
     private final List<CaseStmt> cases;
     private final CaseStmt defaultCase;
 
-    SwitchCaseExpr(AbstractExpression expr, List<CaseStmt> cases, CaseStmt defaultCase, LineFile lineFile) {
+    SwitchCaseExpr(Expression expr, List<CaseStmt> cases, CaseStmt defaultCase, LineFile lineFile) {
         super(lineFile);
 
         this.expr = expr;

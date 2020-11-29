@@ -6,7 +6,7 @@ import spl.util.LineFile;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BlockStmt extends AbstractStatement {
+public class BlockStmt extends Statement {
 
     private final List<Line> children = new ArrayList<>();
 

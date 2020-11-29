@@ -16,4 +16,8 @@ public class NullExpr extends LiteralNode {
         return Pointer.NULL_PTR;
     }
 
+    @Override
+    public String toString() {
+        return "Null";
+    }
 }

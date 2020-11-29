@@ -4,7 +4,7 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
 import spl.util.LineFile;
 
-public class NameNode extends AbstractExpression {
+public class NameNode extends Expression {
     private final String name;
 
     public NameNode(String name, LineFile lineFile) {

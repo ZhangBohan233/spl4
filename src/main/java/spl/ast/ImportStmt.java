@@ -5,7 +5,7 @@ import spl.interpreter.primitives.Pointer;
 import spl.interpreter.splErrors.NativeError;
 import spl.util.LineFile;
 
-public class ImportStmt extends AbstractStatement {
+public class ImportStmt extends Statement {
 
     private final String importName;
     private final String path;

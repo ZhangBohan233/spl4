@@ -5,9 +5,9 @@ import spl.util.LineFile;
 /**
  * This class is the superclass of all spl node that evaluates to non-null value.
  */
-public abstract class AbstractExpression extends Node {
+public abstract class Expression extends Node {
 
-    public AbstractExpression(LineFile lineFile) {
+    public Expression(LineFile lineFile) {
         super(lineFile);
     }
 }

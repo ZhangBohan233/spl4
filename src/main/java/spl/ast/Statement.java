@@ -4,9 +4,9 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
 import spl.util.LineFile;
 
-public abstract class AbstractStatement extends Node {
+public abstract class Statement extends Node {
 
-    public AbstractStatement(LineFile lineFile) {
+    public Statement(LineFile lineFile) {
         super(lineFile);
     }
 

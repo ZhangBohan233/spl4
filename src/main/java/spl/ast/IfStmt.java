@@ -7,11 +7,11 @@ import spl.util.LineFile;
 
 public class IfStmt extends ConditionalStmt {
 
-    private final AbstractExpression condition;
+    private final Expression condition;
     private BlockStmt elseBlock;
     private boolean hasElse;
 
-    public IfStmt(AbstractExpression condition, BlockStmt bodyBlock, LineFile lineFile) {
+    public IfStmt(Expression condition, BlockStmt bodyBlock, LineFile lineFile) {
         super(bodyBlock, lineFile);
 
         this.condition = condition;

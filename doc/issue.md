@@ -5,6 +5,17 @@ Escape characters '\\' not working properly.
 
 ### Interpreter:
 
+### Function and contract
+
+**ISSUE F01**
+Param contract with default param value
+```
+fn foo(a: int?, b: float? = 2.5) -> int? {
+    return a + int(b);
+}
+foo(2);  // currently causes error
+```
+
 ### Class and inheritance
 
 ~~**ISSUE C01**~~ **_FIXED_** \
