@@ -17,7 +17,7 @@ public abstract class Node {
 
     public final SplElement evaluate(Environment env) {
         // pre
-        if (env.interrupted() || env.hasException()) return Pointer.NULL_PTR;
+        if (env.interrupted() || env.hasException()) return null;
 //        env.getMemory().enterNode(this);
 
         // essential
@@ -25,6 +25,7 @@ public abstract class Node {
 
         // post
 //        env.getMemory().exitNode();
+//        if (env.hasException()) return null;
 
         return res;
     }

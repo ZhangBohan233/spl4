@@ -174,6 +174,18 @@ public class SplInvokes extends NativeObject {
         return ins.getClazzPtr();
     }
 
+    public SplElement getAttr(Arguments arguments, Environment environment, LineFile lineFile) {
+        checkArgCount(arguments, 2, "getAttr", lineFile);
+
+        Pointer insPtr = (Pointer) arguments.getLine().get(0).evaluate(environment);
+        Instance ins = (Instance) environment.getMemory().get(insPtr);
+
+        Pointer namePtr = (Pointer) arguments.getLine().get(1).evaluate(environment);
+        Instance nameIns = (Instance) environment.getMemory().get(namePtr);
+        String name = extractFromSplString(nameIns, environment, lineFile);
+        return ins.getEnv().get(name, lineFile);
+    }
+
     public Bool hasAttr(Arguments arguments, Environment environment, LineFile lineFile) {
         checkArgCount(arguments, 2, "hasAttr", lineFile);
 
@@ -182,6 +194,51 @@ public class SplInvokes extends NativeObject {
 
         NameNode nameNode = (NameNode) arguments.getLine().get(1);
         return Bool.boolValueOf(ins.getEnv().hasName(nameNode.getName()));
+    }
+
+    public Bool hasStrAttr(Arguments arguments, Environment environment, LineFile lineFile) {
+        checkArgCount(arguments, 2, "hasStrAttr", lineFile);
+
+        Pointer insPtr = (Pointer) arguments.getLine().get(0).evaluate(environment);
+        Instance ins = (Instance) environment.getMemory().get(insPtr);
+
+        Pointer namePtr = (Pointer) arguments.getLine().get(1).evaluate(environment);
+        Instance nameIns = (Instance) environment.getMemory().get(namePtr);
+        String name = extractFromSplString(nameIns, environment, lineFile);
+        return Bool.boolValueOf(ins.getEnv().hasName(name));
+    }
+
+    public void setAttr(Arguments arguments, Environment environment, LineFile lineFile) {
+        checkArgCount(arguments, 3, "setAttr", lineFile);
+
+        Pointer insPtr = (Pointer) arguments.getLine().get(0).evaluate(environment);
+        Instance ins = (Instance) environment.getMemory().get(insPtr);
+
+        Pointer namePtr = (Pointer) arguments.getLine().get(1).evaluate(environment);
+        Instance nameIns = (Instance) environment.getMemory().get(namePtr);
+        String name = extractFromSplString(nameIns, environment, lineFile);
+
+        ins.getEnv().setVar(name, arguments.getLine().get(2).evaluate(environment), lineFile);
+    }
+
+    public SplElement getGlobalByName(Arguments arguments, Environment environment, LineFile lineFile) {
+        checkArgCount(arguments, 1, "getGlobalByName", lineFile);
+
+        Pointer namePtr = (Pointer) arguments.getLine().get(0).evaluate(environment);
+        Instance nameIns = (Instance) environment.getMemory().get(namePtr);
+        String name = extractFromSplString(nameIns, environment, lineFile);
+
+        return environment.get(name, lineFile);
+    }
+
+    public Bool hasGlobalName(Arguments arguments, Environment environment, LineFile lineFile) {
+        checkArgCount(arguments, 1, "hasGlobalName", lineFile);
+
+        Pointer namePtr = (Pointer) arguments.getLine().get(0).evaluate(environment);
+        Instance nameIns = (Instance) environment.getMemory().get(namePtr);
+        String name = extractFromSplString(nameIns, environment, lineFile);
+
+        return Bool.boolValueOf(environment.hasName(name));
     }
 
     public SplElement script(Arguments arguments, Environment environment, LineFile lineFile) {

@@ -123,6 +123,12 @@ class Exception {
     }
 }
 
+class AttributeException(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
 class IndexException(Exception) {
     fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
@@ -428,6 +434,14 @@ fn repr(obj) {
     return Invokes.repr(obj);
 }
 
+fn type(obj) {
+    if Object?(obj) {
+        return obj.__class__();
+    } else {
+        return null;
+    }
+}
+
 fn void(x) {
     return x is null;
 }
@@ -446,4 +460,36 @@ fn wrap(value) {
             return value;
         }
     }
+}
+
+// Reflections
+
+fn getAttr(obj: Object?, attr: String?) {
+    if hasAttr(obj, attr) {
+        return Invokes.getAttr(obj, attr);
+    } else {
+        throw new AttributeException("Object '" + obj + "' does not have attribute '" + attr + "'.");
+    }
+}
+
+fn hasAttr(obj: Object?, attr: String?) -> boolean? {
+    return Invokes.hasStrAttr(obj, attr);
+}
+
+fn setAttr(obj: Object?, attr: String?, value) -> void {
+    if hasAttr(obj, attr) {
+        return Invokes.setAttr(obj, attr, value);
+    } else {
+        throw new AttributeException("Object '" + obj + "' does not have attribute '" + attr + "'.");
+    }
+}
+
+fn getClassByName(name: String?) {
+    if Invokes.hasGlobalName(name) {
+        value := Invokes.getGlobalByName(name);
+        if Class?(value) {
+            return value;
+        }
+    }
+    throw new AttributeException("Name ''" + name + "' does not exist or is not a class.");
 }

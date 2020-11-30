@@ -300,7 +300,7 @@ public class Parser {
                                 builder.addNode(new ReturnStmt(lineFile));
                                 break;
                             case "new":
-                                builder.addNode(new NewStmt(lineFile));
+                                builder.addNode(new NewExpr(lineFile));
                                 break;
                             case "throw":
                                 builder.addNode(new ThrowStmt(lineFile));

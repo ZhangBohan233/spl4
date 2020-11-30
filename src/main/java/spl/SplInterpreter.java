@@ -196,6 +196,18 @@ public class SplInterpreter {
             }
         };
 
+        NativeFunction isClass = new NativeFunction("Class?", 1) {
+            @Override
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg instanceof Pointer) {
+                    SplObject object = callingEnv.getMemory().get((Pointer) arg);
+                    return Bool.boolValueOf(object instanceof SplClass);
+                }
+                return Bool.FALSE;
+            }
+        };
+
         Memory memory = ge.getMemory();
         Pointer ptrInt = memory.allocateFunction(toInt, ge);
         Pointer ptrIsInt = memory.allocateFunction(isInt, ge);
@@ -208,6 +220,7 @@ public class SplInterpreter {
         Pointer ptrIsAbsObj = memory.allocateFunction(isAbstractObject, ge);
         Pointer ptrIsArray = memory.allocateFunction(isArray, ge);
         Pointer ptrIsCallable = memory.allocateFunction(isCallable, ge);
+        Pointer ptrIsClass = memory.allocateFunction(isClass, ge);
 
         ge.defineFunction("int", ptrInt, LineFile.LF_INTERPRETER);
         ge.defineFunction("int?", ptrIsInt, LineFile.LF_INTERPRETER);
@@ -220,6 +233,7 @@ public class SplInterpreter {
         ge.defineFunction("AbstractObject?", ptrIsAbsObj, LineFile.LF_INTERPRETER);
         ge.defineFunction("Array?", ptrIsArray, LineFile.LF_INTERPRETER);
         ge.defineFunction("Callable?", ptrIsCallable, LineFile.LF_INTERPRETER);
+        ge.defineFunction("Class?", ptrIsClass, LineFile.LF_INTERPRETER);
     }
 
     static void callMain(String[] args, GlobalEnvironment globalEnvironment) {

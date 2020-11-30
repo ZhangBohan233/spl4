@@ -18,6 +18,7 @@ public class Dot extends BinaryExpr {
     protected SplElement internalEval(Environment env) {
 
         SplElement leftTv = left.evaluate(env);
+        if (env.hasException()) return null;
         if (leftTv instanceof Pointer) {
             Pointer ptr = (Pointer) leftTv;
             if (ptr.getPtr() == 0) {

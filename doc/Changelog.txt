@@ -1,3 +1,12 @@
+===== Version 4030 =====
+2020/12/01
+
+* Reflection
+    * Added builtin reflection functions:
+        * getAttr, setAttr, hasAttr, getClassByName
+* Bug fixes:
+    * Fixes part of error handling bug: call, new
+
 ===== Version 4029 =====
 2020/11/30
 
