@@ -2,10 +2,11 @@ package spl.ast;
 
 import spl.interpreter.Memory;
 import spl.interpreter.env.Environment;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Pointer;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.Instance;
-import spl.interpreter.splErrors.TypeError;
+import spl.interpreter.splErrors.NativeTypeError;
 import spl.util.Constants;
 import spl.util.LineFile;
 import spl.util.Utilities;
@@ -34,9 +35,13 @@ public class ThrowStmt extends UnaryExpr {
             Pointer tracePtr = StringLiteral.createString(traceMsg.toCharArray(), env, lineFile);
             excIns.getEnv().setVar("traceMsg", tracePtr, lineFile);
 
-            env.throwException((Pointer) exceptionClassPtr);
+            env.throwException(exceptionClassPtr);
         } else {
-            throw new TypeError("Only classes extends 'Exception' can be thrown. ", lineFile);
+            SplInvokes.throwException(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Only classes extends 'Exception' can be thrown.",
+                    lineFile);
         }
     }
 

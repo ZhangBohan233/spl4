@@ -2,10 +2,11 @@ package spl.util;
 
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Pointer;
 import spl.interpreter.primitives.SplElement;
-import spl.interpreter.splErrors.TypeError;
+import spl.interpreter.splErrors.NativeTypeError;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplCallable;
 import spl.interpreter.splObjects.SplObject;
@@ -80,13 +81,6 @@ public class Utilities {
         return res;
     }
 
-//    @SafeVarargs
-//    public static Map<String, TypeValue> mergeMapsTV(Map<String, TypeValue>... maps) {
-//        Map<String, TypeValue> res = new HashMap<>();
-//        for (Map<String, TypeValue> m : maps) res.putAll(m);
-//        return res;
-//    }
-
     public static String typeName(SplElement element) {
         return element.getClass().toString();
     }
@@ -107,7 +101,11 @@ public class Utilities {
             Instance wrapperIns = (Instance) obj;
             return wrapperIns.getEnv().get(Constants.WRAPPER_ATTR, lineFile);
         } else {
-            throw new TypeError("Cannot convert '" + obj + "' to primitive. ", lineFile);
+            return SplInvokes.throwExceptionWithError(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Cannot convert '" + obj + "' to primitive.",
+                    lineFile);
         }
     }
 

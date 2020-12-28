@@ -34,6 +34,15 @@ public class Constants {
     public static final String ARRAY_LENGTH = "length";
     public static final String ANY_TYPE = "anyType";
 
+    /**
+     * Error names
+     */
+    public static final String NAME_ERROR = "NameError";
+    public static final String INDEX_ERROR = "IndexException";
+    public static final String CONTRACT_ERROR = "ContractError";
+    public static final String TYPE_ERROR = "TypeError";
+    public static final String ATTRIBUTE_EXCEPTION = "AttributeException";
+
     public static final Map<Integer, String> WRAPPERS = Map.of(
             SplElement.INT, "Integer",
             SplElement.FLOAT, "Float",

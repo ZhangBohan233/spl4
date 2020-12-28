@@ -1,9 +1,11 @@
 package spl.interpreter.env;
 
 import spl.interpreter.*;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Pointer;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
+import spl.util.Constants;
 import spl.util.LineFile;
 
 import java.util.*;
@@ -131,7 +133,9 @@ public abstract class Environment {
     public SplElement get(String name, LineFile lineFile) {
         VarEntry se = innerGet(name, true);
         if (se == null) {
-            throw new EnvironmentError("Name '" + name + "' not found. ", lineFile);
+//            throw new EnvironmentError("Name '" + name + "' not found. ", lineFile);
+            SplInvokes.throwException(this, Constants.NAME_ERROR, "Name '" + name + "' not found. ", lineFile);
+            return Undefined.ERROR;
         }
 
         return se.getValue();

@@ -6,7 +6,7 @@ import spl.interpreter.env.BlockEnvironment;
 import spl.interpreter.primitives.*;
 import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.env.Environment;
-import spl.interpreter.splErrors.TypeError;
+import spl.interpreter.splErrors.NativeTypeError;
 import spl.interpreter.splObjects.*;
 import spl.lexer.FileTokenizer;
 import spl.lexer.TextProcessResult;
@@ -115,7 +115,11 @@ public class SplInvokes extends NativeObject {
 
         SplElement arg = arguments.getLine().getChildren().get(0).evaluate(environment);
         if (SplElement.isPrimitive(arg))
-            throw new TypeError("Invokes.id() takes a pointer as argument. ", lineFile);
+            return SplInvokes.throwExceptionWithError(
+                    environment,
+                    Constants.TYPE_ERROR,
+                    "Invokes.id() takes a pointer as argument.",
+                    lineFile);
 
         return new Int(arg.intValue());
     }
@@ -283,6 +287,34 @@ public class SplInvokes extends NativeObject {
             throw new NativeError(e);
         }
     }
+
+    /**
+     * Static field
+     */
+
+    public static void throwException(Environment env, String exceptionClassName, String msg, LineFile lineFile) {
+        StringLiteral sl = new StringLiteral(msg.toCharArray(), lineFile);
+        FuncCall funcCall = new FuncCall(
+                new NameNode(exceptionClassName, lineFile),
+                new Arguments(new Line(lineFile, sl), lineFile),
+                lineFile);
+        NewExpr newExpr = new NewExpr(lineFile);
+        newExpr.setValue(funcCall);
+        ThrowStmt throwStmt = new ThrowStmt(lineFile);
+        throwStmt.setValue(newExpr);
+
+        throwStmt.evaluate(env);
+    }
+
+    public static Undefined throwExceptionWithError(Environment env, String exceptionClassName,
+                                                    String msg, LineFile lineFile) {
+        throwException(env, exceptionClassName, msg, lineFile);
+        return Undefined.ERROR;
+    }
+
+    /**
+     * Helper functions
+     */
 
     private static void checkArgCount(Arguments arguments, int expectArgc, String fnName, LineFile lineFile) {
         if (arguments.getLine().getChildren().size() != expectArgc) {

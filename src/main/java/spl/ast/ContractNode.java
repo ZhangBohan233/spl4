@@ -27,7 +27,7 @@ public class ContractNode extends Statement {
     protected void internalProcess(Environment env) {
         Pointer fnPtr = (Pointer) env.get(fnName, getLineFile());
         Function function = (Function) env.getMemory().get(fnPtr);
-        function.setContract(paramContracts, rtnContract);
+        function.setContract(env, paramContracts, rtnContract);
     }
 
     public void evalAsMethod(Map<String, Pointer> classMethods, String className, Environment classDefEnv) {
@@ -35,7 +35,7 @@ public class ContractNode extends Statement {
         if (methodPtr == null) throw new EnvironmentError("Method '" + fnName + "' is not defined. ", lineFile);
         SplMethod method = (SplMethod) classDefEnv.getMemory().get(methodPtr);
         paramContracts.getChildren().add(0, new NameNode(className + "?", lineFile));
-        method.setContract(paramContracts, rtnContract);
+        method.setContract(classDefEnv, paramContracts, rtnContract);
     }
 
     @Override

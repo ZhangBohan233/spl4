@@ -1,6 +1,6 @@
 package spl.interpreter.primitives;
 
-import spl.interpreter.splErrors.TypeError;
+import spl.interpreter.splErrors.NativeTypeError;
 
 public class Pointer extends SplElement {
 
@@ -24,7 +24,7 @@ public class Pointer extends SplElement {
 
     @Override
     public double floatValue() {
-        throw new TypeError("Cannot convert pointer to float. ");
+        throw new NativeTypeError("Cannot convert pointer to float. ");
     }
 
     @Override
@@ -38,7 +38,7 @@ public class Pointer extends SplElement {
 
     @Override
     public boolean booleanValue() {
-        throw new TypeError("Cannot convert pointer to boolean. ");
+        throw new NativeTypeError("Cannot convert pointer to boolean. ");
     }
 
     @Override

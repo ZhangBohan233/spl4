@@ -1,12 +1,11 @@
 package spl.ast;
 
 import spl.interpreter.EvaluatedArguments;
-import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.env.Environment;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Int;
 import spl.interpreter.primitives.Pointer;
 import spl.interpreter.primitives.SplElement;
-import spl.interpreter.splErrors.TypeError;
 import spl.interpreter.splObjects.*;
 import spl.util.Constants;
 import spl.util.LineFile;
@@ -14,14 +13,6 @@ import spl.util.LineFile;
 public class Assignment extends BinaryExpr {
     public Assignment(LineFile lineFile) {
         super("=", lineFile);
-    }
-
-    @Override
-    protected SplElement internalEval(Environment env) {
-        SplElement rightRes = right.evaluate(env);
-
-        assignment(left, rightRes, env, getLineFile());
-        return rightRes;
     }
 
     public static void assignment(Node key, SplElement value, Environment env, LineFile lineFile) {
@@ -34,7 +25,12 @@ public class Assignment extends BinaryExpr {
         } else if (key instanceof Dot) {
             SplElement dotLeft = ((Dot) key).left.evaluate(env);
             if (!(dotLeft instanceof Pointer)) {
-                throw new TypeError("Left side of dot must be instance or module", lineFile);
+                SplInvokes.throwException(
+                        env,
+                        Constants.TYPE_ERROR,
+                        "Left side of dot must be instance or module",
+                        lineFile);
+                return;
             }
             SplObject dotLeftObj = env.getMemory().get((Pointer) dotLeft);
             Environment objEnv;
@@ -43,7 +39,12 @@ public class Assignment extends BinaryExpr {
             } else if (dotLeftObj instanceof Instance) {
                 objEnv = ((Instance) dotLeftObj).getEnv();
             } else {
-                throw new TypeError("Left side of dot must be instance or module", lineFile);
+                SplInvokes.throwException(
+                        env,
+                        Constants.TYPE_ERROR,
+                        "Left side of dot must be instance or module",
+                        lineFile);
+                return;
             }
             objEnv.setVar(((NameNode) ((Dot) key).right).getName(), value, lineFile);
         } else if (key instanceof IndexingNode) {
@@ -61,13 +62,33 @@ public class Assignment extends BinaryExpr {
                             env.getMemory().get((Pointer) ins.getEnv().get(Constants.SET_ITEM_FN, lineFile));
                     setItemFn.call(EvaluatedArguments.of(arrPtr, index, value), env, lineFile);
                 } else {
-                    throw new NativeError("Object '" + obj + "' does not support set-item. ", lineFile);
+                    SplInvokes.throwException(
+                            env,
+                            Constants.TYPE_ERROR,
+                            "Object '" + obj + "' does not support set-item.",
+                            lineFile);
                 }
             } else {
-                throw new NativeError("Array creation must take exactly one int as argument. ", lineFile);
+                SplInvokes.throwException(
+                        env,
+                        Constants.TYPE_ERROR,
+                        "Array creation must take exactly one int as argument.",
+                        lineFile);
             }
         } else {
-            throw new NativeError();
+            SplInvokes.throwException(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "",
+                    lineFile);
         }
+    }
+
+    @Override
+    protected SplElement internalEval(Environment env) {
+        SplElement rightRes = right.evaluate(env);
+
+        assignment(left, rightRes, env, getLineFile());
+        return rightRes;
     }
 }

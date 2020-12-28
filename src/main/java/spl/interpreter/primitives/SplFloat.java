@@ -1,6 +1,6 @@
 package spl.interpreter.primitives;
 
-import spl.interpreter.splErrors.TypeError;
+import spl.interpreter.splErrors.NativeTypeError;
 
 public class SplFloat extends SplElement {
 
@@ -34,7 +34,7 @@ public class SplFloat extends SplElement {
 
     @Override
     public boolean booleanValue() {
-        throw new TypeError("Cannot convert float to boolean. ");
+        throw new NativeTypeError("Cannot convert float to boolean. ");
     }
 
     @Override

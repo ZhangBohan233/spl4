@@ -1,11 +1,12 @@
 package spl.interpreter.splObjects;
 
 import spl.ast.*;
-import spl.interpreter.splErrors.AttributeError;
 import spl.interpreter.Memory;
 import spl.interpreter.env.Environment;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Pointer;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splErrors.RuntimeSyntaxError;
 import spl.util.Constants;
 import spl.util.LineFile;
@@ -23,15 +24,12 @@ public class SplClass extends SplObject {
 
     private final String className;
     private final Environment definitionEnv;
-
-    // mro array used by java
-    private Pointer[] mro;
-
-    // mro array used by spl
-    private Pointer mroArrayPointer;
-
     private final List<Node> classNodes = new ArrayList<>();
     private final Map<String, Pointer> methodPointers = new HashMap<>();
+    // mro array used by java
+    private Pointer[] mro;
+    // mro array used by spl
+    private Pointer mroArrayPointer;
 
     /**
      * The private constructor, only for in-class call.
@@ -63,6 +61,21 @@ public class SplClass extends SplObject {
         clazz.updateMethods(clazzPtr);
 
         return clazzPtr;
+    }
+
+    public static boolean isSuperclassOf(Pointer superclassPtr, SplElement childClassEle, Memory memory) {
+        if (childClassEle instanceof Pointer) {
+            Pointer childClassPtr = (Pointer) childClassEle;
+            if (superclassPtr.getPtr() == childClassPtr.getPtr()) return true;
+            SplObject splObject = memory.get(childClassPtr);
+            if (splObject instanceof SplClass) {
+                SplClass childClazz = (SplClass) splObject;
+                for (Pointer supPtr : childClazz.superclassPointers) {
+                    if (isSuperclassOf(superclassPtr, supPtr, memory)) return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void updateMethods(Pointer clazzPtr) {
@@ -138,6 +151,10 @@ public class SplClass extends SplObject {
         }
     }
 
+//    public List<Pointer> getSuperclassPointers() {
+//        return superclassPointers;
+//    }
+
     private void checkConstructor() {
         if (!methodPointers.containsKey(Constants.CONSTRUCTOR)) {
             // If class no constructor, put an empty default constructor
@@ -151,10 +168,6 @@ public class SplClass extends SplObject {
             methodPointers.put(Constants.CONSTRUCTOR, constructorPtr);
         }
     }
-
-//    public List<Pointer> getSuperclassPointers() {
-//        return superclassPointers;
-//    }
 
     public Map<String, Pointer> getMethodPointers() {
         return methodPointers;
@@ -172,21 +185,6 @@ public class SplClass extends SplObject {
         return className;
     }
 
-    public static boolean isSuperclassOf(Pointer superclassPtr, SplElement childClassEle, Memory memory) {
-        if (childClassEle instanceof Pointer) {
-            Pointer childClassPtr = (Pointer) childClassEle;
-            if (superclassPtr.getPtr() == childClassPtr.getPtr()) return true;
-            SplObject splObject = memory.get(childClassPtr);
-            if (splObject instanceof SplClass) {
-                SplClass childClazz = (SplClass) splObject;
-                for (Pointer supPtr : childClazz.superclassPointers) {
-                    if (isSuperclassOf(superclassPtr, supPtr, memory)) return true;
-                }
-            }
-        }
-        return false;
-    }
-
     public SplElement getAttr(Pointer selfPtr, Node attrNode, Environment env, LineFile lineFile) {
         if (attrNode instanceof NameNode) {
             String name = ((NameNode) attrNode).getName();
@@ -196,13 +194,20 @@ public class SplClass extends SplObject {
                 return mroArrayPointer;
             }
         }
-        throw new AttributeError("Class does not have attribute '" + attrNode + "'. ", lineFile);
+//        throw new AttributeError("Class does not have attribute '" + attrNode + "'. ", lineFile);
+        SplInvokes.throwException(
+                env,
+                Constants.ATTRIBUTE_EXCEPTION,
+                "Class does not have attribute '" + attrNode + "'. ",
+                lineFile
+        );
+        return Undefined.ERROR;
     }
 
     /**
      * This method is used for gc.
-     * @return a list containing all pointers that should not be collected by gc.
      *
+     * @return a list containing all pointers that should not be collected by gc.
      */
     public List<Pointer> getAllAttrPointers() {
         List<Pointer> res = new ArrayList<>();

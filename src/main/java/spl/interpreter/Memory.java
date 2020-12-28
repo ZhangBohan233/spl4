@@ -17,6 +17,7 @@ public class Memory {
     private int heapSize;
     private int stackSize;
     private int stackLimit = 1000;
+    private boolean checkContract = true;
 
     private final SplThing[] heap;
 
@@ -178,6 +179,14 @@ public class Memory {
 
     public void setHeapSize(int heapSize) {
         this.heapSize = heapSize;
+    }
+
+    public void setCheckContract(boolean checkContract) {
+        this.checkContract = checkContract;
+    }
+
+    public boolean isCheckContract() {
+        return checkContract;
     }
 
     //    public static void main(String[] args) {

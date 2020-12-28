@@ -1,3 +1,9 @@
+===== Version 4031 =====
+2020/12/29
+
+* Changed error system
+* Added command line flag -nc or --noContract to disable contract check
+
 ===== Version 4030 =====
 2020/12/01
 

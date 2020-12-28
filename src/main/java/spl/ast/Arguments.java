@@ -3,7 +3,7 @@ package spl.ast;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Pointer;
-import spl.interpreter.splErrors.TypeError;
+import spl.interpreter.splErrors.NativeTypeError;
 import spl.interpreter.splObjects.*;
 import spl.lexer.SyntaxError;
 import spl.util.Constants;
@@ -60,7 +60,7 @@ public class Arguments extends NonEvaluate {
                             Pointer arrPtr = (Pointer) toArrayFtn.call(EvaluatedArguments.of(arg), callingEnv, lineFile);
                             addArrayToArgs(arrPtr, evaluatedArguments, callingEnv);
                         } else {
-                            throw new TypeError();
+                            throw new NativeTypeError();
                         }
                     }
                 } else {

@@ -1,14 +1,14 @@
 package spl.ast;
 
 import spl.interpreter.EvaluatedArguments;
-import spl.interpreter.primitives.SplElement;
 import spl.interpreter.env.Environment;
-import spl.interpreter.splObjects.Macro;
-import spl.interpreter.splObjects.SplMethod;
-import spl.interpreter.splObjects.SplCallable;
-import spl.interpreter.splObjects.SplObject;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Pointer;
-import spl.interpreter.splErrors.TypeError;
+import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
+import spl.interpreter.splObjects.SplCallable;
+import spl.interpreter.splObjects.SplMethod;
+import spl.interpreter.splObjects.SplObject;
 import spl.util.Constants;
 import spl.util.LineFile;
 
@@ -28,22 +28,18 @@ public class FuncCall extends Expression {
         this.arguments = arguments;
     }
 
-    public void setCallObj(Node callObj) {
-        this.callObj = callObj;
-    }
-
-    public void setArguments(Arguments arguments) {
-        this.arguments = arguments;
-    }
-
     @Override
     protected SplElement internalEval(Environment env) {
         SplElement leftTv = callObj.evaluate(env);
         if (env.hasException()) {
-            return null;
+            return Undefined.ERROR;
         }
         if (SplElement.isPrimitive(leftTv)) {
-            throw new TypeError("Element '" + leftTv + "' is not callable. ", getLineFile());
+            return SplInvokes.throwExceptionWithError(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Element '" + leftTv + "' is not callable.",
+                    lineFile);
         }
         SplObject obj = env.getMemory().get((Pointer) leftTv);
         if (obj instanceof SplCallable) {
@@ -56,12 +52,12 @@ public class FuncCall extends Expression {
                 ea.insertThis(thisPtr);
             }
             return function.call(ea, env, lineFile);
-        } else if (obj instanceof Macro) {
-            Macro macro = (Macro) obj;
-            System.out.println(macro);
-            return null;
         } else {
-            throw new TypeError("Object '" + obj + "' is not callable. ", getLineFile());
+            return SplInvokes.throwExceptionWithError(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Object '" + obj + "' is not callable.",
+                    lineFile);
         }
     }
 
@@ -74,7 +70,15 @@ public class FuncCall extends Expression {
         return arguments;
     }
 
+    public void setArguments(Arguments arguments) {
+        this.arguments = arguments;
+    }
+
     public Node getCallObj() {
         return callObj;
+    }
+
+    public void setCallObj(Node callObj) {
+        this.callObj = callObj;
     }
 }

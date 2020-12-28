@@ -4,11 +4,13 @@ import spl.ast.Arguments;
 import spl.ast.FuncCall;
 import spl.ast.NameNode;
 import spl.ast.Node;
-import spl.interpreter.splErrors.AttributeError;
+import spl.interpreter.invokes.SplInvokes;
+import spl.interpreter.primitives.Undefined;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splErrors.NativeError;
-import spl.interpreter.splErrors.TypeError;
+import spl.interpreter.splErrors.NativeTypeError;
+import spl.util.Constants;
 import spl.util.LineFile;
 
 import java.lang.reflect.InvocationTargetException;
@@ -25,7 +27,11 @@ public class NativeObject extends SplObject {
                 return nativeCall(this, name, ((FuncCall) node).getArguments(), callEnv, lineFile);
             }
         }
-        throw new TypeError("Not a native invoke. ");
+        return SplInvokes.throwExceptionWithError(
+                callEnv,
+                Constants.TYPE_ERROR,
+                "Not a native invoke",
+                lineFile);
     }
 
     private static SplElement nativeAttribute(NativeObject obj, String attrName, LineFile lineFile) {
@@ -44,8 +50,15 @@ public class NativeObject extends SplObject {
 
             return (SplElement) method.invoke(obj, arguments, callEnv, lineFile);
         } catch (NoSuchMethodException | IllegalAccessException e1) {
-            throw new AttributeError("Native class '" + obj.getClass() + "' does not have method '" +
-                    methodName + ". ", lineFile);
+//            throw new AttributeError("Native class '" + obj.getClass() + "' does not have method '" +
+//                    methodName + ". ", lineFile);
+            SplInvokes.throwException(
+                    callEnv,
+                    Constants.ATTRIBUTE_EXCEPTION,
+                    "Native class '" + obj.getClass() + "' does not have method '" + methodName + ". ",
+                    lineFile
+            );
+            return Undefined.ERROR;
         } catch (InvocationTargetException e) {
             throw new NativeError(e);
         }

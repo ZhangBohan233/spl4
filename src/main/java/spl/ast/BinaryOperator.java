@@ -1,14 +1,14 @@
 package spl.ast;
 
 import spl.interpreter.EvaluatedArguments;
+import spl.interpreter.env.Environment;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.*;
-import spl.interpreter.splErrors.TypeError;
-import spl.interpreter.splObjects.Function;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplObject;
-import spl.interpreter.env.Environment;
 import spl.lexer.SyntaxError;
+import spl.util.Constants;
 import spl.util.LineFile;
 import spl.util.Utilities;
 
@@ -48,6 +48,122 @@ public class BinaryOperator extends BinaryExpr {
         this.type = type;
     }
 
+    private static SplElement pointerNumericArithmetic(Pointer leftPtr,
+                                                       SplElement rightEle,
+                                                       String operator,
+                                                       Environment env,
+                                                       LineFile lineFile) {
+        SplObject leftObj = env.getMemory().get(leftPtr);
+        if (leftObj instanceof Instance) {
+            String fnName = ARITHMETIC_OP_MAP.get(operator);
+            Environment instanceEnv = ((Instance) leftObj).getEnv();
+            Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
+            SplMethod opFn = (SplMethod) env.getMemory().get(fnPtr);
+            return opFn.call(EvaluatedArguments.of(leftPtr, rightEle), env, lineFile);
+        } else {
+            return SplInvokes.throwExceptionWithError(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Binary operator type error.",
+                    lineFile);
+        }
+    }
+
+    private static SplElement primitivePointerArithmetic(SplElement leftEle, Pointer rightEle,
+                                                         String operator, Environment env,
+                                                         LineFile lineFile) {
+        Pointer leftWrpPtr = Utilities.primitiveToWrapper(leftEle, env, lineFile);
+        return pointerNumericArithmetic(leftWrpPtr, rightEle, operator, env, lineFile);
+    }
+
+    private static SplElement bitwise(String op, Environment env, long l, long r, LineFile lineFile) {
+        return switch (op) {
+            case "<<" -> new Int(l << r);
+            case ">>" -> new Int(l >> r);
+            case ">>>" -> new Int(l >>> r);
+            case "&" -> new Int(l & r);
+            case "|" -> new Int(l | r);
+            case "^" -> new Int(l ^ r);
+            default -> SplInvokes.throwExceptionWithError(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Unsupported operation '" + op + "'. ",
+                    lineFile);
+        };
+    }
+
+    private static SplElement simpleArithmetic(String op, Environment env, double l, double r, LineFile lineFile) {
+        return switch (op) {
+            case "+" -> new SplFloat(l + r);
+            case "-" -> new SplFloat(l - r);
+            case "*" -> new SplFloat(l * r);
+            case "/" -> new SplFloat(l / r);
+            case "%" -> new SplFloat(l % r);
+            default -> SplInvokes.throwExceptionWithError(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Unsupported operation '" + op + "'. ",
+                    lineFile);
+        };
+    }
+
+    private static SplElement pointerLogical(String op, Pointer l, Pointer r, Environment env, LineFile lineFile) {
+        if (op.equals("is")) {
+            return Bool.boolValueOf(l.getPtr() == r.getPtr());
+        } else if (op.equals("is not")) {
+            return Bool.boolValueOf(l.getPtr() != r.getPtr());
+        } else {
+            SplObject leftObj = env.getMemory().get(l);
+            if (leftObj instanceof Instance) {
+                String fnName = LOGICAL_OP_MAP.get(op);
+                Environment instanceEnv = ((Instance) leftObj).getEnv();
+                Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
+                SplMethod opFn = (SplMethod) env.getMemory().get(fnPtr);
+                SplElement res = opFn.call(EvaluatedArguments.of(l, r), env, lineFile);
+                if (res instanceof Bool) {
+                    return res;
+                }
+            }
+        }
+        return SplInvokes.throwExceptionWithError(
+                env,
+                Constants.TYPE_ERROR,
+                "Binary operator type error.",
+                lineFile);
+    }
+
+    private static SplElement integerLogical(String op, Environment env, long l, long r, LineFile lineFile) {
+        return switch (op) {
+            case "==" -> Bool.boolValueOf(l == r);
+            case "!=" -> Bool.boolValueOf(l != r);
+            case ">" -> Bool.boolValueOf(l > r);
+            case "<" -> Bool.boolValueOf(l < r);
+            case ">=" -> Bool.boolValueOf(l >= r);
+            case "<=" -> Bool.boolValueOf(l <= r);
+            default -> SplInvokes.throwExceptionWithError(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Unsupported binary operator '" + op + "' between int and int.",
+                    lineFile);
+        };
+    }
+
+    private static SplElement otherLogical(String op, Environment env, double l, double r, LineFile lineFile) {
+        return switch (op) {
+            case "==" -> Bool.boolValueOf(l == r);
+            case "!=" -> Bool.boolValueOf(l != r);
+            case ">" -> Bool.boolValueOf(l > r);
+            case "<" -> Bool.boolValueOf(l < r);
+            case ">=" -> Bool.boolValueOf(l >= r);
+            case "<=" -> Bool.boolValueOf(l <= r);
+            default -> SplInvokes.throwExceptionWithError(
+                    env,
+                    Constants.TYPE_ERROR,
+                    String.format("Unsupported binary operator '%s'.", op),
+                    lineFile);
+        };
+    }
+
     @Override
     protected SplElement internalEval(Environment env) {
         if (type == ARITHMETIC) {
@@ -61,30 +177,38 @@ public class BinaryOperator extends BinaryExpr {
                     return primitivePointerArithmetic(leftEle, (Pointer) rightEle, operator, env, lineFile);
                 }
 
-                double res = simpleArithmetic(operator, leftEle.floatValue(), rightEle.floatValue(), lineFile);
+                SplElement res = simpleArithmetic(operator, env, leftEle.floatValue(), rightEle.floatValue(), lineFile);
 
                 if (leftEle.isIntLike()) {
                     if (rightEle.isIntLike()) {
-                        return new Int((long) res);
+                        return new Int(res.intValue());
                     } else if (rightEle instanceof SplFloat) {
-                        return new SplFloat(res);
+                        return res;
                     }
                 } else if (leftEle instanceof SplFloat) {
-                    return new SplFloat(res);
+                    return res;
                 }
-                throw new TypeError(lineFile);
+                return SplInvokes.throwExceptionWithError(
+                        env,
+                        Constants.TYPE_ERROR,
+                        "Binary operator type error.",
+                        lineFile);
             }
         } else if (type == BITWISE) {
             SplElement leftEle = left.evaluate(env);
             SplElement rightEle = right.evaluate(env);
             if (leftEle.isIntLike() && rightEle.isIntLike()) {
-                return new Int(bitwise(operator, leftEle.intValue(), rightEle.intValue(), lineFile));
+                return bitwise(operator, env, leftEle.intValue(), rightEle.intValue(), lineFile);
             }
-            throw new TypeError(lineFile);
+            return SplInvokes.throwExceptionWithError(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Binary operator type error.",
+                    lineFile);
         } else if (type == LOGICAL) {
             SplElement leftTv = left.evaluate(env);
             SplElement rightTv = right.evaluate(env);
-            boolean result;
+            SplElement result;
             if (SplElement.isPrimitive(leftTv)) {
                 if (rightTv instanceof Pointer) {
                     if (operator.equals("is")) {
@@ -92,51 +216,71 @@ public class BinaryOperator extends BinaryExpr {
                     } else if (operator.equals("is not")) {
                         return Bool.TRUE;
                     } else {
-                        return Bool.boolValueOf(pointerLogical(
+                        return pointerLogical(
                                 operator,
                                 Utilities.primitiveToWrapper(leftTv, env, lineFile),
-                                (Pointer) rightTv, 
+                                (Pointer) rightTv,
                                 env,
-                                lineFile));
+                                lineFile);
                     }
                 }
                 if (leftTv.isIntLike()) {
                     long leftV = leftTv.intValue();
                     if (rightTv.isIntLike()) {
                         long rightV = rightTv.intValue();
-                        result = integerLogical(operator, leftV, rightV, getLineFile());
+                        result = integerLogical(operator, env, leftV, rightV, getLineFile());
                     } else if (rightTv instanceof SplFloat) {
                         double rightV = rightTv.floatValue();
-                        result = otherLogical(operator, leftV, rightV, getLineFile());
+                        result = otherLogical(operator, env, leftV, rightV, getLineFile());
                     } else {
                         System.out.println(leftTv + operator + rightTv + lineFile.toStringFileLine());
-                        throw new TypeError(lineFile);
+                        return SplInvokes.throwExceptionWithError(
+                                env,
+                                Constants.TYPE_ERROR,
+                                "Binary operator type error.",
+                                lineFile);
                     }
                 } else if (leftTv instanceof SplFloat) {
                     double leftV = leftTv.floatValue();
                     if (rightTv instanceof SplFloat ||
                             rightTv.isIntLike()) {
                         double rightV = rightTv.intValue();
-                        result = otherLogical(operator, leftV, rightV, getLineFile());
+                        result = otherLogical(operator, env, leftV, rightV, getLineFile());
                     } else {
-                        throw new TypeError(lineFile);
+                        return SplInvokes.throwExceptionWithError(
+                                env,
+                                Constants.TYPE_ERROR,
+                                "Binary operator type error.",
+                                lineFile);
                     }
                 } else if (leftTv instanceof Bool) {
                     boolean leftV = leftTv.booleanValue();
                     if (rightTv instanceof Bool) {
                         boolean rightV = (rightTv).booleanValue();
                         if (operator.equals("==")) {
-                            result = leftV == rightV;
+                            result = Bool.boolValueOf(leftV == rightV);
                         } else if (operator.equals("!=")) {
-                            result = leftV != rightV;
+                            result = Bool.boolValueOf(leftV != rightV);
                         } else {
-                            throw new TypeError(lineFile);
+                            return SplInvokes.throwExceptionWithError(
+                                    env,
+                                    Constants.TYPE_ERROR,
+                                    "Binary operator type error.",
+                                    lineFile);
                         }
                     } else {
-                        throw new TypeError(lineFile);
+                        return SplInvokes.throwExceptionWithError(
+                                env,
+                                Constants.TYPE_ERROR,
+                                "Binary operator type error.",
+                                lineFile);
                     }
                 } else {
-                    throw new TypeError(lineFile);
+                    return SplInvokes.throwExceptionWithError(
+                            env,
+                            Constants.TYPE_ERROR,
+                            "Binary operator type error.",
+                            lineFile);
                 }
             } else {  // is pointer type
                 Pointer leftPtr = (Pointer) leftTv;
@@ -148,7 +292,7 @@ public class BinaryOperator extends BinaryExpr {
                             operator, leftPtr, Utilities.primitiveToWrapper(rightTv, env, lineFile), env, lineFile);
                 }
             }
-            return Bool.boolValueOf(result);
+            return result;
         } else if (type == LAZY) {
             // a and b = b if a else false
             // a or b  = true if a else b
@@ -169,103 +313,6 @@ public class BinaryOperator extends BinaryExpr {
             }
         }
         throw new SyntaxError("Unexpected error. ", lineFile);
-    }
-
-    private static SplElement pointerNumericArithmetic(Pointer leftPtr,
-                                                       SplElement rightEle,
-                                                       String operator,
-                                                       Environment env,
-                                                       LineFile lineFile) {
-        SplObject leftObj = env.getMemory().get(leftPtr);
-        if (leftObj instanceof Instance) {
-            String fnName = ARITHMETIC_OP_MAP.get(operator);
-            Environment instanceEnv = ((Instance) leftObj).getEnv();
-            Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
-            SplMethod opFn = (SplMethod) env.getMemory().get(fnPtr);
-            return opFn.call(EvaluatedArguments.of(leftPtr, rightEle), env, lineFile);
-        } else {
-            throw new TypeError(lineFile);
-        }
-    }
-
-    private static SplElement primitivePointerArithmetic(SplElement leftEle, Pointer rightEle,
-                                                         String operator, Environment env,
-                                                         LineFile lineFile) {
-        Pointer leftWrpPtr = Utilities.primitiveToWrapper(leftEle, env, lineFile);
-        return pointerNumericArithmetic(leftWrpPtr, rightEle, operator, env, lineFile);
-    }
-
-    private static long bitwise(String op, long l, long r, LineFile lineFile) {
-        return switch (op) {
-            case "<<" -> l << r;
-            case ">>" -> l >> r;
-            case ">>>" -> l >>> r;
-            case "&" -> l & r;
-            case "|" -> l | r;
-            case "^" -> l ^ r;
-            default -> throw new TypeError("Unsupported operation '" + op + "'. ", lineFile);
-        };
-    }
-
-    private static double simpleArithmetic(String op, double l, double r, LineFile lineFile) {
-        return switch (op) {
-            case "+" -> l + r;
-            case "-" -> l - r;
-            case "*" -> l * r;
-            case "/" -> l / r;
-            case "%" -> l % r;
-            default -> throw new TypeError("Unsupported operation '" + op + "'. ", lineFile);
-        };
-    }
-
-    private static boolean pointerLogical(String op, Pointer l, Pointer r, Environment env, LineFile lineFile) {
-        if (op.equals("is")) {
-            return l.getPtr() == r.getPtr();
-        } else if (op.equals("is not")) {
-            return l.getPtr() != r.getPtr();
-        } else {
-            SplObject leftObj = env.getMemory().get(l);
-            if (leftObj instanceof Instance) {
-                String fnName = LOGICAL_OP_MAP.get(op);
-                Environment instanceEnv = ((Instance) leftObj).getEnv();
-                Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
-                SplMethod opFn = (SplMethod) env.getMemory().get(fnPtr);
-                SplElement res = opFn.call(EvaluatedArguments.of(l, r), env, lineFile);
-                if (res instanceof Bool) {
-                    return ((Bool) res).value;
-                }
-            }
-        }
-        throw new TypeError(lineFile);
-    }
-
-    private static boolean integerLogical(String op, long l, long r, LineFile lineFile) {
-        return switch (op) {
-            case "==" -> l == r;
-            case "!=" -> l != r;
-            case ">" -> l > r;
-            case "<" -> l < r;
-            case ">=" -> l >= r;
-            case "<=" -> l <= r;
-            default -> throw new SyntaxError("Unsupported binary operator '" + op + "' between int and int. ",
-                    lineFile);
-        };
-    }
-
-    private static boolean otherLogical(String op, double l, double r, LineFile lineFile) {
-        return switch (op) {
-            case "==" -> l == r;
-            case "!=" -> l != r;
-            case ">" -> l > r;
-            case "<" -> l < r;
-            case ">=" -> l >= r;
-            case "<=" -> l <= r;
-            default -> throw new SyntaxError(
-                    String.format("Unsupported binary operator '%s'.",
-                            op),
-                    lineFile
-            );
-        };
     }
 
 }

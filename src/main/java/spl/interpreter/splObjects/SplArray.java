@@ -2,12 +2,11 @@ package spl.interpreter.splObjects;
 
 import spl.ast.NameNode;
 import spl.ast.Node;
-import spl.interpreter.splErrors.AttributeError;
 import spl.interpreter.Memory;
-import spl.interpreter.splErrors.ArrayIndexError;
 import spl.interpreter.env.Environment;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.*;
-import spl.interpreter.splErrors.TypeError;
+import spl.interpreter.splErrors.NativeTypeError;
 import spl.util.Constants;
 import spl.util.LineFile;
 
@@ -23,19 +22,6 @@ public class SplArray extends SplObject {
     public SplArray(int elementTypeCode, int length) {
         this.length = length;
         this.elementTypeCode = elementTypeCode;
-    }
-
-    public SplElement getAttr(Node attrNode, LineFile lineFile) {
-        if (attrNode instanceof NameNode && ((NameNode) attrNode).getName().equals(Constants.ARRAY_LENGTH)) {
-            return new Int(length);
-        } else {
-            throw new AttributeError("Array does not have attribute '" + attrNode + "'. ", lineFile);
-        }
-    }
-
-    @Override
-    public String toString() {
-        return SplElement.typeToString(elementTypeCode) + "[" + length + "]";
     }
 
     private static int calculateEleType(Node eleNode) {
@@ -56,7 +42,7 @@ public class SplArray extends SplObject {
                     break;
             }
         }
-        throw new TypeError("Only basic types are valid in array creation.");
+        throw new NativeTypeError("Only basic types are valid in array creation.");
     }
 
     public static Pointer createArray(int eleType, int arrSize, Environment env) {
@@ -81,7 +67,7 @@ public class SplArray extends SplObject {
             case SplElement.BOOLEAN -> Bool.FALSE;
             case SplElement.CHAR -> Char.NULL_TERMINATOR;
             case SplElement.POINTER -> Pointer.NULL_PTR;
-            default -> throw new TypeError();
+            default -> throw new NativeTypeError();
         };
 
         for (int i = 0; i < arrayLength; ++i) {
@@ -89,12 +75,14 @@ public class SplArray extends SplObject {
         }
     }
 
-    public static SplElement getItemAtIndex(Pointer arrPtr, int index, Memory memory, LineFile lineFile) {
-        SplArray array = (SplArray) memory.get(arrPtr);
+    public static SplElement getItemAtIndex(Pointer arrPtr, int index, Environment env, LineFile lineFile) {
+        SplArray array = (SplArray) env.getMemory().get(arrPtr);
         if (index < 0 || index >= array.length) {
-            throw new ArrayIndexError("Index " + index + " out of array length " + array.length + ". ", lineFile);
+//            throw new ArrayIndexError("Index " + index + " out of array length " + array.length + ". ", lineFile);
+            SplInvokes.throwException(env, Constants.INDEX_ERROR, "", lineFile);
+            return Undefined.ERROR;
         }
-        return memory.getPrimitive(arrPtr.getPtr() + index + 1);
+        return env.getMemory().getPrimitive(arrPtr.getPtr() + index + 1);
     }
 
     public static void setItemAtIndex(Pointer arrPtr,
@@ -105,12 +93,19 @@ public class SplArray extends SplObject {
         SplArray array = (SplArray) env.getMemory().get(arrPtr);
         if (value.type() == array.elementTypeCode) {
             if (index < 0 || index >= array.length) {
-                throw new ArrayIndexError("Index " + index + " out of array length " + array.length + ". ", lineFile);
+                SplInvokes.throwException(env,
+                        Constants.INDEX_ERROR,
+                        "Index " + index + " out of array length " + array.length + ". ",
+                        lineFile);
+                return;
             }
             env.getMemory().set(arrPtr.getPtr() + index + 1, value);
         } else {
-            throw new TypeError(String.format("Array element type: %s, argument type: %s. ",
-                    SplElement.typeToString(array.elementTypeCode), SplElement.typeToString(value.type())));
+            SplInvokes.throwException(env,
+                    Constants.TYPE_ERROR,
+                    String.format("Array element type: %s, argument type: %s. ",
+                            SplElement.typeToString(array.elementTypeCode), SplElement.typeToString(value.type())),
+                    lineFile);
         }
     }
 
@@ -134,5 +129,24 @@ public class SplArray extends SplObject {
 
         // returns array length and addr of first element
         return new int[]{array.length, firstEleAddr};
+    }
+
+    public SplElement getAttr(Node attrNode, Environment env, LineFile lineFile) {
+        if (attrNode instanceof NameNode && ((NameNode) attrNode).getName().equals(Constants.ARRAY_LENGTH)) {
+            return new Int(length);
+        } else {
+            SplInvokes.throwException(
+                    env,
+                    Constants.ATTRIBUTE_EXCEPTION,
+                    "Array does not have attribute '" + attrNode + "'. ",
+                    lineFile
+            );
+            return Undefined.ERROR;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return SplElement.typeToString(elementTypeCode) + "[" + length + "]";
     }
 }

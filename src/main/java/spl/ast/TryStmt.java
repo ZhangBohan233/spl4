@@ -8,9 +8,6 @@ import spl.interpreter.env.TryEnvironment;
 import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Pointer;
 import spl.interpreter.primitives.SplElement;
-import spl.interpreter.splErrors.ArrayIndexError;
-import spl.interpreter.splErrors.NativeError;
-import spl.interpreter.splErrors.TypeError;
 import spl.interpreter.splObjects.SplCallable;
 import spl.util.LineFile;
 
@@ -39,7 +36,7 @@ public class TryStmt extends Statement {
 
     @Override
     protected void internalProcess(Environment env) {
-        try {
+
             TryEnvironment tryEnv = new TryEnvironment(env);
             body.evaluate(tryEnv);
             if (tryEnv.hasException()) {
@@ -71,34 +68,7 @@ public class TryStmt extends Statement {
                     // Exception not caught, throw it to outer
                     ThrowStmt.throwException(exceptionPtr, env, lineFile);
             }
-        } catch (Exception e) {
-            ExceptionContainer[][] exceptionsArr = evalExceptions(env);
-            boolean caught = false;
-            OUT_LOOP:
-            for (int i = 0; i < exceptionsArr.length; i++) {
-                for (int j = 0; j < exceptionsArr[i].length; j++) {
-                    ExceptionContainer ec = exceptionsArr[i][j];
-                    if (ec.nativeError != null) {
 
-                        if (ec.nativeError.isInstance(e)) {
-                            caught = true;
-                            CatchStmt caughtError = catchStmts.get(i);
-                            BlockEnvironment catchEnv = new BlockEnvironment(env);
-
-                            // TODO: catch NativeErr as e
-//                            if (caught.condition instanceof AsExpr) {
-//                                String name = ((AsExpr) caught.condition).getRight().getName();
-//                                catchEnv.defineVarAndSet(name, exceptionPtr, lineFile);
-//                            }
-                            caughtError.evaluate(catchEnv);
-                            break OUT_LOOP;
-                        }
-                    }
-                }
-            }
-
-            if (!caught) throw e;
-        } finally {
             if (finallyBlock != null) {
                 Environment env2 = env;
                 while (!(env2 instanceof FunctionEnvironment)) {
@@ -110,7 +80,7 @@ public class TryStmt extends Statement {
                 finallyBlock.evaluate(finallyEnv);
                 fe.setReturn(rtn);
             }
-        }
+
     }
 
     @Override
@@ -141,28 +111,28 @@ public class TryStmt extends Statement {
             index = fillExceptionContainer(binaryExpr.left, containers, env, index);
             return fillExceptionContainer(binaryExpr.right, containers, env, index);
         } else {
-            if (expr instanceof NameNode) {
-                String name = ((NameNode) expr).getName();
-                Class<? extends NativeError> nativeErrorClass;
-                switch (name) {
-                    case "NativeError":
-                        nativeErrorClass = NativeError.class;
-                        break;
-                    case "TypeError":
-                        nativeErrorClass = TypeError.class;
-                        break;
-                    case "ArrayIndexError":
-                        nativeErrorClass = ArrayIndexError.class;
-                        break;
-                    default:
-                        nativeErrorClass = null;
-                        break;
-                }
-                if (nativeErrorClass != null) {
-                    containers[index] = new ExceptionContainer(nativeErrorClass);
-                    return index + 1;
-                }
-            }
+//            if (expr instanceof NameNode) {
+//                String name = ((NameNode) expr).getName();
+//                Class<? extends NativeError> nativeErrorClass;
+//                switch (name) {
+//                    case "NativeError":
+//                        nativeErrorClass = NativeError.class;
+//                        break;
+//                    case "TypeError":
+//                        nativeErrorClass = TypeError.class;
+//                        break;
+//                    case "ArrayIndexError":
+//                        nativeErrorClass = ArrayIndexError.class;
+//                        break;
+//                    default:
+//                        nativeErrorClass = null;
+//                        break;
+//                }
+//                if (nativeErrorClass != null) {
+//                    containers[index] = new ExceptionContainer(nativeErrorClass);
+//                    return index + 1;
+//                }
+//            }
             SplElement value = expr.evaluate(env);
             SplCallable splCallable = (SplCallable) env.getMemory().get((Pointer) value);
             containers[index] = new ExceptionContainer(splCallable);
@@ -180,16 +150,9 @@ public class TryStmt extends Statement {
     }
 
     private static class ExceptionContainer {
-        private final Class<? extends NativeError> nativeError;
         private final SplCallable userError;
 
-        private ExceptionContainer(Class<? extends NativeError> nativeError) {
-            this.nativeError = nativeError;
-            this.userError = null;
-        }
-
         private ExceptionContainer(SplCallable userError) {
-            this.nativeError = null;
             this.userError = userError;
         }
     }

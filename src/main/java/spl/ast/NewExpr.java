@@ -1,15 +1,18 @@
 package spl.ast;
 
 import spl.interpreter.env.Environment;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Int;
 import spl.interpreter.primitives.Pointer;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splErrors.NativeError;
-import spl.interpreter.splErrors.TypeError;
+import spl.interpreter.splErrors.NativeTypeError;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplArray;
 import spl.interpreter.splObjects.SplModule;
 import spl.parser.ParseError;
+import spl.util.Constants;
 import spl.util.LineFile;
 
 public class NewExpr extends UnaryExpr {
@@ -27,7 +30,15 @@ public class NewExpr extends UnaryExpr {
         } else if (node instanceof Dot) {
             Dot dot = (Dot) node;
             SplElement dotLeft = dot.left.evaluate(classDefEnv);
-            if (SplElement.isPrimitive(dotLeft)) throw new TypeError();
+            if (SplElement.isPrimitive(dotLeft)) {
+                SplInvokes.throwException(
+                        callEnv,
+                        Constants.TYPE_ERROR,
+                        "Cannot create instance of primitive type. ",
+                        lineFile
+                );
+                return Undefined.ERROR;
+            }
             SplModule module = (SplModule) classDefEnv.getMemory().get((Pointer) dotLeft);
             return directInitClass(dot.right, module.getEnv(), callEnv, lineFile);
         } else {

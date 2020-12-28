@@ -1,7 +1,7 @@
 package spl.interpreter.primitives;
 
 import spl.interpreter.SplThing;
-import spl.interpreter.splErrors.TypeError;
+import spl.interpreter.splErrors.NativeTypeError;
 
 public abstract class SplElement implements SplThing {
 
@@ -36,7 +36,7 @@ public abstract class SplElement implements SplThing {
             case VOID -> "void";
             case POINTER -> "Object";
             case UNDEFINED -> "undefined";
-            default -> throw new TypeError();
+            default -> throw new NativeTypeError();
         };
     }
 

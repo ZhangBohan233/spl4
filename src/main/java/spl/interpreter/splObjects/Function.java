@@ -1,7 +1,7 @@
 package spl.interpreter.splObjects;
 
 import spl.ast.*;
-import spl.interpreter.splErrors.ContractError;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.env.Environment;
@@ -9,7 +9,8 @@ import spl.interpreter.env.FunctionEnvironment;
 import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Pointer;
 import spl.interpreter.primitives.SplElement;
-import spl.interpreter.splErrors.TypeError;
+import spl.interpreter.splErrors.NativeTypeError;
+import spl.util.Constants;
 import spl.util.LineFile;
 
 import java.util.Map;
@@ -47,9 +48,15 @@ public class Function extends UserFunction {
         }
     }
 
-    public void setContract(Line paramContractLine, Node rtnContractNode) {
+    public void setContract(Environment env, Line paramContractLine, Node rtnContractNode) {
         if (paramContractLine.size() != params.length) {
-            throw new TypeError("Contracts must match the length of parameters. ", rtnContractNode.getLineFile());
+//            throw new NativeTypeError("Contracts must match the length of parameters. ", rtnContractNode.getLineFile());
+            SplInvokes.throwException(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Contracts must match the length of parameters.",
+                    lineFile);
+            return;
         }
 
         for (int i = 0; i < paramContractLine.size(); i++) {
@@ -77,7 +84,7 @@ public class Function extends UserFunction {
     }
 
     private void checkParamContracts(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile lineFile) {
-        if (hasContract) {
+        if (hasContract && callingEnv.getMemory().isCheckContract()) {
             int argIndex = 0;
             for (Parameter param : params) {
                 if (param.unpackCount == 0) {
@@ -114,7 +121,7 @@ public class Function extends UserFunction {
     }
 
     private void checkRtnContract(SplElement rtnValue, Environment callingEnv, LineFile lineFile) {
-        if (hasContract) {
+        if (hasContract && callingEnv.getMemory().isCheckContract()) {
             callContract(rtnContract, rtnValue, callingEnv, lineFile);
         }
     }
@@ -127,11 +134,16 @@ public class Function extends UserFunction {
         SplElement result = callable.call(contractArgs, callingEnv, lineFile);
         if (result instanceof Bool) {
             if (!((Bool) result).value) {
-                throw new ContractError("Contract violation when calling '" + definedName + "'. " +
-                        "Got " + arg + ". ", lineFile);
+                SplInvokes.throwException(callingEnv,
+                        Constants.CONTRACT_ERROR,
+                        "Contract violation when calling '" + definedName + "'. " + "Got " + arg + ". ",
+                        lineFile);
             }
         } else {
-            throw new TypeError("Contract function must return a boolean. ", lineFile);
+            SplInvokes.throwException(callingEnv,
+                    Constants.TYPE_ERROR,
+                    "Contract function must return a boolean. ",
+                    lineFile);
         }
     }
 

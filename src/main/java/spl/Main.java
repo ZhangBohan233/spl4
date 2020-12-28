@@ -3,7 +3,7 @@ package spl;
 import spl.ast.*;
 import spl.interpreter.Memory;
 import spl.interpreter.env.GlobalEnvironment;
-import spl.interpreter.splErrors.TypeError;
+import spl.interpreter.splErrors.NativeTypeError;
 import spl.lexer.FileTokenizer;
 import spl.lexer.TextProcessResult;
 import spl.lexer.TextProcessor;
@@ -43,6 +43,7 @@ public class Main {
 
             if (argumentParser.isGcInfo()) memory.debugs.setPrintGcRes(true);
             if (argumentParser.isGcTrigger()) memory.debugs.setPrintGcTrigger(true);
+            memory.setCheckContract(argumentParser.isCheckContract());
 
             SplInterpreter.initNatives(globalEnvironment);
             SplInterpreter.importModules(globalEnvironment, processed.importedPaths);
@@ -55,7 +56,7 @@ public class Main {
                 SplInterpreter.callMain(argumentParser.getSplArgs(), globalEnvironment);
             } catch (ClassCastException cce) {
                 cce.printStackTrace();
-                throw new TypeError();
+                throw new NativeTypeError();
             }
 
             long processEnd = System.currentTimeMillis();

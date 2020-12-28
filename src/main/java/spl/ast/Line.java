@@ -18,6 +18,12 @@ public class Line extends Expression {
         super(LineFile.LF_PARSER);
     }
 
+    public Line(LineFile lineFile, Node... nodes) {
+        super(lineFile);
+
+        for (Node node : nodes) add(node);
+    }
+
     public Node get(int index) {
         return children.get(index);
     }

@@ -3,6 +3,7 @@ package spl.interpreter.primitives;
 public class Undefined extends SplElement {
 
     public static final Undefined UNDEFINED = new Undefined();
+    public static final Undefined ERROR = new Undefined();
 
     private Undefined() {
     }

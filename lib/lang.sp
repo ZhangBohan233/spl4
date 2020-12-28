@@ -129,13 +129,31 @@ class AttributeException(Exception) {
     }
 }
 
+class ContractError(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
 class IndexException(Exception) {
     fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
     }
 }
 
+class NameError(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
 class NotImplementedError(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
+class TypeError(Exception) {
     fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
     }
@@ -164,7 +182,6 @@ class Iterable {
 }
 
 class ArrayIterator(Iterator) {
-
     const array;
     const endIndex;
     var index = 0;

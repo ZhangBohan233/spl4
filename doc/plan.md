@@ -19,4 +19,4 @@
 * ~~Ast visualizer~~ **_DONE_**
 * Resolve primitive wrapper confusion
 * ~~Direct contract in function declaration~~ **_DONE_**
-* Reflection
+* ~~Reflection~~ **_DONE_**

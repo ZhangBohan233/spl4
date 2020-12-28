@@ -2,7 +2,7 @@ package spl.interpreter.primitives;
 
 import spl.ast.Expression;
 import spl.interpreter.env.Environment;
-import spl.interpreter.splErrors.TypeError;
+import spl.interpreter.splErrors.NativeTypeError;
 import spl.util.LineFile;
 
 public class Bool extends SplElement {
@@ -65,7 +65,7 @@ public class Bool extends SplElement {
         if (cond instanceof Bool)
             return (Bool) cond;
         else
-            throw new TypeError("Statement takes " +
+            throw new NativeTypeError("Statement takes " +
                     "boolean value as condition. ", lineFile);
     }
 }

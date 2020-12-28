@@ -1,25 +1,26 @@
 package spl.ast;
 
 import spl.interpreter.EvaluatedArguments;
-import spl.interpreter.primitives.Pointer;
-import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.env.BlockEnvironment;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.LoopTitleEnvironment;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Bool;
+import spl.interpreter.primitives.Pointer;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splErrors.RuntimeSyntaxError;
-import spl.interpreter.splErrors.TypeError;
-import spl.interpreter.splObjects.*;
+import spl.interpreter.splObjects.Instance;
+import spl.interpreter.splObjects.SplArray;
+import spl.interpreter.splObjects.SplMethod;
+import spl.interpreter.splObjects.SplObject;
 import spl.util.Constants;
 import spl.util.LineFile;
 import spl.util.Utilities;
 
 public class ForLoopStmt extends ConditionalStmt {
 
-    private final BlockStmt condition;
-
     private final static String forEachSyntaxMsg = "Syntax of for-each loop: 'for i in collection {...}'";
+    private final BlockStmt condition;
 
     public ForLoopStmt(BlockStmt condition, BlockStmt bodyBlock, LineFile lineFile) {
         super(bodyBlock, lineFile);
@@ -46,7 +47,11 @@ public class ForLoopStmt extends ConditionalStmt {
                     bodyEnv
             );
         } else {
-            throw new NativeError("For loop takes 1 or 3 condition parts. ", getLineFile());
+            SplInvokes.throwException(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "For loop takes 1 or 3 condition parts.",
+                    lineFile);
         }
     }
 
@@ -110,9 +115,12 @@ public class ForLoopStmt extends ConditionalStmt {
                 return;
             }
         }
-
-        throw new TypeError("For-each loop only supports array or classes extends 'Iterable' or 'Iterator', " +
-                "got a '" + probIterable + "'. ", lineFile);
+        SplInvokes.throwException(
+                parentEnv,
+                Constants.TYPE_ERROR,
+                "For-each loop only supports array or classes extends 'Iterable' or 'Iterator', " +
+                        "got a '" + probIterable + "'.",
+                lineFile);
     }
 
     private void forEachLoopIterator(Declaration loopInvariant,

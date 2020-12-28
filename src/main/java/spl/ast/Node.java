@@ -4,6 +4,7 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Pointer;
 import spl.interpreter.primitives.SplElement;
 
+import spl.interpreter.primitives.Undefined;
 import spl.util.LineFile;
 
 public abstract class Node {
@@ -17,7 +18,8 @@ public abstract class Node {
 
     public final SplElement evaluate(Environment env) {
         // pre
-        if (env.interrupted() || env.hasException()) return null;
+        if (env.interrupted()) return Pointer.NULL_PTR;
+        if (env.hasException()) return Undefined.ERROR;
 //        env.getMemory().enterNode(this);
 
         // essential
