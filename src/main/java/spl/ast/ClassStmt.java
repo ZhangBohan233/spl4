@@ -4,7 +4,7 @@ import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.SplElement;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.NativeFunction;
 import spl.interpreter.splObjects.SplClass;
@@ -49,13 +49,13 @@ public class ClassStmt extends Expression {
 
         validateExtending();
 
-        List<Pointer> superclassesPointers = new ArrayList<>();
+        List<Reference> superclassesPointers = new ArrayList<>();
         for (Node superclassesNode : superclassesNodes) {
-            Pointer scPtr = (Pointer) superclassesNode.evaluate(env);
+            Reference scPtr = (Reference) superclassesNode.evaluate(env);
             superclassesPointers.add(scPtr);
         }
 
-        Pointer clazzPtr = SplClass.createClassAndAllocate(className, superclassesPointers, body, env);
+        Reference clazzPtr = SplClass.createClassAndAllocate(className, superclassesPointers, body, env);
 
         env.defineVarAndSet(className, clazzPtr, getLineFile());
 
@@ -64,17 +64,17 @@ public class ClassStmt extends Expression {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Pointer) {
-                    SplObject obj = callingEnv.getMemory().get((Pointer) arg);
+                if (arg instanceof Reference) {
+                    SplObject obj = callingEnv.getMemory().get((Reference) arg);
                     if (obj instanceof Instance) {
-                        Pointer argClazzPtr = ((Instance) obj).getClazzPtr();
+                        Reference argClazzPtr = ((Instance) obj).getClazzPtr();
                         return Bool.boolValueOf(SplClass.isSuperclassOf(clazzPtr, argClazzPtr, callingEnv.getMemory()));
                     }
                 }
                 return Bool.FALSE;
             }
         };
-        Pointer iofPtr = env.getMemory().allocateFunction(instanceOfFunc, env);
+        Reference iofPtr = env.getMemory().allocateFunction(instanceOfFunc, env);
         env.defineVarAndSet(iofName, iofPtr, getLineFile());
 
         return clazzPtr;

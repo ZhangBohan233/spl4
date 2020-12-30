@@ -1,7 +1,7 @@
 package spl.ast;
 
 import spl.interpreter.env.Environment;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 
 import spl.interpreter.primitives.Undefined;
@@ -18,7 +18,7 @@ public abstract class Node {
 
     public final SplElement evaluate(Environment env) {
         // pre
-        if (env.interrupted()) return Pointer.NULL_PTR;
+        if (env.interrupted()) return Reference.NULL_PTR;
         if (env.hasException()) return Undefined.ERROR;
 //        env.getMemory().enterNode(this);
 

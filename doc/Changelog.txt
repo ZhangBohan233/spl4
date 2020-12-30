@@ -1,3 +1,10 @@
+===== Version 4032 =====
+2020/12/31
+
+* Implemented syntax sugar: "or" in contract
+* More on error system change
+* Renamed "Pointer" to "Reference"
+
 ===== Version 4031 =====
 2020/12/29
 

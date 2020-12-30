@@ -1,6 +1,6 @@
 package spl.interpreter;
 
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 
 import java.util.*;
@@ -16,7 +16,7 @@ public class EvaluatedArguments {
         return arguments;
     }
 
-    public void insertThis(Pointer thisPtr) {
+    public void insertThis(Reference thisPtr) {
         positionalArgs.add(0, thisPtr);
     }
 }

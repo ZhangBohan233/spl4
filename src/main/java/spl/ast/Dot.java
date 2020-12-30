@@ -3,9 +3,8 @@ package spl.ast;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
-import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.splObjects.*;
 import spl.util.Constants;
 import spl.util.LineFile;
@@ -15,13 +14,13 @@ public class Dot extends BinaryExpr {
         super(".", lineFile);
     }
 
-    private static SplElement crossEnvEval(Node right, Pointer leftPtr,
+    private static SplElement crossEnvEval(Node right, Reference leftPtr,
                                            Environment objEnv, Environment oldEnv, LineFile lineFile) {
         if (right instanceof NameNode) {
             return right.evaluate(objEnv);
         } else if (right instanceof FuncCall) {
             SplElement funcTv = ((FuncCall) right).getCallObj().evaluate(objEnv);
-            SplCallable callable = (SplCallable) objEnv.getMemory().get((Pointer) funcTv);
+            SplCallable callable = (SplCallable) objEnv.getMemory().get((Reference) funcTv);
             EvaluatedArguments ea = ((FuncCall) right).getArguments().evalArgs(oldEnv);
             if (callable instanceof SplMethod) {
                 ea.insertThis(leftPtr);  // add "this" ptr
@@ -43,8 +42,8 @@ public class Dot extends BinaryExpr {
 
         SplElement leftTv = left.evaluate(env);
         if (env.hasException()) return null;
-        if (leftTv instanceof Pointer) {
-            Pointer ptr = (Pointer) leftTv;
+        if (leftTv instanceof Reference) {
+            Reference ptr = (Reference) leftTv;
             if (ptr.getPtr() == 0) {
                 return SplInvokes.throwExceptionWithError(
                         env,

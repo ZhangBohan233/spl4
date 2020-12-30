@@ -2,7 +2,7 @@ package spl.ast;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.EnvironmentError;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.splObjects.Function;
 import spl.interpreter.splObjects.SplMethod;
 import spl.util.LineFile;
@@ -25,13 +25,13 @@ public class ContractNode extends Statement {
 
     @Override
     protected void internalProcess(Environment env) {
-        Pointer fnPtr = (Pointer) env.get(fnName, getLineFile());
+        Reference fnPtr = (Reference) env.get(fnName, getLineFile());
         Function function = (Function) env.getMemory().get(fnPtr);
         function.setContract(env, paramContracts, rtnContract);
     }
 
-    public void evalAsMethod(Map<String, Pointer> classMethods, String className, Environment classDefEnv) {
-        Pointer methodPtr = classMethods.get(fnName);
+    public void evalAsMethod(Map<String, Reference> classMethods, String className, Environment classDefEnv) {
+        Reference methodPtr = classMethods.get(fnName);
         if (methodPtr == null) throw new EnvironmentError("Method '" + fnName + "' is not defined. ", lineFile);
         SplMethod method = (SplMethod) classDefEnv.getMemory().get(methodPtr);
         paramContracts.getChildren().add(0, new NameNode(className + "?", lineFile));

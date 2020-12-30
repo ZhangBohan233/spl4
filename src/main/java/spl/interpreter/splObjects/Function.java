@@ -1,15 +1,14 @@
 package spl.interpreter.splObjects;
 
 import spl.ast.*;
-import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.EvaluatedArguments;
-import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.FunctionEnvironment;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Bool;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
-import spl.interpreter.splErrors.NativeTypeError;
+import spl.interpreter.splErrors.NativeError;
 import spl.util.Constants;
 import spl.util.LineFile;
 
@@ -17,11 +16,10 @@ import java.util.Map;
 
 public class Function extends UserFunction {
 
-    private Node rtnContract;
-    private boolean hasContract = false;
-
     protected final BlockStmt body;
     protected final String definedName;
+    private Node rtnContract;
+    private boolean hasContract = false;
 
     /**
      * Constructor for regular function.
@@ -126,8 +124,32 @@ public class Function extends UserFunction {
         }
     }
 
+    private Reference getContractFunction(Node conNode, Environment callingEnv, LineFile lineFile) {
+        if (conNode instanceof BinaryOperator) {
+            BinaryOperator bo = (BinaryOperator) conNode;
+            if (bo.getOperator().equals("or")) {
+                Reference orFn = (Reference) callingEnv.get(Constants.OR_FN, lineFile);
+                Function function = (Function) callingEnv.getMemory().get(orFn);
+                Arguments args = new Arguments(new Line(lineFile, bo.getLeft(), bo.getRight()), lineFile);
+                return (Reference) function.call(args, callingEnv);
+            }
+        }
+        SplElement res = conNode.evaluate(definitionEnv);
+        if (res instanceof Reference) return (Reference) res;
+        else {
+            SplInvokes.throwException(
+                    callingEnv,
+                    Constants.TYPE_ERROR,
+                    "Contract must be callable",
+                    lineFile
+            );
+            return Reference.NULL_PTR;
+        }
+    }
+
     private void callContract(Node conNode, SplElement arg, Environment callingEnv, LineFile lineFile) {
-        Pointer conFnPtr = (Pointer) conNode.evaluate(definitionEnv);
+        Reference conFnPtr = getContractFunction(conNode, callingEnv, lineFile);
+        if (callingEnv.hasException()) return;
         SplCallable callable = (SplCallable) callingEnv.getMemory().get(conFnPtr);
         EvaluatedArguments contractArgs = EvaluatedArguments.of(arg);
 

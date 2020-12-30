@@ -3,7 +3,7 @@ package spl.ast;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Char;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplArray;
@@ -25,21 +25,21 @@ public class StringLiteral extends LiteralNode {
         return createString(charArray, env, getLineFile());
     }
 
-    public static Pointer createString(char[] charArray, Environment env, LineFile lineFile) {
+    public static Reference createString(char[] charArray, Environment env, LineFile lineFile) {
         // create spl char array
-        Pointer arrPtr = createCharArrayAndAllocate(charArray, env, lineFile);
+        Reference arrPtr = createCharArrayAndAllocate(charArray, env, lineFile);
         env.getMemory().addTempPtr(arrPtr);
 
         // create String instance
-        Pointer strTv = createStringInstance(arrPtr, env, lineFile);
+        Reference strTv = createStringInstance(arrPtr, env, lineFile);
 
         env.getMemory().removeTempPtr(arrPtr);
 
         return strTv;
     }
 
-    private static Pointer createCharArrayAndAllocate(char[] charArray, Environment env, LineFile lineFile) {
-        Pointer arrPtr = SplArray.createArray(SplElement.CHAR, charArray.length, env);
+    private static Reference createCharArrayAndAllocate(char[] charArray, Environment env, LineFile lineFile) {
+        Reference arrPtr = SplArray.createArray(SplElement.CHAR, charArray.length, env);
         for (int i = 0; i < charArray.length; ++i) {
             Char c = new Char(charArray[i]);
             SplArray.setItemAtIndex(
@@ -53,7 +53,7 @@ public class StringLiteral extends LiteralNode {
         return arrPtr;
     }
 
-    private static Pointer createStringInstance(Pointer arrPtr, Environment env, LineFile lineFile) {
+    private static Reference createStringInstance(Reference arrPtr, Environment env, LineFile lineFile) {
         return Instance.createInstanceWithInitCall(
                 Constants.STRING_CLASS,
                 EvaluatedArguments.of(arrPtr),

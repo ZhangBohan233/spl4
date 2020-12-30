@@ -6,7 +6,7 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.env.FunctionEnvironment;
 import spl.interpreter.env.TryEnvironment;
 import spl.interpreter.primitives.Bool;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.SplCallable;
 import spl.util.LineFile;
@@ -40,7 +40,7 @@ public class TryStmt extends Statement {
             TryEnvironment tryEnv = new TryEnvironment(env);
             body.evaluate(tryEnv);
             if (tryEnv.hasException()) {
-                Pointer exceptionPtr = tryEnv.getExceptionPtr();
+                Reference exceptionPtr = tryEnv.getExceptionPtr();
                 ExceptionContainer[][] exceptionsArr = evalExceptions(env);
                 boolean caught = false;
                 OUT_LOOP:
@@ -134,7 +134,7 @@ public class TryStmt extends Statement {
 //                }
 //            }
             SplElement value = expr.evaluate(env);
-            SplCallable splCallable = (SplCallable) env.getMemory().get((Pointer) value);
+            SplCallable splCallable = (SplCallable) env.getMemory().get((Reference) value);
             containers[index] = new ExceptionContainer(splCallable);
             return index + 1;
         }

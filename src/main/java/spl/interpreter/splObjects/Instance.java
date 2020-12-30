@@ -5,7 +5,7 @@ import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.InstanceEnvironment;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.util.Constants;
 import spl.util.LineFile;
 
@@ -14,9 +14,9 @@ import java.util.*;
 public class Instance extends SplObject {
 
     private final InstanceEnvironment env;
-    private final Pointer clazzPtr;
+    private final Reference clazzPtr;
 
-    private Instance(Pointer clazzPtr, InstanceEnvironment env) {
+    private Instance(Reference clazzPtr, InstanceEnvironment env) {
         this.clazzPtr = clazzPtr;
         this.env = env;
     }
@@ -25,7 +25,7 @@ public class Instance extends SplObject {
         return env;
     }
 
-    public Pointer getClazzPtr() {
+    public Reference getClazzPtr() {
         return clazzPtr;
     }
 
@@ -37,11 +37,11 @@ public class Instance extends SplObject {
     public static InstanceAndPtr createInstanceAndAllocate(String className,
                                                            Environment callingEnv,
                                                            LineFile lineFile) {
-        Pointer clazzPtr = (Pointer) callingEnv.get(className, lineFile);
+        Reference clazzPtr = (Reference) callingEnv.get(className, lineFile);
         return createInstanceAndAllocate(clazzPtr, callingEnv, lineFile);
     }
 
-    public static InstanceAndPtr createInstanceAndAllocate(Pointer clazzPtr,
+    public static InstanceAndPtr createInstanceAndAllocate(Reference clazzPtr,
                                                            Environment callingEnv,
                                                            LineFile lineFile) {
         SplClass clazz = (SplClass) callingEnv.getMemory().get(clazzPtr);
@@ -57,10 +57,10 @@ public class Instance extends SplObject {
         return iap;
     }
 
-    public static InstanceAndPtr createInstanceWithInitCall(Pointer clazzPtr,
-                                                     EvaluatedArguments evaluatedArgs,
-                                                     Environment callingEnv,
-                                                     LineFile lineFile) {
+    public static InstanceAndPtr createInstanceWithInitCall(Reference clazzPtr,
+                                                            EvaluatedArguments evaluatedArgs,
+                                                            Environment callingEnv,
+                                                            LineFile lineFile) {
         InstanceAndPtr iap = createInstanceAndAllocate(clazzPtr, callingEnv, lineFile);
         callInit(iap, evaluatedArgs, callingEnv, lineFile);
         return iap;
@@ -75,12 +75,12 @@ public class Instance extends SplObject {
      * @param lineFile   error traceback info of code where instance creation
      * @return the tuple of the newly created instance, and the {@code TypeValue} contains the pointer to this instance
      */
-    private static InstanceAndPtr createInstanceAndAllocate(Pointer[] mro,
+    private static InstanceAndPtr createInstanceAndAllocate(Reference[] mro,
                                                             int indexInMro,
                                                             Environment callingEnv,
                                                             LineFile lineFile) {
 
-        Pointer clazzPtr = mro[indexInMro];
+        Reference clazzPtr = mro[indexInMro];
 
         SplObject obj = callingEnv.getMemory().get(clazzPtr);
         SplClass clazz = (SplClass) obj;
@@ -92,7 +92,7 @@ public class Instance extends SplObject {
         callingEnv.getMemory().addTempEnv(instanceEnv);
 
         Instance instance = new Instance(clazzPtr, instanceEnv);
-        Pointer instancePtr = callingEnv.getMemory().allocate(1, instanceEnv);
+        Reference instancePtr = callingEnv.getMemory().allocate(1, instanceEnv);
         callingEnv.getMemory().set(instancePtr, instance);
 
         // evaluate superclasses
@@ -110,7 +110,7 @@ public class Instance extends SplObject {
         }
 
         // define methods
-        for (Map.Entry<String, Pointer> entry : clazz.getMethodPointers().entrySet()) {
+        for (Map.Entry<String, Reference> entry : clazz.getMethodPointers().entrySet()) {
             instanceEnv.defineFunction(entry.getKey(), entry.getValue(), lineFile);
         }
 
@@ -137,15 +137,15 @@ public class Instance extends SplObject {
 
     private static SplMethod getConstructor(Instance instance, LineFile lineFile) {
         InstanceEnvironment env = instance.getEnv();
-        Pointer constructorPtr = (Pointer) env.get(Constants.CONSTRUCTOR, lineFile);
+        Reference constructorPtr = (Reference) env.get(Constants.CONSTRUCTOR, lineFile);
         SplMethod constructor = (SplMethod) env.getMemory().get(constructorPtr);
 
         if (env.hasName(Constants.SUPER)) {
             // All classes has superclass except class 'Object'
-            Pointer superPtr = (Pointer) env.get(Constants.SUPER, lineFile);
+            Reference superPtr = (Reference) env.get(Constants.SUPER, lineFile);
             Instance supIns = (Instance) env.getMemory().get(superPtr);
             InstanceEnvironment supEnv = supIns.getEnv();
-            Pointer supConstPtr = (Pointer) supEnv.get(Constants.CONSTRUCTOR, lineFile);
+            Reference supConstPtr = (Reference) supEnv.get(Constants.CONSTRUCTOR, lineFile);
             SplMethod supConst = (SplMethod) env.getMemory().get(supConstPtr);
 //            List<Type> supParamTypes = supConst.getFuncType().getParamTypes();
             if (supConst.minArgCount() > 1) {
@@ -222,9 +222,9 @@ public class Instance extends SplObject {
 
     public static class InstanceAndPtr {
         public final Instance instance;
-        public final Pointer pointer;
+        public final Reference pointer;
 
-        InstanceAndPtr(Instance instance, Pointer pointer) {
+        InstanceAndPtr(Instance instance, Reference pointer) {
             this.instance = instance;
             this.pointer = pointer;
         }

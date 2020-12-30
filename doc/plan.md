@@ -14,9 +14,9 @@
 * ~~Type of arithmetic~~ **_DONE_**
 * Pattern matching contract, example: `contract foo(int?, A?) -> A?`
 * ~~Invoke call "hasAttr"~~ **_DONE_**
-* Syntax sugar of unary function, example: `int? or float?`
+* ~~Syntax sugar of unary function,~~ example: `int? or float?` **_DONE_**
 * Duplicate literal removal
 * ~~Ast visualizer~~ **_DONE_**
-* Resolve primitive wrapper confusion
+* ~~Resolve primitive wrapper confusion~~ **_DONE_**
 * ~~Direct contract in function declaration~~ **_DONE_**
 * ~~Reflection~~ **_DONE_**

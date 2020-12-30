@@ -1,6 +1,6 @@
 package spl.interpreter.env;
 
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.Instance;
 
@@ -43,7 +43,7 @@ public class InstanceEnvironment extends MainAbstractEnvironment {
             VarEntry superTv = variables.get("super");
             if (superTv == null) return null;
             else {
-                Instance instance = (Instance) getMemory().get((Pointer) superTv.getValue());
+                Instance instance = (Instance) getMemory().get((Reference) superTv.getValue());
                 return instance.getEnv().searchSuper(name);
             }
         } else return tv;

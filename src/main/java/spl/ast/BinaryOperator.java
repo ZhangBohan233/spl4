@@ -48,7 +48,7 @@ public class BinaryOperator extends BinaryExpr {
         this.type = type;
     }
 
-    private static SplElement pointerNumericArithmetic(Pointer leftPtr,
+    private static SplElement pointerNumericArithmetic(Reference leftPtr,
                                                        SplElement rightEle,
                                                        String operator,
                                                        Environment env,
@@ -57,7 +57,7 @@ public class BinaryOperator extends BinaryExpr {
         if (leftObj instanceof Instance) {
             String fnName = ARITHMETIC_OP_MAP.get(operator);
             Environment instanceEnv = ((Instance) leftObj).getEnv();
-            Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
+            Reference fnPtr = (Reference) instanceEnv.get(fnName, lineFile);
             SplMethod opFn = (SplMethod) env.getMemory().get(fnPtr);
             return opFn.call(EvaluatedArguments.of(leftPtr, rightEle), env, lineFile);
         } else {
@@ -69,10 +69,10 @@ public class BinaryOperator extends BinaryExpr {
         }
     }
 
-    private static SplElement primitivePointerArithmetic(SplElement leftEle, Pointer rightEle,
+    private static SplElement primitivePointerArithmetic(SplElement leftEle, Reference rightEle,
                                                          String operator, Environment env,
                                                          LineFile lineFile) {
-        Pointer leftWrpPtr = Utilities.primitiveToWrapper(leftEle, env, lineFile);
+        Reference leftWrpPtr = Utilities.primitiveToWrapper(leftEle, env, lineFile);
         return pointerNumericArithmetic(leftWrpPtr, rightEle, operator, env, lineFile);
     }
 
@@ -107,7 +107,7 @@ public class BinaryOperator extends BinaryExpr {
         };
     }
 
-    private static SplElement pointerLogical(String op, Pointer l, Pointer r, Environment env, LineFile lineFile) {
+    private static SplElement pointerLogical(String op, Reference l, Reference r, Environment env, LineFile lineFile) {
         if (op.equals("is")) {
             return Bool.boolValueOf(l.getPtr() == r.getPtr());
         } else if (op.equals("is not")) {
@@ -117,7 +117,7 @@ public class BinaryOperator extends BinaryExpr {
             if (leftObj instanceof Instance) {
                 String fnName = LOGICAL_OP_MAP.get(op);
                 Environment instanceEnv = ((Instance) leftObj).getEnv();
-                Pointer fnPtr = (Pointer) instanceEnv.get(fnName, lineFile);
+                Reference fnPtr = (Reference) instanceEnv.get(fnName, lineFile);
                 SplMethod opFn = (SplMethod) env.getMemory().get(fnPtr);
                 SplElement res = opFn.call(EvaluatedArguments.of(l, r), env, lineFile);
                 if (res instanceof Bool) {
@@ -170,11 +170,11 @@ public class BinaryOperator extends BinaryExpr {
             SplElement leftEle = left.evaluate(env);
             SplElement rightEle = right.evaluate(env);
 
-            if (leftEle instanceof Pointer) {
-                return pointerNumericArithmetic((Pointer) leftEle, rightEle, operator, env, lineFile);
+            if (leftEle instanceof Reference) {
+                return pointerNumericArithmetic((Reference) leftEle, rightEle, operator, env, lineFile);
             } else {
-                if (rightEle instanceof Pointer) {
-                    return primitivePointerArithmetic(leftEle, (Pointer) rightEle, operator, env, lineFile);
+                if (rightEle instanceof Reference) {
+                    return primitivePointerArithmetic(leftEle, (Reference) rightEle, operator, env, lineFile);
                 }
 
                 SplElement res = simpleArithmetic(operator, env, leftEle.floatValue(), rightEle.floatValue(), lineFile);
@@ -210,7 +210,7 @@ public class BinaryOperator extends BinaryExpr {
             SplElement rightTv = right.evaluate(env);
             SplElement result;
             if (SplElement.isPrimitive(leftTv)) {
-                if (rightTv instanceof Pointer) {
+                if (rightTv instanceof Reference) {
                     if (operator.equals("is")) {
                         return Bool.FALSE;
                     } else if (operator.equals("is not")) {
@@ -219,7 +219,7 @@ public class BinaryOperator extends BinaryExpr {
                         return pointerLogical(
                                 operator,
                                 Utilities.primitiveToWrapper(leftTv, env, lineFile),
-                                (Pointer) rightTv,
+                                (Reference) rightTv,
                                 env,
                                 lineFile);
                     }
@@ -283,9 +283,9 @@ public class BinaryOperator extends BinaryExpr {
                             lineFile);
                 }
             } else {  // is pointer type
-                Pointer leftPtr = (Pointer) leftTv;
-                if (rightTv instanceof Pointer) {
-                    Pointer rightPtr = (Pointer) rightTv;
+                Reference leftPtr = (Reference) leftTv;
+                if (rightTv instanceof Reference) {
+                    Reference rightPtr = (Reference) rightTv;
                     result = pointerLogical(operator, leftPtr, rightPtr, env, lineFile);
                 } else {
                     result = pointerLogical(

@@ -3,11 +3,10 @@ package spl.ast;
 import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Int;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splErrors.NativeError;
-import spl.interpreter.splErrors.NativeTypeError;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplArray;
 import spl.interpreter.splObjects.SplModule;
@@ -39,7 +38,7 @@ public class NewExpr extends UnaryExpr {
                 );
                 return Undefined.ERROR;
             }
-            SplModule module = (SplModule) classDefEnv.getMemory().get((Pointer) dotLeft);
+            SplModule module = (SplModule) classDefEnv.getMemory().get((Reference) dotLeft);
             return directInitClass(dot.right, module.getEnv(), callEnv, lineFile);
         } else {
             throw new NativeError("Class instantiation must be a call. Got " + node + " instead. ", lineFile);
@@ -50,7 +49,7 @@ public class NewExpr extends UnaryExpr {
                                                Environment classDefEnv,
                                                Environment callEnv,
                                                LineFile lineFile) {
-        Pointer clazzPtr = (Pointer) call.callObj.evaluate(classDefEnv);
+        Reference clazzPtr = (Reference) call.callObj.evaluate(classDefEnv);
         if (callEnv.hasException()) return null;
 
         return Instance.createInstanceWithInitCall(
@@ -110,10 +109,10 @@ public class NewExpr extends UnaryExpr {
 //        return instanceTv.typeValue;
 //    }
 
-    private static Pointer arrayCreation(IndexingNode node,
-                                         Environment classDefEnv,
-                                         Environment callEnv,
-                                         LineFile lineFile) {
+    private static Reference arrayCreation(IndexingNode node,
+                                           Environment classDefEnv,
+                                           Environment callEnv,
+                                           LineFile lineFile) {
 
         if (node.getArgs().getChildren().size() == 1) {
             Int length = (Int) node.getArgs().getChildren().get(0).evaluate(callEnv);

@@ -3,7 +3,7 @@ package spl.ast;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.SplCallable;
@@ -41,14 +41,14 @@ public class FuncCall extends Expression {
                     "Element '" + leftTv + "' is not callable.",
                     lineFile);
         }
-        SplObject obj = env.getMemory().get((Pointer) leftTv);
+        SplObject obj = env.getMemory().get((Reference) leftTv);
         if (obj instanceof SplCallable) {
             SplCallable function = (SplCallable) obj;
 
             EvaluatedArguments ea = arguments.evalArgs(env);
             if (function instanceof SplMethod) {
                 // calling a method inside class
-                Pointer thisPtr = (Pointer) env.get(Constants.THIS, lineFile);
+                Reference thisPtr = (Reference) env.get(Constants.THIS, lineFile);
                 ea.insertThis(thisPtr);
             }
             return function.call(ea, env, lineFile);

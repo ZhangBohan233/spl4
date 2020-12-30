@@ -4,7 +4,7 @@ import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Int;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplArray;
@@ -71,7 +71,7 @@ public class IndexingNode extends Expression {
                         lineFile);
         }
 
-        Pointer objPtr = (Pointer) callRes;
+        Reference objPtr = (Reference) callRes;
 
         SplObject obj = callEnv.getMemory().get(objPtr);
 
@@ -80,7 +80,7 @@ public class IndexingNode extends Expression {
         } else if (obj instanceof Instance) {
             Instance ins = (Instance) obj;
             SplMethod getItemFn = (SplMethod)
-                    callEnv.getMemory().get((Pointer) ins.getEnv().get(Constants.GET_ITEM_FN, lineFile));
+                    callEnv.getMemory().get((Reference) ins.getEnv().get(Constants.GET_ITEM_FN, lineFile));
             return getItemFn.call(EvaluatedArguments.of(objPtr, new Int(index)), callEnv, lineFile);
         } else {
             return SplInvokes.throwExceptionWithError(

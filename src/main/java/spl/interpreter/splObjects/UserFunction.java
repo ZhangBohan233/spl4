@@ -5,7 +5,7 @@ import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.FunctionEnvironment;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.util.Constants;
 import spl.util.LineFile;
@@ -65,10 +65,10 @@ public abstract class UserFunction extends SplCallable {
                     unpackArgs[argIndex - unpackArgBegin] = evaluatedArgs.positionalArgs.get(argIndex);
                 }
 
-                Pointer arrPtr = SplArray.createArray(SplElement.POINTER, unpackArgs.length, scope);
+                Reference arrPtr = SplArray.createArray(SplElement.POINTER, unpackArgs.length, scope);
                 for (int j = 0; j < unpackArgs.length; j++) {
                     SplElement arg = unpackArgs[j];
-                    if (arg instanceof Pointer) {
+                    if (arg instanceof Reference) {
                         SplArray.setItemAtIndex(arrPtr, j, arg, scope, lineFile);
                     } else {
                         SplArray.setItemAtIndex(arrPtr, j,
@@ -78,9 +78,9 @@ public abstract class UserFunction extends SplCallable {
                 scope.setVar(paramName, arrPtr, lineFile);
             } else if (param.unpackCount == 2) {  // **kwargs
                 int size = evaluatedArgs.keywordArgs.size();
-                Pointer keyArrPtr = SplArray.createArray(SplElement.POINTER, size, scope);
+                Reference keyArrPtr = SplArray.createArray(SplElement.POINTER, size, scope);
                 scope.getMemory().addTempPtr(keyArrPtr);
-                Pointer valueArrPtr = SplArray.createArray(SplElement.POINTER, size, scope);
+                Reference valueArrPtr = SplArray.createArray(SplElement.POINTER, size, scope);
                 scope.getMemory().addTempPtr(valueArrPtr);
 
                 Instance.InstanceAndPtr dict =

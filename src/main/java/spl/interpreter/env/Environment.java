@@ -2,7 +2,7 @@ package spl.interpreter.env;
 
 import spl.interpreter.*;
 import spl.interpreter.invokes.SplInvokes;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.util.Constants;
@@ -36,15 +36,15 @@ public abstract class Environment {
         return memory;
     }
 
-    public void defineFunction(String name, Pointer funcPtr, LineFile lineFile) {
+    public void defineFunction(String name, Reference funcPtr, LineFile lineFile) {
         variables.put(name, VarEntry.varEntry(funcPtr));
     }
 
-    public Pointer getImportedModulePtr(String modulePath) {
+    public Reference getImportedModulePtr(String modulePath) {
         return outer.getImportedModulePtr(modulePath);
     }
 
-    public void addImportedModulePtr(String modulePath, Pointer modulePtr) {
+    public void addImportedModulePtr(String modulePath, Reference modulePtr) {
         outer.addImportedModulePtr(modulePath, modulePtr);
     }
 
@@ -70,7 +70,7 @@ public abstract class Environment {
 
     public abstract SplElement yieldResult();
 
-    public void throwException(Pointer exceptionPtr) {
+    public void throwException(Reference exceptionPtr) {
         outer.throwException(exceptionPtr);
     }
 

@@ -18,7 +18,6 @@ import spl.util.Constants;
 import spl.util.LineFile;
 import spl.util.Utilities;
 
-import java.io.Console;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +30,7 @@ public class SplInterpreter {
         SplInvokes system = new SplInvokes();
 
         Memory memory = globalEnvironment.getMemory();
-        Pointer sysPtr = memory.allocateObject(system, globalEnvironment);
+        Reference sysPtr = memory.allocateObject(system, globalEnvironment);
 
         globalEnvironment.defineConstAndSet(
                 Constants.INVOKES,
@@ -46,7 +45,7 @@ public class SplInterpreter {
             entry.getValue().evaluate(moduleScope);
             SplModule module = new SplModule(entry.getKey(), moduleScope);
 
-            Pointer ptr = ge.getMemory().allocateObject(module, moduleScope);
+            Reference ptr = ge.getMemory().allocateObject(module, moduleScope);
 
             ge.addImportedModulePtr(entry.getKey(), ptr);
         }
@@ -68,10 +67,10 @@ public class SplInterpreter {
             @Override
             protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Pointer) {
+                if (arg instanceof Reference) {
                     return new Int(
                             Utilities.wrapperToPrimitive(
-                                    (Pointer) arg,
+                                    (Reference) arg,
                                     callingEnv,
                                     LineFile.LF_INTERPRETER).intValue());
                 } else {
@@ -92,10 +91,10 @@ public class SplInterpreter {
             @Override
             protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Pointer) {
+                if (arg instanceof Reference) {
                     return new SplFloat(
                             Utilities.wrapperToPrimitive(
-                                    (Pointer) arg,
+                                    (Reference) arg,
                                     callingEnv,
                                     LineFile.LF_INTERPRETER).floatValue());
                 } else {
@@ -116,10 +115,10 @@ public class SplInterpreter {
             @Override
             protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Pointer) {
+                if (arg instanceof Reference) {
                     return new Char(
                             (char) Utilities.wrapperToPrimitive(
-                                    (Pointer) arg,
+                                    (Reference) arg,
                                     callingEnv,
                                     LineFile.LF_INTERPRETER).intValue());
                 } else {
@@ -140,10 +139,10 @@ public class SplInterpreter {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Pointer) {
+                if (arg instanceof Reference) {
                     return Bool.boolValueOf(
                             Utilities.wrapperToPrimitive(
-                                    (Pointer) arg,
+                                    (Reference) arg,
                                     callingEnv,
                                     LineFile.LF_INTERPRETER).booleanValue());
                 } else {
@@ -164,8 +163,8 @@ public class SplInterpreter {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Pointer) {
-                    SplObject object = callingEnv.getMemory().get((Pointer) arg);
+                if (arg instanceof Reference) {
+                    SplObject object = callingEnv.getMemory().get((Reference) arg);
                     return Bool.boolValueOf(object != null);
                 }
                 return Bool.FALSE;
@@ -176,8 +175,8 @@ public class SplInterpreter {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Pointer) {
-                    SplObject object = callingEnv.getMemory().get((Pointer) arg);
+                if (arg instanceof Reference) {
+                    SplObject object = callingEnv.getMemory().get((Reference) arg);
                     return Bool.boolValueOf(object instanceof SplArray);
                 }
                 return Bool.FALSE;
@@ -188,8 +187,8 @@ public class SplInterpreter {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Pointer) {
-                    SplObject object = callingEnv.getMemory().get((Pointer) arg);
+                if (arg instanceof Reference) {
+                    SplObject object = callingEnv.getMemory().get((Reference) arg);
                     return Bool.boolValueOf(object instanceof SplCallable);
                 }
                 return Bool.FALSE;
@@ -200,8 +199,8 @@ public class SplInterpreter {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Pointer) {
-                    SplObject object = callingEnv.getMemory().get((Pointer) arg);
+                if (arg instanceof Reference) {
+                    SplObject object = callingEnv.getMemory().get((Reference) arg);
                     return Bool.boolValueOf(object instanceof SplClass);
                 }
                 return Bool.FALSE;
@@ -209,18 +208,18 @@ public class SplInterpreter {
         };
 
         Memory memory = ge.getMemory();
-        Pointer ptrInt = memory.allocateFunction(toInt, ge);
-        Pointer ptrIsInt = memory.allocateFunction(isInt, ge);
-        Pointer ptrFloat = memory.allocateFunction(toFloat, ge);
-        Pointer ptrChar = memory.allocateFunction(toChar, ge);
-        Pointer ptrBool = memory.allocateFunction(toBool, ge);
-        Pointer ptrIsFloat = memory.allocateFunction(isFloat, ge);
-        Pointer ptrIsChar = memory.allocateFunction(isChar, ge);
-        Pointer ptrIsBool = memory.allocateFunction(isBool, ge);
-        Pointer ptrIsAbsObj = memory.allocateFunction(isAbstractObject, ge);
-        Pointer ptrIsArray = memory.allocateFunction(isArray, ge);
-        Pointer ptrIsCallable = memory.allocateFunction(isCallable, ge);
-        Pointer ptrIsClass = memory.allocateFunction(isClass, ge);
+        Reference ptrInt = memory.allocateFunction(toInt, ge);
+        Reference ptrIsInt = memory.allocateFunction(isInt, ge);
+        Reference ptrFloat = memory.allocateFunction(toFloat, ge);
+        Reference ptrChar = memory.allocateFunction(toChar, ge);
+        Reference ptrBool = memory.allocateFunction(toBool, ge);
+        Reference ptrIsFloat = memory.allocateFunction(isFloat, ge);
+        Reference ptrIsChar = memory.allocateFunction(isChar, ge);
+        Reference ptrIsBool = memory.allocateFunction(isBool, ge);
+        Reference ptrIsAbsObj = memory.allocateFunction(isAbstractObject, ge);
+        Reference ptrIsArray = memory.allocateFunction(isArray, ge);
+        Reference ptrIsCallable = memory.allocateFunction(isCallable, ge);
+        Reference ptrIsClass = memory.allocateFunction(isClass, ge);
 
         ge.defineFunction("int", ptrInt, LineFile.LF_INTERPRETER);
         ge.defineFunction("int?", ptrIsInt, LineFile.LF_INTERPRETER);
@@ -238,7 +237,7 @@ public class SplInterpreter {
 
     static void callMain(String[] args, GlobalEnvironment globalEnvironment) {
         if (globalEnvironment.hasName(Constants.MAIN_FN)) {
-            Pointer mainPtr = (Pointer) globalEnvironment.get(Constants.MAIN_FN, Main.LF_MAIN);
+            Reference mainPtr = (Reference) globalEnvironment.get(Constants.MAIN_FN, Main.LF_MAIN);
 
             Function mainFunc = (Function) globalEnvironment.getMemory().get(mainPtr);
             if (mainFunc.minArgCount() > 1) {
@@ -250,12 +249,12 @@ public class SplInterpreter {
             SplElement rtn = mainFunc.call(splArg, globalEnvironment, Main.LF_MAIN);
 
             if (globalEnvironment.hasException()) {
-                Pointer errPtr = globalEnvironment.getExceptionPtr();
+                Reference errPtr = globalEnvironment.getExceptionPtr();
                 globalEnvironment.removeException();
 
                 Instance errIns = (Instance) globalEnvironment.getMemory().get(errPtr);
 
-                Pointer stackTraceFtnPtr = (Pointer) errIns.getEnv().get("printStackTrace", Main.LF_MAIN);
+                Reference stackTraceFtnPtr = (Reference) errIns.getEnv().get("printStackTrace", Main.LF_MAIN);
                 Function stackTraceFtn = (Function) globalEnvironment.getMemory().get(stackTraceFtnPtr);
                 stackTraceFtn.call(EvaluatedArguments.of(errPtr), globalEnvironment, Main.LF_MAIN);
             } else {
@@ -265,11 +264,11 @@ public class SplInterpreter {
     }
 
     private static EvaluatedArguments makeSplArgArray(String[] args, GlobalEnvironment globalEnvironment) {
-        Pointer argPtr = SplArray.createArray(SplElement.POINTER, args.length, globalEnvironment);
+        Reference argPtr = SplArray.createArray(SplElement.POINTER, args.length, globalEnvironment);
         for (int i = 0; i < args.length; ++i) {
 
             // create String instance
-            Pointer strIns = StringLiteral.createString(
+            Reference strIns = StringLiteral.createString(
                     args[i].toCharArray(), globalEnvironment, LineFile.LF_INTERPRETER
             );
             SplArray.setItemAtIndex(argPtr, i, strIns, globalEnvironment, LineFile.LF_INTERPRETER);

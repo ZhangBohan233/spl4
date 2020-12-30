@@ -4,13 +4,13 @@ import spl.ast.BlockStmt;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.MethodEnvironment;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.util.LineFile;
 
 public class SplMethod extends Function {
 
-    private Pointer classPtr;
+    private Reference classPtr;
 
     public SplMethod(BlockStmt body,
                      Parameter[] params,
@@ -20,7 +20,7 @@ public class SplMethod extends Function {
         super(body, params, classDefEnv, definedName, lineFile);
     }
 
-    public void setClassPtr(Pointer classPtr) {
+    public void setClassPtr(Reference classPtr) {
         this.classPtr = classPtr;
     }
 

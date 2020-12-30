@@ -6,7 +6,7 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.env.LoopTitleEnvironment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Bool;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splErrors.RuntimeSyntaxError;
 import spl.interpreter.splObjects.Instance;
@@ -84,8 +84,8 @@ public class ForLoopStmt extends ConditionalStmt {
         else
             throw new RuntimeSyntaxError("Loop invariant must either be declaration or name. ", lineFile);
 
-        if (probIterable instanceof Pointer) {
-            Pointer ptr = (Pointer) probIterable;
+        if (probIterable instanceof Reference) {
+            Reference ptr = (Reference) probIterable;
             SplObject obj = parentEnv.getMemory().get(ptr);
             if (obj instanceof SplArray) {
                 Instance.InstanceAndPtr arrIterator =
@@ -107,9 +107,9 @@ public class ForLoopStmt extends ConditionalStmt {
                 return;
             } else if (Utilities.isInstancePtr(ptr, Constants.ITERABLE_CLASS, parentEnv, lineFile)) {
                 Instance iterable = (Instance) parentEnv.getMemory().get(ptr);
-                Pointer iterFnPtr = (Pointer) iterable.getEnv().get(Constants.ITER_FN, lineFile);
+                Reference iterFnPtr = (Reference) iterable.getEnv().get(Constants.ITER_FN, lineFile);
                 SplMethod iterFn = (SplMethod) parentEnv.getMemory().get(iterFnPtr);
-                Pointer iteratorPtr = (Pointer) iterFn.call(EvaluatedArguments.of(ptr), parentEnv, lineFile);
+                Reference iteratorPtr = (Reference) iterFn.call(EvaluatedArguments.of(ptr), parentEnv, lineFile);
                 Instance iterator = (Instance) parentEnv.getMemory().get(iteratorPtr);
                 forEachLoopIterator(loopInvariant, iteratorPtr, iterator, parentEnv, titleEnv, bodyEnv);
                 return;
@@ -124,13 +124,13 @@ public class ForLoopStmt extends ConditionalStmt {
     }
 
     private void forEachLoopIterator(Declaration loopInvariant,
-                                     Pointer instancePtr,
+                                     Reference instancePtr,
                                      Instance iterator,
                                      Environment parentEnv,
                                      LoopTitleEnvironment titleEnv,
                                      BlockEnvironment bodyEnv) {
-        Pointer nextPtr = (Pointer) iterator.getEnv().get(Constants.NEXT_FN, lineFile);
-        Pointer hasNextPtr = (Pointer) iterator.getEnv().get(Constants.HAS_NEXT_FN, lineFile);
+        Reference nextPtr = (Reference) iterator.getEnv().get(Constants.NEXT_FN, lineFile);
+        Reference hasNextPtr = (Reference) iterator.getEnv().get(Constants.HAS_NEXT_FN, lineFile);
         SplMethod nextFn = (SplMethod) titleEnv.getMemory().get(nextPtr);
         SplMethod hasNextFn = (SplMethod) titleEnv.getMemory().get(hasNextPtr);
 

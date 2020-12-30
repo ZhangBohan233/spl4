@@ -2,7 +2,7 @@ package spl.ast;
 
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.splErrors.NativeTypeError;
 import spl.interpreter.splObjects.*;
 import spl.lexer.SyntaxError;
@@ -49,15 +49,15 @@ public class Arguments extends NonEvaluate {
                         // unpack dict
                         // TODO
                     } else {
-                        Pointer arg = (Pointer) starExpr.value.evaluate(callingEnv);
+                        Reference arg = (Reference) starExpr.value.evaluate(callingEnv);
                         SplObject obj = callingEnv.getMemory().get(arg);
                         if (obj instanceof SplArray) {
                             addArrayToArgs(arg, evaluatedArguments, callingEnv);
                         } else if (obj instanceof Instance &&
                                 Utilities.isInstancePtr(arg, Constants.LIST_CLASS, callingEnv, lineFile)) {
-                            Pointer toArrayPtr = (Pointer) ((Instance) obj).getEnv().get("toArray", lineFile);
+                            Reference toArrayPtr = (Reference) ((Instance) obj).getEnv().get("toArray", lineFile);
                             SplMethod toArrayFtn = (SplMethod) callingEnv.getMemory().get(toArrayPtr);
-                            Pointer arrPtr = (Pointer) toArrayFtn.call(EvaluatedArguments.of(arg), callingEnv, lineFile);
+                            Reference arrPtr = (Reference) toArrayFtn.call(EvaluatedArguments.of(arg), callingEnv, lineFile);
                             addArrayToArgs(arrPtr, evaluatedArguments, callingEnv);
                         } else {
                             throw new NativeTypeError();
@@ -71,7 +71,7 @@ public class Arguments extends NonEvaluate {
         return evaluatedArguments;
     }
 
-    private static void addArrayToArgs(Pointer arrayPtr, EvaluatedArguments evaluatedArguments,
+    private static void addArrayToArgs(Reference arrayPtr, EvaluatedArguments evaluatedArguments,
                                        Environment env) {
         int arrAddr = arrayPtr.getPtr();
         SplArray array = (SplArray) env.getMemory().get(arrayPtr);

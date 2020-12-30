@@ -2,13 +2,13 @@ package spl.interpreter.primitives;
 
 import spl.interpreter.splErrors.NativeTypeError;
 
-public class Pointer extends SplElement {
+public class Reference extends SplElement {
 
     private final int ptr;
 
-    public static final Pointer NULL_PTR = new Pointer(0);
+    public static final Reference NULL_PTR = new Reference(0);
 
-    public Pointer(int ptr) {
+    public Reference(int ptr) {
         this.ptr = ptr;
     }
 
@@ -51,7 +51,7 @@ public class Pointer extends SplElement {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Pointer pointer = (Pointer) o;
+        Reference pointer = (Reference) o;
 
         return ptr == pointer.ptr;
     }

@@ -1,6 +1,6 @@
 package spl.interpreter.env;
 
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.splObjects.Instance;
 import spl.util.Constants;
 import spl.util.LineFile;
@@ -18,7 +18,7 @@ public class MethodEnvironment extends FunctionEnvironment {
             VarEntry thisEntry = variables.get(Constants.THIS);
             if (thisEntry == null)
                 throw new EnvironmentError("Pointer 'this' not in scope. ", LineFile.LF_INTERPRETER);
-            Instance thisIns = (Instance) getMemory().get((Pointer) thisEntry.getValue());
+            Instance thisIns = (Instance) getMemory().get((Reference) thisEntry.getValue());
             entry = thisIns.getEnv().innerGet(name, isFirst);
             if (entry != null) return entry;
         }

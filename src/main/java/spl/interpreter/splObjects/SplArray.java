@@ -45,9 +45,9 @@ public class SplArray extends SplObject {
         throw new NativeTypeError("Only basic types are valid in array creation.");
     }
 
-    public static Pointer createArray(int eleType, int arrSize, Environment env) {
+    public static Reference createArray(int eleType, int arrSize, Environment env) {
         Memory memory = env.getMemory();
-        Pointer arrPtr = memory.allocate(arrSize + 1, env);
+        Reference arrPtr = memory.allocate(arrSize + 1, env);
         SplArray arrIns = new SplArray(eleType, arrSize);
         memory.set(arrPtr, arrIns);
         fillInitValue(eleType, arrPtr, memory, arrSize);
@@ -55,18 +55,18 @@ public class SplArray extends SplObject {
         return arrPtr;
     }
 
-    public static Pointer createArray(Node eleNode, int arrSize, Environment env) {
+    public static Reference createArray(Node eleNode, int arrSize, Environment env) {
         return createArray(calculateEleType(eleNode), arrSize, env);
     }
 
-    public static void fillInitValue(int eleType, Pointer arrayPtr, Memory memory, int arrayLength) {
+    public static void fillInitValue(int eleType, Reference arrayPtr, Memory memory, int arrayLength) {
         int firstEleAddr = arrayPtr.getPtr() + 1;
         SplElement defaultValue = switch (eleType) {
             case SplElement.INT -> Int.ZERO;
             case SplElement.FLOAT -> SplFloat.ZERO;
             case SplElement.BOOLEAN -> Bool.FALSE;
             case SplElement.CHAR -> Char.NULL_TERMINATOR;
-            case SplElement.POINTER -> Pointer.NULL_PTR;
+            case SplElement.POINTER -> Reference.NULL_PTR;
             default -> throw new NativeTypeError();
         };
 
@@ -75,7 +75,7 @@ public class SplArray extends SplObject {
         }
     }
 
-    public static SplElement getItemAtIndex(Pointer arrPtr, int index, Environment env, LineFile lineFile) {
+    public static SplElement getItemAtIndex(Reference arrPtr, int index, Environment env, LineFile lineFile) {
         SplArray array = (SplArray) env.getMemory().get(arrPtr);
         if (index < 0 || index >= array.length) {
 //            throw new ArrayIndexError("Index " + index + " out of array length " + array.length + ". ", lineFile);
@@ -85,7 +85,7 @@ public class SplArray extends SplObject {
         return env.getMemory().getPrimitive(arrPtr.getPtr() + index + 1);
     }
 
-    public static void setItemAtIndex(Pointer arrPtr,
+    public static void setItemAtIndex(Reference arrPtr,
                                       int index,
                                       SplElement value,
                                       Environment env,
@@ -109,7 +109,7 @@ public class SplArray extends SplObject {
         }
     }
 
-    public static char[] toJavaCharArray(Pointer arrPtr, Memory memory) {
+    public static char[] toJavaCharArray(Reference arrPtr, Memory memory) {
         int[] lenPtr = toJavaArrayCommon(arrPtr, memory);
 
         char[] javaCharArray = new char[lenPtr[0]];
@@ -122,7 +122,7 @@ public class SplArray extends SplObject {
         return javaCharArray;
     }
 
-    private static int[] toJavaArrayCommon(Pointer arrPtr, Memory memory) {
+    private static int[] toJavaArrayCommon(Reference arrPtr, Memory memory) {
         SplArray array = (SplArray) memory.get(arrPtr);
 
         int firstEleAddr = arrPtr.getPtr() + 1;

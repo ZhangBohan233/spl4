@@ -429,6 +429,10 @@ fn len(x) {
     }
 }
 
+fn orFn(fn1: Callable?, fn2: Callable?) {
+    return lambda x -> fn1(x) or fn2(x);
+}
+
 fn print(s) {
     Invokes.println(s);
 }

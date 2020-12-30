@@ -2,7 +2,9 @@ package spl.interpreter.primitives;
 
 import spl.ast.Expression;
 import spl.interpreter.env.Environment;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.splErrors.NativeTypeError;
+import spl.util.Constants;
 import spl.util.LineFile;
 
 public class Bool extends SplElement {
@@ -64,8 +66,16 @@ public class Bool extends SplElement {
         SplElement cond = node.evaluate(env);
         if (cond instanceof Bool)
             return (Bool) cond;
-        else
-            throw new NativeTypeError("Statement takes " +
-                    "boolean value as condition. ", lineFile);
+        else {
+            SplInvokes.throwExceptionWithError(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Statement takes boolean value as condition.",
+                    lineFile
+            );
+            return FALSE;
+        }
+//            throw new NativeTypeError("Statement takes " +
+//                    "boolean value as condition. ", lineFile);
     }
 }

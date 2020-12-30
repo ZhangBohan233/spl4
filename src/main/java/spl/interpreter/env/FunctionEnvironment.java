@@ -1,6 +1,6 @@
 package spl.interpreter.env;
 
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 
 import java.util.Objects;
@@ -19,7 +19,7 @@ public class FunctionEnvironment extends MainAbstractEnvironment {
     }
 
     public SplElement getReturnValue() {
-        return Objects.requireNonNullElse(returnValue, Pointer.NULL_PTR);
+        return Objects.requireNonNullElse(returnValue, Reference.NULL_PTR);
     }
 
     /**
@@ -42,7 +42,7 @@ public class FunctionEnvironment extends MainAbstractEnvironment {
     }
 
     @Override
-    public void throwException(Pointer exceptionPtr) {
+    public void throwException(Reference exceptionPtr) {
         callingEnv.throwException(exceptionPtr);
     }
 

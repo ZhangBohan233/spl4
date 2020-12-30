@@ -5,7 +5,7 @@ import spl.ast.Node;
 import spl.interpreter.Memory;
 import spl.interpreter.env.GlobalEnvironment;
 import spl.interpreter.invokes.SplInvokes;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.lexer.*;
 import spl.lexer.treeList.BracketList;
@@ -57,7 +57,7 @@ public class Console {
         SplInterpreter.importModules(globalEnvironment, tpr.importedPaths);
 
         SplInvokes invokes =
-                (SplInvokes) memory.get((Pointer) globalEnvironment.get(Constants.INVOKES, LineFile.LF_CONSOLE));
+                (SplInvokes) memory.get((Reference) globalEnvironment.get(Constants.INVOKES, LineFile.LF_CONSOLE));
         invokes.setOut(out);
 
         root.evaluate(globalEnvironment);

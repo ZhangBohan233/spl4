@@ -29,14 +29,14 @@ fn increment(num) {
     return num + 1;
 }
 
-fn test(a: int?) -> int? {
+fn test(a: int? or float?) -> int? or float? {
     return a + 1;
 }
 
 
-fn main() -> void {
+fn main() {
     a := unaryOr(float?, boolean?, char?, int?);
     print(a(2));
-    print(test(3));
+    print(test("1"));
     return 1;
 }

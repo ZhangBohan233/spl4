@@ -3,7 +3,7 @@ package spl.ast;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.Function;
 import spl.interpreter.env.Environment;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplCallable;
 import spl.util.LineFile;
@@ -11,8 +11,8 @@ import spl.util.LineFile;
 public class FuncDefinition extends Expression {
 
     public final String name;
-    private Line parameters;
-    private BlockStmt body;
+    private final Line parameters;
+    private final BlockStmt body;
 
     public FuncDefinition(String name, Line parameters, BlockStmt body, LineFile lineFile) {
         super(lineFile);
@@ -22,26 +22,18 @@ public class FuncDefinition extends Expression {
         this.body = body;
     }
 
-//    public void setParameters(Line parameters) {
-//        this.parameters = parameters;
-//    }
-
-//    public void setBody(BlockStmt body) {
-//        this.body = body;
-//    }
-
     @Override
     protected SplElement internalEval(Environment env) {
         Function.Parameter[] params = SplCallable.evalParams(parameters, env);
 
         Function function = new Function(body, params, env, name, getLineFile());
-        Pointer funcPtr = env.getMemory().allocateFunction(function, env);
+        Reference funcPtr = env.getMemory().allocateFunction(function, env);
 
         env.defineFunction(name, funcPtr, getLineFile());
         return funcPtr;
     }
 
-    public Pointer evalAsMethod(Environment classDefEnv) {
+    public Reference evalAsMethod(Environment classDefEnv) {
         Function.Parameter[] params = SplCallable.insertThis(SplCallable.evalParams(parameters, classDefEnv));
 
         SplMethod function = new SplMethod(body, params, classDefEnv, name, getLineFile());

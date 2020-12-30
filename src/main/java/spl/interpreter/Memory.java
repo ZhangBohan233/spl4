@@ -2,7 +2,7 @@ package spl.interpreter;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.FunctionEnvironment;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.splObjects.*;
@@ -27,7 +27,7 @@ public class Memory {
     /**
      * Pointers that are managed by memory directly, not from environment.
      */
-    private final Set<Pointer> managedPointers = new HashSet<>();
+    private final Set<Reference> managedPointers = new HashSet<>();
     private final Deque<StackTraceNode> callStack = new ArrayDeque<>();
 
     private final GarbageCollector garbageCollector = new GarbageCollector();
@@ -61,7 +61,7 @@ public class Memory {
         available = new AvailableList(heapSize);
     }
 
-    public Pointer allocate(int size, Environment env) {
+    public Reference allocate(int size, Environment env) {
         int ptr = innerAllocate(size);
         if (ptr == -1) {
             if (debugs.printGcTrigger)
@@ -71,7 +71,7 @@ public class Memory {
             if (ptr == -1)
                 throw new MemoryError("Cannot allocate size " + size + ": no memory available. ");
         }
-        return new Pointer(ptr);
+        return new Reference(ptr);
     }
 
     private int innerAllocate(int size) {
@@ -84,7 +84,7 @@ public class Memory {
         return ptr;
     }
 
-    public void set(Pointer ptr, SplObject obj) {
+    public void set(Reference ptr, SplObject obj) {
         heap[ptr.getPtr()] = obj;
     }
 
@@ -92,7 +92,7 @@ public class Memory {
         heap[addr] = obj;
     }
 
-    public SplObject get(Pointer ptr) {
+    public SplObject get(Reference ptr) {
         return (SplObject) heap[ptr.getPtr()];
     }
 
@@ -108,7 +108,7 @@ public class Memory {
         return (SplElement) heap[addr];
     }
 
-    public void free(Pointer ptr, int length) {
+    public void free(Reference ptr, int length) {
 //        System.out.println(ptr);
 //        System.out.println(available);
         available.addAvaNoSort(ptr.getPtr(), length);
@@ -124,11 +124,11 @@ public class Memory {
         temporaryEnvs.remove(env);
     }
 
-    public void addTempPtr(Pointer tv) {
+    public void addTempPtr(Reference tv) {
         managedPointers.add(tv);
     }
 
-    public void removeTempPtr(Pointer tv) {
+    public void removeTempPtr(Reference tv) {
         managedPointers.remove(tv);
     }
 
@@ -137,15 +137,15 @@ public class Memory {
         garbageCollector.garbageCollect(baseEnv);
     }
 
-    public Pointer allocateFunction(SplCallable function, Environment env) {
+    public Reference allocateFunction(SplCallable function, Environment env) {
 //        System.out.println("Allocating " + function);
-        Pointer ptr = allocate(1, env);
+        Reference ptr = allocate(1, env);
         set(ptr, function);
         return ptr;
     }
 
-    public Pointer allocateObject(SplObject object, Environment env) {
-        Pointer ptr = allocate(1, env);
+    public Reference allocateObject(SplObject object, Environment env) {
+        Reference ptr = allocate(1, env);
         set(ptr, object);
         return ptr;
     }
@@ -225,7 +225,7 @@ public class Memory {
             }
 
             // temp object roots
-            for (Pointer tempPtr : managedPointers) {
+            for (Reference tempPtr : managedPointers) {
                 SplObject obj = get(tempPtr);
                 markObjectAsUsed(obj, tempPtr.getPtr());
             }
@@ -252,8 +252,8 @@ public class Memory {
 
             Set<SplElement> attr = env.attributes();
             for (SplElement ele : attr) {
-                if (ele instanceof Pointer) {
-                    Pointer ptr = (Pointer) ele;
+                if (ele instanceof Reference) {
+                    Reference ptr = (Reference) ele;
 
                     // the null case represent those constants which has not been set yet
                     SplObject obj = get(ptr);
@@ -286,8 +286,8 @@ public class Memory {
                 for (int i = 0; i < array.length; i++) {
                     int p = arrBegin + i;
                     SplElement ele = getPrimitive(p);
-                    if (ele instanceof Pointer) {
-                        SplObject pointed = get((Pointer) ele);
+                    if (ele instanceof Reference) {
+                        SplObject pointed = get((Reference) ele);
                         markObjectAsUsed(pointed, p);
                     }
                 }
@@ -299,8 +299,8 @@ public class Memory {
                 mark(instance.getEnv());
             } else if (obj instanceof SplClass) {
                 SplClass clazz = (SplClass) obj;
-                List<Pointer> classPointers = clazz.getAllAttrPointers();
-                for (Pointer attrPtr : classPointers) {
+                List<Reference> classPointers = clazz.getAllAttrPointers();
+                for (Reference attrPtr : classPointers) {
                     SplObject attrObj = get(attrPtr);
                     markObjectAsUsed(attrObj, attrPtr.getPtr());
                 }

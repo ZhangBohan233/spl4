@@ -4,9 +4,8 @@ import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Bool;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
-import spl.interpreter.splErrors.NativeTypeError;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplCallable;
 import spl.interpreter.splObjects.SplObject;
@@ -85,7 +84,7 @@ public class Utilities {
         return element.getClass().toString();
     }
 
-    public static Pointer primitiveToWrapper(SplElement prim, Environment env, LineFile lineFile) {
+    public static Reference primitiveToWrapper(SplElement prim, Environment env, LineFile lineFile) {
         String wrapperName = Constants.WRAPPERS.get(prim.type());
         return Instance.createInstanceWithInitCall(
                 wrapperName,
@@ -95,7 +94,7 @@ public class Utilities {
         ).pointer;
     }
 
-    public static SplElement wrapperToPrimitive(Pointer wrapperPtr, Environment env, LineFile lineFile) {
+    public static SplElement wrapperToPrimitive(Reference wrapperPtr, Environment env, LineFile lineFile) {
         SplObject obj = env.getMemory().get(wrapperPtr);
         if (obj instanceof Instance) {
             Instance wrapperIns = (Instance) obj;
@@ -110,7 +109,7 @@ public class Utilities {
     }
 
     public static boolean isInstancePtr(SplElement element, String className, Environment env, LineFile lineFile) {
-        Pointer insFtnPtr = (Pointer) env.get(className + "?", lineFile);
+        Reference insFtnPtr = (Reference) env.get(className + "?", lineFile);
         SplCallable insFtn = (SplCallable) env.getMemory().get(insFtnPtr);
         Bool res = (Bool) insFtn.call(EvaluatedArguments.of(element), env, lineFile);
         return res.value;

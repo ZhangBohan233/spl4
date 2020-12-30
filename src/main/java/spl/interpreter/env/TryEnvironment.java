@@ -1,21 +1,21 @@
 package spl.interpreter.env;
 
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 
 public class TryEnvironment extends SubAbstractEnvironment {
 
-    private Pointer exceptionPtr;
+    private Reference exceptionPtr;
 
     public TryEnvironment(Environment outer) {
         super(outer);
     }
 
     @Override
-    public void throwException(Pointer exceptionPtr) {
+    public void throwException(Reference exceptionPtr) {
         this.exceptionPtr = exceptionPtr;
     }
 
-    public Pointer getExceptionPtr() {
+    public Reference getExceptionPtr() {
         return exceptionPtr;
     }
 

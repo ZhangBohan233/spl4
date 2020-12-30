@@ -1,7 +1,7 @@
 package spl.ast;
 
 import spl.interpreter.env.Environment;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.splErrors.NativeError;
 import spl.util.LineFile;
 
@@ -22,7 +22,7 @@ public class ImportStmt extends Statement {
 
         // This step is to avoid duplicate module creation.
         // Any import from a same file should point to a same module
-        Pointer ptr = env.getImportedModulePtr(path);
+        Reference ptr = env.getImportedModulePtr(path);
         if (ptr == null) {
             throw new NativeError("Unexpected error when importing. ", lineFile);
         }

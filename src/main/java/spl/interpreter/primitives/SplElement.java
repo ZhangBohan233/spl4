@@ -41,6 +41,6 @@ public abstract class SplElement implements SplThing {
     }
 
     public static boolean isPrimitive(SplElement element) {
-        return !(element instanceof Pointer);
+        return !(element instanceof Reference);
     }
 }

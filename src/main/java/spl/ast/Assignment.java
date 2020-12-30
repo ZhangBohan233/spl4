@@ -4,7 +4,7 @@ import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Int;
-import spl.interpreter.primitives.Pointer;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.*;
 import spl.util.Constants;
@@ -24,7 +24,7 @@ public class Assignment extends BinaryExpr {
             env.setVar(((Declaration) key).declaredName, value, lineFile);
         } else if (key instanceof Dot) {
             SplElement dotLeft = ((Dot) key).left.evaluate(env);
-            if (!(dotLeft instanceof Pointer)) {
+            if (!(dotLeft instanceof Reference)) {
                 SplInvokes.throwException(
                         env,
                         Constants.TYPE_ERROR,
@@ -32,7 +32,7 @@ public class Assignment extends BinaryExpr {
                         lineFile);
                 return;
             }
-            SplObject dotLeftObj = env.getMemory().get((Pointer) dotLeft);
+            SplObject dotLeftObj = env.getMemory().get((Reference) dotLeft);
             Environment objEnv;
             if (dotLeftObj instanceof SplModule) {
                 objEnv = ((SplModule) dotLeftObj).getEnv();
@@ -49,7 +49,7 @@ public class Assignment extends BinaryExpr {
             objEnv.setVar(((NameNode) ((Dot) key).right).getName(), value, lineFile);
         } else if (key instanceof IndexingNode) {
             IndexingNode indexingNode = (IndexingNode) key;
-            Pointer arrPtr = (Pointer) indexingNode.getCallObj().evaluate(env);
+            Reference arrPtr = (Reference) indexingNode.getCallObj().evaluate(env);
             if (indexingNode.getArgs().getChildren().size() == 1) {
                 Int index = (Int) indexingNode.getArgs().getChildren().get(0).evaluate(env);
                 SplObject obj = env.getMemory().get(arrPtr);
@@ -59,7 +59,7 @@ public class Assignment extends BinaryExpr {
                 } else if (obj instanceof Instance) {
                     Instance ins = (Instance) obj;
                     SplMethod setItemFn = (SplMethod)
-                            env.getMemory().get((Pointer) ins.getEnv().get(Constants.SET_ITEM_FN, lineFile));
+                            env.getMemory().get((Reference) ins.getEnv().get(Constants.SET_ITEM_FN, lineFile));
                     setItemFn.call(EvaluatedArguments.of(arrPtr, index, value), env, lineFile);
                 } else {
                     SplInvokes.throwException(
