@@ -3,9 +3,9 @@ package spl.interpreter.invokes;
 import spl.ast.*;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.BlockEnvironment;
+import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.*;
 import spl.interpreter.splErrors.NativeError;
-import spl.interpreter.env.Environment;
 import spl.interpreter.splObjects.*;
 import spl.lexer.FileTokenizer;
 import spl.lexer.TextProcessResult;
@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.Scanner;
 
 /**
  * Native calls.
@@ -32,6 +33,172 @@ public class SplInvokes extends NativeObject {
     private PrintStream stdout = System.out;
     private PrintStream stderr = System.err;
     private InputStream stdin = System.in;
+
+    /**
+     * Static field
+     */
+
+    public static void throwException(Environment env, String exceptionClassName, String msg, LineFile lineFile) {
+        StringLiteral sl = new StringLiteral(msg.toCharArray(), lineFile);
+        FuncCall funcCall = new FuncCall(
+                new NameNode(exceptionClassName, lineFile),
+                new Arguments(new Line(lineFile, sl), lineFile),
+                lineFile);
+        NewExpr newExpr = new NewExpr(lineFile);
+        newExpr.setValue(funcCall);
+        ThrowStmt throwStmt = new ThrowStmt(lineFile);
+        throwStmt.setValue(newExpr);
+
+        throwStmt.evaluate(env);
+    }
+
+    public static Undefined throwExceptionWithError(Environment env, String exceptionClassName,
+                                                    String msg, LineFile lineFile) {
+        throwException(env, exceptionClassName, msg, lineFile);
+        return Undefined.ERROR;
+    }
+
+    /**
+     * Helper functions
+     */
+
+    private static void checkArgCount(Arguments arguments, int expectArgc, String fnName, LineFile lineFile) {
+        if (arguments.getLine().getChildren().size() != expectArgc) {
+            throw new NativeError("Invokes." + fnName + "() takes " + expectArgc + " arguments, " +
+                    arguments.getLine().getChildren().size() + " given. ", lineFile);
+        }
+    }
+
+    private static void checkArgCount(Arguments arguments, int minArg, int maxArg, String fnName, LineFile lineFile) {
+        if (arguments.getLine().size() < minArg ||
+                arguments.getLine().size() > maxArg) {
+            throw new NativeError(String.format("Invokes.%s takes %d to %d arguments, %d given. ",
+                    fnName, minArg, maxArg, arguments.getLine().size()), lineFile);
+        }
+    }
+
+    private static String getString(SplElement element, Environment environment, LineFile lineFile) {
+        Reference stringPtr = (Reference) environment.get(Constants.STRING_CLASS, lineFile);
+        return getString(element, environment, lineFile, stringPtr);
+    }
+
+    private static String getRepr(SplElement element, Environment environment, LineFile lineFile) {
+        Reference stringPtr = (Reference) environment.get(Constants.STRING_CLASS, lineFile);
+        return getRepr(element, environment, lineFile, stringPtr);
+    }
+
+    private static String getString(SplElement element, Environment environment, LineFile lineFile,
+                                    Reference stringPtr) {
+        if (SplElement.isPrimitive(element)) {
+            return element.toString();
+        } else {
+            return pointerToString((Reference) element, environment, lineFile, stringPtr);
+        }
+    }
+
+    private static String getRepr(SplElement element, Environment environment, LineFile lineFile,
+                                  Reference stringPtr) {
+        if (SplElement.isPrimitive(element)) {
+            return element.toString();
+        } else {
+            return pointerToRepr((Reference) element, environment, lineFile, stringPtr);
+        }
+    }
+
+    private static String getPrintString(Arguments arguments, Environment environment, LineFile lineFile) {
+        EvaluatedArguments args = arguments.evalArgs(environment);
+        int argc = args.positionalArgs.size();
+
+        Reference stringPtr = (Reference) environment.get(Constants.STRING_CLASS, lineFile);
+
+        String[] resArr = new String[argc];
+        for (int i = 0; i < argc; ++i) {
+            resArr[i] = getString(args.positionalArgs.get(i), environment, lineFile, stringPtr);
+        }
+        return String.join(", ", resArr);
+    }
+
+    public static String pointerToString(Reference ptr,
+                                         Environment environment,
+                                         LineFile lineFile) {
+
+        Reference stringPtr = (Reference) environment.get(Constants.STRING_CLASS, lineFile);
+        return pointerToString(ptr, environment, lineFile, stringPtr);
+    }
+
+    private static String pointerToRepr(Reference ptr,
+                                        Environment environment,
+                                        LineFile lineFile,
+                                        Reference stringPtr) {
+        if (ptr.getPtr() == 0) {  // Pointed to null
+            return "null";
+        } else {
+            SplObject object = environment.getMemory().get(ptr);
+            if (object instanceof Instance) {
+                Instance instance = (Instance) object;
+
+                if (instance.getClazzPtr().getPtr() == stringPtr.getPtr()) {  // is String itself
+                    return '"' + extractFromSplString(instance, environment, lineFile) + '"';
+                } else {
+                    Reference toStrPtr = (Reference) instance.getEnv().get(Constants.TO_REPR_FN, lineFile);
+                    Function toStrFtn = (Function) environment.getMemory().get(toStrPtr);
+                    Reference toStrRes = (Reference) toStrFtn.call(EvaluatedArguments.of(ptr), environment, lineFile);
+
+                    Instance strIns = (Instance) environment.getMemory().get(toStrRes);
+                    return extractFromSplString(strIns, environment, lineFile);
+                }
+            } else {
+                return object.toString() + "@" + ptr.getPtr();
+            }
+        }
+    }
+
+    private static String pointerToString(Reference ptr,
+                                          Environment environment,
+                                          LineFile lineFile,
+                                          Reference stringPtr) {
+        if (ptr.getPtr() == 0) {  // Pointed to null
+            return "null";
+        } else {
+            SplObject object = environment.getMemory().get(ptr);
+            if (object instanceof Instance) {
+                Instance instance = (Instance) object;
+
+                if (instance.getClazzPtr().getPtr() == stringPtr.getPtr()) {  // is String itself
+                    return extractFromSplString(instance, environment, lineFile);
+                } else {
+                    Reference toStrPtr = (Reference) instance.getEnv().get(Constants.TO_STRING_FN, lineFile);
+                    Function toStrFtn = (Function) environment.getMemory().get(toStrPtr);
+                    Reference toStrRes = (Reference) toStrFtn.call(EvaluatedArguments.of(ptr), environment, lineFile);
+
+                    Instance strIns = (Instance) environment.getMemory().get(toStrRes);
+                    return extractFromSplString(strIns, environment, lineFile);
+                }
+            } else if (object instanceof SplArray) {
+                return arrayToString(ptr.getPtr(), (SplArray) object, environment, stringPtr, lineFile);
+            } else {
+                return object.toString() + "@" + ptr.getPtr();
+            }
+        }
+    }
+
+    private static String arrayToString(int arrayAddr, SplArray array, Environment env, Reference stringPtr,
+                                        LineFile lineFile) {
+        StringBuilder builder = new StringBuilder("'[");
+        for (int i = 0; i < array.length; i++) {
+            SplElement e = env.getMemory().getPrimitive(arrayAddr + i + 1);
+            builder.append(getRepr(e, env, lineFile, stringPtr));
+            if (i < array.length - 1) builder.append(", ");
+        }
+        return builder.append("]").toString();
+    }
+
+    private static String extractFromSplString(Instance stringInstance, Environment env, LineFile lineFile) {
+        Reference chars = (Reference) stringInstance.getEnv().get(Constants.STRING_CHARS, lineFile);
+
+        char[] arr = SplArray.toJavaCharArray(chars, env.getMemory());
+        return new String(arr);
+    }
 
     public void setErr(PrintStream stderr) {
         this.stderr = stderr;
@@ -63,19 +230,28 @@ public class SplInvokes extends NativeObject {
         return Reference.NULL_PTR;
     }
 
+    public SplElement input(Arguments arguments, Environment environment, LineFile lineFile) {
+        checkArgCount(arguments, 1, "input", lineFile);
+
+        // input(prompt)
+
+        print(new Arguments(new Line(lineFile, arguments.getLine().get(0)), lineFile), environment, lineFile);
+
+        Scanner sc = new Scanner(stdin);
+        String next = sc.next();
+        sc.close();
+
+        return StringLiteral.createString(next.toCharArray(), environment, lineFile);
+    }
+
     public SplElement clock(Arguments arguments, Environment environment, LineFile lineFile) {
-        if (arguments.getLine().getChildren().size() != 0) {
-            throw new NativeError("Invokes.clock() takes 0 arguments, " +
-                    arguments.getLine().getChildren().size() + " given. ", lineFile);
-        }
+        checkArgCount(arguments, 0, "clock", lineFile);
         return new Int(System.currentTimeMillis());
     }
 
     public SplElement free(Arguments arguments, Environment environment, LineFile lineFile) {
-        if (arguments.getLine().getChildren().size() != 1) {
-            throw new NativeError("Invokes.free(ptr) takes 1 argument, " +
-                    arguments.getLine().getChildren().size() + " given. ", lineFile);
-        }
+        checkArgCount(arguments, 1, "free", lineFile);
+
         Reference ptr = (Reference) arguments.getLine().getChildren().get(0).evaluate(environment);
         SplObject obj = environment.getMemory().get(ptr);
         int freeLength;
@@ -91,10 +267,7 @@ public class SplInvokes extends NativeObject {
     }
 
     public SplElement gc(Arguments arguments, Environment environment, LineFile lineFile) {
-        if (arguments.getLine().getChildren().size() != 0) {
-            throw new NativeError("Invokes.gc() takes 0 arguments, " +
-                    arguments.getLine().getChildren().size() + " given. ", lineFile);
-        }
+        checkArgCount(arguments, 0, "gc", lineFile);
 
         environment.getMemory().gc(environment);
 
@@ -285,171 +458,5 @@ public class SplInvokes extends NativeObject {
         } catch (IOException e) {
             throw new NativeError(e);
         }
-    }
-
-    /**
-     * Static field
-     */
-
-    public static void throwException(Environment env, String exceptionClassName, String msg, LineFile lineFile) {
-        StringLiteral sl = new StringLiteral(msg.toCharArray(), lineFile);
-        FuncCall funcCall = new FuncCall(
-                new NameNode(exceptionClassName, lineFile),
-                new Arguments(new Line(lineFile, sl), lineFile),
-                lineFile);
-        NewExpr newExpr = new NewExpr(lineFile);
-        newExpr.setValue(funcCall);
-        ThrowStmt throwStmt = new ThrowStmt(lineFile);
-        throwStmt.setValue(newExpr);
-
-        throwStmt.evaluate(env);
-    }
-
-    public static Undefined throwExceptionWithError(Environment env, String exceptionClassName,
-                                                    String msg, LineFile lineFile) {
-        throwException(env, exceptionClassName, msg, lineFile);
-        return Undefined.ERROR;
-    }
-
-    /**
-     * Helper functions
-     */
-
-    private static void checkArgCount(Arguments arguments, int expectArgc, String fnName, LineFile lineFile) {
-        if (arguments.getLine().getChildren().size() != expectArgc) {
-            throw new NativeError("Invokes." + fnName + "() takes " + expectArgc + " arguments, " +
-                    arguments.getLine().getChildren().size() + " given. ", lineFile);
-        }
-    }
-
-    private static void checkArgCount(Arguments arguments, int minArg, int maxArg, String fnName, LineFile lineFile) {
-        if (arguments.getLine().size() < minArg ||
-                arguments.getLine().size() > maxArg) {
-            throw new NativeError(String.format("Invokes.%s takes %d to %d arguments, %d given. ",
-                    fnName, minArg, maxArg, arguments.getLine().size()), lineFile);
-        }
-    }
-
-    private static String getString(SplElement element, Environment environment, LineFile lineFile) {
-        Reference stringPtr = (Reference) environment.get(Constants.STRING_CLASS, lineFile);
-        return getString(element, environment, lineFile, stringPtr);
-    }
-
-    private static String getRepr(SplElement element, Environment environment, LineFile lineFile) {
-        Reference stringPtr = (Reference) environment.get(Constants.STRING_CLASS, lineFile);
-        return getRepr(element, environment, lineFile, stringPtr);
-    }
-
-    private static String getString(SplElement element, Environment environment, LineFile lineFile,
-                                    Reference stringPtr) {
-        if (SplElement.isPrimitive(element)) {
-            return element.toString();
-        } else {
-            return pointerToString((Reference) element, environment, lineFile, stringPtr);
-        }
-    }
-
-    private static String getRepr(SplElement element, Environment environment, LineFile lineFile,
-                                  Reference stringPtr) {
-        if (SplElement.isPrimitive(element)) {
-            return element.toString();
-        } else {
-            return pointerToRepr((Reference) element, environment, lineFile, stringPtr);
-        }
-    }
-
-    private static String getPrintString(Arguments arguments, Environment environment, LineFile lineFile) {
-        EvaluatedArguments args = arguments.evalArgs(environment);
-        int argc = args.positionalArgs.size();
-
-        Reference stringPtr = (Reference) environment.get(Constants.STRING_CLASS, lineFile);
-
-        String[] resArr = new String[argc];
-        for (int i = 0; i < argc; ++i) {
-            resArr[i] = getString(args.positionalArgs.get(i), environment, lineFile, stringPtr);
-        }
-        return String.join(", ", resArr);
-    }
-
-    public static String pointerToString(Reference ptr,
-                                         Environment environment,
-                                         LineFile lineFile) {
-
-        Reference stringPtr = (Reference) environment.get(Constants.STRING_CLASS, lineFile);
-        return pointerToString(ptr, environment, lineFile, stringPtr);
-    }
-
-    private static String pointerToRepr(Reference ptr,
-                                        Environment environment,
-                                        LineFile lineFile,
-                                        Reference stringPtr) {
-        if (ptr.getPtr() == 0) {  // Pointed to null
-            return "null";
-        } else {
-            SplObject object = environment.getMemory().get(ptr);
-            if (object instanceof Instance) {
-                Instance instance = (Instance) object;
-
-                if (instance.getClazzPtr().getPtr() == stringPtr.getPtr()) {  // is String itself
-                    return '"' + extractFromSplString(instance, environment, lineFile) + '"';
-                } else {
-                    Reference toStrPtr = (Reference) instance.getEnv().get(Constants.TO_REPR_FN, lineFile);
-                    Function toStrFtn = (Function) environment.getMemory().get(toStrPtr);
-                    Reference toStrRes = (Reference) toStrFtn.call(EvaluatedArguments.of(ptr), environment, lineFile);
-
-                    Instance strIns = (Instance) environment.getMemory().get(toStrRes);
-                    return extractFromSplString(strIns, environment, lineFile);
-                }
-            } else {
-                return object.toString() + "@" + ptr.getPtr();
-            }
-        }
-    }
-
-    private static String pointerToString(Reference ptr,
-                                          Environment environment,
-                                          LineFile lineFile,
-                                          Reference stringPtr) {
-        if (ptr.getPtr() == 0) {  // Pointed to null
-            return "null";
-        } else {
-            SplObject object = environment.getMemory().get(ptr);
-            if (object instanceof Instance) {
-                Instance instance = (Instance) object;
-
-                if (instance.getClazzPtr().getPtr() == stringPtr.getPtr()) {  // is String itself
-                    return extractFromSplString(instance, environment, lineFile);
-                } else {
-                    Reference toStrPtr = (Reference) instance.getEnv().get(Constants.TO_STRING_FN, lineFile);
-                    Function toStrFtn = (Function) environment.getMemory().get(toStrPtr);
-                    Reference toStrRes = (Reference) toStrFtn.call(EvaluatedArguments.of(ptr), environment, lineFile);
-
-                    Instance strIns = (Instance) environment.getMemory().get(toStrRes);
-                    return extractFromSplString(strIns, environment, lineFile);
-                }
-            } else if (object instanceof SplArray) {
-                return arrayToString(ptr.getPtr(), (SplArray) object, environment, stringPtr, lineFile);
-            } else {
-                return object.toString() + "@" + ptr.getPtr();
-            }
-        }
-    }
-
-    private static String arrayToString(int arrayAddr, SplArray array, Environment env, Reference stringPtr,
-                                        LineFile lineFile) {
-        StringBuilder builder = new StringBuilder("'[");
-        for (int i = 0; i < array.length; i++) {
-            SplElement e = env.getMemory().getPrimitive(arrayAddr + i + 1);
-            builder.append(getRepr(e, env, lineFile, stringPtr));
-            if (i < array.length - 1) builder.append(", ");
-        }
-        return builder.append("]").toString();
-    }
-
-    private static String extractFromSplString(Instance stringInstance, Environment env, LineFile lineFile) {
-        Reference chars = (Reference) stringInstance.getEnv().get(Constants.STRING_CHARS, lineFile);
-
-        char[] arr = SplArray.toJavaCharArray(chars, env.getMemory());
-        return new String(arr);
     }
 }

@@ -20,3 +20,5 @@
 * ~~Resolve primitive wrapper confusion~~ **_DONE_**
 * ~~Direct contract in function declaration~~ **_DONE_**
 * ~~Reflection~~ **_DONE_**
+* Input stream
+* ~~input()~~ **_DONE_**

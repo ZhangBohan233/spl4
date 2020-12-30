@@ -72,6 +72,7 @@ public class Console {
         Scanner scanner = new Scanner(in);
         out.print(">>> ");
         while ((line = scanner.nextLine()) != null) {
+            globalEnvironment.removeException();
             line = line.trim();
             if (line.equals(":q")) break;
 
@@ -81,7 +82,6 @@ public class Console {
             } else {
                 out.print("... ");
             }
-
         }
     }
 

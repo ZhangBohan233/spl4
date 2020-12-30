@@ -433,6 +433,10 @@ fn orFn(fn1: Callable?, fn2: Callable?) {
     return lambda x -> fn1(x) or fn2(x);
 }
 
+fn input(prompt: String?="") {
+    return Invokes.input(prompt);
+}
+
 fn print(s) {
     Invokes.println(s);
 }

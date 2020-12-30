@@ -36,6 +36,9 @@ public class GlobalEnvironment extends MainAbstractEnvironment {
         return exceptionPtr;
     }
 
+    /**
+     * Removes exception, to make all sub-environments work normally
+     */
     public void removeException() {
         exceptionPtr = null;
     }
