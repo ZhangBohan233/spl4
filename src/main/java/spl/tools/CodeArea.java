@@ -30,7 +30,7 @@ public class CodeArea extends Pane {
     private final static Paint black = Paint.valueOf("black");
     private final static Paint gold = Paint.valueOf("gold");
 
-    private double lineHeight = 18.0;
+    private double lineHeight = 16.0;
     private double charWidth = 10.0;
 
     private Timer timer = new Timer();
@@ -50,7 +50,7 @@ public class CodeArea extends Pane {
             throw new RuntimeException("Failed to generate view", e);
         }
 
-        timer.schedule(new FlashCaretTask(), 600, 600);
+        timer.schedule(new FlashCaretTask(), 500, 500);
 
         graphicsContext = canvas.getGraphicsContext2D();
 
@@ -87,6 +87,7 @@ public class CodeArea extends Pane {
             }
             caretRow = lineIndex;
             caretCol = textEditor.getColOfIndex(lineIndex, event.getX());
+            System.out.println(caretRow + " " + caretCol);
         });
 //        canvas.requestFocus();
     }
@@ -108,19 +109,15 @@ public class CodeArea extends Pane {
     public synchronized void refresh() {
         clearCanvas();
 //        graphicsContext.setLineWidth(2.0);
-        graphicsContext.setFont(new Font("微软雅黑", 15));
+        graphicsContext.setFont(new Font("System Default", 12));
         for (int lineIndex = 0; lineIndex < textEditor.lines.size(); lineIndex++) {
             List<Text> line = textEditor.lines.get(lineIndex);
             double y = getPosFromLineIndex(lineIndex);
             double widthUsed = 0.0;
             for (Text text : line) {
                 graphicsContext.setFill(text.paint);
-                graphicsContext.fillText(String.valueOf(text.text), widthUsed, y);
-                if (isDoubleWidthChar(text.text)) {
-                    widthUsed += charWidth * 2;
-                } else {
-                    widthUsed += charWidth;
-                }
+                graphicsContext.fillText(String.valueOf(text.text), widthUsed, y + lineHeight / 1.5);
+                widthUsed += getCharWidth(text.text);
             }
         }
     }
@@ -130,7 +127,7 @@ public class CodeArea extends Pane {
     }
 
     private int getLineIndexOfPos(double y) {
-        return (int) (y % lineHeight);
+        return (int) (y / lineHeight);
     }
 
     private double getPosFromLineIndex(int lineIndex) {
@@ -177,7 +174,8 @@ public class CodeArea extends Pane {
         }
 
         public void newLine() {
-            lines.add(caretRow++, new ArrayList<>());
+            lines.add(++caretRow, new ArrayList<>());
+            caretCol = 0;
         }
 
         private int getColOfIndex(int lineIndex, double x) {
@@ -185,9 +183,13 @@ public class CodeArea extends Pane {
             double width = 0.0;
             for (int i = 0; i < line.size(); i++) {
                 Text t = line.get(i);
-                if (isDoubleWidthChar(t.text)) width += charWidth * 2;
-                else width += charWidth;
-                if (width >= x) return i;
+
+                double cw = getCharWidth(t.text);
+
+                if (width + cw / 2 >= x) return i;
+                else if (width - cw / 2 >= x) return i + 1;
+
+                width += cw;
             }
             return line.size();
         }
@@ -197,8 +199,7 @@ public class CodeArea extends Pane {
             double width = 0.0;
             for (int i = 0; i < col; i++) {
                 Text t = line.get(i);
-                if (isDoubleWidthChar(t.text)) width += charWidth * 2;
-                else width += charWidth;
+                width += getCharWidth(t.text);
             }
             return width;
         }
@@ -247,7 +248,7 @@ public class CodeArea extends Pane {
         }
     }
 
-    private static boolean isDoubleWidthChar(char c) {
-        return (c & 0xffff) >= 128;
+    private double getCharWidth(char c) {
+        return (c & 0xffff) >= 128 ? charWidth * 1.5 : charWidth;
     }
 }
