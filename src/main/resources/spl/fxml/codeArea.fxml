@@ -2,13 +2,10 @@
 
 <?import javafx.scene.canvas.Canvas?>
 <?import spl.tools.CodeArea?>
-<?import javafx.scene.control.ScrollPane?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="spl.tools.CodeArea"
          prefHeight="180.0"
          prefWidth="500.0">
-    <ScrollPane prefWidth="500.0" prefHeight="180.0">
-        <Canvas fx:id="canvas" height="480.0" width="480.0"/>
-    </ScrollPane>
+    <Canvas fx:id="canvas" height="480.0" width="480.0"/>
 </fx:root>
