@@ -6,6 +6,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import spl.tools.AstVisualizer;
+import spl.tools.IdleController;
 
 public class IDLE extends Application {
     @Override
@@ -15,6 +16,10 @@ public class IDLE extends Application {
 
         stage.setTitle("IDLE");
         stage.setScene(new Scene(parent));
+
+        final IdleController controller = loader.getController();
+        stage.setOnHidden(e -> controller.close());
+
         stage.show();
     }
 }

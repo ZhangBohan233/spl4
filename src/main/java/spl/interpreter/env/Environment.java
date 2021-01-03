@@ -80,13 +80,18 @@ public abstract class Environment {
 
     public Set<SplElement> attributes() {
         Set<SplElement> set = new HashSet<>();
-//        set.addAll(constants.values());
-//        set.addAll(variables.values());
         for (VarEntry entry : variables.values()) {
             set.add(entry.getValue());
         }
-
         return set;
+    }
+
+    public Map<String, SplElement> keyAttributes() {
+        Map<String, SplElement> attrs = new HashMap<>();
+        for (Map.Entry<String, VarEntry> entry : variables.entrySet()) {
+            attrs.put(entry.getKey(), entry.getValue().getValue());
+        }
+        return attrs;
     }
 
     public void defineVar(String name, LineFile lineFile) {

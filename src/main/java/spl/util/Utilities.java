@@ -2,13 +2,12 @@ package spl.util;
 
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
+import spl.interpreter.env.GlobalEnvironment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
-import spl.interpreter.splObjects.Instance;
-import spl.interpreter.splObjects.SplCallable;
-import spl.interpreter.splObjects.SplObject;
+import spl.interpreter.splObjects.*;
 
 import java.io.*;
 import java.util.*;
@@ -65,6 +64,25 @@ public class Utilities {
         return res;
     }
 
+    /**
+     * Returns the readable {@code String} of <code>size</code>, representing the size of a file.
+     * <p>
+     * This method shows a number that at most 1,024 and a corresponding suffix
+     *
+     * @param size   the size to be converted
+     * @return the readable {@code String}
+     */
+    public static String sizeToReadable(long size) {
+        if (size < Math.pow(2, 10)) return numToReadable2Decimal((int) size) + " B";
+        else if (size < Math.pow(2, 20)) return numToReadable2Decimal((double) size / 1024) + " KB";
+        else if (size < Math.pow(2, 30)) return numToReadable2Decimal((double) size / 1048576) + " MB";
+        else return numToReadable2Decimal((double) size / 1073741824) + "GB";
+    }
+
+    public static String numToReadable2Decimal(double num) {
+        return num == (int) num ? String.format("%,d", (int) num) : String.format("%,.2f", num);
+    }
+
     @SafeVarargs
     public static Set<String> mergeSets(Set<String>... sets) {
         Set<String> res = new HashSet<>();
@@ -82,6 +100,32 @@ public class Utilities {
 
     public static String typeName(SplElement element) {
         return element.getClass().toString();
+    }
+
+    public static String classRefToString(Reference classRef, Environment env) {
+        if (classRef.getPtr() == 0) return "null";
+        return ((SplClass) env.getMemory().get(classRef)).getClassName();
+    }
+
+    public static String classRefToRepr(Reference classRef, Environment env) {
+        return "Class<" + classRefToString(classRef, env) + ">";
+    }
+
+    /**
+     * Removes the exception/error in global environment and then print the error message to standard error stream.
+     *
+     * @param globalEnvironment the global environment
+     * @param lineFile          line and file
+     */
+    public static void removeErrorAndPrint(GlobalEnvironment globalEnvironment, LineFile lineFile) {
+        Reference errPtr = globalEnvironment.getExceptionInsPtr();
+        globalEnvironment.removeException();
+
+        Instance errIns = (Instance) globalEnvironment.getMemory().get(errPtr);
+
+        Reference stackTraceFtnPtr = (Reference) errIns.getEnv().get("printStackTrace", lineFile);
+        Function stackTraceFtn = (Function) globalEnvironment.getMemory().get(stackTraceFtnPtr);
+        stackTraceFtn.call(EvaluatedArguments.of(errPtr), globalEnvironment, lineFile);
     }
 
     public static Reference primitiveToWrapper(SplElement prim, Environment env, LineFile lineFile) {

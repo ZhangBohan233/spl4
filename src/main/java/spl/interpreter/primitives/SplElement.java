@@ -35,7 +35,7 @@ public abstract class SplElement implements SplThing {
             case BOOLEAN -> "boolean";
             case VOID -> "void";
             case POINTER -> "Object";
-            case UNDEFINED -> "undefined";
+            case UNDEFINED -> "undefinedType";
             default -> throw new NativeTypeError();
         };
     }

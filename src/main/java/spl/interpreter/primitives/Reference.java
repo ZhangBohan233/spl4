@@ -29,7 +29,7 @@ public class Reference extends SplElement {
 
     @Override
     public String toString() {
-        return ptr == 0 ? "null" : "Ptr<" + ptr + ">";
+        return ptr == 0 ? "null" : "Ref<" + ptr + ">";
     }
 
     public int getPtr() {

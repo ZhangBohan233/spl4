@@ -23,7 +23,6 @@ public class NameNode extends Expression {
 
     @Override
     protected SplElement internalEval(Environment env) {
-//        System.out.println(env.get(name, getLineFile()) + name);
         return env.get(name, getLineFile());
     }
 

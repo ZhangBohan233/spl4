@@ -249,14 +249,7 @@ public class SplInterpreter {
             SplElement rtn = mainFunc.call(splArg, globalEnvironment, Main.LF_MAIN);
 
             if (globalEnvironment.hasException()) {
-                Reference errPtr = globalEnvironment.getExceptionPtr();
-                globalEnvironment.removeException();
-
-                Instance errIns = (Instance) globalEnvironment.getMemory().get(errPtr);
-
-                Reference stackTraceFtnPtr = (Reference) errIns.getEnv().get("printStackTrace", Main.LF_MAIN);
-                Function stackTraceFtn = (Function) globalEnvironment.getMemory().get(stackTraceFtnPtr);
-                stackTraceFtn.call(EvaluatedArguments.of(errPtr), globalEnvironment, Main.LF_MAIN);
+                Utilities.removeErrorAndPrint(globalEnvironment, Main.LF_MAIN);
             } else {
                 System.out.println("Process finished with exit value " + rtn);
             }

@@ -31,9 +31,7 @@ public class FuncCall extends Expression {
     @Override
     protected SplElement internalEval(Environment env) {
         SplElement leftTv = callObj.evaluate(env);
-        if (env.hasException()) {
-            return Undefined.ERROR;
-        }
+        if (env.hasException()) return Undefined.ERROR;
         if (SplElement.isPrimitive(leftTv)) {
             return SplInvokes.throwExceptionWithError(
                     env,

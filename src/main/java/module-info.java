@@ -3,6 +3,7 @@ module spl {
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.graphics;
+    requires java.desktop;
 
     opens spl.tools;
     opens spl.ast;

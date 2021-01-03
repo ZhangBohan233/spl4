@@ -8,6 +8,7 @@ import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splErrors.NativeError;
 import spl.util.Constants;
 import spl.util.LineFile;
@@ -186,9 +187,7 @@ public class Function extends UserFunction {
         body.evaluate(scope);
         scope.getMemory().decreaseStack();
 
-        if (scope.hasException()) {
-            return null;
-        }
+        if (scope.hasException()) return Undefined.ERROR;
 
         SplElement rtnValue = scope.getReturnValue();
         checkRtnContract(rtnValue, callingEnv, lineFile);

@@ -169,6 +169,7 @@ public class BinaryOperator extends BinaryExpr {
         if (type == ARITHMETIC) {
             SplElement leftEle = left.evaluate(env);
             SplElement rightEle = right.evaluate(env);
+            if (env.hasException()) return Undefined.ERROR;
 
             if (leftEle instanceof Reference) {
                 return pointerNumericArithmetic((Reference) leftEle, rightEle, operator, env, lineFile);
@@ -197,6 +198,7 @@ public class BinaryOperator extends BinaryExpr {
         } else if (type == BITWISE) {
             SplElement leftEle = left.evaluate(env);
             SplElement rightEle = right.evaluate(env);
+            if (env.hasException()) return Undefined.ERROR;
             if (leftEle.isIntLike() && rightEle.isIntLike()) {
                 return bitwise(operator, env, leftEle.intValue(), rightEle.intValue(), lineFile);
             }
@@ -208,6 +210,7 @@ public class BinaryOperator extends BinaryExpr {
         } else if (type == LOGICAL) {
             SplElement leftTv = left.evaluate(env);
             SplElement rightTv = right.evaluate(env);
+            if (env.hasException()) return Undefined.ERROR;
             SplElement result;
             if (SplElement.isPrimitive(leftTv)) {
                 if (rightTv instanceof Reference) {
@@ -298,6 +301,7 @@ public class BinaryOperator extends BinaryExpr {
             // a or b  = true if a else b
             if (operator.equals("and")) {
                 Bool leftRes = Bool.evalBoolean(left, env, getLineFile());
+                if (env.hasException()) return Undefined.ERROR;
                 if (leftRes.value) {
                     return Bool.evalBoolean(right, env, getLineFile());
                 } else {
@@ -305,6 +309,7 @@ public class BinaryOperator extends BinaryExpr {
                 }
             } else if (operator.equals("or")) {
                 Bool leftRes = Bool.evalBoolean(left, env, getLineFile());
+                if (env.hasException()) return Undefined.ERROR;
                 if (!leftRes.value) {
                     return Bool.evalBoolean(right, env, getLineFile());
                 } else {

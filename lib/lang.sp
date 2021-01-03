@@ -141,6 +141,18 @@ class IndexException(Exception) {
     }
 }
 
+class Interruption(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
+class InvokeError(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
 class NameError(Exception) {
     fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
@@ -417,6 +429,10 @@ fn anyType(_) {
     return true;
 }
 
+fn clock() -> int? {
+    return Invokes.clock();
+}
+
 fn iter?(x) {
     return Array?(x) or Iterable?(x) or Iterator?(x);
 }
@@ -459,6 +475,13 @@ fn repr(obj) {
     return Invokes.repr(obj);
 }
 
+fn sleep(mills: int?) {
+    mills = unwrap(mills);
+    start := clock();
+    while clock() - start < mills {  // busy waiting
+    }
+}
+
 fn type(obj) {
     if Object?(obj) {
         return obj.__class__();
@@ -481,7 +504,21 @@ fn wrap(value) {
             return new Character(value);
         } case boolean?(value) {
             return new Boolean(value);
+        } case Wrapper?(value) {
+            return value;
         } default {
+            throw new TypeError("Cannot wrap non-wrapper object.");
+        }
+    }
+}
+
+fn unwrap(value) {
+    cond {
+        case Wrapper?(value) {
+            return value.value;
+        } case AbstractObject?(value) {
+            throw new TypeError("Cannot unwrap non-wrapper object.");
+        } default {  // primitive
             return value;
         }
     }
@@ -518,3 +555,7 @@ fn getClassByName(name: String?) {
     }
     throw new AttributeException("Name ''" + name + "' does not exist or is not a class.");
 }
+
+// Constants
+
+const INTERRUPTION = new Interruption("User interruption");

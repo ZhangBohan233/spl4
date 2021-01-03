@@ -5,6 +5,7 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.*;
 import spl.util.Constants;
 import spl.util.LineFile;
@@ -39,9 +40,8 @@ public class Dot extends BinaryExpr {
 
     @Override
     protected SplElement internalEval(Environment env) {
-
         SplElement leftTv = left.evaluate(env);
-        if (env.hasException()) return null;
+        if (env.hasException()) return Undefined.ERROR;
         if (leftTv instanceof Reference) {
             Reference ptr = (Reference) leftTv;
             if (ptr.getPtr() == 0) {

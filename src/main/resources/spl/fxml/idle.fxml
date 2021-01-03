@@ -4,7 +4,8 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<GridPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.1"
+<?import spl.tools.CodeArea?>
+<GridPane prefHeight="600.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/11.0.1"
           xmlns:fx="http://javafx.com/fxml/1" fx:controller="spl.tools.IdleController"
           hgap="5.0">
 
@@ -13,14 +14,15 @@
     </padding>
 
     <columnConstraints>
-        <ColumnConstraints/>
-        <ColumnConstraints/>
+        <ColumnConstraints percentWidth="50.0"/>
+        <ColumnConstraints percentWidth="50.0"/>
     </columnConstraints>
     <rowConstraints>
-        <RowConstraints prefHeight="25"/>
+        <RowConstraints prefHeight="25.0"/>
         <RowConstraints/>
         <RowConstraints/>
         <RowConstraints/>
+        <RowConstraints prefHeight="25.0"/>
         <RowConstraints/>
     </rowConstraints>
 
@@ -31,18 +33,49 @@
         </Menu>
     </MenuBar>
 
-    <TextArea fx:id="codeArea" GridPane.rowIndex="1"/>
+<!--    <TextArea fx:id="codeArea" GridPane.rowIndex="1"/>-->
+    <CodeArea fx:id="codeArea" GridPane.rowIndex="1"/>
 
-    <HBox GridPane.rowIndex="2">
-        <Button onAction="#runAction" text="▶"/>
-        <Button onAction="#stopAction" text="◼"/>
-    </HBox>
+    <GridPane GridPane.rowIndex="2">
+        <columnConstraints>
+            <ColumnConstraints/>
+            <ColumnConstraints hgrow="ALWAYS" halignment="RIGHT"/>
+        </columnConstraints>
+        <HBox alignment="CENTER_LEFT">
+            <Button fx:id="runButton" onAction="#runAction" text="▶"/>
+            <Button fx:id="stopButton" onAction="#stopAction" text="◼" disable="true"/>
+        </HBox>
+        <Button text="Clear output" onAction="#clearOutputAction" GridPane.columnIndex="1"/>
+    </GridPane>
 
     <TextArea fx:id="outputArea" editable="false" GridPane.rowIndex="3"/>
-    <TextArea fx:id="consoleArea" GridPane.rowIndex="4" text=">>> "/>
 
-    <TableView GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.rowSpan="2">
+    <GridPane GridPane.rowIndex="4">
+        <columnConstraints>
+            <ColumnConstraints halignment="LEFT"/>
+            <ColumnConstraints halignment="RIGHT"/>
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints valignment="CENTER"/>
+        </rowConstraints>
 
-    </TableView>
+        <Button text="Restart console" onAction="#restartConsoleAction"/>
+    </GridPane>
+
+    <TextArea fx:id="consoleArea" GridPane.rowIndex="5" text=">>> "/>
+
+    <TreeTableView fx:id="envTable" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.rowSpan="4">
+        <columns>
+            <TreeTableColumn text="Name" prefWidth="200.0"/>
+            <TreeTableColumn text="Value" prefWidth="100.0"/>
+            <TreeTableColumn text="Type" prefWidth="200.0"/>
+        </columns>
+    </TreeTableView>
+
+    <GridPane GridPane.rowIndex="5" GridPane.columnIndex="1" hgap="10.0" vgap="10.0">
+        <CheckBox text="Show builtin objects" selected="true" onAction="#showBuiltinsChange"/>
+        <Label text="Memory usage: " GridPane.rowIndex="1"/>
+        <Label fx:id="memoryUseLabel" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+    </GridPane>
 
 </GridPane>

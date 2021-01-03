@@ -2,10 +2,13 @@ package spl.interpreter.primitives;
 
 public class Undefined extends SplElement {
 
-    public static final Undefined UNDEFINED = new Undefined();
-    public static final Undefined ERROR = new Undefined();
+    public static final Undefined UNDEFINED = new Undefined("undefined");
+    public static final Undefined ERROR = new Undefined("error");
 
-    private Undefined() {
+    private final String text;
+
+    private Undefined(String text) {
+        this.text = text;
     }
 
     @Override
@@ -35,6 +38,6 @@ public class Undefined extends SplElement {
 
     @Override
     public String toString() {
-        return "undefined";
+        return text;
     }
 }

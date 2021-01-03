@@ -43,6 +43,10 @@ public class Constants {
     public static final String CONTRACT_ERROR = "ContractError";
     public static final String TYPE_ERROR = "TypeError";
     public static final String ATTRIBUTE_EXCEPTION = "AttributeException";
+    public static final String INVOKE_ERROR = "InvokeError";
+    public static final String INTERRUPTION = "Interruption";
+
+    public static final String INTERRUPTION_INS = "INTERRUPTION";
 
     public static final Map<Integer, String> WRAPPERS = Map.of(
             SplElement.INT, "Integer",

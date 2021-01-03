@@ -1,8 +1,16 @@
+===== Version 4034 =====
+2021/01/03
+
+* Implemented syntax sugar "while"
+* Update console: stderr and stdin
+* Update IDLE:
+    *
+
 ===== Version 4033 =====
 2020/12/31
 
 * Implemented builtin function "input"
-* Bug fixes: Console returns "undefined" after any error
+* Bug fixes: Console returns "undefined" after any error, caused by environment interruption
 
 ===== Version 4032 =====
 2020/12/31

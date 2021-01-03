@@ -40,6 +40,14 @@ public class Memory {
         initAvailable();
     }
 
+    public int getHeapSize() {
+        return heapSize;
+    }
+
+    public int getHeapUsed() {
+        return heapSize - available.size;
+    }
+
     public void pushStack(FunctionEnvironment newCallEnv, LineFile lineFile) {
         stackSize++;
         callStack.push(new StackTraceNode(newCallEnv, lineFile));
@@ -396,25 +404,6 @@ public class Memory {
             head.next = firstOfAdd;
             size += intervalsCount;
         }
-
-//        void addAvaSorted(int ptr, int intervalsCount) {
-//            LnkNode h = head;
-//            while (h.next.value < ptr) {
-//                h = h.next;
-//            }
-//            LnkNode insertHead = h.next;
-//            for (int i = intervalsCount - 1; i >= 0; --i) {
-//                LnkNode n = new LnkNode();
-//                n.next = insertHead;
-//                n.value = ptr + i * INTERVAL;
-//                insertHead = n;
-//            }
-//            h.next = insertHead;
-//            if (insertHead.value >= insertHead.next.value) {
-//                throw new MemoryError("Heap memory collision. ");
-//            }
-//            size+=intervalsCount;
-//        }
 
         int findAva(int size) {
             LnkNode h = head;

@@ -1,13 +1,26 @@
 package spl.tools;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
+import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.stage.FileChooser;
 import spl.Console;
+import spl.interpreter.EvaluatedArguments;
+import spl.interpreter.env.Environment;
+import spl.interpreter.env.InstanceEnvironment;
+import spl.interpreter.env.ModuleEnvironment;
+import spl.interpreter.invokes.SplInvokes;
+import spl.interpreter.primitives.Reference;
+import spl.interpreter.primitives.SplElement;
+import spl.interpreter.splObjects.*;
+import spl.util.Constants;
+import spl.util.LineFile;
 import spl.util.Utilities;
 
 import java.io.File;
@@ -15,70 +28,37 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
 
 public class IdleController implements Initializable {
 
     private final static String arrow = ">>> ", cont = ". . . ";
 
     @FXML
-    TextArea codeArea, consoleArea, outputArea;
+    TextArea consoleArea, outputArea;
+
+    @FXML
+    CodeArea codeArea;
+
+    @FXML
+    TreeTableView<EnvTableItem> envTable;
+
+    @FXML
+    Button runButton, stopButton;
+
+    @FXML
+    Label memoryUseLabel;
+
+    private boolean showBuiltins = true;
 
     private IdleIO idleIO;
 
     private File openingFile;
     private Console console;
 
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        restartConsole();
-        setCodeAreaListener();
-        setConsoleListener();
-    }
-
-    private void setCodeAreaListener() {
-        codeArea.caretPositionProperty().addListener((observableValue, number, t1) -> {
-            int index = t1.intValue() - 1;
-            String code = codeArea.getText();
-            if (index < 0 || index >= code.length()) return;
-            if (code.charAt(index) == '}') {
-                System.out.println(12321);
-            }
-        });
-    }
-
-    private void setConsoleListener() {
-        consoleArea.setOnKeyPressed(keyEvent -> {
-            if (keyEvent.getCode() == KeyCode.ENTER) {
-                String text = consoleArea.getText();
-                String processed = getLastLine(text);
-                if (console.addCode(processed)) {
-                    idleIO.showInputLine(text);
-                    console.runCode();
-                    consoleArea.setText(arrow);
-                    consoleArea.positionCaret(arrow.length());
-                } else {
-                    String nexText = text + cont;
-                    consoleArea.setText(nexText);
-                    consoleArea.positionCaret(nexText.length());
-                }
-            } else if (keyEvent.getCode() == KeyCode.UP) {
-                String lastInput = idleIO.getUpLine();
-                if (lastInput != null) {
-                    consoleArea.setText(lastInput);
-                    consoleArea.positionCaret(lastInput.length());
-                }
-            }else if (keyEvent.getCode() == KeyCode.DOWN) {
-                String lastInput = idleIO.getDownLine();
-                if (lastInput != null) {
-                    consoleArea.setText(lastInput);
-                    consoleArea.positionCaret(lastInput.length());
-                }
-            }
-        });
-    }
+    private RunService runService;
+    private Timer timer;
+    private final Set<String> builtinNames = new HashSet<>();
 
     private static void analyze(String sourceCode) {
 
@@ -98,6 +78,29 @@ public class IdleController implements Initializable {
         return res;
     }
 
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        restartConsole();
+        setCodeAreaListener();
+        setConsoleListener();
+        setTableFactories();
+
+        refreshTable();
+        recordBuiltinNames();
+
+        timer = new Timer();
+        timer.schedule(new RefreshMemoryTask(), 0, 500);
+    }
+
+    private void recordBuiltinNames() {
+        builtinNames.addAll(console.getGlobalEnvironment().keyAttributes().keySet());
+    }
+
+    public void close() {
+        codeArea.close();
+        timer.cancel();
+    }
+
     private void restartConsole() {
         idleIO = new IdleIO();
         try {
@@ -108,7 +111,12 @@ public class IdleController implements Initializable {
     }
 
     @FXML
-    void clearConsoleAction() {
+    void clearOutputAction() {
+        outputArea.setText("");
+    }
+
+    @FXML
+    void restartConsoleAction() {
         restartConsole();
     }
 
@@ -116,16 +124,46 @@ public class IdleController implements Initializable {
     void runAction() {
         String srcCode = codeArea.getText();
         if (console.addCode(srcCode)) {
-            console.runCode();
+            runCode();
         } else {
             idleIO.err.println("Cannot run");
         }
+    }
 
+    private void runCode() {
+        if (runService != null)
+            if (runService.isRunning()) runService.cancel();
+
+        setRunningUi();
+
+        runService = new RunService();
+        runService.setOnCancelled(e -> {
+            console.interrupt();
+            setNotRunningUi();
+            refreshTable();
+        });
+        runService.setOnSucceeded(e -> {
+            setNotRunningUi();
+            refreshTable();
+        });
+        runService.setOnFailed(e -> {
+            setNotRunningUi();
+            refreshTable();
+        });
+
+        runService.start();
     }
 
     @FXML
     void stopAction() {
+        runService.cancel();
+    }
 
+    @FXML
+    void showBuiltinsChange(ActionEvent ae) {
+        CheckBox checkBox = (CheckBox) ae.getSource();
+        showBuiltins = checkBox.isSelected();
+        refreshTable();
     }
 
     @FXML
@@ -149,12 +187,276 @@ public class IdleController implements Initializable {
 
     }
 
-    private class IdleIO {
-        private IdleOutputStream out = new IdleOutputStream(outputArea);
-        private IdleOutputStream err = new IdleOutputStream(outputArea);
-        private IdleInputStream in = new IdleInputStream(consoleArea);
+    private void setRunningUi() {
+        Platform.runLater(() -> {
+            stopButton.setDisable(false);
+            runButton.setDisable(true);
+        });
+    }
 
+    private void setNotRunningUi() {
+        Platform.runLater(() -> {
+            stopButton.setDisable(true);
+            runButton.setDisable(false);
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    private void setTableFactories() {
+        TreeTableColumn<EnvTableItem, String> varNameCol =
+                (TreeTableColumn<EnvTableItem, String>) envTable.getColumns().get(0);
+        TreeTableColumn<EnvTableItem, String> valueCol =
+                (TreeTableColumn<EnvTableItem, String>) envTable.getColumns().get(1);
+        TreeTableColumn<EnvTableItem, String> typeCol =
+                (TreeTableColumn<EnvTableItem, String>) envTable.getColumns().get(2);
+
+        varNameCol.setCellValueFactory(p ->
+                new ReadOnlyStringWrapper(p.getValue().getValue().getVarName()));
+        valueCol.setCellValueFactory(p ->
+                new ReadOnlyStringWrapper(p.getValue().getValue().getValueString()));
+        typeCol.setCellValueFactory(p ->
+                new ReadOnlyStringWrapper(p.getValue().getValue().getType()));
+
+        valueCol.setCellFactory(col ->
+                new TreeTableCell<>() {
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (item == null || empty) {
+                            setText(null);
+                        } else {
+                            setText(item);
+                            hoverProperty().addListener(((observableValue, aBoolean, t1) -> {
+                                if (t1) {
+                                    envTable.setTooltip(new Tooltip(item));
+                                } else {
+                                    envTable.setTooltip(null);
+                                }
+                            }));
+                        }
+                    }
+                });
+    }
+
+    private void refreshTable() {
+        TreeItem<EnvTableItem> root = new TreeItem<>(new EnvTableItem("Global", null, null));
+        for (Map.Entry<String, SplElement> entry : console.getGlobalEnvironment().keyAttributes().entrySet()) {
+            if (showBuiltins || !builtinNames.contains(entry.getKey())) {
+                TreeItem<EnvTableItem> eti =
+                        createTreeItem(entry.getKey(), entry.getValue(), console.getGlobalEnvironment());
+                root.getChildren().add(eti);
+            }
+        }
+
+        envTable.setRoot(root);
+        root.setExpanded(true);
+    }
+
+    private TreeItem<EnvTableItem> createTreeItem(String varName, SplElement se, Environment env) {
+        if (SplElement.isPrimitive(se)) {
+            return new TreeItem<>(new EnvTableItem(varName, se.toString(), SplElement.typeToString(se.type())));
+        } else {
+            Reference ref = (Reference) se;
+            if (ref.getPtr() == 0) {
+                return new TreeItem<>(new EnvTableItem(varName, "null", "null"));
+            }
+            SplObject obj = env.getMemory().get(ref);
+            TreeItem<EnvTableItem> ti;
+            if (obj instanceof Instance) {
+                Instance ins = (Instance) obj;
+                InstanceEnvironment insEnv = ins.getEnv();
+                ti = new TreeItem<>(new EnvTableItem(
+                        varName,
+                        SplInvokes.pointerToString(ref, env, LineFile.LF_CONSOLE),
+                        Utilities.classRefToRepr((Reference) ((SplMethod) env.getMemory()
+                                        .get((Reference)
+                                                insEnv.get(Constants.GET_CLASS, LineFile.LF_CONSOLE)))
+                                        .call(
+                                                EvaluatedArguments.of(ref),
+                                                console.getGlobalEnvironment(),
+                                                LineFile.LF_CONSOLE),
+                                console.getGlobalEnvironment())));
+                for (Map.Entry<String, SplElement> entry : insEnv.keyAttributes().entrySet()) {
+                    TreeItem<EnvTableItem> eti =
+                            createTreeItem(entry.getKey(), entry.getValue(), insEnv);
+                    ti.getChildren().add(eti);
+                }
+            } else if (obj instanceof SplModule) {
+                ModuleEnvironment modEnv = ((SplModule) obj).getEnv();
+                ti = new TreeItem<>(new EnvTableItem(
+                        varName,
+                        ref.toString(),
+                        "Module"
+                ));
+                for (Map.Entry<String, SplElement> entry : modEnv.keyAttributes().entrySet()) {
+                    TreeItem<EnvTableItem> eti =
+                            createTreeItem(entry.getKey(), entry.getValue(), modEnv);
+                    ti.getChildren().add(eti);
+                }
+            } else if (obj instanceof SplMethod) {
+                return new TreeItem<>(new EnvTableItem(
+                        varName,
+                        ref.toString(),
+                        "Method of " + Utilities.classRefToRepr(
+                                ((SplMethod) obj).getClassPtr(),
+                                console.getGlobalEnvironment())));
+            } else if (obj instanceof Function) {
+                return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Function"));
+            } else if (obj instanceof LambdaExpression) {
+                return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Lambda Function"));
+            } else if (obj instanceof NativeFunction) {
+                return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Native Function"));
+            } else if (obj instanceof NativeObject) {
+                return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Native Object"));
+            } else if (obj instanceof SplArray) {
+                return new TreeItem<>(new EnvTableItem(varName, SplInvokes.pointerToString(
+                        ref, env, LineFile.LF_CONSOLE
+                ), obj.toString()));
+            } else if (obj instanceof SplClass) {
+                return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Class"));
+            } else {
+                return new TreeItem<>(new EnvTableItem(varName, ref.toString(), obj.getClass().getTypeName()));
+            }
+            return ti;
+        }
+    }
+
+    private void setCodeAreaListener() {
+//        codeArea.caretPositionProperty().addListener((observableValue, number, t1) -> {
+//            int index = t1.intValue() - 1;
+//            String code = codeArea.getText();
+//            if (index < 0 || index >= code.length()) return;
+//            if (code.charAt(index) == '}') {
+//                System.out.println(12321);
+//            }
+//        });
+//        codeArea.setOnKeyPressed(keyEvent -> {
+//            if (keyEvent.getCode() == KeyCode.TAB) {
+//                keyEvent.consume();
+//                int curIndex = codeArea.getCaretPosition() - 1;
+//
+//            }
+//        });
+    }
+
+    private void setConsoleListener() {
+        consoleArea.setOnKeyPressed(keyEvent -> {
+            if (keyEvent.getCode() == KeyCode.ENTER) {
+                String text = consoleArea.getText();
+                String processed = getLastLine(text);
+                if (console.addCode(processed)) {
+                    idleIO.showInputLine(text);
+                    runCode();
+                    consoleArea.setText(arrow);
+                    consoleArea.positionCaret(arrow.length());
+                } else {
+                    String nexText = text + cont;
+                    consoleArea.setText(nexText);
+                    consoleArea.positionCaret(nexText.length());
+                }
+            } else if (keyEvent.getCode() == KeyCode.UP) {
+                String lastInput = idleIO.getUpLine();
+                if (lastInput != null) {
+                    consoleArea.setText(lastInput);
+                    consoleArea.positionCaret(lastInput.length());
+                }
+            } else if (keyEvent.getCode() == KeyCode.DOWN) {
+                String lastInput = idleIO.getDownLine();
+                if (lastInput != null) {
+                    consoleArea.setText(lastInput);
+                    consoleArea.positionCaret(lastInput.length());
+                }
+            }
+        });
+        consoleArea.textProperty().addListener(((observable, oldValue, newValue) -> {
+            if (newValue.length() < 4) {
+                consoleArea.setText(oldValue);
+            }
+        }));
+    }
+
+    private static class IdleInputStream extends InputStream {
+
+        private final TextArea textArea;
+
+        private IdleInputStream(TextArea area) {
+            this.textArea = area;
+        }
+
+        @Override
+        public int read() throws IOException {
+            return 0;
+        }
+    }
+
+    private static class IdleOutputStream extends PrintStream {
+
+        private final TextArea textArea;
+
+        public IdleOutputStream(TextArea area) {
+            super(nullOutputStream());
+            this.textArea = area;
+            this.textArea.setText("");
+        }
+
+        @Override
+        public void print(String s) {
+            Platform.runLater(() -> {
+                textArea.setText(textArea.getText() + s);
+                textArea.setScrollTop(textArea.getHeight());
+            });
+        }
+
+        @Override
+        public void println(String s) {
+            print(s);
+            print("\n");
+        }
+    }
+
+    static class EnvTableItem {
+
+        private final String name;
+        private final String type;
+        private final String value;
+
+        EnvTableItem(String name, String value, String type) {
+            this.name = name;
+            this.value = value;
+            this.type = type;
+        }
+
+        String getVarName() {
+            return name;
+        }
+
+        String getType() {
+            return type;
+        }
+
+        String getValueString() {
+            return value;
+        }
+    }
+
+    private class RunService extends Service<Void> {
+        @Override
+        protected Task<Void> createTask() {
+            return new Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+                    console.runCode();
+                    return null;
+                }
+            };
+        }
+    }
+
+    private class IdleIO {
         private final List<String> inputLines = new ArrayList<>();
+        private final IdleOutputStream out = new IdleOutputStream(outputArea);
+        private final IdleOutputStream err = new IdleOutputStream(outputArea);
+        private final IdleInputStream in = new IdleInputStream(consoleArea);
         private int upCount = 0;
 
         private void showInputLine(String input) {
@@ -177,40 +479,14 @@ public class IdleController implements Initializable {
         }
     }
 
-    private static class IdleInputStream extends InputStream {
-
-        private final TextArea textArea;
-
+    private class RefreshMemoryTask extends TimerTask {
         @Override
-        public int read() throws IOException {
-            return 0;
-        }
-
-        private IdleInputStream(TextArea area) {
-            this.textArea = area;
-        }
-    }
-
-    private static class IdleOutputStream extends PrintStream {
-
-        private final TextArea textArea;
-
-        public IdleOutputStream(TextArea area) {
-            super(nullOutputStream());
-            this.textArea = area;
-            this.textArea.setText("");
-        }
-
-        @Override
-        public void print(String s) {
-            textArea.setText(textArea.getText() + s);
-            textArea.setScrollTop(textArea.getHeight());
-        }
-
-        @Override
-        public void println(String s) {
-            print(s);
-            print("\n");
+        public void run() {
+            Platform.runLater(() -> memoryUseLabel.setText(
+                    Utilities.sizeToReadable(console.getGlobalEnvironment().getMemory().getHeapUsed()) +
+                            " / " +
+                            Utilities.sizeToReadable(console.getGlobalEnvironment().getMemory().getHeapSize())
+            ));
         }
     }
 }

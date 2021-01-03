@@ -24,6 +24,16 @@ public class SplMethod extends Function {
         this.classPtr = classPtr;
     }
 
+    /**
+     * This method calls a method in an spl instance.
+     * <p>
+     * Note that {@code evaluatedArguments} has at least one element, which is a reference to "this"
+     *
+     * @param evaluatedArgs arguments, evaluated
+     * @param callingEnv    environment of calling
+     * @param argLineFile   line file of argument
+     * @return function returns
+     */
     @Override
     public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile argLineFile) {
         MethodEnvironment scope = new MethodEnvironment(definitionEnv, callingEnv, definedName);
@@ -34,5 +44,9 @@ public class SplMethod extends Function {
     public String toString() {
         return "Method " + definedName + ": {" + body.getLines().size() + " lines, defined in " +
                 definitionEnv.getMemory().get(classPtr) + "} ";
+    }
+
+    public Reference getClassPtr() {
+        return classPtr;
     }
 }

@@ -33,10 +33,21 @@ public class ForLoopStmt extends ConditionalStmt {
         LoopTitleEnvironment titleEnv = new LoopTitleEnvironment(env);
         BlockEnvironment bodyEnv = new BlockEnvironment(titleEnv);
 
-        Node first;
-        if (condition.getLines().size() == 1 &&
-                ((first = condition.getLines().get(0).get(0)) instanceof InExpr)) {
-            forEachLoop((InExpr) first, env, titleEnv, bodyEnv);
+
+        if (condition.getLines().size() == 1) {
+            Node first = condition.getLines().get(0).get(0);
+            if (first instanceof InExpr) {
+                forEachLoop((InExpr) first, env, titleEnv, bodyEnv);
+            } else {
+                forLoop3Parts(
+                        new Line(lineFile),
+                        (Expression) first,
+                        new Line(lineFile),
+                        env,
+                        titleEnv,
+                        bodyEnv
+                );
+            }
         } else if (condition.getLines().size() == 3) {  // regular for loop
             forLoop3Parts(
                     condition.getLines().get(0),

@@ -50,7 +50,7 @@ public class NewExpr extends UnaryExpr {
                                                Environment callEnv,
                                                LineFile lineFile) {
         Reference clazzPtr = (Reference) call.callObj.evaluate(classDefEnv);
-        if (callEnv.hasException()) return null;
+        if (callEnv.hasException()) return Undefined.ERROR;
 
         return Instance.createInstanceWithInitCall(
                 clazzPtr, call.arguments.evalArgs(callEnv), callEnv, lineFile).pointer;

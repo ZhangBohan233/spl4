@@ -13,18 +13,18 @@ public class GlobalEnvironment extends MainAbstractEnvironment {
      */
     private final Map<String, Reference> importedModules = new HashMap<>();
 
-    protected Reference exceptionPtr;
+    protected Reference exceptionInsPtr;
 
     public GlobalEnvironment(Memory memory) {
         super(memory, null);
     }
 
-    public void throwException(Reference exceptionPtr) {
-        this.exceptionPtr = exceptionPtr;
+    public void throwException(Reference exceptionInsPtr) {
+        this.exceptionInsPtr = exceptionInsPtr;
     }
 
     public boolean hasException() {
-        return exceptionPtr != null;
+        return exceptionInsPtr != null;
     }
 
     @Override
@@ -32,15 +32,15 @@ public class GlobalEnvironment extends MainAbstractEnvironment {
         return false;
     }
 
-    public Reference getExceptionPtr() {
-        return exceptionPtr;
+    public Reference getExceptionInsPtr() {
+        return exceptionInsPtr;
     }
 
     /**
      * Removes exception, to make all sub-environments work normally
      */
     public void removeException() {
-        exceptionPtr = null;
+        exceptionInsPtr = null;
     }
 
     @Override
