@@ -2,10 +2,16 @@
 
 <?import javafx.scene.canvas.Canvas?>
 <?import spl.tools.CodeArea?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.ListView?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="spl.tools.CodeArea"
          prefHeight="180.0"
-         prefWidth="500.0">
-    <Canvas fx:id="canvas" height="480.0" width="480.0"/>
+         prefWidth="500.0"
+         style="-fx-background-color: transparent; -fx-background: white">
+    <HBox>
+        <Canvas fx:id="lineCanvas" width="30.0"/>
+        <Canvas fx:id="canvas" height="100.0" width="440.0"/>
+    </HBox>
 </fx:root>
