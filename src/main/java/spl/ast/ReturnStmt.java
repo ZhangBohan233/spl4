@@ -16,6 +16,6 @@ public class ReturnStmt extends UnaryStmt {
 
     @Override
     protected void internalProcess(Environment env) {
-        env.setReturn(value.evaluate(env));
+        env.setReturn(value.evaluate(env), lineFile);
     }
 }

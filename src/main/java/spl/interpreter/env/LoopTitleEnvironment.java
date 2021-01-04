@@ -1,5 +1,7 @@
 package spl.interpreter.env;
 
+import spl.util.LineFile;
+
 public class LoopTitleEnvironment extends SubAbstractEnvironment {
 
     private boolean broken;
@@ -15,7 +17,7 @@ public class LoopTitleEnvironment extends SubAbstractEnvironment {
     }
 
     @Override
-    public void breakLoop() {
+    public void breakLoop(LineFile lineFile) {
         broken = true;
     }
 
@@ -25,7 +27,7 @@ public class LoopTitleEnvironment extends SubAbstractEnvironment {
     }
 
     @Override
-    public void pauseLoop() {
+    public void pauseLoop(LineFile lineFile) {
         paused = true;
     }
 

@@ -78,7 +78,7 @@ public class TryStmt extends Statement {
                 SplElement rtn = fe.temporaryRemoveRtn();
                 BlockEnvironment finallyEnv = new BlockEnvironment(env);
                 finallyBlock.evaluate(finallyEnv);
-                fe.setReturn(rtn);
+                fe.setReturn(rtn, lineFile);
             }
 
     }

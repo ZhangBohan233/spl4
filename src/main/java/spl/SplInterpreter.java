@@ -10,24 +10,114 @@ import spl.interpreter.env.ModuleEnvironment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.*;
 import spl.interpreter.splErrors.NativeError;
+import spl.interpreter.splErrors.NativeTypeError;
 import spl.interpreter.splObjects.*;
+import spl.lexer.FileTokenizer;
 import spl.lexer.TextProcessResult;
+import spl.lexer.TextProcessor;
+import spl.lexer.TokenizeResult;
 import spl.lexer.treeList.CollectiveElement;
 import spl.parser.Parser;
+import spl.util.ArgumentParser;
 import spl.util.Constants;
 import spl.util.LineFile;
 import spl.util.Utilities;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
 public class SplInterpreter {
 
+    private static InputStream in = System.in;
+    private static PrintStream out = System.out;
+    private static PrintStream err = System.err;
+    private GlobalEnvironment globalEnvironment;
+
+    public void run(String[] args) throws Exception {
+        ArgumentParser argumentParser = new ArgumentParser(args);
+        if (argumentParser.isAllValid()) {
+            long parseBegin = System.currentTimeMillis();
+            FileTokenizer tokenizer = new FileTokenizer(
+                    argumentParser.getMainSrcFile(),
+                    argumentParser.importLang() && globalEnvironment == null  // no preset global env
+            );
+            TokenizeResult rootToken = tokenizer.tokenize();
+            TextProcessResult processed = new TextProcessor(rootToken,
+                    argumentParser.importLang()).process();  // keep this to let other files import lang
+            if (argumentParser.isPrintTokens()) {
+                out.println(processed.rootList);
+            }
+            Parser parser = new Parser(processed);
+            BlockStmt root = parser.parse();
+            if (argumentParser.isPrintAst()) {
+                out.println("===== Ast =====");
+                out.println(root);
+                out.println("===== End of spl.ast =====");
+            }
+            long vmStartBegin = System.currentTimeMillis();
+            Memory memory = new Memory();
+            if (globalEnvironment == null) {
+                globalEnvironment = new GlobalEnvironment(memory);
+                initNatives(globalEnvironment);
+            }
+            importModules(globalEnvironment, processed.importedPaths);
+
+            if (argumentParser.isGcInfo()) memory.debugs.setPrintGcRes(true);
+            if (argumentParser.isGcTrigger()) memory.debugs.setPrintGcTrigger(true);
+            memory.setCheckContract(argumentParser.isCheckContract());
+
+            long runBegin = System.currentTimeMillis();
+
+            try {
+                root.evaluate(globalEnvironment);
+
+                callMain(argumentParser.getSplArgs(), globalEnvironment);
+            } catch (ClassCastException cce) {
+                cce.printStackTrace();
+                throw new NativeTypeError();
+            }
+
+            long processEnd = System.currentTimeMillis();
+
+            if (argumentParser.isPrintMem()) {
+                memory.printMemory();
+            }
+            if (argumentParser.isTimer()) {
+                out.printf(
+                        "Parse time: %d ms, VM startup time: %d ms, running time: %d ms.%n",
+                        vmStartBegin - parseBegin,
+                        runBegin - vmStartBegin,
+                        processEnd - runBegin
+                );
+            }
+        } else {
+            System.out.println(argumentParser.getMsg());
+        }
+    }
+
+    public static void setOut(PrintStream out) {
+        SplInterpreter.out = out;
+    }
+
+    public static void setIn(InputStream in) {
+        SplInterpreter.in = in;
+    }
+
+    public static void setErr(PrintStream err) {
+        SplInterpreter.err = err;
+    }
+
+    public void setGlobalEnvironment(GlobalEnvironment globalEnvironment) {
+        this.globalEnvironment = globalEnvironment;
+    }
+
     static void initNatives(GlobalEnvironment globalEnvironment) {
         initNativeFunctions(globalEnvironment);
 
-        SplInvokes system = new SplInvokes();
+        SplInvokes system = new SplInvokes(out, in, err);
 
         Memory memory = globalEnvironment.getMemory();
         Reference sysPtr = memory.allocateObject(system, globalEnvironment);
@@ -51,7 +141,8 @@ public class SplInterpreter {
         }
     }
 
-    public static Map<String, BlockStmt> parseImportedModules(Map<String, CollectiveElement> imported) throws IOException {
+    public static Map<String, BlockStmt> parseImportedModules(Map<String, CollectiveElement> imported)
+            throws IOException {
         Map<String, BlockStmt> result = new HashMap<>();
         for (Map.Entry<String, CollectiveElement> entry : imported.entrySet()) {
             Parser psr = new Parser(new TextProcessResult(entry.getValue()));
@@ -235,7 +326,7 @@ public class SplInterpreter {
         ge.defineFunction("Class?", ptrIsClass, LineFile.LF_INTERPRETER);
     }
 
-    static void callMain(String[] args, GlobalEnvironment globalEnvironment) {
+    void callMain(String[] args, GlobalEnvironment globalEnvironment) {
         if (globalEnvironment.hasName(Constants.MAIN_FN)) {
             Reference mainPtr = (Reference) globalEnvironment.get(Constants.MAIN_FN, Main.LF_MAIN);
 
@@ -251,7 +342,7 @@ public class SplInterpreter {
             if (globalEnvironment.hasException()) {
                 Utilities.removeErrorAndPrint(globalEnvironment, Main.LF_MAIN);
             } else {
-                System.out.println("Process finished with exit value " + rtn);
+                out.println("Process finished with exit value " + rtn);
             }
         }
     }

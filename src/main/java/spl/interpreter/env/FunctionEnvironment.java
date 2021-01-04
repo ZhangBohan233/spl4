@@ -2,6 +2,7 @@ package spl.interpreter.env;
 
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
+import spl.util.LineFile;
 
 import java.util.Objects;
 
@@ -37,7 +38,7 @@ public class FunctionEnvironment extends MainAbstractEnvironment {
     }
 
     @Override
-    public void setReturn(SplElement typeValue) {
+    public void setReturn(SplElement typeValue, LineFile lineFile) {
         returnValue = typeValue;
     }
 

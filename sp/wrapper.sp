@@ -1,3 +1,9 @@
+fn test() {
+    b := 1;
+    return 1;
+}
+
+
 fn main() {
     a := new Integer(1);
 

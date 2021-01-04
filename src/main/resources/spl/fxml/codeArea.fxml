@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.canvas.Canvas?>
-<?import spl.tools.CodeArea?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.control.ListView?>
+<?import spl.tools.codeArea.CodeArea?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
-         type="spl.tools.CodeArea"
+         type="spl.tools.codeArea.CodeArea"
          prefHeight="180.0"
          prefWidth="500.0"
          style="-fx-background-color: transparent; -fx-background: white">

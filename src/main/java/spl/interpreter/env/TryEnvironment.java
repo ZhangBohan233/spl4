@@ -1,6 +1,7 @@
 package spl.interpreter.env;
 
 import spl.interpreter.primitives.Reference;
+import spl.util.LineFile;
 
 public class TryEnvironment extends SubAbstractEnvironment {
 
@@ -30,8 +31,8 @@ public class TryEnvironment extends SubAbstractEnvironment {
     }
 
     @Override
-    public void breakLoop() {
-        outer.breakLoop();
+    public void breakLoop(LineFile lineFile) {
+        outer.breakLoop(lineFile);
     }
 
     @Override
@@ -40,8 +41,8 @@ public class TryEnvironment extends SubAbstractEnvironment {
     }
 
     @Override
-    public void pauseLoop() {
-        outer.pauseLoop();
+    public void pauseLoop(LineFile lineFile) {
+        outer.pauseLoop(lineFile);
     }
 
     @Override

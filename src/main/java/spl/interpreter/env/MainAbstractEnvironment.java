@@ -1,7 +1,9 @@
 package spl.interpreter.env;
 
 import spl.interpreter.Memory;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.SplElement;
+import spl.util.Constants;
 import spl.util.LineFile;
 
 import java.util.HashSet;
@@ -21,8 +23,10 @@ public abstract class MainAbstractEnvironment extends Environment {
     }
 
     @Override
-    public void setReturn(SplElement element) {
-        throw new EnvironmentError("Return outside function. ");
+    public void setReturn(SplElement element, LineFile lineFile) {
+//        throw new EnvironmentError("Return outside function. ");
+        SplInvokes.throwException(this, Constants.NAME_ERROR, "Return outside function.",
+                lineFile);
     }
 
     @Override
@@ -45,40 +49,52 @@ public abstract class MainAbstractEnvironment extends Environment {
 //        System.out.println(12312313);
     }
 
-    public void breakLoop() {
-        throw new EnvironmentError("Break outside loop");
+    @Override
+    public void breakLoop(LineFile lineFile) {
+//        throw new EnvironmentError("Break outside loop");
+        SplInvokes.throwException(this, Constants.NAME_ERROR, "Break outside loop",
+                lineFile);
     }
 
+    @Override
     public void resumeLoop() {
-        throw new EnvironmentError("Outside function");
+        throw new EnvironmentError("Outside function");  // do not change this
     }
 
-    public void pauseLoop() {
-        throw new EnvironmentError("Continue outside function");
+    @Override
+    public void pauseLoop(LineFile lineFile) {
+//        throw new EnvironmentError("Continue outside function");
+        SplInvokes.throwException(this, Constants.NAME_ERROR, "Continue outside function",
+                lineFile);
     }
 
+    @Override
     public void invalidate() {
         throw new EnvironmentError();
     }
 
     @Override
     public void fallthrough(LineFile lineFile) {
-        throw new EnvironmentError("'fallthrough' outside case statements. ", lineFile);
+//        throw new EnvironmentError("'fallthrough' outside case statements. ", lineFile);
+        SplInvokes.throwException(this, Constants.NAME_ERROR, "'fallthrough' outside case statements.",
+                lineFile);
     }
 
     @Override
     public boolean isFallingThrough() {
-        throw new EnvironmentError("'fallthrough' outside case statements. ");
+        throw new EnvironmentError("'fallthrough' outside case statements. ");  // do not change this
     }
 
     @Override
     public void yield(SplElement value, LineFile lineFile) {
-        throw new EnvironmentError("'yield' outside cond/switch-case expressions. ", lineFile);
+//        throw new EnvironmentError("'yield' outside cond/switch-case expressions. ", lineFile);
+        SplInvokes.throwException(this, Constants.NAME_ERROR, "'yield' outside cond/switch-case expressions.",
+                lineFile);
     }
 
     @Override
     public SplElement yieldResult() {
-        throw new EnvironmentError("'yield' outside cond/switch-case expressions. ");
+        throw new EnvironmentError("'yield' outside cond/switch-case expressions. ");  // do not change this
     }
 
 }

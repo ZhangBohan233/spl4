@@ -54,6 +54,7 @@ public class Console {
 
         Memory memory = new Memory();
         globalEnvironment = new GlobalEnvironment(memory);
+
         SplInterpreter.initNatives(globalEnvironment);
         SplInterpreter.importModules(globalEnvironment, tpr.importedPaths);
 
@@ -77,7 +78,7 @@ public class Console {
             line = line.trim();
             if (line.equals(":q")) break;
 
-            if (addCode(line)) {
+            if (addLine(line)) {
                 runCode();
                 out.print(">>> ");
             } else {
@@ -86,7 +87,7 @@ public class Console {
         }
     }
 
-    public boolean addCode(String code) {
+    public boolean addLine(String code) {
         consoleTokenizer.addLine(code);
         return consoleTokenizer.readyToBuild();
     }
@@ -113,12 +114,24 @@ public class Console {
         }
     }
 
+    public void interrupt() {
+        globalEnvironment.throwException(
+                (Reference) globalEnvironment.get(Constants.INTERRUPTION_INS, LineFile.LF_CONSOLE));
+    }
+
     public GlobalEnvironment getGlobalEnvironment() {
         return globalEnvironment;
     }
 
-    public void interrupt() {
-        globalEnvironment.throwException(
-                (Reference) globalEnvironment.get(Constants.INTERRUPTION_INS, LineFile.LF_CONSOLE));
+    public InputStream getIn() {
+        return in;
+    }
+
+    public PrintStream getOut() {
+        return out;
+    }
+
+    public PrintStream getErr() {
+        return err;
     }
 }

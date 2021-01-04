@@ -20,8 +20,8 @@ public abstract class SubAbstractEnvironment extends Environment {
     }
 
     @Override
-    public void setReturn(SplElement typeValue) {
-        outer.setReturn(typeValue);
+    public void setReturn(SplElement typeValue, LineFile lineFile) {
+        outer.setReturn(typeValue, lineFile);
     }
 
     @Override

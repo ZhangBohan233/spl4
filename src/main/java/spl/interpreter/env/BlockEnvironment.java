@@ -1,6 +1,8 @@
 package spl.interpreter.env;
 
 
+import spl.util.LineFile;
+
 public class BlockEnvironment extends SubAbstractEnvironment {
 
     public BlockEnvironment(Environment outer) {
@@ -13,8 +15,8 @@ public class BlockEnvironment extends SubAbstractEnvironment {
     }
 
     @Override
-    public void breakLoop() {
-        outer.breakLoop();
+    public void breakLoop(LineFile lineFile) {
+        outer.breakLoop(lineFile);
     }
 
     @Override
@@ -23,8 +25,8 @@ public class BlockEnvironment extends SubAbstractEnvironment {
     }
 
     @Override
-    public void pauseLoop() {
-        outer.pauseLoop();
+    public void pauseLoop(LineFile lineFile) {
+        outer.pauseLoop(lineFile);
     }
 
     public void invalidate() {

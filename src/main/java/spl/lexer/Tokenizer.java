@@ -76,8 +76,11 @@ public abstract class Tokenizer {
             "class", "fn", "if", "else", "new", "return", "break",
             "continue", "true", "false", "null", "while", "for", "import", "namespace",
             "const", "var", "assert", "as", "super", "this", "lambda",
-            "cond", "switch", "case", "default", "fallthrough", "in", "yield",
-            "macro", "syntax"
+            "cond", "switch", "case", "default", "fallthrough", "in", "yield"
+    );
+
+    public static final Set<String> KEYWORDS = Utilities.mergeSets(
+            RESERVED, LAZY_BINARY, LOGICAL_UNARY
     );
 
     final List<Token> tokens = new ArrayList<>();

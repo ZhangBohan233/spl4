@@ -11,6 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.stage.FileChooser;
 import spl.Console;
+import spl.SplInterpreter;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.InstanceEnvironment;
@@ -19,6 +20,7 @@ import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.*;
+import spl.tools.codeArea.CodeArea;
 import spl.util.Constants;
 import spl.util.LineFile;
 import spl.util.Utilities;
@@ -53,7 +55,7 @@ public class IdleController implements Initializable {
 
     private IdleIO idleIO;
 
-    private File openingFile;
+    private File openingFile = new File("Untitled.sp");
     private Console console;
 
     private RunService runService;
@@ -121,12 +123,17 @@ public class IdleController implements Initializable {
     }
 
     @FXML
-    void runAction() {
-        String srcCode = codeArea.getText();
-        if (console.addCode(srcCode)) {
-            runCode();
-        } else {
-            idleIO.err.println("Cannot run");
+    void runAction() throws IOException {
+        saveFileAction();
+        SplInterpreter interpreter = new SplInterpreter();
+        interpreter.setGlobalEnvironment(console.getGlobalEnvironment());
+        SplInterpreter.setIn(console.getIn());
+        SplInterpreter.setOut(console.getOut());
+        SplInterpreter.setErr(console.getErr());
+        try {
+            interpreter.run(new String[]{openingFile.getAbsolutePath()});
+        } catch (Exception e) {
+            e.printStackTrace(console.getErr());
         }
     }
 
@@ -178,13 +185,15 @@ public class IdleController implements Initializable {
         File f = chooser.showOpenDialog(null);
         if (f != null) {
             String text = Utilities.readFile(f);
+            openingFile = f;
             codeArea.setText(text);
         }
     }
 
     @FXML
-    void saveFileAction() {
-
+    void saveFileAction() throws IOException {
+        String text = codeArea.getText();
+        Utilities.writeFile(openingFile, text);
     }
 
     private void setRunningUi() {
@@ -322,21 +331,6 @@ public class IdleController implements Initializable {
     }
 
     private void setCodeAreaListener() {
-//        codeArea.caretPositionProperty().addListener((observableValue, number, t1) -> {
-//            int index = t1.intValue() - 1;
-//            String code = codeArea.getText();
-//            if (index < 0 || index >= code.length()) return;
-//            if (code.charAt(index) == '}') {
-//                System.out.println(12321);
-//            }
-//        });
-//        codeArea.setOnKeyPressed(keyEvent -> {
-//            if (keyEvent.getCode() == KeyCode.TAB) {
-//                keyEvent.consume();
-//                int curIndex = codeArea.getCaretPosition() - 1;
-//
-//            }
-//        });
     }
 
     private void setConsoleListener() {
@@ -344,7 +338,7 @@ public class IdleController implements Initializable {
             if (keyEvent.getCode() == KeyCode.ENTER) {
                 String text = consoleArea.getText();
                 String processed = getLastLine(text);
-                if (console.addCode(processed)) {
+                if (console.addLine(processed)) {
                     idleIO.showInputLine(text);
                     runCode();
                     consoleArea.setText(arrow);

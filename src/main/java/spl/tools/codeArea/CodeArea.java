@@ -1,4 +1,4 @@
-package spl.tools;
+package spl.tools.codeArea;
 
 import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.value.ObservableValue;
@@ -23,11 +23,10 @@ import java.util.TimerTask;
 public class CodeArea extends ScrollPane {
 
     public static final long FLASH_TIME = 500;
-
+    private final static Paint KEYWORD = Paint.valueOf("goldenrod");
     private final static Paint background = Paint.valueOf("white");
     private final static Paint red = Paint.valueOf("red");
-    private final static Paint black = Paint.valueOf("black");
-    private final static Paint gold = Paint.valueOf("gold");
+    private final static Paint CODE = Paint.valueOf("black");
     private final static Paint lineBackground = Paint.valueOf("#DDDDDD");
     private final TextEditor textEditor = new TextEditor();
     private final double leftMargin = 5.0;
@@ -38,9 +37,11 @@ public class CodeArea extends ScrollPane {
     Canvas canvas;
     @FXML
     Canvas lineCanvas;
-
-    private double lineHeight = 16.0;
-    private double charWidth = 8.0;
+    private Font codeFont = Font.font("Lucida Console", 12.0);
+    private Font keywordFont = Font.font("Lucida Console", 12.0);
+    private CodeAnalyzer codeAnalyzer = new SplCodeAnalyzer(KEYWORD, keywordFont, CODE, codeFont);
+    private double lineHeight = 15.6;
+    private double charWidth = 7.8;
     private Timer timer;
     private FlashCaretTask fct;
 
@@ -55,6 +56,8 @@ public class CodeArea extends ScrollPane {
         } catch (IOException e) {
             throw new RuntimeException("Failed to generate view", e);
         }
+
+//        for (String x : Font.getFontNames()) System.out.println(x);
 
         canvas.setHeight(lineHeight);
         canvas.setCursor(Cursor.TEXT);
@@ -84,14 +87,23 @@ public class CodeArea extends ScrollPane {
         refresh();
     }
 
-    public void clearCanvas() {
+    public void setCodeAnalyzer(CodeAnalyzer codeAnalyzer) {
+        this.codeAnalyzer = codeAnalyzer;
+    }
+
+    public void setFont(Font font) {
+        this.codeFont = font;
+        this.charWidth = font.getSize() * 0.65;
+        this.lineHeight = this.charWidth * 2;
+    }
+
+    public synchronized void clearCanvas() {
         graphicsContext.setFill(background);
         graphicsContext.fillRect(0.0, 0.0, canvas.getWidth(), canvas.getHeight());
     }
 
     public synchronized void refresh() {
         clearCanvas();
-        graphicsContext.setFont(new Font("System Default", 12));
         int lineCount = textEditor.linesCount();
         canvas.setHeight(lineCount * lineHeight);
         lineCanvas.setHeight(Math.max((lineCount + 1) * lineHeight, this.getPrefHeight()));
@@ -99,7 +111,7 @@ public class CodeArea extends ScrollPane {
         GraphicsContext lineGc = lineCanvas.getGraphicsContext2D();
         lineGc.setFill(lineBackground);
         lineGc.fillRect(0.0, 0.0, lineCanvas.getWidth(), lineCanvas.getHeight());
-        lineGc.setFill(black);
+        lineGc.setFill(CODE);
 
         for (int lineIndex = 0; lineIndex < lineCount; lineIndex++) {
             List<Text> line = textEditor.getLine(lineIndex);
@@ -108,12 +120,31 @@ public class CodeArea extends ScrollPane {
             double realY = y + lineHeight / 1.5;
             for (Text text : line) {
                 graphicsContext.setFill(text.paint);
+                graphicsContext.setFont(text.font);
+                double cw = getCharWidth(text.text);
+                if (widthUsed + cw > canvas.getWidth()) {
+                    canvas.setWidth(widthUsed + cw);
+                }
                 graphicsContext.fillText(String.valueOf(text.text), widthUsed, realY);
-                widthUsed += getCharWidth(text.text);
+                widthUsed += cw;
             }
             lineGc.fillText(String.valueOf(lineIndex + 1), leftMargin, realY);
         }
     }
+
+    public void close() {
+        stopTimer();
+    }
+
+    public void setCodeFont(Font codeFont) {
+        this.codeFont = codeFont;
+    }
+
+    public void setKeywordFont(Font keywordFont) {
+        this.keywordFont = keywordFont;
+    }
+
+    /* listeners and handlers */
 
     private void scrollDownToCaret() {
         int screenRows = getLinesInScreen();
@@ -152,10 +183,6 @@ public class CodeArea extends ScrollPane {
         return (int) (getHeight() / lineHeight);
     }
 
-    public void close() {
-        stopTimer();
-    }
-
     private void addFocusListener() {
         canvas.focusedProperty().addListener(this::focusListener);
         this.focusedProperty().addListener(((observable, oldValue, newValue) -> {
@@ -185,12 +212,12 @@ public class CodeArea extends ScrollPane {
         }));
     }
 
-    private void refreshCaretFlasher() {
+    private synchronized void refreshCaretFlasher() {
         stopTimer();
         startTimer();
     }
 
-    private void stopTimer() {
+    private synchronized void stopTimer() {
         if (timer != null) {
             fct.clearCaret();
             timer.cancel();
@@ -199,7 +226,7 @@ public class CodeArea extends ScrollPane {
         }
     }
 
-    private void startTimer() {
+    private synchronized void startTimer() {
         timer = new Timer();
         fct = new FlashCaretTask();
         timer.schedule(fct, 0, FLASH_TIME);
@@ -231,6 +258,10 @@ public class CodeArea extends ScrollPane {
                 }
                 scrollDownToCaret();
             }
+        } else if (keyCode == KeyCode.TAB) {
+            keyEvent.consume();
+        } else if (keyCode == KeyCode.SPACE) {
+            keyEvent.consume();
         }
     }
 
@@ -242,6 +273,13 @@ public class CodeArea extends ScrollPane {
             textEditor.newLine();
         } else if (first == '\b') {
             textEditor.backspace();
+        } else if (first == ' ') {
+            keyEvent.consume();
+            textEditor.typeText(" ");
+        } else if (first == '\t') {
+            for (int i = 0; i < 4; i++) {
+                textEditor.typeText(" ");
+            }
         } else {
             textEditor.typeText(chars);
         }
@@ -279,16 +317,24 @@ public class CodeArea extends ScrollPane {
     }
 
     private double getCharWidth(char c) {
-        if (c >= 'A' && c <= 'Z') return charWidth * 1.25;
         return (c & 0xffff) >= 128 ? charWidth * 1.5 : charWidth;
     }
 
-    private static class Text {
-        private final char text;
-        private Paint paint = black;
+    public class Text {
+        public final char text;
+        private Paint paint = CODE;
+        private Font font = codeFont;
 
         Text(char text) {
             this.text = text;
+        }
+
+        public void setPaint(Paint paint) {
+            this.paint = paint;
+        }
+
+        public void setFont(Font font) {
+            this.font = font;
         }
     }
 
@@ -307,6 +353,7 @@ public class CodeArea extends ScrollPane {
                 }
                 builder.append("\n");
             }
+            builder.setLength(builder.length() - 1);  // removes the last '\n'
             return builder.toString();
         }
 
@@ -316,11 +363,14 @@ public class CodeArea extends ScrollPane {
             for (char c : text.toCharArray()) {
                 if (c == '\n') {
                     lines.add(activeLine);
+                    analyze(activeLine);
                     activeLine = new ArrayList<>();
                 } else {
                     activeLine.add(new Text(c));
                 }
             }
+            lines.add(activeLine);
+            analyze(activeLine);
         }
 
         public void typeText(String newText) {
@@ -330,6 +380,7 @@ public class CodeArea extends ScrollPane {
                 line.add(caretCol.get(), t);
                 caretCol.set(caretCol.get() + 1);
             }
+            analyze(line);
         }
 
         public void backspace() {
@@ -339,10 +390,12 @@ public class CodeArea extends ScrollPane {
                     caretRow.set(caretRow.get() - 1);
                     caretCol.set(lines.get(caretRow.get()).size());
                     getLine(caretRow.get()).addAll(removed);
+                    analyze(getLine(caretRow.get()));
                 }
             } else {
                 caretCol.set(caretCol.get() - 1);
-                lines.get(caretRow.intValue()).remove(caretCol.get());
+                getLine(caretRow.get()).remove(caretCol.get());
+                analyze(getLine(caretRow.get()));
             }
         }
 
@@ -357,6 +410,9 @@ public class CodeArea extends ScrollPane {
 
             caretRow.set(caretRow.get() + 1);
             caretCol.set(0);
+
+            analyze(newLine);
+            analyze(oldLineTrimmed);
         }
 
         int lineSize(int lineIndex) {
@@ -373,6 +429,11 @@ public class CodeArea extends ScrollPane {
 
         List<Text> getLine(int lineIndex) {
             return lines.get(lineIndex);
+        }
+
+        private void analyze(List<Text> line) {
+            codeAnalyzer.markKeyword(line);
+            codeAnalyzer.markVariable(line);
         }
 
         private int getColOfIndex(int lineIndex, double x) {
@@ -423,7 +484,7 @@ public class CodeArea extends ScrollPane {
                 if (caretCol.get() == 0) x = leftMargin;
                 else x = textEditor.getXofCol(caretRow.get(), caretCol.get());
 
-                drawCaret(y, x, black);
+                drawCaret(y, x, CODE);
                 showingY = y;
                 showingX = x;
             }
@@ -438,6 +499,7 @@ public class CodeArea extends ScrollPane {
         }
 
         private synchronized void drawCaret(double y, double x, Paint paint) {
+            System.out.println(y + " " + x);
             graphicsContext.setStroke(paint);
             graphicsContext.setLineWidth(1.0);
             graphicsContext.strokeLine(x, y, x, y + lineHeight);

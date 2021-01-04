@@ -37,6 +37,6 @@ fn test(a: int? or float?) -> int? or float? {
 fn main() {
     a := unaryOr(float?, boolean?, char?, int?);
     print(a(2));
-    print(test("1"));
+    print(test(1));
     return 1;
 }

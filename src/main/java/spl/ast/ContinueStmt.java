@@ -11,6 +11,6 @@ public class ContinueStmt extends Statement {
 
     @Override
     protected void internalProcess(Environment env) {
-        env.pauseLoop();
+        env.pauseLoop(lineFile);
     }
 }

@@ -1,10 +1,11 @@
 package spl.ast;
 
 import spl.interpreter.env.Environment;
-import spl.interpreter.env.EnvironmentError;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.splObjects.Function;
 import spl.interpreter.splObjects.SplMethod;
+import spl.util.Constants;
 import spl.util.LineFile;
 
 import java.util.Map;
@@ -32,7 +33,12 @@ public class ContractNode extends Statement {
 
     public void evalAsMethod(Map<String, Reference> classMethods, String className, Environment classDefEnv) {
         Reference methodPtr = classMethods.get(fnName);
-        if (methodPtr == null) throw new EnvironmentError("Method '" + fnName + "' is not defined. ", lineFile);
+        if (methodPtr == null) {
+//            throw new EnvironmentError("Method '" + fnName + "' is not defined. ", lineFile);
+            SplInvokes.throwException(classDefEnv, Constants.NAME_ERROR, "Method '" + fnName + "' is not defined.",
+                    lineFile);
+            return;
+        }
         SplMethod method = (SplMethod) classDefEnv.getMemory().get(methodPtr);
         paramContracts.getChildren().add(0, new NameNode(className + "?", lineFile));
         method.setContract(classDefEnv, paramContracts, rtnContract);

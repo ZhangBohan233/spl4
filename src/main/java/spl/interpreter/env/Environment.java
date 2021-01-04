@@ -1,6 +1,6 @@
 package spl.interpreter.env;
 
-import spl.interpreter.*;
+import spl.interpreter.Memory;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
@@ -8,19 +8,20 @@ import spl.interpreter.primitives.Undefined;
 import spl.util.Constants;
 import spl.util.LineFile;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class Environment {
 
     private static int envCount = 0;
-
+    public final Environment outer;
+    public final GlobalEnvironment globalEnv;
     /**
      * Id is guaranteed unique.
      */
     private final int envId;
-
-    public final Environment outer;
-    public final GlobalEnvironment globalEnv;
     protected Memory memory;
 
     protected Map<String, VarEntry> variables = new HashMap<>();
@@ -50,15 +51,15 @@ public abstract class Environment {
 
     public abstract boolean isSub();
 
-    public abstract void setReturn(SplElement typeValue);
+    public abstract void setReturn(SplElement typeValue, LineFile lineFile);
 
     public abstract boolean interrupted();
 
-    public abstract void breakLoop();
+    public abstract void breakLoop(LineFile lineFile);
 
     public abstract void resumeLoop();
 
-    public abstract void pauseLoop();
+    public abstract void pauseLoop(LineFile lineFile);
 
     public abstract void invalidate();
 
@@ -95,41 +96,60 @@ public abstract class Environment {
     }
 
     public void defineVar(String name, LineFile lineFile) {
-        if (localHasName(name, lineFile))
-            throw new EnvironmentError("Variable '" + name + "' already defined. ", lineFile);
+        if (localHasName(name, lineFile)) {
+            SplInvokes.throwException(this, Constants.NAME_ERROR, "Variable '" + name + "' already defined.",
+                    lineFile);
+        return;}
 
         variables.put(name, VarEntry.varEntry());
     }
 
     public void defineVarAndSet(String name, SplElement value, LineFile lineFile) {
-        if (localHasName(name, lineFile))
-            throw new EnvironmentError("Variable '" + name + "' already defined. ", lineFile);
+        if (localHasName(name, lineFile)) {
+//            throw new EnvironmentError("Variable '" + name + "' already defined. ", lineFile);
+            SplInvokes.throwException(this, Constants.NAME_ERROR, "Variable '" + name + "' already defined.",
+                    lineFile);
+        return;}
 
         variables.put(name, VarEntry.varEntry(value));
     }
 
     public void defineConst(String name, LineFile lineFile) {
-        if (localHasName(name, lineFile))
-            throw new EnvironmentError("Constant '" + name + "' already defined. ", lineFile);
+        if (localHasName(name, lineFile)) {
+            SplInvokes.throwException(this, Constants.NAME_ERROR, "Constant '" + name + "' already defined.",
+                    lineFile);
+        return;}
 
         // not using 'defaultValue' because 'null' is the mark of unassigned constant
         variables.put(name, VarEntry.constEntry());
     }
 
     public void defineConstAndSet(String name, SplElement value, LineFile lineFile) {
-        if (localHasName(name, lineFile))
-            throw new EnvironmentError("Constant '" + name + "' already defined. ", lineFile);
+        if (localHasName(name, lineFile)) {
+            SplInvokes.throwException(this, Constants.NAME_ERROR, "Constant '" + name + "' already defined.",
+                    lineFile);
+            return;
+        }
 
         variables.put(name, VarEntry.constEntry(value));
     }
 
     public void setVar(String name, SplElement value, LineFile lineFile) {
         VarEntry entry = innerGet(name, true);
-        if (entry == null)
-            throw new EnvironmentError("Variable '" + name + "' is not defined in this scope. ", lineFile);
+        if (entry == null) {
+//            throw new EnvironmentError("Variable '" + name + "' is not defined in this scope. ", lineFile);
+            SplInvokes.throwException(this,
+                    Constants.NAME_ERROR,
+                    "Variable '" + name + "' is not defined in this scope.",
+                    lineFile);
+            return;
+        }
 
         if (entry.constant && entry.getValue() != Undefined.UNDEFINED) {
-            throw new EnvironmentError("Constant '" + name + "' is not assignable. ", lineFile);
+            SplInvokes.throwException(this, Constants.NAME_ERROR, "Constant '" + name + "' is not assignable.",
+                    lineFile);
+            return;
+//            throw new EnvironmentError("Constant '" + name + "' is not assignable. ", lineFile);
         }
 
         entry.setValue(value);
@@ -139,8 +159,8 @@ public abstract class Environment {
         VarEntry se = innerGet(name, true);
         if (se == null) {
 //            throw new EnvironmentError("Name '" + name + "' not found. ", lineFile);
-            SplInvokes.throwException(this, Constants.NAME_ERROR, "Name '" + name + "' not found. ", lineFile);
-            return Undefined.ERROR;
+            return SplInvokes.throwExceptionWithError(
+                    this, Constants.NAME_ERROR, "Name '" + name + "' not found.", lineFile);
         }
 
         return se.getValue();
@@ -155,8 +175,8 @@ public abstract class Environment {
      * <p>
      * Note that this method is overridden in {@code InstanceEnvironment}
      *
-     * @param name         the name
-     * @param isFirst      whether this is called by another function. {@code false} if this call is self recursion
+     * @param name    the name
+     * @param isFirst whether this is called by another function. {@code false} if this call is self recursion
      * @return the value
      */
     protected VarEntry innerGet(String name, boolean isFirst) {

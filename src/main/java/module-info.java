@@ -6,6 +6,7 @@ module spl {
     requires java.desktop;
 
     opens spl.tools;
+    opens spl.tools.codeArea;
     opens spl.ast;
     opens spl.util;
 
@@ -16,6 +17,7 @@ module spl {
     exports spl.interpreter.splObjects;
     exports spl.lexer.treeList;
     exports spl.tools;
+    exports spl.tools.codeArea;
     exports spl.ast;
     exports spl.util;
 }

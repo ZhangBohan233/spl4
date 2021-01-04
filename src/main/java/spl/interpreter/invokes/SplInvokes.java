@@ -31,9 +31,15 @@ import java.util.Scanner;
 @SuppressWarnings("unused")
 public class SplInvokes extends NativeObject {
 
-    private PrintStream stdout = System.out;
-    private PrintStream stderr = System.err;
-    private InputStream stdin = System.in;
+    private PrintStream stdout;
+    private PrintStream stderr;
+    private InputStream stdin;
+
+    public SplInvokes(PrintStream stdout, InputStream stdin, PrintStream stderr) {
+        this.stdout = stdout;
+        this.stdin = stdin;
+        this.stderr = stderr;
+    }
 
     /**
      * Static field

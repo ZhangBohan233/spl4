@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<?import spl.tools.CodeArea?>
+<?import spl.tools.codeArea.CodeArea?>
 <GridPane prefHeight="600.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/11.0.1"
           xmlns:fx="http://javafx.com/fxml/1" fx:controller="spl.tools.IdleController"
           hgap="5.0">

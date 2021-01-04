@@ -16,7 +16,7 @@ public class MethodEnvironment extends FunctionEnvironment {
         VarEntry entry = variables.get(name);
         if (entry == null) {
             VarEntry thisEntry = variables.get(Constants.THIS);
-            if (thisEntry == null)
+            if (thisEntry == null)  // do not remove this
                 throw new EnvironmentError("Pointer 'this' not in scope. ", LineFile.LF_INTERPRETER);
             Instance thisIns = (Instance) getMemory().get((Reference) thisEntry.getValue());
             entry = thisIns.getEnv().innerGet(name, isFirst);
