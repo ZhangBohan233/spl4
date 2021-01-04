@@ -177,14 +177,6 @@ public class CodeArea extends ScrollPane {
         caretRow.getReadOnlyProperty().addListener(((observable, oldValue, newValue) -> {
             if (newValue.intValue() != oldValue.intValue()) {
                 refreshCaretFlasher();
-//                scrollDownToCaret();
-//                double caretY = getPosFromLineIndex(newValue.intValue());
-//                double caretPercent = (caretY) / getPrefHeight();
-//                int screenLines = (int) (getPrefHeight() / lineHeight);
-//                System.out.println(screenLines);
-//                if (newValue.intValue() + 3 > screenLines) {
-//                    setVvalue(1.0);
-//                }
             }
         }));
         caretCol.getReadOnlyProperty().addListener(((observable, oldValue, newValue) -> {
