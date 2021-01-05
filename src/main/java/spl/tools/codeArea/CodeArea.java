@@ -8,9 +8,11 @@ import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.image.PixelWriter;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 
@@ -130,6 +132,9 @@ public class CodeArea extends ScrollPane {
             }
             lineGc.fillText(String.valueOf(lineIndex + 1), leftMargin, realY);
         }
+        if (fct != null) {
+            fct.showCaretNow();
+        }
     }
 
     public void close() {
@@ -213,14 +218,13 @@ public class CodeArea extends ScrollPane {
     }
 
     private synchronized void refreshCaretFlasher() {
-        stopTimer();
-        startTimer();
+        fct.showCaretNow();
     }
 
     private synchronized void stopTimer() {
         if (timer != null) {
-            fct.clearCaret();
             timer.cancel();
+            fct.clearCaret();
             fct = null;
             timer = null;
         }
@@ -473,36 +477,74 @@ public class CodeArea extends ScrollPane {
         private boolean showing;
         private double showingY;
         private double showingX;
+        private boolean manualShow;
 
         @Override
         public void run() {
-            if (showing) {
-                drawCaret(showingY, showingX, background);  // erase
-            } else {
-                double y = getPosFromLineIndex(caretRow.get());
-                double x;
-                if (caretCol.get() == 0) x = leftMargin;
-                else x = textEditor.getXofCol(caretRow.get(), caretCol.get());
+            runTask();
+        }
 
-                drawCaret(y, x, CODE);
-                showingY = y;
-                showingX = x;
+        private synchronized void runTask() {
+            if (showing) {
+                if (manualShow) {
+                    manualShow = false;
+                    return;
+                }
+                hideCaret();  // erase
+            } else {
+                showCaret();
             }
             showing = !showing;
         }
 
         synchronized void clearCaret() {
             if (showing) {
-                drawCaret(showingY, showingX, background);
+                hideCaret();
                 showing = false;
             }
         }
 
+        synchronized void showCaretNow() {
+            if (!showing) {
+                showCaret();
+                showing = true;
+                manualShow = true;
+            } else {
+                hideCaret();
+                showCaret();
+            }
+        }
+
+        private synchronized void hideCaret() {
+            drawCaret(showingY, showingX, background);
+        }
+
+        private synchronized void showCaret() {
+            double y = getPosFromLineIndex(caretRow.get());
+            double x;
+            if (caretCol.get() == 0) x = leftMargin;
+            else x = textEditor.getXofCol(caretRow.get(), caretCol.get());
+
+            drawCaret(y, x, CODE);
+            showingY = y;
+            showingX = x;
+        }
+
         private synchronized void drawCaret(double y, double x, Paint paint) {
-            System.out.println(y + " " + x);
-            graphicsContext.setStroke(paint);
-            graphicsContext.setLineWidth(1.0);
-            graphicsContext.strokeLine(x, y, x, y + lineHeight);
+            drawVerticalLine(y, x - 1, paint);
+        }
+
+        private synchronized void drawVerticalLine(double y, double x, Paint paint) {
+            PixelWriter pw = graphicsContext.getPixelWriter();
+            Color color = (Color) paint;
+
+            int y0 = (int) Math.round(y);
+            int y1 = (int) Math.round(y + lineHeight);
+            int xx = (int) Math.round(x);
+
+            for (int yy = y0; yy < y1; yy++) {
+                pw.setColor(xx, yy, color);
+            }
         }
     }
 }

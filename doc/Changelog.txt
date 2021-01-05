@@ -1,10 +1,12 @@
 ===== Version 4034 =====
-2021/01/03
+2021/01/05
 
 * Implemented syntax sugar "while"
 * Update console: stderr and stdin
+* More on error system change
 * Update IDLE:
-    *
+    * Custom code area
+    * Environment viewer
 
 ===== Version 4033 =====
 2020/12/31
