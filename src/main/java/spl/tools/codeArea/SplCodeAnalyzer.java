@@ -1,5 +1,6 @@
 package spl.tools.codeArea;
 
+import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import spl.ast.*;
 import spl.lexer.*;
@@ -22,7 +23,7 @@ public class SplCodeAnalyzer extends CodeAnalyzer {
 
     private static final char[] SPLITTERS = {' ', '.', ',', ';', '(', ')', '[', ']', '{', '}'};
 
-    private Timer timer;
+    private final Timer timer;
 
     public SplCodeAnalyzer(CodeArea codeArea, Font baseFont) {
         super(codeArea, baseFont);
@@ -36,28 +37,30 @@ public class SplCodeAnalyzer extends CodeAnalyzer {
         String[] words = splitWords(line, SPLITTERS);
         int index = 0;
         for (String word : words) {
-            for (String kw : KW_COLORED) {
-                if (word.equals(kw)) {
-                    for (int i = 0; i < word.length(); i++) {
-                        CodeArea.Text text = line.get(index + i);
-                        text.setPaint(keywordPaint);
-                        text.setFont(keywordFont);
-                    }
-                    break;
-                } else {
-                    for (int i = 0; i < word.length(); i++) {
-                        CodeArea.Text text = line.get(index + i);
-                        text.setPaint(codePaint);
-                        text.setFont(codeFont);
-                    }
+            if (KW_COLORED.contains(word)) {
+                for (int i = 0; i < word.length(); i++) {
+                    CodeArea.Text text = line.get(index + i);
+                    text.setPaint(keywordPaint);
+                    text.setFont(keywordFont);
+                }
+            } else if (builtinNames.contains(word)) {
+                for (int i = 0; i < word.length(); i++) {
+                    CodeArea.Text text = line.get(index + i);
+                    text.setPaint(builtinPaint);
+                    text.setFont(codeFont);
+                }
+            } else {
+                for (int i = 0; i < word.length(); i++) {
+                    CodeArea.Text text = line.get(index + i);
+                    text.setPaint(codePaint);
+                    text.setFont(codeFont);
                 }
             }
             index += word.length();
         }
     }
 
-    @Override
-    public void markVariable(List<CodeArea.Text> line) {
+    private void mark(List<CodeArea.Text> line, String[] words, Set<String> targets, Paint paint, Font font) {
 
     }
 
@@ -80,7 +83,7 @@ public class SplCodeAnalyzer extends CodeAnalyzer {
     private String[] splitWords(List<CodeArea.Text> line, char[] splitters) {
         List<String> res = new ArrayList<>();
         StringBuilder builder = new StringBuilder();
-        int lineSize = line.size();
+//        int lineSize = line.size();
         for (CodeArea.Text value : line) {
             char text = value.text;
             if (Utilities.arrayContains(splitters, text)) {

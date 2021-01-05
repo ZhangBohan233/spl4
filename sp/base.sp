@@ -12,5 +12,6 @@ class A {
 fn main() {
     b := 23;
     a := new A(b);
+    print(123);
     return test(a.x);
 }

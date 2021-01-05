@@ -35,13 +35,14 @@ public class CodeArea extends ScrollPane {
     private final GraphicsContext graphicsContext;
     private final ReadOnlyIntegerWrapper caretRow = new ReadOnlyIntegerWrapper();
     private final ReadOnlyIntegerWrapper caretCol = new ReadOnlyIntegerWrapper();
+    protected CodeAnalyzer codeAnalyzer;
+    protected CodePref codePref = new CodePref();
     @FXML
     Canvas canvas;
     @FXML
     Canvas lineCanvas;
     private Font codeFont = Font.font("Lucida Console", 12.0);
     private Font keywordFont = Font.font("Lucida Console", 12.0);
-    private CodeAnalyzer codeAnalyzer;
     private double lineHeight = 15.6;
     private double charWidth = 7.8;
     private Timer timer;
@@ -59,8 +60,7 @@ public class CodeArea extends ScrollPane {
             throw new RuntimeException("Failed to generate view", e);
         }
 
-//        for (String x : Font.getFontNames()) System.out.println(x);
-        codeAnalyzer = new SplCodeAnalyzer(this, codeFont);
+        codeAnalyzer = new EmptyCodeAnalyzer(this, codeFont);
 
         canvas.setHeight(lineHeight);
         canvas.setCursor(Cursor.TEXT);
@@ -98,10 +98,22 @@ public class CodeArea extends ScrollPane {
         this.codeAnalyzer = codeAnalyzer;
     }
 
+    public CodeAnalyzer getCodeAnalyzer() {
+        return codeAnalyzer;
+    }
+
     public void setFont(Font font) {
         this.codeFont = font;
         this.charWidth = font.getSize() * 0.65;
         this.lineHeight = this.charWidth * 2;
+    }
+
+    public Font getCodeFont() {
+        return codeFont;
+    }
+
+    public void setCodePref(CodePref codePref) {
+        this.codePref = codePref;
     }
 
     public synchronized void clearCanvas() {
@@ -434,8 +446,108 @@ public class CodeArea extends ScrollPane {
             caretRow.set(caretRow.get() + 1);
             caretCol.set(0);
 
+            boolean indented = false;
+            if (codePref.isAutoBackBrace()) {
+                if (oldLineTrimmed.size() > 0) {
+                    if (autoAddBack(newLine)) {
+                        if (codePref.isAutoIndent()) {
+                            /*
+                            .... {
+                                |
+                            }
+                            */
+                            List<Text> blankLine = new ArrayList<>();
+                            lines.add(caretRow.get(), blankLine);
+                            autoIndent(blankLine);
+                            indented = true;
+                        }
+                    }
+                }
+            }
+            if (!indented && codePref.isAutoIndent()) {
+                autoIndent(newLine);
+            }
+
             analyze(newLine);
             analyze(oldLineTrimmed);
+        }
+
+        private void autoIndent(List<Text> newLine) {
+            int lastLineIndex = caretRow.get() - 1;
+            int lastIndent = Math.max(firstNonSpaceIndex(getLine(lastLineIndex)), 0);
+            int thisIndent = firstNonSpaceIndex(newLine);
+            char nlFirstChar;
+            if (thisIndent < 0) {
+                thisIndent = 0;
+                nlFirstChar = '\0';
+            } else {
+                nlFirstChar = newLine.get(thisIndent).text;
+            }
+            char lastChar = lastNonSpaceChar(lastLineIndex);
+            int expectedIndent;
+            if (lastChar == ';' || nlFirstChar == '}' || nlFirstChar == ')' || nlFirstChar == ']') {
+                expectedIndent = lastIndent;
+            } else if (lastChar == '{' || lastChar == '(' || lastChar == '[') {
+                expectedIndent = lastIndent + 4;
+            } else {
+                expectedIndent = lastIndent + 8;
+            }
+            int indentNeeded = expectedIndent - thisIndent;
+            List<Text> insert = new ArrayList<>();
+            for (int i = 0; i < indentNeeded; i++) {
+                insert.add(new Text(' '));
+            }
+            newLine.addAll(0, insert);
+            caretCol.set(caretCol.get() + indentNeeded);
+        }
+
+        private boolean autoAddBack(List<Text> newLine) {
+            for (char[] fb : CodePref.FRONT_BACKS) {
+                char front = fb[0];
+                char back = fb[1];
+                char last = lastNonSpaceChar(caretRow.get() - 1);
+                if (last == front) {
+                    if (nextNonSpaceChar(caretRow.get()) != back) {
+                        int indexNewLine = firstNonSpaceIndex(newLine);
+                        addBack(newLine, back, Math.max(indexNewLine, 0));
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private char nextNonSpaceChar(int row) {
+            for (int i = row; i < linesCount(); i++) {
+                List<Text> line = getLine(i);
+                for (Text t : line) {
+                    if (t.text != ' ') return t.text;
+                }
+            }
+            return '\0';
+        }
+
+        private char lastNonSpaceChar(int row) {
+            for (int i = row; i >= 0; i--) {
+                List<Text> line = getLine(i);
+                for (int j = line.size() - 1; j >= 0; j--) {
+                    Text t = line.get(j);
+                    if (t.text != ' ') return t.text;
+                }
+            }
+            return '\0';
+        }
+
+        private void addBack(List<Text> line, char toAdd, int firstNonSpaceIndex) {
+            line.add(firstNonSpaceIndex, new Text(toAdd));
+            caretCol.set(firstNonSpaceIndex);
+        }
+
+        private int firstNonSpaceIndex(List<Text> line) {
+            for (int i = 0; i < line.size(); i++) {
+                if (line.get(i).text != ' ') return i;
+            }
+            return -1;
         }
 
         int lineSize(int lineIndex) {
@@ -456,7 +568,6 @@ public class CodeArea extends ScrollPane {
 
         private void analyze(List<Text> line) {
             codeAnalyzer.markKeyword(line);
-            codeAnalyzer.markVariable(line);
         }
 
         private int getColOfIndex(int lineIndex, double x) {

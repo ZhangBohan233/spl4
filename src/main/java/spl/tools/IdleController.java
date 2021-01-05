@@ -20,8 +20,10 @@ import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.*;
+import spl.tools.codeArea.CodeAnalyzer;
 import spl.tools.codeArea.CodeArea;
 import spl.tools.codeArea.CodeFile;
+import spl.tools.codeArea.SplCodeAnalyzer;
 import spl.util.Constants;
 import spl.util.LineFilePos;
 import spl.util.Utilities;
@@ -91,10 +93,23 @@ public class IdleController implements Initializable {
         refreshTable();
         recordBuiltinNames();
 
+        codeArea.setCodeAnalyzer(createSplCodeAnalyzer());
         codeArea.setCodeFile(openingFile);
 
         timer = new Timer();
         timer.schedule(new RefreshMemoryTask(), 0, 500);
+    }
+
+    private CodeAnalyzer createSplCodeAnalyzer() {
+        CodeAnalyzer codeAnalyzer = new SplCodeAnalyzer(codeArea, codeArea.getCodeFont());
+        Set<String> builtinNames = new HashSet<>(console.getGlobalEnvironment().keyAttributes().keySet());
+
+        Reference langRef = (Reference) console.getGlobalEnvironment().get("lang", LineFilePos.LFP_CONSOLE);
+        SplModule langModule = (SplModule) console.getGlobalEnvironment().getMemory().get(langRef);
+        builtinNames.addAll(langModule.getEnv().keyAttributes().keySet());
+
+        codeAnalyzer.setBuiltinNames(builtinNames);
+        return codeAnalyzer;
     }
 
     private void recordBuiltinNames() {
