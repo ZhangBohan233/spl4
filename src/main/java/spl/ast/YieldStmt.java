@@ -1,11 +1,11 @@
 package spl.ast;
 
 import spl.interpreter.env.Environment;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class YieldStmt extends UnaryStmt {
 
-    public YieldStmt(LineFile lineFile) {
+    public YieldStmt(LineFilePos lineFile) {
         super("yield", true, lineFile);
     }
 

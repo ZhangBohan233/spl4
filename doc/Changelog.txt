@@ -1,3 +1,10 @@
+===== Version 4035 =====
+2021/01/06
+
+* Updated tracing system: added attribute 'pos' for lineFile
+* Updated IDLE:
+    * Basic code analyzer for spl
+
 ===== Version 4034 =====
 2021/01/05
 

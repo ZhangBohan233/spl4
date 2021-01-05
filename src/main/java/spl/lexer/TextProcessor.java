@@ -1,7 +1,7 @@
 package spl.lexer;
 
 import spl.lexer.treeList.*;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,7 +57,7 @@ public class TextProcessor {
         Element ele = parent.get(index++);
         if (ele instanceof AtomicElement) {
             Token token = ((AtomicElement) ele).atom;
-            LineFile lineFile = token.lineFile;
+            LineFilePos lineFile = token.lineFile;
             if (token instanceof IdToken) {
                 String id = ((IdToken) token).getIdentifier();
                 Element next;

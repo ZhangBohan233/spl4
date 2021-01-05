@@ -1,12 +1,12 @@
 package spl.lexer;
 
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class IdToken extends Token {
 
     private String identifier;
 
-    public IdToken(String identifier, LineFile lineFile) {
+    public IdToken(String identifier, LineFilePos lineFile) {
         super(lineFile);
         this.identifier = identifier;
     }

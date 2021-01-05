@@ -1,12 +1,12 @@
 package spl.lexer;
 
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class StrToken extends Token {
 
     private final String literal;
 
-    public StrToken(String literal, LineFile lineFile) {
+    public StrToken(String literal, LineFilePos lineFile) {
         super(lineFile);
         this.literal = replaceEscapes(literal, lineFile);
     }
@@ -15,7 +15,7 @@ public class StrToken extends Token {
         return literal;
     }
 
-    private static String replaceEscapes(String s, LineFile lineFile) {
+    private static String replaceEscapes(String s, LineFilePos lineFile) {
         StringBuilder builder = new StringBuilder();
         int strLen = s.length();
         for (int i = 0; i < strLen; i++) {

@@ -8,7 +8,7 @@ import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.*;
 import spl.interpreter.splErrors.NativeTypeError;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class SplArray extends SplObject {
 
@@ -75,7 +75,7 @@ public class SplArray extends SplObject {
         }
     }
 
-    public static SplElement getItemAtIndex(Reference arrPtr, int index, Environment env, LineFile lineFile) {
+    public static SplElement getItemAtIndex(Reference arrPtr, int index, Environment env, LineFilePos lineFile) {
         SplArray array = (SplArray) env.getMemory().get(arrPtr);
         if (index < 0 || index >= array.length) {
 //            throw new ArrayIndexError("Index " + index + " out of array length " + array.length + ". ", lineFile);
@@ -89,7 +89,7 @@ public class SplArray extends SplObject {
                                       int index,
                                       SplElement value,
                                       Environment env,
-                                      LineFile lineFile) {
+                                      LineFilePos lineFile) {
         SplArray array = (SplArray) env.getMemory().get(arrPtr);
         if (value.type() == array.elementTypeCode) {
             if (index < 0 || index >= array.length) {
@@ -131,7 +131,7 @@ public class SplArray extends SplObject {
         return new int[]{array.length, firstEleAddr};
     }
 
-    public SplElement getAttr(Node attrNode, Environment env, LineFile lineFile) {
+    public SplElement getAttr(Node attrNode, Environment env, LineFilePos lineFile) {
         if (attrNode instanceof NameNode && ((NameNode) attrNode).getName().equals(Constants.ARRAY_LENGTH)) {
             return new Int(length);
         } else {

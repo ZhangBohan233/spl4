@@ -1,14 +1,14 @@
 package spl.ast;
 
 import spl.interpreter.env.Environment;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class CatchStmt extends Statement {
 
     final Expression condition;
     final BlockStmt body;
 
-    public CatchStmt(Expression condition, BlockStmt body, LineFile lineFile) {
+    public CatchStmt(Expression condition, BlockStmt body, LineFilePos lineFile) {
         super(lineFile);
 
         this.condition = condition;

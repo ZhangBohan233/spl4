@@ -1,7 +1,7 @@
 package spl.lexer;
 
 import spl.lexer.treeList.*;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 import spl.util.Utilities;
 
 import java.util.ArrayList;
@@ -132,12 +132,13 @@ public abstract class Tokenizer {
         }
     }
 
-    void proceedLine(String line, LineFile lineFile) {
+    void proceedLine(String line, LineFilePos.LineFile lineFile) {
         boolean inStr = false;
         int len = line.length();
         StringBuilder stringLiteral = new StringBuilder();
         StringBuilder nonLiteral = new StringBuilder();
-        for (int i = 0; i < len; ++i) {
+        int partStartPos = 0;
+        for (int i = 0; i < len; i++) {
             char ch = line.charAt(i);
             if (inDoc) {
                 if (i < len - 1 && ch == '*' && line.charAt(i + 1) == '/') {
@@ -151,8 +152,9 @@ public abstract class Tokenizer {
                     // in string literal
                     if (ch == '"') {
                         inStr = false;
-                        tokens.add(new StrToken(stringLiteral.toString(), lineFile));
+                        tokens.add(new StrToken(stringLiteral.toString(), new LineFilePos(lineFile, partStartPos)));
                         stringLiteral.setLength(0);
+                        partStartPos = i;
                     } else {
                         stringLiteral.append(ch);
                     }
@@ -165,37 +167,45 @@ public abstract class Tokenizer {
                     } else if (i < len - 1 && ch == '/' && line.charAt(i + 1) == '/') {
                         // enter comment, end of this line
                         if (nonLiteral.length() > 2)
-                            lineTokenize(nonLiteral.substring(0, nonLiteral.length() - 2), lineFile);
+                            lineTokenize(nonLiteral.substring(0, nonLiteral.length() - 2),
+                                    lineFile, partStartPos);
                         nonLiteral.setLength(0);
+                        partStartPos = i;
                         break;
                     } else if (ch == '"') {
                         // enter string literal
                         inStr = true;
-                        lineTokenize(nonLiteral.toString(), lineFile);
+                        lineTokenize(nonLiteral.toString(), lineFile, partStartPos);
                         nonLiteral.setLength(0);
+                        partStartPos = i;
                     } else if (ch == '\'') {
                         // enter char literal
                         if (i < len - 2 && line.charAt(i + 2) == '\'') {
                             // normal char
-                            lineTokenize(nonLiteral.toString(), lineFile);
+                            lineTokenize(nonLiteral.toString(), lineFile, partStartPos);
                             nonLiteral.setLength(0);
-                            tokens.add(new CharToken(line.charAt(i + 1), lineFile));
+                            partStartPos = i;
+                            tokens.add(new CharToken(line.charAt(i + 1), new LineFilePos(lineFile, partStartPos)));
                             i += 2;
                         } else if (i < len - 3 && line.charAt(i + 3) == '\'' && line.charAt(i + 1) == '\\') {
                             // escape char
-                            lineTokenize(nonLiteral.toString(), lineFile);
+                            lineTokenize(nonLiteral.toString(), lineFile, partStartPos);
                             nonLiteral.setLength(0);
+                            partStartPos = i;
                             char escaped = line.charAt(i + 2);
                             if (escaped == '\\') {
-                                tokens.add(new CharToken('\\', lineFile));
+                                tokens.add(new CharToken('\\', new LineFilePos(lineFile, partStartPos)));
                             } else if (CharToken.ESCAPES.containsKey(escaped)) {
-                                tokens.add(new CharToken(CharToken.ESCAPES.get(escaped), lineFile));
+                                tokens.add(new CharToken(CharToken.ESCAPES.get(escaped),
+                                        new LineFilePos(lineFile, partStartPos)));
                             } else {
-                                throw new SyntaxError("Invalid escape '\\" + escaped + "'. ", lineFile);
+                                throw new SyntaxError("Invalid escape '\\" + escaped + "'. ",
+                                        new LineFilePos(lineFile, partStartPos));
                             }
                             i += 3;
                         } else {
-                            throw new SyntaxError("Char literal must contain exactly one symbol. ", lineFile);
+                            throw new SyntaxError("Char literal must contain exactly one symbol. ",
+                                    new LineFilePos(lineFile, partStartPos));
                         }
                     } else {
                         nonLiteral.append(ch);
@@ -204,29 +214,34 @@ public abstract class Tokenizer {
             }
         }
         if (nonLiteral.length() > 0) {
-            lineTokenize(nonLiteral.toString(), lineFile);
+            lineTokenize(nonLiteral.toString(), lineFile, partStartPos);
         }
     }
 
-    private void lineTokenize(String nonLiteral, LineFile lineFile) {
+    private void lineTokenize(String nonLiteral, LineFilePos.LineFile lineFile, int startPos) {
         List<String> list = normalize(nonLiteral);
         int len = list.size();
+        int pos = startPos;
         for (int i = 0; i < len; ++i) {
             String s = list.get(i);
             if (StringTypes.isInteger(s)) {
                 if (i < len - 2 && list.get(i + 1).equals(".") && StringTypes.isInteger(list.get(i + 2))) {
                     // is a float:   number.number
-                    FloatToken floatToken = new FloatToken(s + "." + list.get(i + 2), lineFile);
+                    FloatToken floatToken = new FloatToken(s + "." + list.get(i + 2),
+                            new LineFilePos(lineFile, pos));
                     tokens.add(floatToken);
+                    for (int j = i + 1; j < i + 3; j++) startPos += list.get(j).length();
                     i += 2;
                 } else {
-                    tokens.add(new IntToken(s, lineFile));
+                    tokens.add(new IntToken(s, new LineFilePos(lineFile, pos)));
                 }
             } else if (StringTypes.isIdentifier(s)) {
-                tokens.add(new IdToken(s, lineFile));
+//                System.out.println(s + " " + pos);
+                tokens.add(new IdToken(s, new LineFilePos(lineFile, pos)));
             } else if (EXTRA_IDENTIFIERS.contains(s)) {
-                tokens.add(new IdToken(s, lineFile));
+                tokens.add(new IdToken(s, new LineFilePos(lineFile, pos)));
             }
+            pos += s.length();
         }
     }
 

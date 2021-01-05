@@ -1,9 +1,9 @@
 package spl.lexer.treeList;
 
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class BracketList extends CollectiveElement {
-    public BracketList(CollectiveElement parentElement, LineFile lineFile) {
+    public BracketList(CollectiveElement parentElement, LineFilePos lineFile) {
         super(parentElement, lineFile);
     }
 

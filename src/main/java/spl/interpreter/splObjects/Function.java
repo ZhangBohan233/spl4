@@ -11,7 +11,7 @@ import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splErrors.NativeError;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.Map;
 
@@ -26,7 +26,7 @@ public class Function extends UserFunction {
      * Constructor for regular function.
      */
     public Function(BlockStmt body, SplCallable.Parameter[] params, Environment definitionEnv,
-                    String definedName, LineFile lineFile) {
+                    String definedName, LineFilePos lineFile) {
 
         super(params, definitionEnv, lineFile);
 
@@ -82,7 +82,7 @@ public class Function extends UserFunction {
         return call(evaluatedArgs, callingEnv, arguments.lineFile);
     }
 
-    private void checkParamContracts(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile lineFile) {
+    private void checkParamContracts(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile) {
         if (hasContract && callingEnv.getMemory().isCheckContract()) {
             int argIndex = 0;
             for (Parameter param : params) {
@@ -119,13 +119,13 @@ public class Function extends UserFunction {
         }
     }
 
-    private void checkRtnContract(SplElement rtnValue, Environment callingEnv, LineFile lineFile) {
+    private void checkRtnContract(SplElement rtnValue, Environment callingEnv, LineFilePos lineFile) {
         if (hasContract && callingEnv.getMemory().isCheckContract()) {
             callContract(rtnContract, rtnValue, callingEnv, lineFile);
         }
     }
 
-    private Reference getContractFunction(Node conNode, Environment callingEnv, LineFile lineFile) {
+    private Reference getContractFunction(Node conNode, Environment callingEnv, LineFilePos lineFile) {
         if (conNode instanceof BinaryOperator) {
             BinaryOperator bo = (BinaryOperator) conNode;
             if (bo.getOperator().equals("or")) {
@@ -148,7 +148,7 @@ public class Function extends UserFunction {
         }
     }
 
-    private void callContract(Node conNode, SplElement arg, Environment callingEnv, LineFile lineFile) {
+    private void callContract(Node conNode, SplElement arg, Environment callingEnv, LineFilePos lineFile) {
         Reference conFnPtr = getContractFunction(conNode, callingEnv, lineFile);
         if (callingEnv.hasException()) return;
         SplCallable callable = (SplCallable) callingEnv.getMemory().get(conFnPtr);
@@ -170,13 +170,13 @@ public class Function extends UserFunction {
         }
     }
 
-    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile argLineFile) {
+    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos argLineFile) {
         FunctionEnvironment scope = new FunctionEnvironment(definitionEnv, callingEnv, definedName);
         return callEssential(evaluatedArgs, callingEnv, scope, argLineFile);
     }
 
     protected SplElement callEssential(EvaluatedArguments evaluatedArgs, Environment callingEnv,
-                                       FunctionEnvironment scope, LineFile argLineFile) {
+                                       FunctionEnvironment scope, LineFilePos argLineFile) {
         checkValidArgCount(evaluatedArgs.positionalArgs.size(), definedName, argLineFile);
 
         checkParamContracts(evaluatedArgs, callingEnv, argLineFile);

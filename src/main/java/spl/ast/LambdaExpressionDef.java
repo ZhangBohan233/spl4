@@ -5,14 +5,14 @@ import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.Function;
 import spl.interpreter.splObjects.LambdaExpression;
 import spl.interpreter.splObjects.SplCallable;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class LambdaExpressionDef extends Expression {
 
     private final Line parameters;
     private final Expression body;
 
-    public LambdaExpressionDef(Line parameters, Expression body, LineFile lineFile) {
+    public LambdaExpressionDef(Line parameters, Expression body, LineFilePos lineFile) {
         super(lineFile);
 
         this.parameters = parameters;

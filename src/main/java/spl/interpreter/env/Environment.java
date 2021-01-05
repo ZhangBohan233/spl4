@@ -6,7 +6,7 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,7 +37,7 @@ public abstract class Environment {
         return memory;
     }
 
-    public void defineFunction(String name, Reference funcPtr, LineFile lineFile) {
+    public void defineFunction(String name, Reference funcPtr, LineFilePos lineFile) {
         variables.put(name, VarEntry.varEntry(funcPtr));
     }
 
@@ -51,23 +51,23 @@ public abstract class Environment {
 
     public abstract boolean isSub();
 
-    public abstract void setReturn(SplElement typeValue, LineFile lineFile);
+    public abstract void setReturn(SplElement typeValue, LineFilePos lineFile);
 
     public abstract boolean interrupted();
 
-    public abstract void breakLoop(LineFile lineFile);
+    public abstract void breakLoop(LineFilePos lineFile);
 
     public abstract void resumeLoop();
 
-    public abstract void pauseLoop(LineFile lineFile);
+    public abstract void pauseLoop(LineFilePos lineFile);
 
     public abstract void invalidate();
 
-    public abstract void fallthrough(LineFile lineFile);
+    public abstract void fallthrough(LineFilePos lineFile);
 
     public abstract boolean isFallingThrough();
 
-    public abstract void yield(SplElement value, LineFile lineFile);
+    public abstract void yield(SplElement value, LineFilePos lineFile);
 
     public abstract SplElement yieldResult();
 
@@ -95,7 +95,7 @@ public abstract class Environment {
         return attrs;
     }
 
-    public void defineVar(String name, LineFile lineFile) {
+    public void defineVar(String name, LineFilePos lineFile) {
         if (localHasName(name, lineFile)) {
             SplInvokes.throwException(this, Constants.NAME_ERROR, "Variable '" + name + "' already defined.",
                     lineFile);
@@ -104,7 +104,7 @@ public abstract class Environment {
         variables.put(name, VarEntry.varEntry());
     }
 
-    public void defineVarAndSet(String name, SplElement value, LineFile lineFile) {
+    public void defineVarAndSet(String name, SplElement value, LineFilePos lineFile) {
         if (localHasName(name, lineFile)) {
 //            throw new EnvironmentError("Variable '" + name + "' already defined. ", lineFile);
             SplInvokes.throwException(this, Constants.NAME_ERROR, "Variable '" + name + "' already defined.",
@@ -114,7 +114,7 @@ public abstract class Environment {
         variables.put(name, VarEntry.varEntry(value));
     }
 
-    public void defineConst(String name, LineFile lineFile) {
+    public void defineConst(String name, LineFilePos lineFile) {
         if (localHasName(name, lineFile)) {
             SplInvokes.throwException(this, Constants.NAME_ERROR, "Constant '" + name + "' already defined.",
                     lineFile);
@@ -124,7 +124,7 @@ public abstract class Environment {
         variables.put(name, VarEntry.constEntry());
     }
 
-    public void defineConstAndSet(String name, SplElement value, LineFile lineFile) {
+    public void defineConstAndSet(String name, SplElement value, LineFilePos lineFile) {
         if (localHasName(name, lineFile)) {
             SplInvokes.throwException(this, Constants.NAME_ERROR, "Constant '" + name + "' already defined.",
                     lineFile);
@@ -134,7 +134,7 @@ public abstract class Environment {
         variables.put(name, VarEntry.constEntry(value));
     }
 
-    public void setVar(String name, SplElement value, LineFile lineFile) {
+    public void setVar(String name, SplElement value, LineFilePos lineFile) {
         VarEntry entry = innerGet(name, true);
         if (entry == null) {
 //            throw new EnvironmentError("Variable '" + name + "' is not defined in this scope. ", lineFile);
@@ -155,7 +155,7 @@ public abstract class Environment {
         entry.setValue(value);
     }
 
-    public SplElement get(String name, LineFile lineFile) {
+    public SplElement get(String name, LineFilePos lineFile) {
         VarEntry se = innerGet(name, true);
         if (se == null) {
 //            throw new EnvironmentError("Name '" + name + "' not found. ", lineFile);
@@ -193,7 +193,7 @@ public abstract class Environment {
         return tv;
     }
 
-    protected VarEntry localInnerGet(String name, LineFile lineFile) {
+    protected VarEntry localInnerGet(String name, LineFilePos lineFile) {
         VarEntry tv = variables.get(name);
         if (tv == null) {
             if (outer != null && outer.isSub()) {
@@ -203,7 +203,7 @@ public abstract class Environment {
         return tv;
     }
 
-    protected final boolean localHasName(String name, LineFile lineFile) {
+    protected final boolean localHasName(String name, LineFilePos lineFile) {
         return localInnerGet(name, lineFile) != null;
     }
 

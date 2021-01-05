@@ -3,12 +3,12 @@ package spl.ast;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Int;
 import spl.interpreter.env.Environment;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class IntNode extends LiteralNode {
     private final long value;
 
-    public IntNode(long value, LineFile lineFile) {
+    public IntNode(long value, LineFilePos lineFile) {
         super(lineFile);
 
         this.value = value;
@@ -22,5 +22,9 @@ public class IntNode extends LiteralNode {
     @Override
     public String toString() {
         return "Int(" + value + ')';
+    }
+
+    public long getValue() {
+        return value;
     }
 }

@@ -3,9 +3,8 @@ package spl.interpreter.primitives;
 import spl.ast.Expression;
 import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
-import spl.interpreter.splErrors.NativeTypeError;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class Bool extends SplElement {
 
@@ -62,7 +61,7 @@ public class Bool extends SplElement {
         return b ? Bool.TRUE : Bool.FALSE;
     }
 
-    public static Bool evalBoolean(Expression node, Environment env, LineFile lineFile) {
+    public static Bool evalBoolean(Expression node, Environment env, LineFilePos lineFile) {
         SplElement cond = node.evaluate(env);
         if (cond instanceof Bool)
             return (Bool) cond;

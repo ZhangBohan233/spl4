@@ -14,7 +14,7 @@ import spl.interpreter.splObjects.SplArray;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplObject;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 import spl.util.Utilities;
 
 public class ForLoopStmt extends ConditionalStmt {
@@ -22,7 +22,7 @@ public class ForLoopStmt extends ConditionalStmt {
     private final static String forEachSyntaxMsg = "Syntax of for-each loop: 'for i in collection {...}'";
     private final BlockStmt condition;
 
-    public ForLoopStmt(BlockStmt condition, BlockStmt bodyBlock, LineFile lineFile) {
+    public ForLoopStmt(BlockStmt condition, BlockStmt bodyBlock, LineFilePos lineFile) {
         super(bodyBlock, lineFile);
 
         this.condition = condition;

@@ -9,7 +9,7 @@ import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.SplCallable;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,7 @@ public class TryStmt extends Statement {
     private final BlockStmt body;
     private BlockStmt finallyBlock;
 
-    public TryStmt(BlockStmt body, LineFile lineFile) {
+    public TryStmt(BlockStmt body, LineFilePos lineFile) {
         super(lineFile);
 
         this.body = body;

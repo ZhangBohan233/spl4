@@ -9,16 +9,15 @@ import spl.interpreter.primitives.Undefined;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splErrors.NativeError;
-import spl.interpreter.splErrors.NativeTypeError;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class NativeObject extends SplObject {
 
-    public SplElement invoke(Node node, Environment callEnv, LineFile lineFile) {
+    public SplElement invoke(Node node, Environment callEnv, LineFilePos lineFile) {
         if (node instanceof NameNode) {
             return nativeAttribute(this, ((NameNode) node).getName(), lineFile);
         } else if (node instanceof FuncCall) {
@@ -34,7 +33,7 @@ public class NativeObject extends SplObject {
                 lineFile);
     }
 
-    private static SplElement nativeAttribute(NativeObject obj, String attrName, LineFile lineFile) {
+    private static SplElement nativeAttribute(NativeObject obj, String attrName, LineFilePos lineFile) {
         // TODO
 
         return null;
@@ -44,9 +43,9 @@ public class NativeObject extends SplObject {
                                         String methodName,
                                         Arguments arguments,
                                         Environment callEnv,
-                                        LineFile lineFile) {
+                                        LineFilePos lineFile) {
         try {
-            Method method = obj.getClass().getMethod(methodName, Arguments.class, Environment.class, LineFile.class);
+            Method method = obj.getClass().getMethod(methodName, Arguments.class, Environment.class, LineFilePos.class);
 
             return (SplElement) method.invoke(obj, arguments, callEnv, lineFile);
         } catch (NoSuchMethodException | IllegalAccessException e1) {

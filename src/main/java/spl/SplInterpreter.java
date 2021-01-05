@@ -20,7 +20,7 @@ import spl.lexer.treeList.CollectiveElement;
 import spl.parser.Parser;
 import spl.util.ArgumentParser;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 import spl.util.Utilities;
 
 import java.io.IOException;
@@ -125,7 +125,7 @@ public class SplInterpreter {
         globalEnvironment.defineConstAndSet(
                 Constants.INVOKES,
                 sysPtr,
-                LineFile.LF_INTERPRETER);
+                LineFilePos.LF_INTERPRETER);
     }
 
     static void importModules(GlobalEnvironment ge, Map<String, CollectiveElement> imported) throws IOException {
@@ -163,7 +163,7 @@ public class SplInterpreter {
                             Utilities.wrapperToPrimitive(
                                     (Reference) arg,
                                     callingEnv,
-                                    LineFile.LF_INTERPRETER).intValue());
+                                    LineFilePos.LF_INTERPRETER).intValue());
                 } else {
                     return new Int(arg.intValue());
                 }
@@ -187,7 +187,7 @@ public class SplInterpreter {
                             Utilities.wrapperToPrimitive(
                                     (Reference) arg,
                                     callingEnv,
-                                    LineFile.LF_INTERPRETER).floatValue());
+                                    LineFilePos.LF_INTERPRETER).floatValue());
                 } else {
                     return new SplFloat(arg.floatValue());
                 }
@@ -211,7 +211,7 @@ public class SplInterpreter {
                             (char) Utilities.wrapperToPrimitive(
                                     (Reference) arg,
                                     callingEnv,
-                                    LineFile.LF_INTERPRETER).intValue());
+                                    LineFilePos.LF_INTERPRETER).intValue());
                 } else {
                     return new Char((char) arg.intValue());
                 }
@@ -235,7 +235,7 @@ public class SplInterpreter {
                             Utilities.wrapperToPrimitive(
                                     (Reference) arg,
                                     callingEnv,
-                                    LineFile.LF_INTERPRETER).booleanValue());
+                                    LineFilePos.LF_INTERPRETER).booleanValue());
                 } else {
                     return Bool.boolValueOf(arg.booleanValue());
                 }
@@ -312,18 +312,18 @@ public class SplInterpreter {
         Reference ptrIsCallable = memory.allocateFunction(isCallable, ge);
         Reference ptrIsClass = memory.allocateFunction(isClass, ge);
 
-        ge.defineFunction("int", ptrInt, LineFile.LF_INTERPRETER);
-        ge.defineFunction("int?", ptrIsInt, LineFile.LF_INTERPRETER);
-        ge.defineFunction("float", ptrFloat, LineFile.LF_INTERPRETER);
-        ge.defineFunction("float?", ptrIsFloat, LineFile.LF_INTERPRETER);
-        ge.defineFunction("char", ptrChar, LineFile.LF_INTERPRETER);
-        ge.defineFunction("char?", ptrIsChar, LineFile.LF_INTERPRETER);
-        ge.defineFunction("boolean", ptrBool, LineFile.LF_INTERPRETER);
-        ge.defineFunction("boolean?", ptrIsBool, LineFile.LF_INTERPRETER);
-        ge.defineFunction("AbstractObject?", ptrIsAbsObj, LineFile.LF_INTERPRETER);
-        ge.defineFunction("Array?", ptrIsArray, LineFile.LF_INTERPRETER);
-        ge.defineFunction("Callable?", ptrIsCallable, LineFile.LF_INTERPRETER);
-        ge.defineFunction("Class?", ptrIsClass, LineFile.LF_INTERPRETER);
+        ge.defineFunction("int", ptrInt, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("int?", ptrIsInt, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("float", ptrFloat, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("float?", ptrIsFloat, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("char", ptrChar, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("char?", ptrIsChar, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("boolean", ptrBool, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("boolean?", ptrIsBool, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("AbstractObject?", ptrIsAbsObj, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("Array?", ptrIsArray, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("Callable?", ptrIsCallable, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("Class?", ptrIsClass, LineFilePos.LF_INTERPRETER);
     }
 
     void callMain(String[] args, GlobalEnvironment globalEnvironment) {
@@ -353,9 +353,9 @@ public class SplInterpreter {
 
             // create String instance
             Reference strIns = StringLiteral.createString(
-                    args[i].toCharArray(), globalEnvironment, LineFile.LF_INTERPRETER
+                    args[i].toCharArray(), globalEnvironment, LineFilePos.LF_INTERPRETER
             );
-            SplArray.setItemAtIndex(argPtr, i, strIns, globalEnvironment, LineFile.LF_INTERPRETER);
+            SplArray.setItemAtIndex(argPtr, i, strIns, globalEnvironment, LineFilePos.LF_INTERPRETER);
         }
         return EvaluatedArguments.of(argPtr);
     }

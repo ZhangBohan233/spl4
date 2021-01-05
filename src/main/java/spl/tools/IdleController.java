@@ -21,8 +21,9 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.*;
 import spl.tools.codeArea.CodeArea;
+import spl.tools.codeArea.CodeFile;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 import spl.util.Utilities;
 
 import java.io.File;
@@ -55,7 +56,7 @@ public class IdleController implements Initializable {
 
     private IdleIO idleIO;
 
-    private File openingFile = new File("Untitled.sp");
+    private CodeFile openingFile = new CodeFile(new File("Untitled.sp"));
     private Console console;
 
     private RunService runService;
@@ -89,6 +90,8 @@ public class IdleController implements Initializable {
 
         refreshTable();
         recordBuiltinNames();
+
+        codeArea.setCodeFile(openingFile);
 
         timer = new Timer();
         timer.schedule(new RefreshMemoryTask(), 0, 500);
@@ -131,7 +134,7 @@ public class IdleController implements Initializable {
         SplInterpreter.setOut(console.getOut());
         SplInterpreter.setErr(console.getErr());
         try {
-            interpreter.run(new String[]{openingFile.getAbsolutePath()});
+            interpreter.run(new String[]{openingFile.getFile().getAbsolutePath()});
         } catch (Exception e) {
             e.printStackTrace(console.getErr());
         }
@@ -185,15 +188,16 @@ public class IdleController implements Initializable {
         File f = chooser.showOpenDialog(null);
         if (f != null) {
             String text = Utilities.readFile(f);
-            openingFile = f;
-            codeArea.setText(text);
+            openingFile = new CodeFile(f);
+            codeArea.setCodeFile(openingFile);
+            codeArea.setText(text);;
         }
     }
 
     @FXML
     void saveFileAction() throws IOException {
         String text = codeArea.getText();
-        Utilities.writeFile(openingFile, text);
+        openingFile.save(text);
     }
 
     private void setRunningUi() {
@@ -276,14 +280,14 @@ public class IdleController implements Initializable {
                 InstanceEnvironment insEnv = ins.getEnv();
                 ti = new TreeItem<>(new EnvTableItem(
                         varName,
-                        SplInvokes.pointerToString(ref, env, LineFile.LF_CONSOLE),
+                        SplInvokes.pointerToString(ref, env, LineFilePos.LFP_CONSOLE),
                         Utilities.classRefToRepr((Reference) ((SplMethod) env.getMemory()
                                         .get((Reference)
-                                                insEnv.get(Constants.GET_CLASS, LineFile.LF_CONSOLE)))
+                                                insEnv.get(Constants.GET_CLASS, LineFilePos.LFP_CONSOLE)))
                                         .call(
                                                 EvaluatedArguments.of(ref),
                                                 console.getGlobalEnvironment(),
-                                                LineFile.LF_CONSOLE),
+                                                LineFilePos.LFP_CONSOLE),
                                 console.getGlobalEnvironment())));
                 for (Map.Entry<String, SplElement> entry : insEnv.keyAttributes().entrySet()) {
                     TreeItem<EnvTableItem> eti =
@@ -319,7 +323,7 @@ public class IdleController implements Initializable {
                 return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Native Object"));
             } else if (obj instanceof SplArray) {
                 return new TreeItem<>(new EnvTableItem(varName, SplInvokes.pointerToString(
-                        ref, env, LineFile.LF_CONSOLE
+                        ref, env, LineFilePos.LFP_CONSOLE
                 ), obj.toString()));
             } else if (obj instanceof SplClass) {
                 return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Class"));

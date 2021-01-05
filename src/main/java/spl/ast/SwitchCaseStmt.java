@@ -2,7 +2,7 @@ package spl.ast;
 
 import spl.interpreter.env.CaseBlockEnvironment;
 import spl.interpreter.env.Environment;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ public class SwitchCaseStmt extends Statement {
     private final List<CaseStmt> cases;
     private final CaseStmt defaultCase;
 
-    SwitchCaseStmt(Expression expr, List<CaseStmt> cases, CaseStmt defaultCase, LineFile lineFile) {
+    SwitchCaseStmt(Expression expr, List<CaseStmt> cases, CaseStmt defaultCase, LineFilePos lineFile) {
         super(lineFile);
 
         this.expr = expr;

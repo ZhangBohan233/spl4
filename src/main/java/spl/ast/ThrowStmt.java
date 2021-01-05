@@ -7,12 +7,12 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.Instance;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 import spl.util.Utilities;
 
 public class ThrowStmt extends UnaryExpr {
 
-    public ThrowStmt(LineFile lineFile) {
+    public ThrowStmt(LineFilePos lineFile) {
         super("throw", true, lineFile);
     }
 
@@ -23,7 +23,7 @@ public class ThrowStmt extends UnaryExpr {
         return null;
     }
 
-    static void throwException(Reference exceptionClassPtr, Environment env, LineFile lineFile) {
+    static void throwException(Reference exceptionClassPtr, Environment env, LineFilePos lineFile) {
         if (Utilities.isInstancePtr(exceptionClassPtr, Constants.EXCEPTION_CLASS, env, lineFile)) {
             Instance excIns = (Instance) env.getMemory().get(exceptionClassPtr);
 
@@ -44,7 +44,7 @@ public class ThrowStmt extends UnaryExpr {
         }
     }
 
-    private static String makeTraceMsg(Environment env, LineFile lineFile) {
+    private static String makeTraceMsg(Environment env, LineFilePos lineFile) {
         StringBuilder builder = new StringBuilder();
         builder.append(lineFile.toStringFileLine()).append('\n');
         for (Memory.StackTraceNode stn : env.getMemory().getCallStack()) {

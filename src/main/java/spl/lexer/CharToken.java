@@ -1,6 +1,6 @@
 package spl.lexer;
 
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.Map;
 
@@ -17,7 +17,7 @@ public class CharToken extends Token {
 
     private final char ch;
 
-    public CharToken(char ch, LineFile lineFile) {
+    public CharToken(char ch, LineFilePos lineFile) {
         super(lineFile);
         this.ch = ch;
     }

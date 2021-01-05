@@ -2,11 +2,11 @@ package spl.ast;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public abstract class Statement extends Node {
 
-    public Statement(LineFile lineFile) {
+    public Statement(LineFilePos lineFile) {
         super(lineFile);
     }
 

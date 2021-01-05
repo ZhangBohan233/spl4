@@ -5,10 +5,9 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
-import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.TreeItemPropertyValueFactory;
 import spl.ast.*;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.net.URL;
 import java.util.Map;
@@ -96,9 +95,9 @@ public class AstVisualizer implements Initializable {
         private final String type;
         private final String value;
         private final String msg;
-        private final LineFile lineFile;
+        private final LineFilePos lineFile;
 
-        private TreeNode(String type, String value, String msg, LineFile lineFile) {
+        private TreeNode(String type, String value, String msg, LineFilePos lineFile) {
             this.type = type;
             this.value = value;
             this.msg = msg;
@@ -127,7 +126,7 @@ public class AstVisualizer implements Initializable {
 
         @FXML
         public String getFile() {
-            if (lineFile.getFile() == null) return lineFile.msg;
+            if (lineFile.getFile() == null) return lineFile.getMsg();
             else return lineFile.getFile().toString();
         }
     }

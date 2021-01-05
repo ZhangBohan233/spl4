@@ -4,13 +4,13 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.Instance;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class ArrayLiteral extends Expression {
 
     private final Arguments content;
 
-    public ArrayLiteral(Arguments content, LineFile lineFile) {
+    public ArrayLiteral(Arguments content, LineFilePos lineFile) {
         super(lineFile);
 
         this.content = content;

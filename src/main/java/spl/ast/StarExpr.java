@@ -2,11 +2,11 @@ package spl.ast;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class StarExpr extends UnaryExpr {
 
-    public StarExpr(LineFile lineFile) {
+    public StarExpr(LineFilePos lineFile) {
         super("star", true, lineFile);
     }
 

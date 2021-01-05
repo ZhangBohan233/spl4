@@ -10,7 +10,7 @@ import spl.interpreter.splObjects.NativeFunction;
 import spl.interpreter.splObjects.SplClass;
 import spl.interpreter.splObjects.SplObject;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,7 @@ public class ClassStmt extends Expression {
      * @param body       body block
      * @param lineFile   line file
      */
-    public ClassStmt(String className, Line extensions, BlockStmt body, LineFile lineFile) {
+    public ClassStmt(String className, Line extensions, BlockStmt body, LineFilePos lineFile) {
         super(lineFile);
 
         this.className = className;

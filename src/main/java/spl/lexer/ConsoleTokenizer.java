@@ -2,14 +2,14 @@ package spl.lexer;
 
 import spl.lexer.treeList.BracketList;
 import spl.lexer.treeList.CollectiveElement;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.List;
 
 public class ConsoleTokenizer extends Tokenizer {
 
     public void addLine(String line) {
-        proceedLine(line, LineFile.LF_CONSOLE);
+        proceedLine(line, LineFilePos.LF_CONSOLE);
     }
 
     public BracketList build() {
@@ -35,7 +35,7 @@ public class ConsoleTokenizer extends Tokenizer {
     }
 
     private static BracketList makeOneStmtList(List<Token> tokenList) {
-        BracketList root = new BracketList(null, LineFile.LF_TOKENIZER);
+        BracketList root = new BracketList(null, LineFilePos.LF_TOKENIZER);
         CollectiveElement currentActive = root;
         for (int i = 0; i < tokenList.size(); ++i) {
             currentActive = makeTreeListRec(currentActive, tokenList, i);

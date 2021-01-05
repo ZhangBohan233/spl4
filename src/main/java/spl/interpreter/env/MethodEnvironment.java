@@ -3,7 +3,7 @@ package spl.interpreter.env;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.splObjects.Instance;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class MethodEnvironment extends FunctionEnvironment {
 
@@ -17,7 +17,7 @@ public class MethodEnvironment extends FunctionEnvironment {
         if (entry == null) {
             VarEntry thisEntry = variables.get(Constants.THIS);
             if (thisEntry == null)  // do not remove this
-                throw new EnvironmentError("Pointer 'this' not in scope. ", LineFile.LF_INTERPRETER);
+                throw new EnvironmentError("Pointer 'this' not in scope. ", LineFilePos.LF_INTERPRETER);
             Instance thisIns = (Instance) getMemory().get((Reference) thisEntry.getValue());
             entry = thisIns.getEnv().innerGet(name, isFirst);
             if (entry != null) return entry;

@@ -6,7 +6,7 @@ public class SplBaseException extends RuntimeException {
         super();
     }
 
-    public SplBaseException(LineFile lineFile) {
+    public SplBaseException(LineFilePos lineFile) {
         super(lineFile.toStringFileLine());
     }
 
@@ -18,7 +18,7 @@ public class SplBaseException extends RuntimeException {
         super(msg);
     }
 
-    public SplBaseException(String msg, LineFile lineFile) {
+    public SplBaseException(String msg, LineFilePos lineFile) {
         super(msg + lineFile.toStringFileLine());
     }
 }

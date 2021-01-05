@@ -8,7 +8,7 @@ import spl.interpreter.env.FunctionEnvironment;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 import spl.util.Utilities;
 
 import java.util.Map;
@@ -21,12 +21,12 @@ public abstract class UserFunction extends SplCallable {
     protected final Environment definitionEnv;
 
     protected final Function.Parameter[] params;
-    protected final LineFile lineFile;
+    protected final LineFilePos lineFile;
 
     private int minArg;
     private int maxArg;
 
-    protected UserFunction(Function.Parameter[] parameters, Environment definitionEnv, LineFile lineFile) {
+    protected UserFunction(Function.Parameter[] parameters, Environment definitionEnv, LineFilePos lineFile) {
         this.params = parameters;
         this.definitionEnv = definitionEnv;
         this.lineFile = lineFile;

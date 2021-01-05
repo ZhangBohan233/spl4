@@ -4,11 +4,11 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.SplModule;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class NamespaceNode extends UnaryStmt {
 
-    public NamespaceNode(String name, LineFile lineFile) {
+    public NamespaceNode(String name, LineFilePos lineFile) {
         super("namespace", true, lineFile);
 
         value = new NameNode(name, lineFile);

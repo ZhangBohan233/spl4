@@ -6,7 +6,7 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.env.MethodEnvironment;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class SplMethod extends Function {
 
@@ -16,7 +16,7 @@ public class SplMethod extends Function {
                      Parameter[] params,
                      Environment classDefEnv,
                      String definedName,
-                     LineFile lineFile) {
+                     LineFilePos lineFile) {
         super(body, params, classDefEnv, definedName, lineFile);
     }
 
@@ -35,7 +35,7 @@ public class SplMethod extends Function {
      * @return function returns
      */
     @Override
-    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile argLineFile) {
+    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos argLineFile) {
         MethodEnvironment scope = new MethodEnvironment(definitionEnv, callingEnv, definedName);
         return callEssential(evaluatedArgs, callingEnv, scope, argLineFile);
     }

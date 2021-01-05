@@ -4,7 +4,7 @@ import spl.interpreter.Memory;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.SplElement;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -23,7 +23,7 @@ public abstract class MainAbstractEnvironment extends Environment {
     }
 
     @Override
-    public void setReturn(SplElement element, LineFile lineFile) {
+    public void setReturn(SplElement element, LineFilePos lineFile) {
 //        throw new EnvironmentError("Return outside function. ");
         SplInvokes.throwException(this, Constants.NAME_ERROR, "Return outside function.",
                 lineFile);
@@ -50,7 +50,7 @@ public abstract class MainAbstractEnvironment extends Environment {
     }
 
     @Override
-    public void breakLoop(LineFile lineFile) {
+    public void breakLoop(LineFilePos lineFile) {
 //        throw new EnvironmentError("Break outside loop");
         SplInvokes.throwException(this, Constants.NAME_ERROR, "Break outside loop",
                 lineFile);
@@ -62,7 +62,7 @@ public abstract class MainAbstractEnvironment extends Environment {
     }
 
     @Override
-    public void pauseLoop(LineFile lineFile) {
+    public void pauseLoop(LineFilePos lineFile) {
 //        throw new EnvironmentError("Continue outside function");
         SplInvokes.throwException(this, Constants.NAME_ERROR, "Continue outside function",
                 lineFile);
@@ -74,7 +74,7 @@ public abstract class MainAbstractEnvironment extends Environment {
     }
 
     @Override
-    public void fallthrough(LineFile lineFile) {
+    public void fallthrough(LineFilePos lineFile) {
 //        throw new EnvironmentError("'fallthrough' outside case statements. ", lineFile);
         SplInvokes.throwException(this, Constants.NAME_ERROR, "'fallthrough' outside case statements.",
                 lineFile);
@@ -86,7 +86,7 @@ public abstract class MainAbstractEnvironment extends Environment {
     }
 
     @Override
-    public void yield(SplElement value, LineFile lineFile) {
+    public void yield(SplElement value, LineFilePos lineFile) {
 //        throw new EnvironmentError("'yield' outside cond/switch-case expressions. ", lineFile);
         SplInvokes.throwException(this, Constants.NAME_ERROR, "'yield' outside cond/switch-case expressions.",
                 lineFile);

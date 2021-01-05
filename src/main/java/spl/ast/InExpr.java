@@ -2,11 +2,11 @@ package spl.ast;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class InExpr extends BinaryExpr {
 
-    public InExpr(LineFile lineFile) {
+    public InExpr(LineFilePos lineFile) {
         super("in", lineFile);
     }
 

@@ -8,14 +8,14 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.*;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class Assignment extends BinaryExpr {
-    public Assignment(LineFile lineFile) {
+    public Assignment(LineFilePos lineFile) {
         super("=", lineFile);
     }
 
-    public static void assignment(Node key, SplElement value, Environment env, LineFile lineFile) {
+    public static void assignment(Node key, SplElement value, Environment env, LineFilePos lineFile) {
         if (key instanceof NameNode) {
             env.setVar(((NameNode) key).getName(), value, lineFile);
         } else if (key instanceof Declaration) {

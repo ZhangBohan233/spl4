@@ -3,7 +3,7 @@ package spl.ast;
 import spl.interpreter.env.BlockEnvironment;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Bool;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class IfStmt extends ConditionalStmt {
 
@@ -11,7 +11,7 @@ public class IfStmt extends ConditionalStmt {
     private BlockStmt elseBlock;
     private boolean hasElse;
 
-    public IfStmt(Expression condition, BlockStmt bodyBlock, LineFile lineFile) {
+    public IfStmt(Expression condition, BlockStmt bodyBlock, LineFilePos lineFile) {
         super(bodyBlock, lineFile);
 
         this.condition = condition;

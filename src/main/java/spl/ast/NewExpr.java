@@ -12,16 +12,16 @@ import spl.interpreter.splObjects.SplArray;
 import spl.interpreter.splObjects.SplModule;
 import spl.parser.ParseError;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class NewExpr extends UnaryExpr {
 
-    public NewExpr(LineFile lineFile) {
+    public NewExpr(LineFilePos lineFile) {
         super("new", true, lineFile);
     }
 
     private static SplElement directInitClass(Node node, Environment classDefEnv, Environment callEnv,
-                                              LineFile lineFile) {
+                                              LineFilePos lineFile) {
         if (node instanceof FuncCall) {
             return instanceCreation((FuncCall) node, classDefEnv, callEnv, lineFile);
         } else if (node instanceof IndexingNode) {
@@ -48,7 +48,7 @@ public class NewExpr extends UnaryExpr {
     private static SplElement instanceCreation(FuncCall call,
                                                Environment classDefEnv,
                                                Environment callEnv,
-                                               LineFile lineFile) {
+                                               LineFilePos lineFile) {
         Reference clazzPtr = (Reference) call.callObj.evaluate(classDefEnv);
         if (callEnv.hasException()) return Undefined.ERROR;
 
@@ -112,7 +112,7 @@ public class NewExpr extends UnaryExpr {
     private static Reference arrayCreation(IndexingNode node,
                                            Environment classDefEnv,
                                            Environment callEnv,
-                                           LineFile lineFile) {
+                                           LineFilePos lineFile) {
 
         if (node.getArgs().getChildren().size() == 1) {
             Int length = (Int) node.getArgs().getChildren().get(0).evaluate(callEnv);

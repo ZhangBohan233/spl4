@@ -2,14 +2,14 @@ package spl.ast;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class BinaryOperatorAssignment extends BinaryExpr {
 
     private final String realOp;
     private final int type;
 
-    public BinaryOperatorAssignment(String operator, int type, LineFile lineFile) {
+    public BinaryOperatorAssignment(String operator, int type, LineFilePos lineFile) {
         super(operator, lineFile);
 
         realOp = operator.substring(0, operator.length() - 1);

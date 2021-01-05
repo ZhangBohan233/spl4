@@ -5,14 +5,14 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 
 import spl.interpreter.primitives.Undefined;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public abstract class Node {
-    public final LineFile lineFile;
+    public final LineFilePos lineFile;
 
     static int spaceCount = 0;  // used for printing spl.ast
 
-    public Node(LineFile lineFile) {
+    public Node(LineFilePos lineFile) {
         this.lineFile = lineFile;
     }
 
@@ -34,7 +34,7 @@ public abstract class Node {
 
     protected abstract SplElement internalEval(Environment env);
 
-    public LineFile getLineFile() {
+    public LineFilePos getLineFile() {
         return lineFile;
     }
 

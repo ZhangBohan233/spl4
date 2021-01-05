@@ -1,16 +1,16 @@
 package spl.ast;
 
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public abstract class ConditionalStmt extends Statement {
 
     protected BlockStmt bodyBlock;
 
-    public ConditionalStmt(LineFile lineFile) {
+    public ConditionalStmt(LineFilePos lineFile) {
         super(lineFile);
     }
 
-    public ConditionalStmt(BlockStmt bodyBlock, LineFile lineFile) {
+    public ConditionalStmt(BlockStmt bodyBlock, LineFilePos lineFile) {
         super(lineFile);
 
         this.bodyBlock = bodyBlock;

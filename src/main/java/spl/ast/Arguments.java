@@ -7,14 +7,14 @@ import spl.interpreter.splErrors.NativeTypeError;
 import spl.interpreter.splObjects.*;
 import spl.lexer.SyntaxError;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 import spl.util.Utilities;
 
 public class Arguments extends NonEvaluate {
 
     private final Line line;
 
-    public Arguments(Line line, LineFile lineFile) {
+    public Arguments(Line line, LineFilePos lineFile) {
         super(lineFile);
 
         this.line = line;

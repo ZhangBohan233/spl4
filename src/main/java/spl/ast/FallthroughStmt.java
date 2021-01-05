@@ -1,11 +1,11 @@
 package spl.ast;
 
 import spl.interpreter.env.Environment;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class FallthroughStmt extends Statement {
 
-    public FallthroughStmt(LineFile lineFile) {
+    public FallthroughStmt(LineFilePos lineFile) {
         super(lineFile);
     }
 

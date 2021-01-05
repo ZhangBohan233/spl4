@@ -11,7 +11,7 @@ import spl.lexer.*;
 import spl.lexer.treeList.BracketList;
 import spl.parser.Parser;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 import spl.util.Utilities;
 
 import java.io.File;
@@ -59,7 +59,7 @@ public class Console {
         SplInterpreter.importModules(globalEnvironment, tpr.importedPaths);
 
         SplInvokes invokes =
-                (SplInvokes) memory.get((Reference) globalEnvironment.get(Constants.INVOKES, LineFile.LF_CONSOLE));
+                (SplInvokes) memory.get((Reference) globalEnvironment.get(Constants.INVOKES, LineFilePos.LFP_CONSOLE));
         invokes.setOut(out);
         invokes.setIn(in);
         invokes.setErr(err);
@@ -103,9 +103,9 @@ public class Console {
                 Node only = lineExpr.getLines().get(0).get(0);
                 SplElement result = only.evaluate(globalEnvironment);
                 if (globalEnvironment.hasException()) {
-                    Utilities.removeErrorAndPrint(globalEnvironment, LineFile.LF_CONSOLE);
+                    Utilities.removeErrorAndPrint(globalEnvironment, LineFilePos.LFP_CONSOLE);
                 } else if (result != null && result != Reference.NULL_PTR) {
-                    out.println(SplInvokes.getRepr(result, globalEnvironment, LineFile.LF_CONSOLE));
+                    out.println(SplInvokes.getRepr(result, globalEnvironment, LineFilePos.LFP_CONSOLE));
                 }
             }
         } catch (Exception e) {
@@ -116,7 +116,7 @@ public class Console {
 
     public void interrupt() {
         globalEnvironment.throwException(
-                (Reference) globalEnvironment.get(Constants.INTERRUPTION_INS, LineFile.LF_CONSOLE));
+                (Reference) globalEnvironment.get(Constants.INTERRUPTION_INS, LineFilePos.LFP_CONSOLE));
     }
 
     public GlobalEnvironment getGlobalEnvironment() {

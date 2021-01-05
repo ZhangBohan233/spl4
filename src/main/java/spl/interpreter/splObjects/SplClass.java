@@ -9,7 +9,7 @@ import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splErrors.RuntimeSyntaxError;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.*;
 
@@ -94,7 +94,7 @@ public class SplClass extends SplObject {
         this.mro = mro.toArray(new Reference[0]);
         this.mroArrayPointer = SplArray.createArray(SplElement.POINTER, this.mro.length, definitionEnv);
         for (int i = 0; i < this.mro.length; i++) {
-            SplArray.setItemAtIndex(mroArrayPointer, i, this.mro[i], definitionEnv, LineFile.LF_INTERPRETER);
+            SplArray.setItemAtIndex(mroArrayPointer, i, this.mro[i], definitionEnv, LineFilePos.LF_INTERPRETER);
         }
     }
 
@@ -142,7 +142,7 @@ public class SplClass extends SplObject {
                 } else if (lineNode instanceof FuncDefinition) {
                     FuncDefinition fd = (FuncDefinition) lineNode;
                     Reference methodPtr = fd.evalAsMethod(definitionEnv);
-                    methodPointers.put(fd.name, methodPtr);
+                    methodPointers.put(fd.name.getName(), methodPtr);
                 } else if (lineNode instanceof ContractNode) {
                     ((ContractNode) lineNode).evalAsMethod(methodPointers, className, definitionEnv);
                 } else
@@ -159,10 +159,10 @@ public class SplClass extends SplObject {
         if (!methodPointers.containsKey(Constants.CONSTRUCTOR)) {
             // If class no constructor, put an empty default constructor
             FuncDefinition fd = new FuncDefinition(
-                    Constants.CONSTRUCTOR,
+                    new NameNode(Constants.CONSTRUCTOR, LineFilePos.LF_INTERPRETER),
                     new Line(),
-                    new BlockStmt(LineFile.LF_INTERPRETER),
-                    LineFile.LF_INTERPRETER);
+                    new BlockStmt(LineFilePos.LF_INTERPRETER),
+                    LineFilePos.LF_INTERPRETER);
 
             Reference constructorPtr = fd.evalAsMethod(definitionEnv);
             methodPointers.put(Constants.CONSTRUCTOR, constructorPtr);
@@ -185,7 +185,7 @@ public class SplClass extends SplObject {
         return className;
     }
 
-    public SplElement getAttr(Reference selfPtr, Node attrNode, Environment env, LineFile lineFile) {
+    public SplElement getAttr(Reference selfPtr, Node attrNode, Environment env, LineFilePos lineFile) {
         if (attrNode instanceof NameNode) {
             String name = ((NameNode) attrNode).getName();
             if (name.equals(Constants.CLASS_NAME)) {

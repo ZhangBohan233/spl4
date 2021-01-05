@@ -25,10 +25,10 @@ import java.util.TimerTask;
 public class CodeArea extends ScrollPane {
 
     public static final long FLASH_TIME = 500;
-    private final static Paint KEYWORD = Paint.valueOf("goldenrod");
     private final static Paint background = Paint.valueOf("white");
     private final static Paint red = Paint.valueOf("red");
     private final static Paint CODE = Paint.valueOf("black");
+    private final static Paint CARET = Paint.valueOf("black");
     private final static Paint lineBackground = Paint.valueOf("#DDDDDD");
     private final TextEditor textEditor = new TextEditor();
     private final double leftMargin = 5.0;
@@ -41,7 +41,7 @@ public class CodeArea extends ScrollPane {
     Canvas lineCanvas;
     private Font codeFont = Font.font("Lucida Console", 12.0);
     private Font keywordFont = Font.font("Lucida Console", 12.0);
-    private CodeAnalyzer codeAnalyzer = new SplCodeAnalyzer(KEYWORD, keywordFont, CODE, codeFont);
+    private CodeAnalyzer codeAnalyzer;
     private double lineHeight = 15.6;
     private double charWidth = 7.8;
     private Timer timer;
@@ -60,6 +60,7 @@ public class CodeArea extends ScrollPane {
         }
 
 //        for (String x : Font.getFontNames()) System.out.println(x);
+        codeAnalyzer = new SplCodeAnalyzer(this, codeFont);
 
         canvas.setHeight(lineHeight);
         canvas.setCursor(Cursor.TEXT);
@@ -89,6 +90,10 @@ public class CodeArea extends ScrollPane {
         refresh();
     }
 
+    public void setCodeFile(CodeFile codeFile) {
+        this.codeAnalyzer.setCodeFile(codeFile);
+    }
+
     public void setCodeAnalyzer(CodeAnalyzer codeAnalyzer) {
         this.codeAnalyzer = codeAnalyzer;
     }
@@ -105,40 +110,49 @@ public class CodeArea extends ScrollPane {
     }
 
     public synchronized void refresh() {
-        clearCanvas();
-        int lineCount = textEditor.linesCount();
-        canvas.setHeight(lineCount * lineHeight);
-        lineCanvas.setHeight(Math.max((lineCount + 1) * lineHeight, this.getPrefHeight()));
+        try {
+            clearCanvas();
+            int lineCount = textEditor.linesCount();
+            canvas.setHeight(lineCount * lineHeight);
+            lineCanvas.setHeight(Math.max((lineCount + 1) * lineHeight, this.getPrefHeight()));
 
-        GraphicsContext lineGc = lineCanvas.getGraphicsContext2D();
-        lineGc.setFill(lineBackground);
-        lineGc.fillRect(0.0, 0.0, lineCanvas.getWidth(), lineCanvas.getHeight());
-        lineGc.setFill(CODE);
+            GraphicsContext lineGc = lineCanvas.getGraphicsContext2D();
+            lineGc.setFill(lineBackground);
+            lineGc.fillRect(0.0, 0.0, lineCanvas.getWidth(), lineCanvas.getHeight());
+            lineGc.setFill(CODE);
 
-        for (int lineIndex = 0; lineIndex < lineCount; lineIndex++) {
-            List<Text> line = textEditor.getLine(lineIndex);
-            double y = getPosFromLineIndex(lineIndex);
-            double widthUsed = leftMargin;
-            double realY = y + lineHeight / 1.5;
-            for (Text text : line) {
-                graphicsContext.setFill(text.paint);
-                graphicsContext.setFont(text.font);
-                double cw = getCharWidth(text.text);
-                if (widthUsed + cw > canvas.getWidth()) {
-                    canvas.setWidth(widthUsed + cw);
+            for (int lineIndex = 0; lineIndex < lineCount; lineIndex++) {
+                List<Text> line = textEditor.getLine(lineIndex);
+                double y = getPosFromLineIndex(lineIndex);
+                double widthUsed = leftMargin;
+                double realY = y + lineHeight / 1.5;
+                for (Text text : line) {
+                    graphicsContext.setFill(text.paint);
+                    graphicsContext.setFont(text.font);
+                    double cw = getCharWidth(text.text);
+                    if (widthUsed + cw > canvas.getWidth()) {
+                        canvas.setWidth(widthUsed + cw);
+                    }
+                    graphicsContext.fillText(String.valueOf(text.text), widthUsed, realY);
+                    widthUsed += cw;
                 }
-                graphicsContext.fillText(String.valueOf(text.text), widthUsed, realY);
-                widthUsed += cw;
+                lineGc.fillText(String.valueOf(lineIndex + 1), leftMargin, realY);
             }
-            lineGc.fillText(String.valueOf(lineIndex + 1), leftMargin, realY);
-        }
-        if (fct != null) {
-            fct.showCaretNow();
+            if (fct != null) {
+                fct.showCaretNow();
+            }
+        } catch (ClassCastException | InternalError e) {
+            e.printStackTrace();
         }
     }
 
     public void close() {
         stopTimer();
+        codeAnalyzer.close();
+    }
+
+    public TextEditor getTextEditor() {
+        return textEditor;
     }
 
     public void setCodeFont(Font codeFont) {
@@ -340,9 +354,14 @@ public class CodeArea extends ScrollPane {
         public void setFont(Font font) {
             this.font = font;
         }
+
+        @Override
+        public String toString() {
+            return String.valueOf(text);
+        }
     }
 
-    private class TextEditor {
+    public class TextEditor {
         private final List<List<Text>> lines = new ArrayList<>();
 
         TextEditor() {
@@ -525,13 +544,17 @@ public class CodeArea extends ScrollPane {
             if (caretCol.get() == 0) x = leftMargin;
             else x = textEditor.getXofCol(caretRow.get(), caretCol.get());
 
-            drawCaret(y, x, CODE);
+            drawCaret(y, x, CARET);
             showingY = y;
             showingX = x;
         }
 
         private synchronized void drawCaret(double y, double x, Paint paint) {
-            drawVerticalLine(y, x - 1, paint);
+            try {
+                drawVerticalLine(y, x - 1, paint);
+            } catch (InternalError | ClassCastException e) {
+                e.printStackTrace();
+            }
         }
 
         private synchronized void drawVerticalLine(double y, double x, Paint paint) {

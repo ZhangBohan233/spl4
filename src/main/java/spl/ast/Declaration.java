@@ -6,7 +6,7 @@ import spl.interpreter.primitives.SplElement;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Undefined;
 import spl.lexer.SyntaxError;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class Declaration extends Expression {
 
@@ -18,7 +18,7 @@ public class Declaration extends Expression {
 
     public final int level;
 
-    public Declaration(int level, String name, LineFile lineFile) {
+    public Declaration(int level, String name, LineFilePos lineFile) {
         super(lineFile);
 
         this.declaredName = name;

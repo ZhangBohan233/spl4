@@ -1,7 +1,7 @@
 package spl.parser;
 
 import spl.ast.*;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 import spl.util.Utilities;
 
 import java.util.ArrayList;
@@ -132,7 +132,7 @@ public class AstBuilder {
         }
     }
 
-    void addInt(long value, LineFile lineFile) {
+    void addInt(long value, LineFilePos lineFile) {
         if (inner == null) {
             stack.add(new IntNode(value, lineFile));
         } else {
@@ -140,7 +140,7 @@ public class AstBuilder {
         }
     }
 
-    void addChar(char value, LineFile lineFile) {
+    void addChar(char value, LineFilePos lineFile) {
         if (inner == null) {
             stack.add(new CharNode(value, lineFile));
         } else {
@@ -148,7 +148,7 @@ public class AstBuilder {
         }
     }
 
-    void addBoolean(boolean value, LineFile lineFile) {
+    void addBoolean(boolean value, LineFilePos lineFile) {
         if (inner == null) {
             stack.add(new BoolStmt(value, lineFile));
         } else {
@@ -156,7 +156,7 @@ public class AstBuilder {
         }
     }
 
-    void addFloat(double value, LineFile lineFile) {
+    void addFloat(double value, LineFilePos lineFile) {
         if (inner == null) {
             stack.add(new FloatNode(value, lineFile));
         } else {
@@ -164,7 +164,7 @@ public class AstBuilder {
         }
     }
 
-    void addString(char[] charArray, LineFile lineFile) {
+    void addString(char[] charArray, LineFilePos lineFile) {
         if (inner == null) {
             stack.add(new StringLiteral(charArray, lineFile));
         } else {
@@ -172,7 +172,7 @@ public class AstBuilder {
         }
     }
 
-    void addUnaryOperator(String op, int type, LineFile lineFile) {
+    void addUnaryOperator(String op, int type, LineFilePos lineFile) {
         if (inner == null) {
             stack.add(new RegularUnaryOperator(op, type, lineFile));
         } else {
@@ -180,7 +180,7 @@ public class AstBuilder {
         }
     }
 
-    void addBinaryOperator(String op, int type, LineFile lineFile) {
+    void addBinaryOperator(String op, int type, LineFilePos lineFile) {
         if (inner == null) {
             stack.add(new BinaryOperator(op, type, lineFile));
         } else {
@@ -196,7 +196,7 @@ public class AstBuilder {
 //        }
 //    }
 
-    void addFakeTernary(String op, LineFile lineFile) {
+    void addFakeTernary(String op, LineFilePos lineFile) {
         if (inner == null) {
             stack.add(new ConditionalExpr(op, lineFile));
         } else {
@@ -301,7 +301,7 @@ public class AstBuilder {
                     Node value;
                     if (ue.operatorAtLeft()) {
                         if (list.size() <= index + 1 && ue.voidAble()) {
-                            value = new NullExpr(LineFile.LF_PARSER);
+                            value = new NullExpr(LineFilePos.LF_PARSER);
                         } else {
                             value = list.remove(index + 1);
                         }

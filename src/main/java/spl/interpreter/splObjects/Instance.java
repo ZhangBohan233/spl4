@@ -7,7 +7,7 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.env.InstanceEnvironment;
 import spl.interpreter.primitives.Reference;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.*;
 
@@ -36,14 +36,14 @@ public class Instance extends SplObject {
 
     public static InstanceAndPtr createInstanceAndAllocate(String className,
                                                            Environment callingEnv,
-                                                           LineFile lineFile) {
+                                                           LineFilePos lineFile) {
         Reference clazzPtr = (Reference) callingEnv.get(className, lineFile);
         return createInstanceAndAllocate(clazzPtr, callingEnv, lineFile);
     }
 
     public static InstanceAndPtr createInstanceAndAllocate(Reference clazzPtr,
                                                            Environment callingEnv,
-                                                           LineFile lineFile) {
+                                                           LineFilePos lineFile) {
         SplClass clazz = (SplClass) callingEnv.getMemory().get(clazzPtr);
         return createInstanceAndAllocate(clazz.getMro(), 0, callingEnv, lineFile);
     }
@@ -51,7 +51,7 @@ public class Instance extends SplObject {
     public static InstanceAndPtr createInstanceWithInitCall(String className,
                                                      EvaluatedArguments evaluatedArgs,
                                                      Environment callingEnv,
-                                                     LineFile lineFile) {
+                                                     LineFilePos lineFile) {
         InstanceAndPtr iap = createInstanceAndAllocate(className, callingEnv, lineFile);
         callInit(iap, evaluatedArgs, callingEnv, lineFile);
         return iap;
@@ -60,7 +60,7 @@ public class Instance extends SplObject {
     public static InstanceAndPtr createInstanceWithInitCall(Reference clazzPtr,
                                                             EvaluatedArguments evaluatedArgs,
                                                             Environment callingEnv,
-                                                            LineFile lineFile) {
+                                                            LineFilePos lineFile) {
         InstanceAndPtr iap = createInstanceAndAllocate(clazzPtr, callingEnv, lineFile);
         callInit(iap, evaluatedArgs, callingEnv, lineFile);
         return iap;
@@ -78,7 +78,7 @@ public class Instance extends SplObject {
     private static InstanceAndPtr createInstanceAndAllocate(Reference[] mro,
                                                             int indexInMro,
                                                             Environment callingEnv,
-                                                            LineFile lineFile) {
+                                                            LineFilePos lineFile) {
 
         Reference clazzPtr = mro[indexInMro];
 
@@ -128,14 +128,14 @@ public class Instance extends SplObject {
     private static void callInit(InstanceAndPtr iap,
                                 EvaluatedArguments evaluatedArgs,
                                 Environment callEnv,
-                                LineFile lineFile) {
+                                LineFilePos lineFile) {
 
         SplMethod constructor = getConstructor(iap.instance, lineFile);
         evaluatedArgs.insertThis(iap.pointer);
         constructor.call(evaluatedArgs, callEnv, lineFile);
     }
 
-    private static SplMethod getConstructor(Instance instance, LineFile lineFile) {
+    private static SplMethod getConstructor(Instance instance, LineFilePos lineFile) {
         InstanceEnvironment env = instance.getEnv();
         Reference constructorPtr = (Reference) env.get(Constants.CONSTRUCTOR, lineFile);
         SplMethod constructor = (SplMethod) env.getMemory().get(constructorPtr);
@@ -176,7 +176,7 @@ public class Instance extends SplObject {
         }
     }
 
-    private static void addDefaultSuperCall(Function constructor, LineFile lineFile) {
+    private static void addDefaultSuperCall(Function constructor, LineFilePos lineFile) {
         Node body = constructor.getBody();
         if (body instanceof BlockStmt) {
             // call super.init()

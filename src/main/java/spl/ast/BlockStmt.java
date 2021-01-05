@@ -1,7 +1,7 @@
 package spl.ast;
 
 import spl.interpreter.env.Environment;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,12 +10,12 @@ public class BlockStmt extends Statement {
 
     private final List<Line> children = new ArrayList<>();
 
-    public BlockStmt(LineFile lineFile) {
+    public BlockStmt(LineFilePos lineFile) {
         super(lineFile);
     }
 
     public BlockStmt() {
-        super(LineFile.LF_PARSER);
+        super(LineFilePos.LF_PARSER);
     }
 
     public void addLine(Line line) {

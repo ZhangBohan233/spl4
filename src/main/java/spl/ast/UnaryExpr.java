@@ -1,6 +1,6 @@
 package spl.ast;
 
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public abstract class UnaryExpr extends Expression implements UnaryBuildable {
 
@@ -8,7 +8,7 @@ public abstract class UnaryExpr extends Expression implements UnaryBuildable {
     protected Expression value;
     private final boolean atLeft;
 
-    public UnaryExpr(String operator, boolean operatorAtLeft, LineFile lineFile) {
+    public UnaryExpr(String operator, boolean operatorAtLeft, LineFilePos lineFile) {
         super(lineFile);
 
         this.operator = operator;

@@ -13,8 +13,7 @@ import spl.lexer.TextProcessor;
 import spl.lexer.TokenizeResult;
 import spl.parser.Parser;
 import spl.util.Constants;
-import spl.util.LineFile;
-import spl.util.Utilities;
+import spl.util.LineFilePos;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +44,7 @@ public class SplInvokes extends NativeObject {
      * Static field
      */
 
-    public static void throwException(Environment env, String exceptionClassName, String msg, LineFile lineFile) {
+    public static void throwException(Environment env, String exceptionClassName, String msg, LineFilePos lineFile) {
         StringLiteral sl = new StringLiteral(msg.toCharArray(), lineFile);
         FuncCall funcCall = new FuncCall(
                 new NameNode(exceptionClassName, lineFile),
@@ -60,7 +59,7 @@ public class SplInvokes extends NativeObject {
     }
 
     public static Undefined throwExceptionWithError(Environment env, String exceptionClassName,
-                                                    String msg, LineFile lineFile) {
+                                                    String msg, LineFilePos lineFile) {
         throwException(env, exceptionClassName, msg, lineFile);
         return Undefined.ERROR;
     }
@@ -69,7 +68,7 @@ public class SplInvokes extends NativeObject {
      * Helper functions
      */
 
-    private static void checkArgCount(Arguments arguments, int expectArgc, String fnName, Environment env, LineFile lineFile) {
+    private static void checkArgCount(Arguments arguments, int expectArgc, String fnName, Environment env, LineFilePos lineFile) {
         if (arguments.getLine().getChildren().size() != expectArgc) {
             throwException(
                     env,
@@ -86,7 +85,7 @@ public class SplInvokes extends NativeObject {
                                       int maxArg,
                                       String fnName,
                                       Environment env,
-                                      LineFile lineFile) {
+                                      LineFilePos lineFile) {
         if (arguments.getLine().size() < minArg ||
                 arguments.getLine().size() > maxArg) {
             throwException(
@@ -99,17 +98,17 @@ public class SplInvokes extends NativeObject {
         }
     }
 
-    private static String getString(SplElement element, Environment environment, LineFile lineFile) {
+    private static String getString(SplElement element, Environment environment, LineFilePos lineFile) {
         Reference stringPtr = (Reference) environment.get(Constants.STRING_CLASS, lineFile);
         return getString(element, environment, lineFile, stringPtr);
     }
 
-    public static String getRepr(SplElement element, Environment environment, LineFile lineFile) {
+    public static String getRepr(SplElement element, Environment environment, LineFilePos lineFile) {
         Reference stringPtr = (Reference) environment.get(Constants.STRING_CLASS, lineFile);
         return getRepr(element, environment, lineFile, stringPtr);
     }
 
-    private static String getString(SplElement element, Environment environment, LineFile lineFile,
+    private static String getString(SplElement element, Environment environment, LineFilePos lineFile,
                                     Reference stringPtr) {
         if (SplElement.isPrimitive(element)) {
             return element.toString();
@@ -118,7 +117,7 @@ public class SplInvokes extends NativeObject {
         }
     }
 
-    private static String getRepr(SplElement element, Environment environment, LineFile lineFile,
+    private static String getRepr(SplElement element, Environment environment, LineFilePos lineFile,
                                   Reference stringPtr) {
         if (SplElement.isPrimitive(element)) {
             return element.toString();
@@ -127,7 +126,7 @@ public class SplInvokes extends NativeObject {
         }
     }
 
-    private static String getPrintString(Arguments arguments, Environment environment, LineFile lineFile) {
+    private static String getPrintString(Arguments arguments, Environment environment, LineFilePos lineFile) {
         EvaluatedArguments args = arguments.evalArgs(environment);
         int argc = args.positionalArgs.size();
 
@@ -142,7 +141,7 @@ public class SplInvokes extends NativeObject {
 
     public static String pointerToString(Reference ptr,
                                          Environment environment,
-                                         LineFile lineFile) {
+                                         LineFilePos lineFile) {
 
         Reference stringPtr = (Reference) environment.get(Constants.STRING_CLASS, lineFile);
         return pointerToString(ptr, environment, lineFile, stringPtr);
@@ -150,7 +149,7 @@ public class SplInvokes extends NativeObject {
 
     private static String pointerToRepr(Reference ptr,
                                         Environment environment,
-                                        LineFile lineFile,
+                                        LineFilePos lineFile,
                                         Reference stringPtr) {
         if (ptr.getPtr() == 0) {  // Pointed to null
             return "null";
@@ -177,7 +176,7 @@ public class SplInvokes extends NativeObject {
 
     private static String pointerToString(Reference ptr,
                                           Environment environment,
-                                          LineFile lineFile,
+                                          LineFilePos lineFile,
                                           Reference stringPtr) {
         if (ptr.getPtr() == 0) {  // Pointed to null
             return "null";
@@ -205,7 +204,7 @@ public class SplInvokes extends NativeObject {
     }
 
     private static String arrayToString(int arrayAddr, SplArray array, Environment env, Reference stringPtr,
-                                        LineFile lineFile) {
+                                        LineFilePos lineFile) {
         StringBuilder builder = new StringBuilder("'[");
         for (int i = 0; i < array.length; i++) {
             SplElement e = env.getMemory().getPrimitive(arrayAddr + i + 1);
@@ -215,7 +214,7 @@ public class SplInvokes extends NativeObject {
         return builder.append("]").toString();
     }
 
-    private static String extractFromSplString(Instance stringInstance, Environment env, LineFile lineFile) {
+    private static String extractFromSplString(Instance stringInstance, Environment env, LineFilePos lineFile) {
         Reference chars = (Reference) stringInstance.getEnv().get(Constants.STRING_CHARS, lineFile);
 
         char[] arr = SplArray.toJavaCharArray(chars, env.getMemory());
@@ -234,25 +233,25 @@ public class SplInvokes extends NativeObject {
         this.stdout = stdout;
     }
 
-    public SplElement println(Arguments arguments, Environment environment, LineFile lineFile) {
+    public SplElement println(Arguments arguments, Environment environment, LineFilePos lineFile) {
         stdout.println(getPrintString(arguments, environment, lineFile));
 
         return Reference.NULL_PTR;
     }
 
-    public SplElement print(Arguments arguments, Environment environment, LineFile lineFile) {
+    public SplElement print(Arguments arguments, Environment environment, LineFilePos lineFile) {
         stdout.print(getPrintString(arguments, environment, lineFile));
 
         return Reference.NULL_PTR;
     }
 
-    public SplElement printErr(Arguments arguments, Environment environment, LineFile lineFile) {
+    public SplElement printErr(Arguments arguments, Environment environment, LineFilePos lineFile) {
         stderr.print(getPrintString(arguments, environment, lineFile));
 
         return Reference.NULL_PTR;
     }
 
-    public SplElement input(Arguments arguments, Environment environment, LineFile lineFile) {
+    public SplElement input(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, "input", environment, lineFile);
 
         // input(prompt)
@@ -266,12 +265,12 @@ public class SplInvokes extends NativeObject {
         return StringLiteral.createString(next.toCharArray(), environment, lineFile);
     }
 
-    public SplElement clock(Arguments arguments, Environment environment, LineFile lineFile) {
+    public SplElement clock(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 0, "clock", environment, lineFile);
         return new Int(System.currentTimeMillis());
     }
 
-    public SplElement free(Arguments arguments, Environment environment, LineFile lineFile) {
+    public SplElement free(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, "free", environment, lineFile);
 
         Reference ptr = (Reference) arguments.getLine().getChildren().get(0).evaluate(environment);
@@ -288,7 +287,7 @@ public class SplInvokes extends NativeObject {
         return Reference.NULL_PTR;
     }
 
-    public SplElement gc(Arguments arguments, Environment environment, LineFile lineFile) {
+    public SplElement gc(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 0, "gc", environment, lineFile);
 
         environment.getMemory().gc(environment);
@@ -296,7 +295,7 @@ public class SplInvokes extends NativeObject {
         return Reference.NULL_PTR;
     }
 
-    public SplElement memoryView(Arguments arguments, Environment environment, LineFile lineFile) {
+    public SplElement memoryView(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 0, "memoryView", environment, lineFile);
 
         stdout.println("Memory: " + environment.getMemory().memoryView());
@@ -304,7 +303,7 @@ public class SplInvokes extends NativeObject {
         return Reference.NULL_PTR;
     }
 
-    public SplElement id(Arguments arguments, Environment environment, LineFile lineFile) {
+    public SplElement id(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, "id", environment, lineFile);
 
         SplElement arg = arguments.getLine().getChildren().get(0).evaluate(environment);
@@ -318,7 +317,7 @@ public class SplInvokes extends NativeObject {
         return new Int(arg.intValue());
     }
 
-    public SplElement string(Arguments arguments, Environment environment, LineFile lineFile) {
+    public SplElement string(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, "string", environment, lineFile);
 
         SplElement typeValue = arguments.getLine().getChildren().get(0).evaluate(environment);
@@ -326,7 +325,7 @@ public class SplInvokes extends NativeObject {
         return StringLiteral.createString(s.toCharArray(), environment, lineFile);
     }
 
-    public SplElement repr(Arguments arguments, Environment environment, LineFile lineFile) {
+    public SplElement repr(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, "repr", environment, lineFile);
 
         SplElement typeValue = arguments.getLine().getChildren().get(0).evaluate(environment);
@@ -334,7 +333,7 @@ public class SplInvokes extends NativeObject {
         return StringLiteral.createString(s.toCharArray(), environment, lineFile);
     }
 
-    public SplElement log(Arguments arguments, Environment env, LineFile lineFile) {
+    public SplElement log(Arguments arguments, Environment env, LineFilePos lineFile) {
         checkArgCount(arguments, 1, "log", env, lineFile);
 
         SplElement arg = arguments.getLine().getChildren().get(0).evaluate(env);
@@ -344,7 +343,7 @@ public class SplInvokes extends NativeObject {
         return new SplFloat(res);
     }
 
-    public SplElement pow(Arguments arguments, Environment env, LineFile lineFile) {
+    public SplElement pow(Arguments arguments, Environment env, LineFilePos lineFile) {
         checkArgCount(arguments, 2, "pow", env, lineFile);
 
         SplElement base = arguments.getLine().getChildren().get(0).evaluate(env);
@@ -355,7 +354,7 @@ public class SplInvokes extends NativeObject {
         return new SplFloat(res);
     }
 
-    public SplElement typeName(Arguments arguments, Environment environment, LineFile lineFile) {
+    public SplElement typeName(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, "typeName", environment, lineFile);
 
         SplElement element = arguments.getLine().getChildren().get(0).evaluate(environment);
@@ -364,7 +363,7 @@ public class SplInvokes extends NativeObject {
         return StringLiteral.createString(s.toCharArray(), environment, lineFile);
     }
 
-    public Reference getClass(Arguments arguments, Environment environment, LineFile lineFile) {
+    public Reference getClass(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, "getClass", environment, lineFile);
 
         Reference insPtr = (Reference) arguments.getLine().get(0).evaluate(environment);
@@ -372,7 +371,7 @@ public class SplInvokes extends NativeObject {
         return ins.getClazzPtr();
     }
 
-    public SplElement getAttr(Arguments arguments, Environment environment, LineFile lineFile) {
+    public SplElement getAttr(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 2, "getAttr", environment, lineFile);
 
         Reference insPtr = (Reference) arguments.getLine().get(0).evaluate(environment);
@@ -384,7 +383,7 @@ public class SplInvokes extends NativeObject {
         return ins.getEnv().get(name, lineFile);
     }
 
-    public Bool hasAttr(Arguments arguments, Environment environment, LineFile lineFile) {
+    public Bool hasAttr(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 2, "hasAttr", environment, lineFile);
 
         Reference insPtr = (Reference) arguments.getLine().get(0).evaluate(environment);
@@ -394,7 +393,7 @@ public class SplInvokes extends NativeObject {
         return Bool.boolValueOf(ins.getEnv().hasName(nameNode.getName()));
     }
 
-    public Bool hasStrAttr(Arguments arguments, Environment environment, LineFile lineFile) {
+    public Bool hasStrAttr(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 2, "hasStrAttr", environment, lineFile);
 
         Reference insPtr = (Reference) arguments.getLine().get(0).evaluate(environment);
@@ -406,7 +405,7 @@ public class SplInvokes extends NativeObject {
         return Bool.boolValueOf(ins.getEnv().hasName(name));
     }
 
-    public void setAttr(Arguments arguments, Environment environment, LineFile lineFile) {
+    public void setAttr(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 3, "setAttr", environment, lineFile);
 
         Reference insPtr = (Reference) arguments.getLine().get(0).evaluate(environment);
@@ -419,7 +418,7 @@ public class SplInvokes extends NativeObject {
         ins.getEnv().setVar(name, arguments.getLine().get(2).evaluate(environment), lineFile);
     }
 
-    public SplElement getGlobalByName(Arguments arguments, Environment environment, LineFile lineFile) {
+    public SplElement getGlobalByName(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, "getGlobalByName", environment, lineFile);
 
         Reference namePtr = (Reference) arguments.getLine().get(0).evaluate(environment);
@@ -429,7 +428,7 @@ public class SplInvokes extends NativeObject {
         return environment.get(name, lineFile);
     }
 
-    public Bool hasGlobalName(Arguments arguments, Environment environment, LineFile lineFile) {
+    public Bool hasGlobalName(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, "hasGlobalName", environment, lineFile);
 
         Reference namePtr = (Reference) arguments.getLine().get(0).evaluate(environment);
@@ -439,7 +438,7 @@ public class SplInvokes extends NativeObject {
         return Bool.boolValueOf(environment.hasName(name));
     }
 
-    public SplElement script(Arguments arguments, Environment environment, LineFile lineFile) {
+    public SplElement script(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, SplCallable.MAX_ARGS, "script", environment, lineFile);
 
         EvaluatedArguments evaluatedArgs = arguments.evalArgs(environment);

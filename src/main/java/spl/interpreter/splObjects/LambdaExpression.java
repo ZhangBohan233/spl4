@@ -5,7 +5,7 @@ import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.FunctionEnvironment;
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class LambdaExpression extends UserFunction {
 
@@ -16,7 +16,7 @@ public class LambdaExpression extends UserFunction {
     private final Expression body;
 
     public LambdaExpression(Expression body, SplCallable.Parameter[] params, Environment definitionEnv,
-                            LineFile lineFile) {
+                            LineFilePos lineFile) {
 
         super(params, definitionEnv, lineFile);
 
@@ -24,7 +24,7 @@ public class LambdaExpression extends UserFunction {
     }
 
     @Override
-    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile lineFile) {
+    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile) {
         String name = toString();
         FunctionEnvironment scope = new FunctionEnvironment(definitionEnv, callingEnv, name);
 

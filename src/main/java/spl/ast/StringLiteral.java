@@ -8,13 +8,13 @@ import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplArray;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class StringLiteral extends LiteralNode {
 
     private final char[] charArray;
 
-    public StringLiteral(char[] charArray, LineFile lineFile) {
+    public StringLiteral(char[] charArray, LineFilePos lineFile) {
         super(lineFile);
 
         this.charArray = charArray;
@@ -25,7 +25,7 @@ public class StringLiteral extends LiteralNode {
         return createString(charArray, env, getLineFile());
     }
 
-    public static Reference createString(char[] charArray, Environment env, LineFile lineFile) {
+    public static Reference createString(char[] charArray, Environment env, LineFilePos lineFile) {
         // create spl char array
         Reference arrPtr = createCharArrayAndAllocate(charArray, env, lineFile);
         env.getMemory().addTempPtr(arrPtr);
@@ -38,7 +38,7 @@ public class StringLiteral extends LiteralNode {
         return strTv;
     }
 
-    private static Reference createCharArrayAndAllocate(char[] charArray, Environment env, LineFile lineFile) {
+    private static Reference createCharArrayAndAllocate(char[] charArray, Environment env, LineFilePos lineFile) {
         Reference arrPtr = SplArray.createArray(SplElement.CHAR, charArray.length, env);
         for (int i = 0; i < charArray.length; ++i) {
             Char c = new Char(charArray[i]);
@@ -53,7 +53,7 @@ public class StringLiteral extends LiteralNode {
         return arrPtr;
     }
 
-    private static Reference createStringInstance(Reference arrPtr, Environment env, LineFile lineFile) {
+    private static Reference createStringInstance(Reference arrPtr, Environment env, LineFilePos lineFile) {
         return Instance.createInstanceWithInitCall(
                 Constants.STRING_CLASS,
                 EvaluatedArguments.of(arrPtr),

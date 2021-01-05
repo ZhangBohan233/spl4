@@ -1,6 +1,6 @@
 package spl.interpreter.splErrors;
 
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class RuntimeSyntaxError extends NativeError {
 
@@ -9,10 +9,10 @@ public class RuntimeSyntaxError extends NativeError {
     }
 
     public RuntimeSyntaxError(String msg) {
-        super(msg, LineFile.LF_INTERPRETER);
+        super(msg, LineFilePos.LF_INTERPRETER);
     }
 
-    public RuntimeSyntaxError(String msg, LineFile lineFile) {
+    public RuntimeSyntaxError(String msg, LineFilePos lineFile) {
         super(msg, lineFile);
     }
 }

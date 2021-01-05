@@ -1,13 +1,13 @@
 package spl.ast;
 
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public abstract class BinaryExpr extends Expression implements Buildable {
     protected Expression left;
     protected Expression right;
     protected String operator;
 
-    public BinaryExpr(String operator, LineFile lineFile) {
+    public BinaryExpr(String operator, LineFilePos lineFile) {
         super(lineFile);
         this.operator = operator;
     }

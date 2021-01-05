@@ -4,7 +4,7 @@ import spl.ast.Arguments;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public abstract class NativeFunction extends SplCallable {
 
@@ -55,7 +55,7 @@ public abstract class NativeFunction extends SplCallable {
         return callFuncWithNode(arguments, callingEnv);
     }
 
-    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile lineFile) {
+    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile) {
         checkValidArgCount(evaluatedArgs.positionalArgs.size(), name, lineFile);
 
         return callFunc(evaluatedArgs, callingEnv);

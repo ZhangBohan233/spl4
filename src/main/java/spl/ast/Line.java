@@ -2,7 +2,7 @@ package spl.ast;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,15 +10,15 @@ import java.util.List;
 public class Line extends Expression {
     private final List<Node> children = new ArrayList<>();
 
-    public Line(LineFile lineFile) {
+    public Line(LineFilePos lineFile) {
         super(lineFile);
     }
 
     public Line() {
-        super(LineFile.LF_PARSER);
+        super(LineFilePos.LF_PARSER);
     }
 
-    public Line(LineFile lineFile, Node... nodes) {
+    public Line(LineFilePos lineFile, Node... nodes) {
         super(lineFile);
 
         for (Node node : nodes) add(node);

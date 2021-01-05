@@ -1,7 +1,7 @@
 package spl.ast;
 
 import spl.parser.ParseError;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,11 +67,11 @@ public class SwitchCaseFactory {
         return exprLevel == 1;
     }
 
-    public SwitchCaseExpr buildExpr(LineFile lineFile) {
+    public SwitchCaseExpr buildExpr(LineFilePos lineFile) {
         return new SwitchCaseExpr(expr, cases, defaultCase, lineFile);
     }
 
-    public SwitchCaseStmt buildStmt(LineFile lineFile) {
+    public SwitchCaseStmt buildStmt(LineFilePos lineFile) {
         return new SwitchCaseStmt(expr, cases, defaultCase, lineFile);
     }
 }

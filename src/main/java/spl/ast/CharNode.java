@@ -3,13 +3,13 @@ package spl.ast;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Char;
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class CharNode extends LiteralNode {
 
     public final char ch;
 
-    public CharNode(char ch, LineFile lineFile) {
+    public CharNode(char ch, LineFilePos lineFile) {
         super(lineFile);
 
         this.ch = ch;

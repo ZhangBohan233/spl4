@@ -1,6 +1,6 @@
 package spl.interpreter.env;
 
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 import spl.util.SplBaseException;
 
 public class EnvironmentError extends SplBaseException {
@@ -13,7 +13,7 @@ public class EnvironmentError extends SplBaseException {
         super(msg);
     }
 
-    public EnvironmentError(String msg, LineFile lineFile) {
+    public EnvironmentError(String msg, LineFilePos lineFile) {
         super(msg, lineFile);
     }
 }

@@ -6,7 +6,7 @@ import spl.interpreter.primitives.Int;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.SplFloat;
 import spl.lexer.SyntaxError;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class RegularUnaryOperator extends UnaryExpr {
 
@@ -14,7 +14,7 @@ public class RegularUnaryOperator extends UnaryExpr {
     public static final int LOGICAL = 2;
     private final int type;
 
-    public RegularUnaryOperator(String op, int type, LineFile lineFile) {
+    public RegularUnaryOperator(String op, int type, LineFilePos lineFile) {
         super(op, true, lineFile);
 
         this.type = type;

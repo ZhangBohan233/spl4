@@ -11,7 +11,7 @@ import spl.interpreter.splObjects.SplArray;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplObject;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class IndexingNode extends Expression {
     private final Node callObj;
     private final Line args;
 
-    public IndexingNode(Node callObj, Line args, LineFile lineFile) {
+    public IndexingNode(Node callObj, Line args, LineFilePos lineFile) {
         super(lineFile);
 
         this.callObj = callObj;

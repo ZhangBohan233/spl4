@@ -117,7 +117,7 @@ public class Utilities {
      * @param globalEnvironment the global environment
      * @param lineFile          line and file
      */
-    public static void removeErrorAndPrint(GlobalEnvironment globalEnvironment, LineFile lineFile) {
+    public static void removeErrorAndPrint(GlobalEnvironment globalEnvironment, LineFilePos lineFile) {
         Reference errPtr = globalEnvironment.getExceptionInsPtr();
         globalEnvironment.removeException();
 
@@ -128,7 +128,7 @@ public class Utilities {
         stackTraceFtn.call(EvaluatedArguments.of(errPtr), globalEnvironment, lineFile);
     }
 
-    public static Reference primitiveToWrapper(SplElement prim, Environment env, LineFile lineFile) {
+    public static Reference primitiveToWrapper(SplElement prim, Environment env, LineFilePos lineFile) {
         String wrapperName = Constants.WRAPPERS.get(prim.type());
         return Instance.createInstanceWithInitCall(
                 wrapperName,
@@ -138,7 +138,7 @@ public class Utilities {
         ).pointer;
     }
 
-    public static SplElement wrapperToPrimitive(Reference wrapperPtr, Environment env, LineFile lineFile) {
+    public static SplElement wrapperToPrimitive(Reference wrapperPtr, Environment env, LineFilePos lineFile) {
         SplObject obj = env.getMemory().get(wrapperPtr);
         if (obj instanceof Instance) {
             Instance wrapperIns = (Instance) obj;
@@ -152,7 +152,7 @@ public class Utilities {
         }
     }
 
-    public static boolean isInstancePtr(SplElement element, String className, Environment env, LineFile lineFile) {
+    public static boolean isInstancePtr(SplElement element, String className, Environment env, LineFilePos lineFile) {
         Reference insFtnPtr = (Reference) env.get(className + "?", lineFile);
         SplCallable insFtn = (SplCallable) env.getMemory().get(insFtnPtr);
         Bool res = (Bool) insFtn.call(EvaluatedArguments.of(element), env, lineFile);

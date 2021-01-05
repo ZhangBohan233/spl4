@@ -1,11 +1,11 @@
 package spl.ast;
 
 import spl.interpreter.env.Environment;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class ContinueStmt extends Statement {
 
-    public ContinueStmt(LineFile lineFile) {
+    public ContinueStmt(LineFilePos lineFile) {
         super(lineFile);
     }
 

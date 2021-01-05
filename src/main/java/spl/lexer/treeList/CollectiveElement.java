@@ -1,16 +1,16 @@
 package spl.lexer.treeList;
 
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class CollectiveElement extends Element {
 
-    public final LineFile lineFile;
+    public final LineFilePos lineFile;
     protected final List<Element> elements = new ArrayList<>();
 
-    public CollectiveElement(CollectiveElement parentElement, LineFile lineFile) {
+    public CollectiveElement(CollectiveElement parentElement, LineFilePos lineFile) {
         super(parentElement);
 
         this.lineFile = lineFile;

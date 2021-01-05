@@ -1,11 +1,11 @@
 package spl.ast;
 
 import spl.interpreter.env.Environment;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class ReturnStmt extends UnaryStmt {
 
-    public ReturnStmt(LineFile lineFile) {
+    public ReturnStmt(LineFilePos lineFile) {
         super("return", true, lineFile);
     }
 

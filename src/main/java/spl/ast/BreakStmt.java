@@ -1,11 +1,11 @@
 package spl.ast;
 
 import spl.interpreter.env.Environment;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class BreakStmt extends Statement {
 
-    public BreakStmt(LineFile lineFile) {
+    public BreakStmt(LineFilePos lineFile) {
         super(lineFile);
     }
 

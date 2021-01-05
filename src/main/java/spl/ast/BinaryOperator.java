@@ -9,7 +9,7 @@ import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplObject;
 import spl.lexer.SyntaxError;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 import spl.util.Utilities;
 
 import java.util.Map;
@@ -42,7 +42,7 @@ public class BinaryOperator extends BinaryExpr {
 
     private final int type;
 
-    public BinaryOperator(String operator, int type, LineFile lineFile) {
+    public BinaryOperator(String operator, int type, LineFilePos lineFile) {
         super(operator, lineFile);
 
         this.type = type;
@@ -52,7 +52,7 @@ public class BinaryOperator extends BinaryExpr {
                                                        SplElement rightEle,
                                                        String operator,
                                                        Environment env,
-                                                       LineFile lineFile) {
+                                                       LineFilePos lineFile) {
         SplObject leftObj = env.getMemory().get(leftPtr);
         if (leftObj instanceof Instance) {
             String fnName = ARITHMETIC_OP_MAP.get(operator);
@@ -71,12 +71,12 @@ public class BinaryOperator extends BinaryExpr {
 
     private static SplElement primitivePointerArithmetic(SplElement leftEle, Reference rightEle,
                                                          String operator, Environment env,
-                                                         LineFile lineFile) {
+                                                         LineFilePos lineFile) {
         Reference leftWrpPtr = Utilities.primitiveToWrapper(leftEle, env, lineFile);
         return pointerNumericArithmetic(leftWrpPtr, rightEle, operator, env, lineFile);
     }
 
-    private static SplElement bitwise(String op, Environment env, long l, long r, LineFile lineFile) {
+    private static SplElement bitwise(String op, Environment env, long l, long r, LineFilePos lineFile) {
         return switch (op) {
             case "<<" -> new Int(l << r);
             case ">>" -> new Int(l >> r);
@@ -92,7 +92,7 @@ public class BinaryOperator extends BinaryExpr {
         };
     }
 
-    private static SplElement simpleArithmetic(String op, Environment env, double l, double r, LineFile lineFile) {
+    private static SplElement simpleArithmetic(String op, Environment env, double l, double r, LineFilePos lineFile) {
         return switch (op) {
             case "+" -> new SplFloat(l + r);
             case "-" -> new SplFloat(l - r);
@@ -107,7 +107,7 @@ public class BinaryOperator extends BinaryExpr {
         };
     }
 
-    private static SplElement pointerLogical(String op, Reference l, Reference r, Environment env, LineFile lineFile) {
+    private static SplElement pointerLogical(String op, Reference l, Reference r, Environment env, LineFilePos lineFile) {
         if (op.equals("is")) {
             return Bool.boolValueOf(l.getPtr() == r.getPtr());
         } else if (op.equals("is not")) {
@@ -132,7 +132,7 @@ public class BinaryOperator extends BinaryExpr {
                 lineFile);
     }
 
-    private static SplElement integerLogical(String op, Environment env, long l, long r, LineFile lineFile) {
+    private static SplElement integerLogical(String op, Environment env, long l, long r, LineFilePos lineFile) {
         return switch (op) {
             case "==" -> Bool.boolValueOf(l == r);
             case "!=" -> Bool.boolValueOf(l != r);
@@ -148,7 +148,7 @@ public class BinaryOperator extends BinaryExpr {
         };
     }
 
-    private static SplElement otherLogical(String op, Environment env, double l, double r, LineFile lineFile) {
+    private static SplElement otherLogical(String op, Environment env, double l, double r, LineFilePos lineFile) {
         return switch (op) {
             case "==" -> Bool.boolValueOf(l == r);
             case "!=" -> Bool.boolValueOf(l != r);

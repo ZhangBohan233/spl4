@@ -10,18 +10,18 @@ import spl.interpreter.splObjects.SplCallable;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplObject;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class FuncCall extends Expression {
 
     Node callObj;
     Arguments arguments;
 
-    public FuncCall(LineFile lineFile) {
+    public FuncCall(LineFilePos lineFile) {
         super(lineFile);
     }
 
-    public FuncCall(Node callObj, Arguments arguments, LineFile lineFile) {
+    public FuncCall(Node callObj, Arguments arguments, LineFilePos lineFile) {
         super(lineFile);
 
         this.callObj = callObj;

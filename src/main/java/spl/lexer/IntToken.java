@@ -1,13 +1,13 @@
 package spl.lexer;
 
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class IntToken extends Token {
 
     private final long value;
 //    private byte[] bytes = new byte[8];
 
-    public IntToken(String numStr, LineFile lineFile) {
+    public IntToken(String numStr, LineFilePos lineFile) {
         super(lineFile);
 
         value = Long.parseLong(numStr.replace("_", ""));

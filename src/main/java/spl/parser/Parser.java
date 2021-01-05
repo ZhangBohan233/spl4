@@ -4,7 +4,7 @@ import spl.ast.*;
 import spl.lexer.*;
 import spl.lexer.treeList.*;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.io.IOException;
 
@@ -75,7 +75,7 @@ public class Parser {
         Element ele = parent.get(index++);
         if (ele instanceof AtomicElement) {
             Token token = ((AtomicElement) ele).atom;
-            LineFile lineFile = token.getLineFile();
+            LineFilePos lineFile = token.getLineFile();
             try {
                 if (token instanceof IdToken) {
                     String identifier = ((IdToken) token).getIdentifier();
@@ -176,15 +176,16 @@ public class Parser {
                             case "fn":  // function definition
                                 next = parent.get(index++);
                                 BracketList paramList;
-                                String name;
+                                NameNode name;
                                 if (next instanceof AtomicElement) {
                                     nameToken = (IdToken) ((AtomicElement) next).atom;
-                                    name = nameToken.getIdentifier();
+                                    name = new NameNode(nameToken.getIdentifier(), nameToken.getLineFile());
                                     paramList = (BracketList) parent.get(index++);
                                 } else {
                                     paramList = (BracketList) next;
-                                    name = "anonymous function";
+                                    name = new NameNode("anonymous function", lineFile);
                                 }
+//                                System.out.println(name + " " + name.lineFile);
                                 Expression rtnType = null;
                                 next = parent.get(index++);
                                 if (identifierOf(next, "->")) {
@@ -205,7 +206,7 @@ public class Parser {
 //                                System.out.println(rtnType);
 
                                 // this line must before FuncDefinition
-                                ContractNode autoCont = autoContract(name, paramBlock, rtnType, lineFile);
+                                ContractNode autoCont = autoContract(name.getName(), paramBlock, rtnType, lineFile);
 
                                 FuncDefinition def = new FuncDefinition(name, paramBlock, bodyBlock, lineFile);
                                 builder.addNode(def);
@@ -519,7 +520,7 @@ public class Parser {
             }
         } else if (ele instanceof BracketList) {
             BracketList bracketList = (BracketList) ele;
-            LineFile lineFile = bracketList.lineFile;
+            LineFilePos lineFile = bracketList.lineFile;
             if (index > 1) {
                 Element probCallObj = parent.get(index - 2);
                 if (probCallObj instanceof AtomicElement && isCall(((AtomicElement) probCallObj).atom)) {
@@ -546,7 +547,7 @@ public class Parser {
             builder.addNode(node);
         } else if (ele instanceof SqrBracketList) {
             SqrBracketList bracketList = (SqrBracketList) ele;
-            LineFile lineFile = bracketList.lineFile;
+            LineFilePos lineFile = bracketList.lineFile;
             if (index > 1) {
                 Element probCallObj = parent.get(index - 2);
                 if (probCallObj instanceof AtomicElement && isCall(((AtomicElement) probCallObj).atom)) {
@@ -649,7 +650,7 @@ public class Parser {
     private static ContractNode autoContract(String fnName,
                                              Line paramBlock,
                                              Expression rtnContract,
-                                             LineFile lineFile) {
+                                             LineFilePos lineFile) {
         boolean hasParamContract = false;
         Line contractLine = new Line(lineFile);
         for (int i = 0; i < paramBlock.size(); i++) {

@@ -5,7 +5,7 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Int;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.SplFloat;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 import spl.util.Utilities;
 
 public class IncDecOperator extends Expression implements Buildable {
@@ -26,7 +26,7 @@ public class IncDecOperator extends Expression implements Buildable {
 
     private Node value;
 
-    public IncDecOperator(boolean isIncrement, LineFile lineFile) {
+    public IncDecOperator(boolean isIncrement, LineFilePos lineFile) {
         super(lineFile);
 
         this.isIncrement = isIncrement;

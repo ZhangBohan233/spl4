@@ -1,6 +1,6 @@
 package spl.interpreter.splErrors;
 
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class NativeTypeError extends NativeError {
 
@@ -8,15 +8,15 @@ public class NativeTypeError extends NativeError {
         super();
     }
 
-    public NativeTypeError(LineFile lineFile) {
+    public NativeTypeError(LineFilePos lineFile) {
         super(lineFile);
     }
 
     public NativeTypeError(String msg) {
-        super(msg, LineFile.LF_INTERPRETER);
+        super(msg, LineFilePos.LF_INTERPRETER);
     }
 
-    public NativeTypeError(String msg, LineFile lineFile) {
+    public NativeTypeError(String msg, LineFilePos lineFile) {
         super(msg, lineFile);
     }
 }

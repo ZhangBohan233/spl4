@@ -2,12 +2,12 @@ package spl.ast;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class NameNode extends Expression {
     private final String name;
 
-    public NameNode(String name, LineFile lineFile) {
+    public NameNode(String name, LineFilePos lineFile) {
         super(lineFile);
         this.name = name;
     }

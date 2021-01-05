@@ -4,11 +4,11 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.SplElement;
 import spl.lexer.SyntaxError;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class ConditionalExpr extends BinaryExpr {
 
-    public ConditionalExpr(String operator, LineFile lineFile) {
+    public ConditionalExpr(String operator, LineFilePos lineFile) {
         super(operator, lineFile);
     }
 

@@ -6,7 +6,7 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.splObjects.*;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.*;
 
@@ -48,7 +48,7 @@ public class Memory {
         return heapSize - available.size;
     }
 
-    public void pushStack(FunctionEnvironment newCallEnv, LineFile lineFile) {
+    public void pushStack(FunctionEnvironment newCallEnv, LineFilePos lineFile) {
         stackSize++;
         callStack.push(new StackTraceNode(newCallEnv, lineFile));
         if (stackSize > stackLimit) {
@@ -477,9 +477,9 @@ public class Memory {
 
     public static class StackTraceNode {
         public final FunctionEnvironment env;
-        public final LineFile callLineFile;
+        public final LineFilePos callLineFile;
 
-        StackTraceNode(FunctionEnvironment env, LineFile callLineFile) {
+        StackTraceNode(FunctionEnvironment env, LineFilePos callLineFile) {
             this.env = env;
             this.callLineFile = callLineFile;
         }

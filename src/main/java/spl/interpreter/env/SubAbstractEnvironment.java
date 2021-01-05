@@ -1,7 +1,7 @@
 package spl.interpreter.env;
 
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public abstract class SubAbstractEnvironment extends Environment {
 
@@ -20,7 +20,7 @@ public abstract class SubAbstractEnvironment extends Environment {
     }
 
     @Override
-    public void setReturn(SplElement typeValue, LineFile lineFile) {
+    public void setReturn(SplElement typeValue, LineFilePos lineFile) {
         outer.setReturn(typeValue, lineFile);
     }
 
@@ -40,7 +40,7 @@ public abstract class SubAbstractEnvironment extends Environment {
     }
 
     @Override
-    public void fallthrough(LineFile lineFile) {
+    public void fallthrough(LineFilePos lineFile) {
         outer.fallthrough(lineFile);
     }
 
@@ -50,7 +50,7 @@ public abstract class SubAbstractEnvironment extends Environment {
     }
 
     @Override
-    public void yield(SplElement value, LineFile lineFile) {
+    public void yield(SplElement value, LineFilePos lineFile) {
         outer.yield(value, lineFile);
     }
 

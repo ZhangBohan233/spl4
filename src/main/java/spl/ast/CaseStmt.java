@@ -2,7 +2,7 @@ package spl.ast;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Bool;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class CaseStmt extends Statement {
 
@@ -11,7 +11,7 @@ public class CaseStmt extends Statement {
     private final BinaryOperator binaryCondition;
     public final boolean isExpr;
 
-    public CaseStmt(Expression condition, Node bodyBlock, boolean isExpr, LineFile lineFile) {
+    public CaseStmt(Expression condition, Node bodyBlock, boolean isExpr, LineFilePos lineFile) {
         super(lineFile);
 
         this.condition = condition;

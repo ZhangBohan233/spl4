@@ -2,11 +2,11 @@ package spl.ast;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class TypeExpr extends BinaryExpr {
 
-    public TypeExpr(LineFile lineFile) {
+    public TypeExpr(LineFilePos lineFile) {
         super(":", lineFile);
     }
 

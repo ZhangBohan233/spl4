@@ -3,14 +3,14 @@ package spl.ast;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.splErrors.NativeError;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class ImportStmt extends Statement {
 
     private final String importName;
     private final String path;
 
-    public ImportStmt(String path, String importName, LineFile lineFile) {
+    public ImportStmt(String path, String importName, LineFilePos lineFile) {
         super(lineFile);
 
         this.path = path;

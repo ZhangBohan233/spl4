@@ -1,15 +1,15 @@
 package spl.lexer;
 
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public abstract class Token {
-    public final LineFile lineFile;
+    public final LineFilePos lineFile;
 
-    public Token(LineFile lineFile) {
+    public Token(LineFilePos lineFile) {
         this.lineFile = lineFile;
     }
 
-    public LineFile getLineFile() {
+    public LineFilePos getLineFile() {
         return lineFile;
     }
 }

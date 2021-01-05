@@ -3,11 +3,11 @@ package spl.ast;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class NullExpr extends LiteralNode {
 
-    public NullExpr(LineFile lineFile) {
+    public NullExpr(LineFilePos lineFile) {
         super(lineFile);
     }
 

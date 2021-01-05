@@ -4,7 +4,7 @@ import spl.interpreter.env.CaseBlockEnvironment;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ public class SwitchCaseExpr extends Expression {
     private final List<CaseStmt> cases;
     private final CaseStmt defaultCase;
 
-    SwitchCaseExpr(Expression expr, List<CaseStmt> cases, CaseStmt defaultCase, LineFile lineFile) {
+    SwitchCaseExpr(Expression expr, List<CaseStmt> cases, CaseStmt defaultCase, LineFilePos lineFile) {
         super(lineFile);
 
         this.expr = expr;

@@ -6,7 +6,7 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.splObjects.Function;
 import spl.interpreter.splObjects.SplMethod;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 import java.util.Map;
 
@@ -16,7 +16,7 @@ public class ContractNode extends Statement {
     private final Line paramContracts;
     private final Expression rtnContract;
 
-    public ContractNode(String fnName, Line paramContracts, Expression rtnContract, LineFile lineFile) {
+    public ContractNode(String fnName, Line paramContracts, Expression rtnContract, LineFilePos lineFile) {
         super(lineFile);
 
         this.fnName = fnName;

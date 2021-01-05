@@ -7,13 +7,13 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
 import spl.parser.ParseError;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public abstract class SplCallable extends SplObject {
 
     public static final int MAX_ARGS = 65535;
 
-    public abstract SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFile lineFile);
+    public abstract SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile);
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
         return call(arguments.evalArgs(callingEnv), callingEnv, arguments.getLineFile());
@@ -23,7 +23,7 @@ public abstract class SplCallable extends SplObject {
 
     public abstract int maxArgCount();
 
-    protected void checkValidArgCount(int argc, String fnName, LineFile callingLf) {
+    protected void checkValidArgCount(int argc, String fnName, LineFilePos callingLf) {
         int leastArg = minArgCount();
         int mostArg = maxArgCount();
         if (argc < leastArg || argc > mostArg) {

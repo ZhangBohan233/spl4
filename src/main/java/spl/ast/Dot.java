@@ -8,15 +8,15 @@ import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.*;
 import spl.util.Constants;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class Dot extends BinaryExpr {
-    public Dot(LineFile lineFile) {
+    public Dot(LineFilePos lineFile) {
         super(".", lineFile);
     }
 
     private static SplElement crossEnvEval(Node right, Reference leftPtr,
-                                           Environment objEnv, Environment oldEnv, LineFile lineFile) {
+                                           Environment objEnv, Environment oldEnv, LineFilePos lineFile) {
         if (right instanceof NameNode) {
             return right.evaluate(objEnv);
         } else if (right instanceof FuncCall) {

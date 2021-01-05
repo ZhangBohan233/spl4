@@ -1,6 +1,6 @@
 package spl.ast;
 
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public abstract class UnaryStmt extends Statement implements UnaryBuildable {
 
@@ -8,7 +8,7 @@ public abstract class UnaryStmt extends Statement implements UnaryBuildable {
     protected Node value;
     private final boolean atLeft;
 
-    public UnaryStmt(String operator, boolean operatorAtLeft, LineFile lineFile) {
+    public UnaryStmt(String operator, boolean operatorAtLeft, LineFilePos lineFile) {
         super(lineFile);
 
         this.operator = operator;

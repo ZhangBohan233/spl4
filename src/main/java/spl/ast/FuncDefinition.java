@@ -6,15 +6,15 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplCallable;
-import spl.util.LineFile;
+import spl.util.LineFilePos;
 
 public class FuncDefinition extends Expression {
 
-    public final String name;
+    public final NameNode name;
     private final Line parameters;
     private final BlockStmt body;
 
-    public FuncDefinition(String name, Line parameters, BlockStmt body, LineFile lineFile) {
+    public FuncDefinition(NameNode name, Line parameters, BlockStmt body, LineFilePos lineFile) {
         super(lineFile);
 
         this.name = name;
@@ -26,17 +26,17 @@ public class FuncDefinition extends Expression {
     protected SplElement internalEval(Environment env) {
         Function.Parameter[] params = SplCallable.evalParams(parameters, env);
 
-        Function function = new Function(body, params, env, name, getLineFile());
+        Function function = new Function(body, params, env, name.getName(), getLineFile());
         Reference funcPtr = env.getMemory().allocateFunction(function, env);
 
-        env.defineFunction(name, funcPtr, getLineFile());
+        env.defineFunction(name.getName(), funcPtr, getLineFile());
         return funcPtr;
     }
 
     public Reference evalAsMethod(Environment classDefEnv) {
         Function.Parameter[] params = SplCallable.insertThis(SplCallable.evalParams(parameters, classDefEnv));
 
-        SplMethod function = new SplMethod(body, params, classDefEnv, name, getLineFile());
+        SplMethod function = new SplMethod(body, params, classDefEnv, name.getName(), getLineFile());
 
         return classDefEnv.getMemory().allocateFunction(function, classDefEnv);
     }
@@ -60,5 +60,9 @@ public class FuncDefinition extends Expression {
 
     public BlockStmt getBody() {
         return body;
+    }
+
+    public NameNode getName() {
+        return name;
     }
 }
