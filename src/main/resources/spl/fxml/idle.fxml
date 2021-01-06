@@ -19,11 +19,11 @@
     </columnConstraints>
     <rowConstraints>
         <RowConstraints prefHeight="25.0"/>
-        <RowConstraints/>
-        <RowConstraints/>
-        <RowConstraints/>
+        <RowConstraints fx:id="codeAreaRow" percentHeight="40.0"/>
         <RowConstraints prefHeight="25.0"/>
         <RowConstraints/>
+        <RowConstraints prefHeight="25.0"/>
+        <RowConstraints percentHeight="25.0"/>
     </rowConstraints>
 
     <MenuBar GridPane.columnSpan="2">

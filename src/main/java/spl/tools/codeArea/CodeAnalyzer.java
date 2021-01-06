@@ -44,7 +44,7 @@ public abstract class CodeAnalyzer {
         this.codeFile = codeFile;
     }
 
-    public abstract void markKeyword(List<CodeArea.Text> line);
+    public abstract void markKeyword(CodeArea.TextLine line);
 
     public void close() {
     }

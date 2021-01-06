@@ -9,18 +9,13 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.PixelWriter;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class CodeArea extends ScrollPane {
 
@@ -30,6 +25,7 @@ public class CodeArea extends ScrollPane {
     private final static Paint CODE = Paint.valueOf("black");
     private final static Paint CARET = Paint.valueOf("black");
     private final static Paint lineBackground = Paint.valueOf("#DDDDDD");
+    private final static Paint HIGHLIGHT = Paint.valueOf("gray");
     private final TextEditor textEditor = new TextEditor();
     private final double leftMargin = 5.0;
     private final GraphicsContext graphicsContext;
@@ -47,6 +43,11 @@ public class CodeArea extends ScrollPane {
     private double charWidth = 7.8;
     private Timer timer;
     private FlashCaretTask fct;
+
+    private int lastDragRow = -1;
+    private int lastDragCol = -1;
+    private int mousePressedRow = -1;
+    private int mousePressedCol = -1;
 
     public CodeArea() {
         FXMLLoader loader = new FXMLLoader(
@@ -77,6 +78,8 @@ public class CodeArea extends ScrollPane {
         canvas.setOnKeyTyped(this::keyTypedHandler);
         canvas.setOnMouseClicked(this::mouseClickedHandler);
         this.setOnMouseClicked(this::backgroundMouseClickedHandler);
+        canvas.setOnMousePressed(this::mousePressHandler);
+        canvas.setOnMouseDragged(this::mouseDragHandler);
 
         refresh();
     }
@@ -94,12 +97,12 @@ public class CodeArea extends ScrollPane {
         this.codeAnalyzer.setCodeFile(codeFile);
     }
 
-    public void setCodeAnalyzer(CodeAnalyzer codeAnalyzer) {
-        this.codeAnalyzer = codeAnalyzer;
-    }
-
     public CodeAnalyzer getCodeAnalyzer() {
         return codeAnalyzer;
+    }
+
+    public void setCodeAnalyzer(CodeAnalyzer codeAnalyzer) {
+        this.codeAnalyzer = codeAnalyzer;
     }
 
     public void setFont(Font font) {
@@ -112,8 +115,18 @@ public class CodeArea extends ScrollPane {
         return codeFont;
     }
 
+    public void setCodeFont(Font codeFont) {
+        this.codeFont = codeFont;
+    }
+
     public void setCodePref(CodePref codePref) {
         this.codePref = codePref;
+    }
+
+    @Override
+    public void setHeight(double newHeight) {
+        super.setHeight(newHeight);
+        refresh();
     }
 
     public synchronized void clearCanvas() {
@@ -126,7 +139,7 @@ public class CodeArea extends ScrollPane {
             clearCanvas();
             int lineCount = textEditor.linesCount();
             canvas.setHeight(lineCount * lineHeight);
-            lineCanvas.setHeight(Math.max((lineCount + 1) * lineHeight, this.getPrefHeight()));
+            lineCanvas.setHeight(Math.max((lineCount + 1) * lineHeight, this.getHeight()));
 
             GraphicsContext lineGc = lineCanvas.getGraphicsContext2D();
             lineGc.setFill(lineBackground);
@@ -134,17 +147,22 @@ public class CodeArea extends ScrollPane {
             lineGc.setFill(CODE);
 
             for (int lineIndex = 0; lineIndex < lineCount; lineIndex++) {
-                List<Text> line = textEditor.getLine(lineIndex);
+                TextLine line = textEditor.getLine(lineIndex);
                 double y = getPosFromLineIndex(lineIndex);
                 double widthUsed = leftMargin;
                 double realY = y + lineHeight / 1.5;
                 for (Text text : line) {
-                    graphicsContext.setFill(text.paint);
-                    graphicsContext.setFont(text.font);
                     double cw = getCharWidth(text.text);
                     if (widthUsed + cw > canvas.getWidth()) {
                         canvas.setWidth(widthUsed + cw);
                     }
+                    if (text.highlight || line.wholeLineHighLighted) {
+                        graphicsContext.setFill(HIGHLIGHT);
+                        graphicsContext.fillRect(widthUsed, y, cw, lineHeight);
+                    }
+
+                    graphicsContext.setFill(text.paint);
+                    graphicsContext.setFont(text.font);
                     graphicsContext.fillText(String.valueOf(text.text), widthUsed, realY);
                     widthUsed += cw;
                 }
@@ -165,10 +183,6 @@ public class CodeArea extends ScrollPane {
 
     public TextEditor getTextEditor() {
         return textEditor;
-    }
-
-    public void setCodeFont(Font codeFont) {
-        this.codeFont = codeFont;
     }
 
     public void setKeywordFont(Font keywordFont) {
@@ -297,25 +311,52 @@ public class CodeArea extends ScrollPane {
 
     private void keyTypedHandler(KeyEvent keyEvent) {
         String chars = keyEvent.getCharacter();
+        keyEvent.consume();
         if (chars.isEmpty()) return;
-        char first = chars.charAt(0);
-        if (first == '\r' || first == '\n') {
-            textEditor.newLine();
-        } else if (first == '\b') {
-            textEditor.backspace();
-        } else if (first == ' ') {
-            keyEvent.consume();
-            textEditor.typeText(" ");
-        } else if (first == '\t') {
-            for (int i = 0; i < 4; i++) {
-                textEditor.typeText(" ");
-            }
-        } else {
-            textEditor.typeText(chars);
-        }
+        keyTyped(chars);
+
         refresh();
         scrollDownToCaret();
         scrollUpToCaret();
+    }
+
+    private void keyTyped(String text) {
+        for (char c : text.toCharArray()) {
+            keyTyped(c);
+        }
+    }
+
+    private void keyTyped(char c) {
+        switch (c) {
+            case '\r':
+            case '\n':
+                textEditor.newLine();
+                break;
+            case '\b':
+                textEditor.backspace();
+                break;
+            case ' ':
+                textEditor.typeText(" ");
+                break;
+            case '\t':
+                textEditor.typeText("    ");
+                break;
+            case 3:
+                copyAction();
+                break;
+            case 22:
+                pasteAction();
+                break;
+            case 24:
+                cutAction();
+                break;
+            case 26:
+                undoAction();
+                break;
+            default:
+                textEditor.typeText(c);
+                break;
+        }
     }
 
     private void backgroundMouseClickedHandler(MouseEvent mouseEvent) {
@@ -324,6 +365,12 @@ public class CodeArea extends ScrollPane {
 
     private void mouseClickedHandler(MouseEvent mouseEvent) {
         canvas.requestFocus();
+        if (mouseEvent.isStillSincePress()) {
+            lastDragRow = -1;
+            lastDragCol = -1;
+            textEditor.clearHighlights();
+            refresh();
+        }
         if (textEditor.lines.isEmpty()) {
             caretRow.set(0);
             caretCol.set(0);
@@ -336,6 +383,94 @@ public class CodeArea extends ScrollPane {
         }
         caretRow.set(lineIndex);
         caretCol.set(textEditor.getColOfIndex(lineIndex, mouseEvent.getX()));
+    }
+
+    private void mousePressHandler(MouseEvent mouseEvent) {
+        int lineIndex = getLineIndexOfPos(mouseEvent.getY());
+        if (lineIndex >= textEditor.lines.size()) {
+            lineIndex = textEditor.lines.size() - 1;
+        }
+        mousePressedRow = lineIndex;
+        mousePressedCol = textEditor.getColOfIndex(lineIndex, mouseEvent.getX());
+    }
+
+    private void mouseDragHandler(MouseEvent mouseEvent) {
+        int lineIndex = getLineIndexOfPos(mouseEvent.getY());
+        if (lineIndex >= textEditor.lines.size()) {
+            lineIndex = textEditor.lines.size() - 1;
+        }
+        int col = textEditor.getColOfIndex(lineIndex, mouseEvent.getX());
+        if (lineIndex != lastDragRow || col != lastDragCol) {
+            lastDragRow = lineIndex;
+            lastDragCol = col;
+            textEditor.clearHighlights();
+            markHighlights(lineIndex, col);
+            refresh();
+        }
+    }
+
+    private void markHighlights(int row, int col) {
+        int startRow = mousePressedRow;
+        int startCol = mousePressedCol;
+        if (row == startRow) {
+            if (startCol == col) return;
+            textEditor.hasHighlight = true;
+            int c1 = Math.min(startCol, col);
+            int c2 = Math.max(startCol, col);
+            TextLine line = textEditor.getLine(row);
+            for (int c = c1; c < c2; c++) {
+                line.get(c).highlight = true;
+            }
+        } else if (row > startRow) {  // drag to front
+            markAcrossRows(startRow, startCol, row, col);
+        } else {  // drag to back
+            markAcrossRows(row, col, startRow, startCol);
+        }
+    }
+
+    private void markAcrossRows(int row, int col, int startRow, int startCol) {
+        textEditor.hasHighlight = true;
+        TextLine startLine = textEditor.getLine(row);  // first line
+        for (int i = col; i < startLine.size(); i++) {
+            startLine.get(i).highlight = true;
+        }
+        for (int i = row + 1; i < startRow; i++) {  // middle lines
+            textEditor.getLine(i).setWholeLineHighLighted(true);
+        }
+        TextLine endLine = textEditor.getLine(startRow);  // last line
+        for (int i = 0; i < startCol; i++) {
+            endLine.get(i).highlight = true;
+        }
+    }
+
+    private void copyAction() {
+        String content = textEditor.getHighlightedString();
+        Clipboard clipboard = Clipboard.getSystemClipboard();
+        ClipboardContent cc = new ClipboardContent();
+        cc.putString(content);
+        clipboard.setContent(cc);
+    }
+
+    private void pasteAction() {
+        Clipboard clipboard = Clipboard.getSystemClipboard();
+        String content = clipboard.getString();
+        if (content != null) {
+            for (char c : content.toCharArray()) {
+                keyTyped(c);
+            }
+            refresh();
+            scrollDownToCaret();
+            scrollUpToCaret();
+        }
+    }
+
+    private void cutAction() {
+        copyAction();
+        textEditor.deleteHighlighted();
+    }
+
+    private void undoAction() {
+
     }
 
     private int getLineIndexOfPos(double y) {
@@ -354,6 +489,7 @@ public class CodeArea extends ScrollPane {
         public final char text;
         private Paint paint = CODE;
         private Font font = codeFont;
+        private boolean highlight = false;
 
         Text(char text) {
             this.text = text;
@@ -373,16 +509,45 @@ public class CodeArea extends ScrollPane {
         }
     }
 
+
+    public static class TextLine extends ArrayList<Text> {
+
+        /**
+         * Is the whole line highlighted, including the eol.
+         */
+        private boolean wholeLineHighLighted = false;
+
+        public TextLine() {
+            super();
+        }
+
+        public TextLine(Collection<? extends Text> c) {
+            super(c);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            for (Text t : this) builder.append(t.text);
+            return builder.toString();
+        }
+
+        void setWholeLineHighLighted(boolean v) {
+            this.wholeLineHighLighted = v;
+        }
+    }
+
     public class TextEditor {
-        private final List<List<Text>> lines = new ArrayList<>();
+        private final List<TextLine> lines = new ArrayList<>();
+        private boolean hasHighlight = false;
 
         TextEditor() {
-            lines.add(new ArrayList<>());
+            lines.add(new TextLine());
         }
 
         public String getText() {
             StringBuilder builder = new StringBuilder();
-            for (List<Text> line : lines) {
+            for (TextLine line : lines) {
                 for (Text text : line) {
                     builder.append(text.text);
                 }
@@ -394,12 +559,12 @@ public class CodeArea extends ScrollPane {
 
         public void setText(String text) {
             lines.clear();
-            List<Text> activeLine = new ArrayList<>();
+            TextLine activeLine = new TextLine();
             for (char c : text.toCharArray()) {
                 if (c == '\n') {
                     lines.add(activeLine);
                     analyze(activeLine);
-                    activeLine = new ArrayList<>();
+                    activeLine = new TextLine();
                 } else {
                     activeLine.add(new Text(c));
                 }
@@ -408,20 +573,119 @@ public class CodeArea extends ScrollPane {
             analyze(activeLine);
         }
 
+        public void clearHighlights() {
+            for (TextLine line : lines) {
+                line.setWholeLineHighLighted(false);
+                for (Text t : line) {
+                    t.highlight = false;
+                }
+            }
+            hasHighlight = false;
+        }
+
+        public String getHighlightedString() {
+            StringBuilder builder = new StringBuilder();
+            boolean eol = false;
+            for (TextLine line : lines) {
+                int lineSize = line.size();
+                if (line.wholeLineHighLighted) {
+                    if (eol) builder.append('\n');
+                    builder.append(line.toString());
+                    eol = true;
+                } else {
+                    for (int i = 0; i < lineSize; i++) {
+                        Text t = line.get(i);
+                        if (t.highlight) {
+                            if (i == 0) {
+                                if (eol) builder.append('\n');
+                                eol = false;
+                            }
+                            builder.append(t.text);
+                        }
+                        if (i == lineSize - 1) eol = true;
+                    }
+                }
+            }
+            return builder.toString();
+        }
+
+        public void deleteHighlighted() {
+            int row = 0;
+            int startRow = -1;
+            int endRow = -1;
+            Iterator<TextLine> linesIterator = lines.listIterator();
+            while (linesIterator.hasNext()) {
+                TextLine line = linesIterator.next();
+                if (line.wholeLineHighLighted) {
+                    if (startRow == -1) {  // first encounter
+                        startRow = row;
+                        caretRow.set(row);
+                        caretCol.set(0);
+                    }
+                    linesIterator.remove();
+                    endRow = row;
+                } else {
+                    int i = 0;
+                    while (i < line.size()) {
+                        Text text = line.get(i);
+                        if (text.highlight) {
+                            if (startRow == -1) {
+                                startRow = row;
+                                caretRow.set(row);
+                                caretCol.set(i);
+                            }
+                            line.remove(i);
+                            endRow = row;
+                        }
+                        else i++;
+                    }
+                }
+                row++;
+            }
+            if (startRow != endRow) {  // cross line deletion
+                TextLine curLine = getLine(caretRow.get());
+                TextLine nextLine = lines.remove(caretRow.get() + 1);
+                curLine.addAll(nextLine);
+            }
+        }
+
         public void typeText(String newText) {
-            List<Text> line = lines.get(caretRow.get());
+            if (hasHighlight) {
+                deleteHighlighted();
+                hasHighlight = false;
+            }
+            TextLine line = lines.get(caretRow.get());
             for (char c : newText.toCharArray()) {
-                Text t = new Text(c);
-                line.add(caretCol.get(), t);
-                caretCol.set(caretCol.get() + 1);
+                typeText(c, line);
             }
             analyze(line);
         }
 
+        public void typeText(char c) {
+            if (hasHighlight) {
+                deleteHighlighted();
+                hasHighlight = false;
+            }
+            TextLine line = lines.get(caretRow.get());
+            typeText(c, line);
+            analyze(line);
+        }
+
+        private void typeText(char c, TextLine line) {
+            Text t = new Text(c);
+            line.add(caretCol.get(), t);
+            caretCol.set(caretCol.get() + 1);
+        }
+
         public void backspace() {
+            if (hasHighlight) {
+                deleteHighlighted();
+                hasHighlight = false;
+                return;
+            }
             if (caretCol.get() == 0) {
                 if (caretRow.get() > 0) {
-                    List<Text> removed = lines.remove(caretRow.get());
+                    TextLine removed = lines.remove(caretRow.get());
                     caretRow.set(caretRow.get() - 1);
                     caretCol.set(lines.get(caretRow.get()).size());
                     getLine(caretRow.get()).addAll(removed);
@@ -435,11 +699,15 @@ public class CodeArea extends ScrollPane {
         }
 
         public void newLine() {
+            if (hasHighlight) {
+                deleteHighlighted();
+                hasHighlight = false;
+            }
             int newIndex = caretRow.get() + 1;
-            List<Text> oldLine = getLine(caretRow.get());
+            TextLine oldLine = getLine(caretRow.get());
 
-            List<Text> newLine = new ArrayList<>(oldLine.subList(caretCol.get(), oldLine.size()));
-            List<Text> oldLineTrimmed = new ArrayList<>(oldLine.subList(0, caretCol.get()));
+            TextLine newLine = new TextLine(oldLine.subList(caretCol.get(), oldLine.size()));
+            TextLine oldLineTrimmed = new TextLine(oldLine.subList(0, caretCol.get()));
             lines.set(caretRow.get(), oldLineTrimmed);
             lines.add(newIndex, newLine);
 
@@ -456,7 +724,7 @@ public class CodeArea extends ScrollPane {
                                 |
                             }
                             */
-                            List<Text> blankLine = new ArrayList<>();
+                            TextLine blankLine = new TextLine();
                             lines.add(caretRow.get(), blankLine);
                             autoIndent(blankLine);
                             indented = true;
@@ -472,9 +740,8 @@ public class CodeArea extends ScrollPane {
             analyze(oldLineTrimmed);
         }
 
-        private void autoIndent(List<Text> newLine) {
+        private void autoIndent(TextLine newLine) {
             int lastLineIndex = caretRow.get() - 1;
-            int lastIndent = Math.max(firstNonSpaceIndex(getLine(lastLineIndex)), 0);
             int thisIndent = firstNonSpaceIndex(newLine);
             char nlFirstChar;
             if (thisIndent < 0) {
@@ -485,15 +752,19 @@ public class CodeArea extends ScrollPane {
             }
             char lastChar = lastNonSpaceChar(lastLineIndex);
             int expectedIndent;
-            if (lastChar == ';' || nlFirstChar == '}' || nlFirstChar == ')' || nlFirstChar == ']') {
+            int lastIndent = firstNonSpaceIndex(getLine(lastLineIndex));
+            if (lastIndent < 0) {  // last line is empty
+                expectedIndent = 0;
+            } else if (lastChar == ';' || nlFirstChar == '}' || nlFirstChar == ')' || nlFirstChar == ']') {
                 expectedIndent = lastIndent;
             } else if (lastChar == '{' || lastChar == '(' || lastChar == '[') {
                 expectedIndent = lastIndent + 4;
             } else {
-                expectedIndent = lastIndent + 8;
+                expectedIndent = lastIndent;
+//                expectedIndent = lastIndent + 8;
             }
             int indentNeeded = expectedIndent - thisIndent;
-            List<Text> insert = new ArrayList<>();
+            TextLine insert = new TextLine();
             for (int i = 0; i < indentNeeded; i++) {
                 insert.add(new Text(' '));
             }
@@ -501,7 +772,7 @@ public class CodeArea extends ScrollPane {
             caretCol.set(caretCol.get() + indentNeeded);
         }
 
-        private boolean autoAddBack(List<Text> newLine) {
+        private boolean autoAddBack(TextLine newLine) {
             for (char[] fb : CodePref.FRONT_BACKS) {
                 char front = fb[0];
                 char back = fb[1];
@@ -519,7 +790,7 @@ public class CodeArea extends ScrollPane {
 
         private char nextNonSpaceChar(int row) {
             for (int i = row; i < linesCount(); i++) {
-                List<Text> line = getLine(i);
+                TextLine line = getLine(i);
                 for (Text t : line) {
                     if (t.text != ' ') return t.text;
                 }
@@ -529,7 +800,7 @@ public class CodeArea extends ScrollPane {
 
         private char lastNonSpaceChar(int row) {
             for (int i = row; i >= 0; i--) {
-                List<Text> line = getLine(i);
+                TextLine line = getLine(i);
                 for (int j = line.size() - 1; j >= 0; j--) {
                     Text t = line.get(j);
                     if (t.text != ' ') return t.text;
@@ -538,12 +809,12 @@ public class CodeArea extends ScrollPane {
             return '\0';
         }
 
-        private void addBack(List<Text> line, char toAdd, int firstNonSpaceIndex) {
+        private void addBack(TextLine line, char toAdd, int firstNonSpaceIndex) {
             line.add(firstNonSpaceIndex, new Text(toAdd));
             caretCol.set(firstNonSpaceIndex);
         }
 
-        private int firstNonSpaceIndex(List<Text> line) {
+        private int firstNonSpaceIndex(TextLine line) {
             for (int i = 0; i < line.size(); i++) {
                 if (line.get(i).text != ' ') return i;
             }
@@ -558,20 +829,20 @@ public class CodeArea extends ScrollPane {
             return lines.size();
         }
 
-        public List<List<Text>> getLines() {
+        public List<TextLine> getLines() {
             return lines;
         }
 
-        List<Text> getLine(int lineIndex) {
+        TextLine getLine(int lineIndex) {
             return lines.get(lineIndex);
         }
 
-        private void analyze(List<Text> line) {
+        private void analyze(TextLine line) {
             codeAnalyzer.markKeyword(line);
         }
 
         private int getColOfIndex(int lineIndex, double x) {
-            List<Text> line = lines.get(lineIndex);
+            TextLine line = lines.get(lineIndex);
             double width = leftMargin;
             for (int i = 0; i < line.size(); i++) {
                 Text t = line.get(i);
@@ -587,7 +858,7 @@ public class CodeArea extends ScrollPane {
         }
 
         private double getXofCol(int lineIndex, int col) {
-            List<Text> line = lines.get(lineIndex);
+            TextLine line = lines.get(lineIndex);
             double width = leftMargin;
             for (int i = 0; i < col; i++) {
                 if (i >= line.size()) return width;

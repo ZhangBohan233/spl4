@@ -33,7 +33,7 @@ public class SplCodeAnalyzer extends CodeAnalyzer {
     }
 
     @Override
-    public void markKeyword(List<CodeArea.Text> line) {
+    public void markKeyword(CodeArea.TextLine line) {
         String[] words = splitWords(line, SPLITTERS);
         int index = 0;
         for (String word : words) {
@@ -80,7 +80,7 @@ public class SplCodeAnalyzer extends CodeAnalyzer {
         timer.cancel();
     }
 
-    private String[] splitWords(List<CodeArea.Text> line, char[] splitters) {
+    private String[] splitWords(CodeArea.TextLine line, char[] splitters) {
         List<String> res = new ArrayList<>();
         StringBuilder builder = new StringBuilder();
 //        int lineSize = line.size();

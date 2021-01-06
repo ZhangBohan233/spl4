@@ -9,6 +9,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.RowConstraints;
 import javafx.stage.FileChooser;
 import spl.Console;
 import spl.SplInterpreter;
@@ -38,32 +39,25 @@ import java.util.*;
 public class IdleController implements Initializable {
 
     private final static String arrow = ">>> ", cont = ". . . ";
-
+    private final Set<String> builtinNames = new HashSet<>();
     @FXML
     TextArea consoleArea, outputArea;
-
     @FXML
     CodeArea codeArea;
-
     @FXML
     TreeTableView<EnvTableItem> envTable;
-
     @FXML
     Button runButton, stopButton;
-
     @FXML
     Label memoryUseLabel;
-
+    @FXML
+    RowConstraints codeAreaRow;
     private boolean showBuiltins = true;
-
     private IdleIO idleIO;
-
     private CodeFile openingFile = new CodeFile(new File("Untitled.sp"));
     private Console console;
-
     private RunService runService;
     private Timer timer;
-    private final Set<String> builtinNames = new HashSet<>();
 
     private static void analyze(String sourceCode) {
 
@@ -93,6 +87,9 @@ public class IdleController implements Initializable {
         refreshTable();
         recordBuiltinNames();
 
+        codeAreaRow.prefHeightProperty().addListener(((observable, oldValue, newValue) -> {
+            codeArea.setHeight(newValue.doubleValue());
+        }));
         codeArea.setCodeAnalyzer(createSplCodeAnalyzer());
         codeArea.setCodeFile(openingFile);
 
@@ -205,7 +202,8 @@ public class IdleController implements Initializable {
             String text = Utilities.readFile(f);
             openingFile = new CodeFile(f);
             codeArea.setCodeFile(openingFile);
-            codeArea.setText(text);;
+            codeArea.setText(text);
+            ;
         }
     }
 
