@@ -6,6 +6,7 @@ import java.util.Map;
 
 public class CharToken extends Token {
 
+    public final static char[] ESCAPE_CHARS = {'\f', '\n', '\t', '\r', '\b', '\0'};
     public final static Map<Character, Character> ESCAPES = Map.of(
             'f', '\f',
             'n', '\n',

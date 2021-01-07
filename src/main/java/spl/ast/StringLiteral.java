@@ -20,6 +20,10 @@ public class StringLiteral extends LiteralNode {
         this.charArray = charArray;
     }
 
+    public int length() {
+        return charArray.length;
+    }
+
     @Override
     protected SplElement internalEval(Environment env) {
         return createString(charArray, env, getLineFile());

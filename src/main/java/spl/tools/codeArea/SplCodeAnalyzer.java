@@ -109,36 +109,6 @@ public class SplCodeAnalyzer extends CodeAnalyzer {
         return lineTextB.toString();
     }
 
-    private class AnalyzeTask extends TimerTask {
-        @Override
-        public void run() {
-            String text = codeArea.getTextEditor().getText();
-            try {
-                codeFile.save(text);
-                FileTokenizer tokenizer = new FileTokenizer(codeFile.getFile(), true);
-                TokenizeResult tr = tokenizer.tokenize();
-                TextProcessResult processed = new TextProcessor(tr, true).process();
-                Parser parser = new Parser(processed);
-                BlockStmt blockStmt = parser.parse();
-
-                AnalyzeEnv analyzeEnv = new AnalyzeEnv(null);
-                for (Line line : blockStmt.getLines()) {
-                    analyzeNode(line, analyzeEnv);
-                }
-
-                codeArea.refresh();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ParseError e) {
-                LineFilePos errLf = e.getLocation();
-                if (errLf.getFile().equals(codeFile.getFile())) {
-
-                }
-            }
-        }
-    }
-
     private void analyzeNode(Node node, AnalyzeEnv analyzeEnv) {
         LineFilePos lineFile = node.getLineFile();
         int lineIndex = lineFile.getLine() - 1;
@@ -187,6 +157,36 @@ public class SplCodeAnalyzer extends CodeAnalyzer {
                 int pos = node.getLineFile().getPos() + i;
                 line.get(pos).setPaint(numberPaint);
             }
+        } else if (node instanceof CharNode) {
+            List<CodeArea.Text> line = codeArea.getTextEditor().getLine(lineIndex);
+            int pos = node.getLineFile().getPos();
+            line.get(pos).setPaint(stringPaint);
+            if (Utilities.arrayContains(CharToken.ESCAPE_CHARS, ((CharNode) node).ch)) {
+                line.get(pos + 1).setPaint(keywordPaint);
+                line.get(pos + 2).setPaint(keywordPaint);
+                line.get(pos + 3).setPaint(stringPaint);
+            } else {
+                line.get(pos + 1).setPaint(stringPaint);
+                line.get(pos + 2).setPaint(stringPaint);
+            }
+        } else if (node instanceof StringLiteral) {
+            List<CodeArea.Text> line = codeArea.getTextEditor().getLine(lineIndex);
+            int pos = node.getLineFile().getPos();
+            StringLiteral sl = (StringLiteral) node;
+            line.get(pos).setPaint(stringPaint);
+            int expectedLen = sl.length();
+            for (int i = 0; i < expectedLen; i++) {
+                CodeArea.Text t = line.get(pos + i + 1);
+                if (t.text == '\\') {
+                    expectedLen += 1;
+                    i += 1;
+                    t.setPaint(keywordPaint);
+                    line.get(pos + i + 1).setPaint(keywordPaint);
+                } else {
+                    t.setPaint(stringPaint);
+                }
+            }
+            line.get(pos + expectedLen + 1).setPaint(stringPaint);
         } else if (node instanceof UnaryStmt) {
             analyzeNode(((UnaryStmt) node).getValue(), analyzeEnv);
         } else if (node instanceof UnaryExpr) {
@@ -205,6 +205,38 @@ public class SplCodeAnalyzer extends CodeAnalyzer {
             analyzeEnv.put(((NameNode) node).getName(), AnalyzeEnv.PLACEHOLDER);
         } else if (node instanceof TypeExpr) {
             analyzeDefinition(((TypeExpr) node).getLeft(), analyzeEnv);
+        }
+    }
+
+    private class AnalyzeTask extends TimerTask {
+        @Override
+        public void run() {
+            String text = codeArea.getTextEditor().getText();
+            try {
+                codeFile.save(text);
+                FileTokenizer tokenizer = new FileTokenizer(codeFile.getFile(), true);
+                TokenizeResult tr = tokenizer.tokenize();
+                TextProcessResult processed = new TextProcessor(tr, true).process();
+                Parser parser = new Parser(processed);
+                BlockStmt blockStmt = parser.parse();
+
+                AnalyzeEnv analyzeEnv = new AnalyzeEnv(null);
+                for (Line line : blockStmt.getLines()) {
+                    analyzeNode(line, analyzeEnv);
+                }
+
+                codeArea.refresh();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ParseError e) {
+                LineFilePos errLf = e.getLocation();
+                if (errLf.getFile().equals(codeFile.getFile())) {
+
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }
