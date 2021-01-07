@@ -26,4 +26,23 @@ public class CodePref {
     public boolean isAutoIndent() {
         return autoIndent;
     }
+
+    public static class Builder {
+
+        private final CodePref codePref = new CodePref();
+
+        public Builder autoIndent(boolean value) {
+            codePref.autoIndent = value;
+            return this;
+        }
+
+        public Builder autoBackBrace(boolean value) {
+            codePref.autoBackBrace = value;
+            return this;
+        }
+
+        public CodePref build() {
+            return codePref;
+        }
+    }
 }

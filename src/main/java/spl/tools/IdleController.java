@@ -10,6 +10,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.RowConstraints;
+import javafx.scene.paint.Paint;
 import javafx.stage.FileChooser;
 import spl.Console;
 import spl.SplInterpreter;
@@ -21,10 +22,7 @@ import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.*;
-import spl.tools.codeArea.CodeAnalyzer;
-import spl.tools.codeArea.CodeArea;
-import spl.tools.codeArea.CodeFile;
-import spl.tools.codeArea.SplCodeAnalyzer;
+import spl.tools.codeArea.*;
 import spl.util.Constants;
 import spl.util.LineFilePos;
 import spl.util.Utilities;
@@ -41,7 +39,9 @@ public class IdleController implements Initializable {
     private final static String arrow = ">>> ", cont = ". . . ";
     private final Set<String> builtinNames = new HashSet<>();
     @FXML
-    TextArea consoleArea, outputArea;
+    TextArea consoleArea;
+    @FXML
+    CodeArea outputArea;
     @FXML
     CodeArea codeArea;
     @FXML
@@ -92,6 +92,11 @@ public class IdleController implements Initializable {
         }));
         codeArea.setCodeAnalyzer(createSplCodeAnalyzer());
         codeArea.setCodeFile(openingFile);
+
+        outputArea.setCodePref(new CodePref.Builder()
+                .autoIndent(false)
+                .autoBackBrace(false)
+                .build());
 
         timer = new Timer();
         timer.schedule(new RefreshMemoryTask(), 0, 500);
@@ -203,7 +208,6 @@ public class IdleController implements Initializable {
             openingFile = new CodeFile(f);
             codeArea.setCodeFile(openingFile);
             codeArea.setText(text);
-            ;
         }
     }
 
@@ -402,26 +406,35 @@ public class IdleController implements Initializable {
 
     private static class IdleOutputStream extends PrintStream {
 
-        private final TextArea textArea;
+        private final CodeArea textArea;
+        private final Paint textColor;
 
-        public IdleOutputStream(TextArea area) {
+        public IdleOutputStream(CodeArea area) {
+            this(area, Paint.valueOf("black"));
+        }
+
+        public IdleOutputStream(CodeArea area, Paint textColor) {
             super(nullOutputStream());
+            this.textColor = textColor;
             this.textArea = area;
             this.textArea.setText("");
         }
 
         @Override
         public void print(String s) {
-            Platform.runLater(() -> {
-                textArea.setText(textArea.getText() + s);
-                textArea.setScrollTop(textArea.getHeight());
-            });
+            if (s == null) return;
+            textArea.setCodePaint(textColor);
+            for (char c : s.toCharArray()) {
+                if (c == '\n') textArea.getTextEditor().newLine();
+                else textArea.getTextEditor().typeText(c);
+            }
+            textArea.scrollToBottom();
         }
 
         @Override
         public void println(String s) {
             print(s);
-            print("\n");
+            textArea.getTextEditor().newLine();
         }
     }
 
@@ -466,15 +479,15 @@ public class IdleController implements Initializable {
     private class IdleIO {
         private final List<String> inputLines = new ArrayList<>();
         private final IdleOutputStream out = new IdleOutputStream(outputArea);
-        private final IdleOutputStream err = new IdleOutputStream(outputArea);
+        private final IdleOutputStream err = new IdleOutputStream(outputArea, Paint.valueOf("red"));
         private final IdleInputStream in = new IdleInputStream(consoleArea);
         private int upCount = 0;
 
         private void showInputLine(String input) {
             inputLines.add(input);
-            out.textArea.setText(out.textArea.getText() + input);
+            out.print(input);
             upCount = 0;
-            out.textArea.setScrollTop(out.textArea.getHeight());
+            out.textArea.scrollToBottom();
         }
 
         private String getUpLine() {

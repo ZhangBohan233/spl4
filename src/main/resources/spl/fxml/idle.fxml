@@ -48,7 +48,7 @@
         <Button text="Clear output" onAction="#clearOutputAction" GridPane.columnIndex="1"/>
     </GridPane>
 
-    <TextArea fx:id="outputArea" editable="false" GridPane.rowIndex="3"/>
+    <CodeArea fx:id="outputArea" editable="false" showLines="false" GridPane.rowIndex="3"/>
 
     <GridPane GridPane.rowIndex="4">
         <columnConstraints>

@@ -22,8 +22,9 @@ public class CodeArea extends ScrollPane {
     public static final long FLASH_TIME = 500;
     private final static Paint background = Paint.valueOf("white");
     private final static Paint red = Paint.valueOf("red");
-    private final static Paint CODE = Paint.valueOf("black");
-    private final static Paint CARET = Paint.valueOf("black");
+    private Paint codePaint = Paint.valueOf("black");
+    private final Paint lineCountPaint = Paint.valueOf("black");
+    private final static Paint caret = Paint.valueOf("black");
     private final static Paint lineBackground = Paint.valueOf("#DDDDDD");
     private final static Paint HIGHLIGHT = Paint.valueOf("gray");
     private final TextEditor textEditor = new TextEditor();
@@ -33,6 +34,8 @@ public class CodeArea extends ScrollPane {
     private final ReadOnlyIntegerWrapper caretCol = new ReadOnlyIntegerWrapper();
     protected CodeAnalyzer codeAnalyzer;
     protected CodePref codePref = new CodePref();
+    protected boolean editable = true;
+    protected boolean showLines = true;
     @FXML
     Canvas canvas;
     @FXML
@@ -119,8 +122,36 @@ public class CodeArea extends ScrollPane {
         this.codeFont = codeFont;
     }
 
+    public void setCodePaint(Paint codePaint) {
+        this.codePaint = codePaint;
+    }
+
     public void setCodePref(CodePref codePref) {
         this.codePref = codePref;
+    }
+
+    public boolean isEditable() {
+        return editable;
+    }
+
+    public void setEditable(boolean editable) {
+        this.editable = editable;
+    }
+
+    public boolean isShowLines() {
+        return showLines;
+    }
+
+    public void setShowLines(boolean showLines) {
+        this.showLines = showLines;
+    }
+
+    public void scrollToTop() {
+        setVvalue(0.0);
+    }
+
+    public void scrollToBottom() {
+        setVvalue(1.0);
     }
 
     @Override
@@ -144,7 +175,7 @@ public class CodeArea extends ScrollPane {
             GraphicsContext lineGc = lineCanvas.getGraphicsContext2D();
             lineGc.setFill(lineBackground);
             lineGc.fillRect(0.0, 0.0, lineCanvas.getWidth(), lineCanvas.getHeight());
-            lineGc.setFill(CODE);
+            lineGc.setFill(lineCountPaint);
 
             for (int lineIndex = 0; lineIndex < lineCount; lineIndex++) {
                 TextLine line = textEditor.getLine(lineIndex);
@@ -258,7 +289,8 @@ public class CodeArea extends ScrollPane {
     }
 
     private synchronized void refreshCaretFlasher() {
-        fct.showCaretNow();
+        if (fct != null)
+            fct.showCaretNow();
     }
 
     private synchronized void stopTimer() {
@@ -271,12 +303,15 @@ public class CodeArea extends ScrollPane {
     }
 
     private synchronized void startTimer() {
-        timer = new Timer();
-        fct = new FlashCaretTask();
-        timer.schedule(fct, 0, FLASH_TIME);
+        if (editable) {
+            timer = new Timer();
+            fct = new FlashCaretTask();
+            timer.schedule(fct, 0, FLASH_TIME);
+        }
     }
 
     private void keyPressedHandler(KeyEvent keyEvent) {
+        if (!editable) return;
         KeyCode keyCode = keyEvent.getCode();
         if (keyCode == KeyCode.LEFT) {
             if (caretCol.get() > 0) caretCol.set(caretCol.get() - 1);
@@ -310,6 +345,7 @@ public class CodeArea extends ScrollPane {
     }
 
     private void keyTypedHandler(KeyEvent keyEvent) {
+        if (!editable) return;
         String chars = keyEvent.getCharacter();
         keyEvent.consume();
         if (chars.isEmpty()) return;
@@ -485,31 +521,6 @@ public class CodeArea extends ScrollPane {
         return (c & 0xffff) >= 128 ? charWidth * 1.5 : charWidth;
     }
 
-    public class Text {
-        public final char text;
-        private Paint paint = CODE;
-        private Font font = codeFont;
-        private boolean highlight = false;
-
-        Text(char text) {
-            this.text = text;
-        }
-
-        public void setPaint(Paint paint) {
-            this.paint = paint;
-        }
-
-        public void setFont(Font font) {
-            this.font = font;
-        }
-
-        @Override
-        public String toString() {
-            return String.valueOf(text);
-        }
-    }
-
-
     public static class TextLine extends ArrayList<Text> {
 
         /**
@@ -537,6 +548,30 @@ public class CodeArea extends ScrollPane {
         }
     }
 
+    public class Text {
+        public final char text;
+        private Paint paint = codePaint;
+        private Font font = codeFont;
+        private boolean highlight = false;
+
+        Text(char text) {
+            this.text = text;
+        }
+
+        public void setPaint(Paint paint) {
+            this.paint = paint;
+        }
+
+        public void setFont(Font font) {
+            this.font = font;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(text);
+        }
+    }
+
     public class TextEditor {
         private final List<TextLine> lines = new ArrayList<>();
         private boolean hasHighlight = false;
@@ -545,7 +580,7 @@ public class CodeArea extends ScrollPane {
             lines.add(new TextLine());
         }
 
-        public String getText() {
+        public synchronized String getText() {
             StringBuilder builder = new StringBuilder();
             for (TextLine line : lines) {
                 for (Text text : line) {
@@ -557,7 +592,7 @@ public class CodeArea extends ScrollPane {
             return builder.toString();
         }
 
-        public void setText(String text) {
+        public synchronized void setText(String text) {
             lines.clear();
             TextLine activeLine = new TextLine();
             for (char c : text.toCharArray()) {
@@ -570,10 +605,12 @@ public class CodeArea extends ScrollPane {
                 }
             }
             lines.add(activeLine);
+            caretRow.set(lines.size() - 1);
+            caretCol.set(activeLine.size());
             analyze(activeLine);
         }
 
-        public void clearHighlights() {
+        public synchronized void clearHighlights() {
             for (TextLine line : lines) {
                 line.setWholeLineHighLighted(false);
                 for (Text t : line) {
@@ -609,7 +646,7 @@ public class CodeArea extends ScrollPane {
             return builder.toString();
         }
 
-        public void deleteHighlighted() {
+        public synchronized void deleteHighlighted() {
             int row = 0;
             int startRow = -1;
             int endRow = -1;
@@ -636,8 +673,7 @@ public class CodeArea extends ScrollPane {
                             }
                             line.remove(i);
                             endRow = row;
-                        }
-                        else i++;
+                        } else i++;
                     }
                 }
                 row++;
@@ -649,7 +685,14 @@ public class CodeArea extends ScrollPane {
             }
         }
 
-        public void typeText(String newText) {
+        /**
+         * Types a line to the text area, and moves the caret position to the end of typed text.
+         *
+         * Note that this method does not auto detect invisible chars like '\n'.
+         *
+         * @param newText text to be typed.
+         */
+        public synchronized void typeText(String newText) {
             if (hasHighlight) {
                 deleteHighlighted();
                 hasHighlight = false;
@@ -658,10 +701,11 @@ public class CodeArea extends ScrollPane {
             for (char c : newText.toCharArray()) {
                 typeText(c, line);
             }
+//            System.out.println(caretRow.get() + " " + caretCol.get());
             analyze(line);
         }
 
-        public void typeText(char c) {
+        public synchronized void typeText(char c) {
             if (hasHighlight) {
                 deleteHighlighted();
                 hasHighlight = false;
@@ -671,13 +715,13 @@ public class CodeArea extends ScrollPane {
             analyze(line);
         }
 
-        private void typeText(char c, TextLine line) {
+        private synchronized void typeText(char c, TextLine line) {
             Text t = new Text(c);
             line.add(caretCol.get(), t);
             caretCol.set(caretCol.get() + 1);
         }
 
-        public void backspace() {
+        public synchronized void backspace() {
             if (hasHighlight) {
                 deleteHighlighted();
                 hasHighlight = false;
@@ -698,7 +742,7 @@ public class CodeArea extends ScrollPane {
             }
         }
 
-        public void newLine() {
+        public synchronized void newLine() {
             if (hasHighlight) {
                 deleteHighlighted();
                 hasHighlight = false;
@@ -926,7 +970,7 @@ public class CodeArea extends ScrollPane {
             if (caretCol.get() == 0) x = leftMargin;
             else x = textEditor.getXofCol(caretRow.get(), caretCol.get());
 
-            drawCaret(y, x, CARET);
+            drawCaret(y, x, caret);
             showingY = y;
             showingX = x;
         }
