@@ -13,25 +13,25 @@ import java.util.*;
 public class Memory {
 
     public static final int INTERVAL = 1;
-    private static final int DEFAULT_HEAP_SIZE = 8192;
-    private int heapSize;
-    private int stackSize;
-    private int stackLimit = 1000;
-    private boolean checkContract = true;
-
+    private static final int DEFAULT_HEAP_SIZE = 1024;
+    public final DebugAttributes debugs = new DebugAttributes();
     private final SplThing[] heap;
-
-    private AvailableList available;
     private final Set<Environment> temporaryEnvs = new HashSet<>();
-
     /**
      * Pointers that are managed by memory directly, not from environment.
      */
     private final Set<Reference> managedPointers = new HashSet<>();
+    /**
+     * Permanent objects that do not collected by garbage collector, such as string literals.
+     */
+    private final Set<Reference> permanentPointers = new HashSet<>();
     private final Deque<StackTraceNode> callStack = new ArrayDeque<>();
-
     private final GarbageCollector garbageCollector = new GarbageCollector();
-    public final DebugAttributes debugs = new DebugAttributes();
+    private int heapSize;
+    private int stackSize;
+    private int stackLimit = 1000;
+    private boolean checkContract = true;
+    private AvailableList available;
 
     public Memory() {
         heapSize = DEFAULT_HEAP_SIZE;
@@ -42,6 +42,10 @@ public class Memory {
 
     public int getHeapSize() {
         return heapSize;
+    }
+
+    public void setHeapSize(int heapSize) {
+        this.heapSize = heapSize;
     }
 
     public int getHeapUsed() {
@@ -76,8 +80,16 @@ public class Memory {
                 System.out.println("Triggering gc when allocate " + size + " in " + env);
             gc(env);
             ptr = innerAllocate(size);
-            if (ptr == -1)
-                throw new MemoryError("Cannot allocate size " + size + ": no memory available. ");
+            if (ptr == -1) {
+                if (available.size >= size) {
+                    reallocate();
+                    ptr = innerAllocate(size);
+                    if (ptr > 0) return new Reference(ptr);
+                }
+                throw new MemoryError("Cannot allocate size " + size + ": no memory available. " +
+                        "Available memory: " + available.availableCount() + ". ");
+
+            }
         }
         return new Reference(ptr);
     }
@@ -90,6 +102,14 @@ public class Memory {
             ptr = available.findAva(size);
         }
         return ptr;
+    }
+
+    /**
+     * Rearrange memory to remove fragile memory.
+     */
+    private void reallocate() {
+        MemoryRearranger mr = new MemoryRearranger();
+        mr.rearrange();
     }
 
     public void set(Reference ptr, SplObject obj) {
@@ -122,6 +142,10 @@ public class Memory {
         available.addAvaNoSort(ptr.getPtr(), length);
         set(ptr, null);
 //        System.out.println(available);
+    }
+
+    public void addPermanentPtr(Reference ref) {
+        permanentPointers.add(ref);
     }
 
     public void addTempEnv(Environment env) {
@@ -185,16 +209,12 @@ public class Memory {
         this.stackLimit = stackLimit;
     }
 
-    public void setHeapSize(int heapSize) {
-        this.heapSize = heapSize;
+    public boolean isCheckContract() {
+        return checkContract;
     }
 
     public void setCheckContract(boolean checkContract) {
         this.checkContract = checkContract;
-    }
-
-    public boolean isCheckContract() {
-        return checkContract;
     }
 
     //    public static void main(String[] args) {
@@ -206,137 +226,6 @@ public class Memory {
 //        System.out.println(availableList.findAva(2));
 //        System.out.println(availableList);
 //    }
-
-    private class GarbageCollector {
-
-        private void garbageCollect(Environment baseEnv) {
-            long beginTime = System.currentTimeMillis();
-            if (debugs.printGcRes)
-                System.out.println("Doing gc! Available before gc: " + available.availableCount());
-
-            // set all marks to 0
-            initMarks();
-
-            // mark
-            // global root
-            mark(baseEnv);
-
-            // call stack roots
-            for (StackTraceNode stn : callStack) {
-//            System.out.println("===" + env);
-                mark(stn.env);
-            }
-
-            // other roots
-            for (Environment env : temporaryEnvs) {
-                mark(env);
-            }
-
-            // temp object roots
-            for (Reference tempPtr : managedPointers) {
-                SplObject obj = get(tempPtr);
-                markObjectAsUsed(obj, tempPtr.getPtr());
-            }
-
-            // sweep
-            sweep();
-
-            if (debugs.printGcRes)
-                System.out.println("gc done! Available after gc: " + available.availableCount() +
-                        ". Time used: " + (System.currentTimeMillis() - beginTime));
-        }
-
-        private void initMarks() {
-            for (SplThing obj : heap) {
-                if (obj instanceof SplObject)
-                    ((SplObject) obj).clearGcCount();
-            }
-        }
-
-        private void mark(Environment env) {
-            if (env == null) return;
-
-//        System.out.println(env);
-
-            Set<SplElement> attr = env.attributes();
-            for (SplElement ele : attr) {
-                if (ele instanceof Reference) {
-                    Reference ptr = (Reference) ele;
-
-                    // the null case represent those constants which has not been set yet
-                    SplObject obj = get(ptr);
-                    markObjectAsUsed(obj, ptr.getPtr());
-                }
-            }
-            mark(env.outer);
-            if (env instanceof FunctionEnvironment) {
-//            System.out.println("***" + ((FunctionEnvironment) env).callingEnv);
-                mark(((FunctionEnvironment) env).callingEnv);
-            }
-//        else
-//            if (env instanceof InstanceEnvironment) {
-//            markGcByEnv(((InstanceEnvironment) env).creationEnvironment);
-//        }
-        }
-
-        private void markObjectAsUsed(SplObject obj, int objAddr) {
-            if (obj == null) return;
-            if (obj.isGcMarked()) return;
-            obj.incrementGcCount();
-//        if (obj.gcCount > 1) return;  // already marked
-//        System.out.println(obj);
-
-//            switch (type.getPointerType()) {
-//                case PointerType.ARRAY_TYPE:
-            if (obj instanceof SplArray) {
-                int arrBegin = objAddr + 1;
-                SplArray array = (SplArray) obj;
-                for (int i = 0; i < array.length; i++) {
-                    int p = arrBegin + i;
-                    SplElement ele = getPrimitive(p);
-                    if (ele instanceof Reference) {
-                        SplObject pointed = get((Reference) ele);
-                        markObjectAsUsed(pointed, p);
-                    }
-                }
-            } else if (obj instanceof SplModule) {
-                SplModule module = (SplModule) obj;
-                mark(module.getEnv());
-            } else if (obj instanceof Instance) {
-                Instance instance = (Instance) obj;
-                mark(instance.getEnv());
-            } else if (obj instanceof SplClass) {
-                SplClass clazz = (SplClass) obj;
-                List<Reference> classPointers = clazz.getAllAttrPointers();
-                for (Reference attrPtr : classPointers) {
-                    SplObject attrObj = get(attrPtr);
-                    markObjectAsUsed(attrObj, attrPtr.getPtr());
-                }
-            }
-        }
-
-
-        private void sweep() {
-            available.clear();
-            AvailableList.LnkNode curLast = null;
-            for (int p = 1; p < heapSize; ++p) {
-                SplThing thing = getRaw(p);
-                if (thing instanceof SplObject) {
-                    SplObject obj = (SplObject) thing;
-                    if (obj.isGcMarked()) {
-                        if (obj instanceof SplArray) {
-                            p += ((SplArray) obj).length;  // do not add any addresses in this array to available list
-                        }
-                    } else {
-                        curLast = available.addLast(p, curLast);
-                        set(p, null);  // just for visual clearance, not necessary
-                    }
-                } else {
-                    curLast = available.addLast(p, curLast);
-                }
-            }
-        }
-    }
 
     private static class AvailableList {
 
@@ -482,6 +371,157 @@ public class Memory {
         StackTraceNode(FunctionEnvironment env, LineFilePos callLineFile) {
             this.env = env;
             this.callLineFile = callLineFile;
+        }
+    }
+
+    private class MemoryRearranger {
+        private void rearrange() {
+
+        }
+    }
+
+    private class GarbageCollector {
+
+        private final Map<Integer, Reference> survivedRefs = new HashMap<>();
+
+        private void garbageCollect(Environment baseEnv) {
+            long beginTime = System.currentTimeMillis();
+            survivedRefs.clear();
+            if (debugs.printGcRes)
+                System.out.println("Doing gc! Available before gc: " + available.availableCount());
+
+            // set all marks to 0
+            initMarks();
+
+            // mark
+            // global root
+            mark(baseEnv);
+
+            // call stack roots
+            for (StackTraceNode stn : callStack) {
+//            System.out.println("===" + env);
+                mark(stn.env);
+            }
+
+            // other roots
+//            for (Environment env : temporaryEnvs) {
+//                mark(env);
+//            }
+
+            // permanent objects
+            for (Reference pr : permanentPointers) {
+                SplObject obj = get(pr);
+                markObjectAsUsed(obj, pr.getPtr());
+            }
+
+            // temp object roots
+//            for (Reference tempPtr : managedPointers) {
+//                SplObject obj = get(tempPtr);
+//                System.out.println(obj);
+//                markObjectAsUsed(obj, tempPtr.getPtr());
+//            }
+
+            // sweep
+            sweep();
+
+            if (debugs.printGcRes)
+                System.out.println("gc done! Available after gc: " + available.availableCount() +
+                        ". Time used: " + (System.currentTimeMillis() - beginTime));
+        }
+
+        private void initMarks() {
+            for (SplThing obj : heap) {
+                if (obj instanceof SplObject)
+                    ((SplObject) obj).clearGcCount();
+            }
+        }
+
+        private void mark(Environment env) {
+            if (env == null) return;
+
+//            System.out.println(env);
+
+            Set<SplElement> attr = env.attributes();
+            for (SplElement ele : attr) {
+                if (ele instanceof Reference) {
+                    Reference ptr = (Reference) ele;
+
+                    // the null case represent those constants which has not been set yet
+                    SplObject obj = get(ptr);
+                    markObjectAsUsed(obj, ptr.getPtr());
+                }
+            }
+            mark(env.outer);
+            if (env instanceof FunctionEnvironment) {
+//            System.out.println("***" + ((FunctionEnvironment) env).callingEnv);
+                mark(((FunctionEnvironment) env).callingEnv);
+            }
+//        else
+//            if (env instanceof InstanceEnvironment) {
+//            markGcByEnv(((InstanceEnvironment) env).creationEnvironment);
+//        }
+        }
+
+        private void markObjectAsUsed(SplObject obj, int objAddr) {
+            if (obj == null) return;
+            if (obj.isGcMarked()) return;
+            obj.incrementGcCount();
+//        if (obj.gcCount > 1) return;  // already marked
+//        System.out.println(obj);
+
+//            switch (type.getPointerType()) {
+//                case PointerType.ARRAY_TYPE:
+            if (obj instanceof SplArray) {
+                int arrBegin = objAddr + 1;
+                SplArray array = (SplArray) obj;
+                for (int i = 0; i < array.length; i++) {
+                    int p = arrBegin + i;
+                    SplElement ele = getPrimitive(p);
+                    if (ele instanceof Reference) {
+                        SplObject pointed = get((Reference) ele);
+                        markObjectAsUsed(pointed, p);
+                    }
+                }
+            } else if (obj instanceof SplModule) {
+                SplModule module = (SplModule) obj;
+                mark(module.getEnv());
+            } else if (obj instanceof Instance) {
+                Instance instance = (Instance) obj;
+                mark(instance.getEnv());
+            } else if (obj instanceof SplClass) {
+                SplClass clazz = (SplClass) obj;
+                List<Reference> classPointers = clazz.getAllAttrPointers();
+                for (Reference attrPtr : classPointers) {
+                    SplObject attrObj = get(attrPtr);
+                    markObjectAsUsed(attrObj, attrPtr.getPtr());
+                }
+            }
+        }
+
+
+        private void sweep() {
+            available.clear();
+            AvailableList.LnkNode curLast = null;
+            for (int p = 1; p < heapSize; ++p) {
+                SplThing thing = getRaw(p);
+                if (thing instanceof SplObject) {
+                    SplObject obj = (SplObject) thing;
+                    if (obj.isGcMarked()) {
+                        obj.resetGeneration();
+                        if (obj instanceof SplArray) {
+                            p += ((SplArray) obj).length;  // do not add any addresses in this array to available list
+                        }
+                    } else {
+                        obj.nextGeneration();
+                        if (obj.isDead()) {
+                            curLast = available.addLast(p, curLast);
+                            set(p, null);  // just for visual clearance, not necessary
+                        }
+                    }
+                } else {
+                    curLast = available.addLast(p, curLast);
+                }
+            }
         }
     }
 }

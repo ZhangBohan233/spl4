@@ -49,17 +49,19 @@ public class NativeObject extends SplObject {
 
             return (SplElement) method.invoke(obj, arguments, callEnv, lineFile);
         } catch (NoSuchMethodException | IllegalAccessException e1) {
-//            throw new AttributeError("Native class '" + obj.getClass() + "' does not have method '" +
-//                    methodName + ". ", lineFile);
-            SplInvokes.throwException(
+            return SplInvokes.throwExceptionWithError(
                     callEnv,
                     Constants.ATTRIBUTE_EXCEPTION,
-                    "Native class '" + obj.getClass() + "' does not have method '" + methodName + ". ",
+                    "Native class '" + obj.getClass() + "' does not have method '" + methodName + "'.",
                     lineFile
             );
-            return Undefined.ERROR;
         } catch (InvocationTargetException e) {
-            throw new NativeError(e);
+            return SplInvokes.throwExceptionWithError(
+                    callEnv,
+                    Constants.INVOKE_ERROR,
+                    "Error occurred while calling '" + methodName + "': " + e.toString() + ".",
+                    lineFile
+            );
         }
     }
 }

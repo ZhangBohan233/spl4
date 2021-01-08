@@ -2,12 +2,12 @@ package spl.interpreter.env;
 
 import spl.util.LineFilePos;
 
-public class LoopTitleEnvironment extends SubAbstractEnvironment {
+public class LoopEnvironment extends SubAbstractEnvironment {
 
     private boolean broken;
     private boolean paused;
 
-    public LoopTitleEnvironment(Environment outer) {
+    public LoopEnvironment(Environment outer) {
         super(outer);
     }
 

@@ -28,4 +28,5 @@
 * File IO
 * ~~String literal duplicate removal~~ **_DONE_**
 * Reference count garbage collection
+* Memory reallocation during full gc
 * Multithreading

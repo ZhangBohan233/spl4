@@ -64,7 +64,7 @@ public class BinaryOperator extends BinaryExpr {
             return SplInvokes.throwExceptionWithError(
                     env,
                     Constants.TYPE_ERROR,
-                    "Binary operator type error.",
+                    "Binary operator type error. Left side: ",
                     lineFile);
         }
     }

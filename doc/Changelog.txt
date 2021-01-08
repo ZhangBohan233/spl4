@@ -1,3 +1,9 @@
+===== Version 4037 =====
+2021/01/09
+
+* Updated GC:
+    * Added object survive round count to reduce gc-related problems
+
 ===== Version 4036 =====
 2021/01/08
 

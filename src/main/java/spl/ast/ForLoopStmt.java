@@ -3,7 +3,7 @@ package spl.ast;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.BlockEnvironment;
 import spl.interpreter.env.Environment;
-import spl.interpreter.env.LoopTitleEnvironment;
+import spl.interpreter.env.LoopEnvironment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Reference;
@@ -30,7 +30,7 @@ public class ForLoopStmt extends ConditionalStmt {
 
     @Override
     protected void internalProcess(Environment env) {
-        LoopTitleEnvironment titleEnv = new LoopTitleEnvironment(env);
+        LoopEnvironment titleEnv = new LoopEnvironment(env);
         BlockEnvironment bodyEnv = new BlockEnvironment(titleEnv);
 
 
@@ -67,7 +67,7 @@ public class ForLoopStmt extends ConditionalStmt {
     }
 
     private void forLoop3Parts(Line init, Expression end, Line step, Environment parentEnv,
-                               LoopTitleEnvironment titleEnv, BlockEnvironment bodyEnv) {
+                               LoopEnvironment titleEnv, BlockEnvironment bodyEnv) {
         init.evaluate(titleEnv);
         Bool bool = Bool.evalBoolean(end, titleEnv, lineFile);
         while (bool.value) {
@@ -83,7 +83,7 @@ public class ForLoopStmt extends ConditionalStmt {
 
     private void forEachLoop(InExpr inExpr,
                              Environment parentEnv,
-                             LoopTitleEnvironment titleEnv,
+                             LoopEnvironment titleEnv,
                              BlockEnvironment bodyEnv) {
         SplElement probIterable = inExpr.right.evaluate(parentEnv);
 
@@ -138,7 +138,7 @@ public class ForLoopStmt extends ConditionalStmt {
                                      Reference instancePtr,
                                      Instance iterator,
                                      Environment parentEnv,
-                                     LoopTitleEnvironment titleEnv,
+                                     LoopEnvironment titleEnv,
                                      BlockEnvironment bodyEnv) {
         Reference nextPtr = (Reference) iterator.getEnv().get(Constants.NEXT_FN, lineFile);
         Reference hasNextPtr = (Reference) iterator.getEnv().get(Constants.HAS_NEXT_FN, lineFile);

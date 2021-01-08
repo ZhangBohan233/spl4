@@ -31,6 +31,7 @@ public class StringLiteral extends LiteralNode {
     Reference evalRef(Environment env, LineFilePos lineFilePos) {
         if (litRef == null) {
             litRef = createString(charArray, env, lineFilePos);
+            env.getMemory().addPermanentPtr(litRef);
         }
         return litRef;
     }

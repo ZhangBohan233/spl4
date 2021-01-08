@@ -20,4 +20,9 @@ public class SplModule extends SplObject {
     public String toString() {
         return "Module " + importedPath;
     }
+
+    @Override
+    protected int gcGenerationLimit() {
+        return 1;
+    }
 }

@@ -264,7 +264,16 @@ class List(Iterable) {
     }
 
     fn __repr__() {
-        return __str__();
+        result := "[";
+        for i := 0; i < _size; i++ {
+            item := array[i];
+            if List?(item) or Array?(item) {
+                result += item.__class__().__name__ + "@" + Invokes.id(item);
+            } else {
+                result += repr(item) + ", ";
+            }
+        }
+        return result + "]";
     }
 
     fn __str__() {
@@ -498,6 +507,9 @@ fn void(x) {
     return x is null;
 }
 
+/*
+ * Wraps any primitive to wrapper. Leave any referenced value unchanged.
+ */
 fn wrap(value) {
     cond {
         case int?(value) {
@@ -508,10 +520,8 @@ fn wrap(value) {
             return new Character(value);
         } case boolean?(value) {
             return new Boolean(value);
-        } case Wrapper?(value) {
-            return value;
         } default {
-            throw new TypeError("Cannot wrap non-wrapper object.");
+            return value;
         }
     }
 }

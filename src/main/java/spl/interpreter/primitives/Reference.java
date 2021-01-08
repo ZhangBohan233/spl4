@@ -4,7 +4,7 @@ import spl.interpreter.splErrors.NativeTypeError;
 
 public class Reference extends SplElement {
 
-    private final int ptr;
+    private int ptr;
 
     public static final Reference NULL = new Reference(0);
 
@@ -34,6 +34,15 @@ public class Reference extends SplElement {
 
     public int getPtr() {
         return ptr;
+    }
+
+    /**
+     * This method should only be used by garbage collection system.
+     *
+     * @param ptr the new pointer
+     */
+    public void setPtr(int ptr) {
+        this.ptr = ptr;
     }
 
     @Override
