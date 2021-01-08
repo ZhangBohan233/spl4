@@ -6,7 +6,11 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import spl.ast.BlockStmt;
-import spl.lexer.*;
+import spl.lexer.FileTokenizer;
+import spl.lexer.TextProcessResult;
+import spl.lexer.TextProcessor;
+import spl.lexer.TokenizeResult;
+import spl.parser.ParseResult;
 import spl.parser.Parser;
 import spl.tools.AstVisualizer;
 import spl.util.ArgumentParser;
@@ -17,7 +21,7 @@ import java.util.Map;
 public class Visualizer extends Application {
 
     private static BlockStmt root;
-    private static Map<String, BlockStmt> importedModules;
+    private static Map<String, ParseResult> importedModules;
 
     public static void main(String[] args) throws IOException {
         new Visualizer().load(args);
@@ -31,8 +35,9 @@ public class Visualizer extends Application {
             TokenizeResult tr =
                     new FileTokenizer(argumentParser.getMainSrcFile(), argumentParser.importLang()).tokenize();
             TextProcessResult tpr = new TextProcessor(tr, argumentParser.importLang()).process();
-            root = new Parser(tpr).parse();
-            importedModules = SplInterpreter.parseImportedModules(tpr.importedPaths);
+            Parser psr = new Parser(tpr);
+            root = psr.parse().getRoot();
+            importedModules = SplInterpreter.parseImportedModules(tpr.importedPaths, psr.getStringLiterals());
         }
     }
 

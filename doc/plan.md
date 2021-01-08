@@ -15,10 +15,17 @@
 * Pattern matching contract, example: `contract foo(int?, A?) -> A?`
 * ~~Invoke call "hasAttr"~~ **_DONE_**
 * ~~Syntax sugar of unary function,~~ example: `int? or float?` **_DONE_**
-* Duplicate literal removal
+* ~~Duplicate literal removal~~ **_DISCARDED_**
 * ~~Ast visualizer~~ **_DONE_**
 * ~~Resolve primitive wrapper confusion~~ **_DONE_**
 * ~~Direct contract in function declaration~~ **_DONE_**
 * ~~Reflection~~ **_DONE_**
 * Input stream
 * ~~input()~~ **_DONE_**
+
+### Phase 3
+
+* File IO
+* ~~String literal duplicate removal~~ **_DONE_**
+* Reference count garbage collection
+* Multithreading

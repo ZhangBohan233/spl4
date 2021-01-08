@@ -2,6 +2,7 @@ package spl;
 
 import spl.ast.BlockStmt;
 import spl.ast.Node;
+import spl.ast.StringLiteral;
 import spl.interpreter.Memory;
 import spl.interpreter.env.GlobalEnvironment;
 import spl.interpreter.invokes.SplInvokes;
@@ -9,6 +10,7 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.lexer.*;
 import spl.lexer.treeList.BracketList;
+import spl.parser.ParseResult;
 import spl.parser.Parser;
 import spl.util.Constants;
 import spl.util.LineFilePos;
@@ -18,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Console {
@@ -27,6 +30,7 @@ public class Console {
     private PrintStream out = System.out;
     private PrintStream err = System.err;
     private GlobalEnvironment globalEnvironment;
+    private Map<String, StringLiteral> strLitBundleMap;
 
     public Console() throws IOException {
         createConsoleEnvironment();
@@ -50,13 +54,14 @@ public class Console {
         TextProcessResult tpr =
                 new TextProcessor(fileTokenizer.tokenize(), true).process();
         Parser parser = new Parser(tpr);
-        BlockStmt root = parser.parse();
+        ParseResult pr = parser.parse();
+        strLitBundleMap = parser.getStringLiterals();
 
         Memory memory = new Memory();
         globalEnvironment = new GlobalEnvironment(memory);
 
         SplInterpreter.initNatives(globalEnvironment);
-        SplInterpreter.importModules(globalEnvironment, tpr.importedPaths);
+        SplInterpreter.importModules(globalEnvironment, tpr.importedPaths, strLitBundleMap);
 
         SplInvokes invokes =
                 (SplInvokes) memory.get((Reference) globalEnvironment.get(Constants.INVOKES, LineFilePos.LFP_CONSOLE));
@@ -64,7 +69,7 @@ public class Console {
         invokes.setIn(in);
         invokes.setErr(err);
 
-        root.evaluate(globalEnvironment);
+        pr.getRoot().evaluate(globalEnvironment);
     }
 
     /**
@@ -97,14 +102,14 @@ public class Console {
             BracketList bracketList = consoleTokenizer.build();
             TextProcessResult tpr =
                     new TextProcessor(new TokenizeResult(bracketList), false).process();
-            Parser parser = new Parser(tpr);
-            BlockStmt lineExpr = parser.parse();
+            Parser parser = new Parser(tpr, strLitBundleMap);
+            BlockStmt lineExpr = parser.parse().getRoot();
             if (lineExpr.getLines().size() > 0 && lineExpr.getLines().get(0).size() > 0) {
                 Node only = lineExpr.getLines().get(0).get(0);
                 SplElement result = only.evaluate(globalEnvironment);
                 if (globalEnvironment.hasException()) {
                     Utilities.removeErrorAndPrint(globalEnvironment, LineFilePos.LFP_CONSOLE);
-                } else if (result != null && result != Reference.NULL_PTR) {
+                } else if (result != null && result != Reference.NULL) {
                     out.println(SplInvokes.getRepr(result, globalEnvironment, LineFilePos.LFP_CONSOLE));
                 }
             }

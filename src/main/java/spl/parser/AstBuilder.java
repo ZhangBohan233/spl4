@@ -164,13 +164,13 @@ public class AstBuilder {
         }
     }
 
-    void addString(char[] charArray, LineFilePos lineFile) {
-        if (inner == null) {
-            stack.add(new StringLiteral(charArray, lineFile));
-        } else {
-            inner.addString(charArray, lineFile);
-        }
-    }
+//    void addString(char[] charArray, LineFilePos lineFile) {
+//        if (inner == null) {
+//            stack.add(new StringLiteral(charArray, lineFile));
+//        } else {
+//            inner.addString(charArray, lineFile);
+//        }
+//    }
 
     void addUnaryOperator(String op, int type, LineFilePos lineFile) {
         if (inner == null) {

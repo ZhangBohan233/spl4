@@ -1,6 +1,7 @@
 package spl.ast;
 
 import spl.interpreter.EvaluatedArguments;
+import spl.interpreter.Memory;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Char;
 import spl.interpreter.primitives.Reference;
@@ -10,8 +11,11 @@ import spl.interpreter.splObjects.SplArray;
 import spl.util.Constants;
 import spl.util.LineFilePos;
 
+import java.util.Arrays;
+
 public class StringLiteral extends LiteralNode {
 
+    private Reference litRef = null;
     private final char[] charArray;
 
     public StringLiteral(char[] charArray, LineFilePos lineFile) {
@@ -24,9 +28,17 @@ public class StringLiteral extends LiteralNode {
         return charArray.length;
     }
 
+    Reference evalRef(Environment env, LineFilePos lineFilePos) {
+        if (litRef == null) {
+            litRef = createString(charArray, env, lineFilePos);
+        }
+        return litRef;
+    }
+
     @Override
     protected SplElement internalEval(Environment env) {
-        return createString(charArray, env, getLineFile());
+        return evalRef(env, lineFile);
+//        return createString(charArray, env, getLineFile());
     }
 
     public static Reference createString(char[] charArray, Environment env, LineFilePos lineFile) {
@@ -67,6 +79,6 @@ public class StringLiteral extends LiteralNode {
 
     @Override
     public String toString() {
-        return "StringLiteral{" + new String(charArray) + "}";
+        return "StringLiteral{" + Arrays.toString(charArray) + "}";
     }
 }

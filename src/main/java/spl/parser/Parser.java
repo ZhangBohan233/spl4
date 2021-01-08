@@ -7,6 +7,10 @@ import spl.util.Constants;
 import spl.util.LineFilePos;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class Parser {
 
@@ -14,8 +18,30 @@ public class Parser {
 
     private int varLevel = Declaration.USELESS;
 
-    public Parser(TextProcessResult textProcessResult) {
+    private final Map<String, StringLiteral> stringLiterals;
+
+    /**
+     * Constructor of Parser, for imported module files.
+     *
+     * @param textProcessResult tokens
+     * @param stringStrLitMap string literals from previous
+     */
+    public Parser(TextProcessResult textProcessResult, Map<String, StringLiteral> stringStrLitMap) {
         this.rootList = textProcessResult.rootList;
+        this.stringLiterals = stringStrLitMap;
+    }
+
+    /**
+     * Constructor of Parser, for main file.
+     *
+     * @param textProcessResult tokens
+     */
+    public Parser(TextProcessResult textProcessResult) {
+        this(textProcessResult, new HashMap<>());
+    }
+
+    public Map<String, StringLiteral> getStringLiterals() {
+        return stringLiterals;
     }
 
     private AstBuilder parseSomeBlock(CollectiveElement collectiveElement) throws IOException {
@@ -509,7 +535,14 @@ public class Parser {
                 } else if (token instanceof FloatToken) {
                     builder.addFloat(((FloatToken) token).getValue(), lineFile);
                 } else if (token instanceof StrToken) {
-                    builder.addString(((StrToken) token).getLiteral().toCharArray(), lineFile);
+                    StrToken strToken = (StrToken) token;
+                    StringLiteral lit = stringLiterals.get(strToken.getLiteral());
+                    if (lit == null) {
+                        lit = new StringLiteral(strToken.getLiteral().toCharArray(), lineFile);
+                        stringLiterals.put(strToken.getLiteral(), lit);
+                    }
+                    StringLiteralRef sl = new StringLiteralRef(lit, lineFile);
+                    builder.addNode(sl);
                 } else if (token instanceof CharToken) {
                     builder.addChar(((CharToken) token).getValue(), lineFile);
                 } else {
@@ -573,9 +606,8 @@ public class Parser {
         return index;
     }
 
-    public BlockStmt parse() throws IOException {
-
-        return parseBlock(rootList);
+    public ParseResult parse() throws IOException {
+        return new ParseResult(parseBlock(rootList));
     }
 
     private static boolean notIdentifierOf(Element element, String expectedName) {

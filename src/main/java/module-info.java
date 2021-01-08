@@ -11,6 +11,8 @@ module spl {
     opens spl.util;
 
     exports spl;
+    exports spl.parser;
+    exports spl.lexer;
     exports spl.interpreter;
     exports spl.interpreter.env;
     exports spl.interpreter.primitives;

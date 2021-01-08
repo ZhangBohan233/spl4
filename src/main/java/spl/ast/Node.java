@@ -18,7 +18,7 @@ public abstract class Node {
 
     public final SplElement evaluate(Environment env) {
         // pre
-        if (env.interrupted()) return Reference.NULL_PTR;
+        if (env.interrupted()) return Reference.NULL;
         if (env.hasException()) return Undefined.ERROR;
 //        env.getMemory().enterNode(this);
 

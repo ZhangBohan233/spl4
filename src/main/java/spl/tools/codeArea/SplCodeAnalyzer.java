@@ -218,7 +218,7 @@ public class SplCodeAnalyzer extends CodeAnalyzer {
                 TokenizeResult tr = tokenizer.tokenize();
                 TextProcessResult processed = new TextProcessor(tr, true).process();
                 Parser parser = new Parser(processed);
-                BlockStmt blockStmt = parser.parse();
+                BlockStmt blockStmt = parser.parse().getRoot();
 
                 AnalyzeEnv analyzeEnv = new AnalyzeEnv(null);
                 for (Line line : blockStmt.getLines()) {

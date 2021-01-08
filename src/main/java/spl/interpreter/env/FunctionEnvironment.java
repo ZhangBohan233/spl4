@@ -20,7 +20,7 @@ public class FunctionEnvironment extends MainAbstractEnvironment {
     }
 
     public SplElement getReturnValue() {
-        return Objects.requireNonNullElse(returnValue, Reference.NULL_PTR);
+        return Objects.requireNonNullElse(returnValue, Reference.NULL);
     }
 
     /**

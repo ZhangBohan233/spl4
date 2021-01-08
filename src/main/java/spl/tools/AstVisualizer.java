@@ -7,6 +7,7 @@ import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.control.cell.TreeItemPropertyValueFactory;
 import spl.ast.*;
+import spl.parser.ParseResult;
 import spl.util.LineFilePos;
 
 import java.net.URL;
@@ -21,7 +22,7 @@ public class AstVisualizer implements Initializable {
     @FXML
     TreeTableColumn<TreeNode, String> typeCol, valueCol, msgCol, lineCol, fileCol;
 
-    private Map<String, BlockStmt> importedModules;
+    private Map<String, ParseResult> importedModules;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -32,7 +33,7 @@ public class AstVisualizer implements Initializable {
         fileCol.setCellValueFactory(new TreeItemPropertyValueFactory<>("file"));
     }
 
-    public void setup(Node node, Map<String, BlockStmt> importedModules) {
+    public void setup(Node node, Map<String, ParseResult> importedModules) {
         this.importedModules = importedModules;
 
         fill(node, null, "Program root");
@@ -82,7 +83,7 @@ public class AstVisualizer implements Initializable {
             UnaryStmt ue = (UnaryStmt) node;
             fill(ue.getValue(), treeItem, "value");
         } else if (node instanceof ImportStmt) {
-            BlockStmt importBody = importedModules.get(((ImportStmt) node).getPath());
+            BlockStmt importBody = importedModules.get(((ImportStmt) node).getPath()).getRoot();
             fill(importBody, treeItem, "imported module");
         } else if (node instanceof ContractNode) {
             ContractNode cn = (ContractNode) node;

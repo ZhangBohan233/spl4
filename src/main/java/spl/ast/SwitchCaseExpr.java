@@ -32,7 +32,7 @@ public class SwitchCaseExpr extends Expression {
                 if (result == null) {
                     result = blockEnv.yieldResult();
                 }
-                return result == null ? Reference.NULL_PTR : result;
+                return result == null ? Reference.NULL : result;
             }
         }
         if (defaultCase != null) {
@@ -41,9 +41,9 @@ public class SwitchCaseExpr extends Expression {
             if (result == null) {
                 result = blockEnv.yieldResult();
             }
-            return result == null ? Reference.NULL_PTR : result;
+            return result == null ? Reference.NULL : result;
         } else {
-            return Reference.NULL_PTR;
+            return Reference.NULL;
         }
     }
 

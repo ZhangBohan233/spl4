@@ -99,7 +99,8 @@ public abstract class Environment {
         if (localHasName(name, lineFile)) {
             SplInvokes.throwException(this, Constants.NAME_ERROR, "Variable '" + name + "' already defined.",
                     lineFile);
-        return;}
+            return;
+        }
 
         variables.put(name, VarEntry.varEntry());
     }
@@ -109,7 +110,8 @@ public abstract class Environment {
 //            throw new EnvironmentError("Variable '" + name + "' already defined. ", lineFile);
             SplInvokes.throwException(this, Constants.NAME_ERROR, "Variable '" + name + "' already defined.",
                     lineFile);
-        return;}
+            return;
+        }
 
         variables.put(name, VarEntry.varEntry(value));
     }
@@ -118,7 +120,8 @@ public abstract class Environment {
         if (localHasName(name, lineFile)) {
             SplInvokes.throwException(this, Constants.NAME_ERROR, "Constant '" + name + "' already defined.",
                     lineFile);
-        return;}
+            return;
+        }
 
         // not using 'defaultValue' because 'null' is the mark of unassigned constant
         variables.put(name, VarEntry.constEntry());

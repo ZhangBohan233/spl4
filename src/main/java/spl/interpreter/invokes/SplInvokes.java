@@ -236,19 +236,19 @@ public class SplInvokes extends NativeObject {
     public SplElement println(Arguments arguments, Environment environment, LineFilePos lineFile) {
         stdout.println(getPrintString(arguments, environment, lineFile));
 
-        return Reference.NULL_PTR;
+        return Reference.NULL;
     }
 
     public SplElement print(Arguments arguments, Environment environment, LineFilePos lineFile) {
         stdout.print(getPrintString(arguments, environment, lineFile));
 
-        return Reference.NULL_PTR;
+        return Reference.NULL;
     }
 
     public SplElement printErr(Arguments arguments, Environment environment, LineFilePos lineFile) {
         stderr.print(getPrintString(arguments, environment, lineFile));
 
-        return Reference.NULL_PTR;
+        return Reference.NULL;
     }
 
     public SplElement input(Arguments arguments, Environment environment, LineFilePos lineFile) {
@@ -284,7 +284,7 @@ public class SplInvokes extends NativeObject {
         }
         environment.getMemory().free(ptr, freeLength);
 
-        return Reference.NULL_PTR;
+        return Reference.NULL;
     }
 
     public SplElement gc(Arguments arguments, Environment environment, LineFilePos lineFile) {
@@ -292,7 +292,7 @@ public class SplInvokes extends NativeObject {
 
         environment.getMemory().gc(environment);
 
-        return Reference.NULL_PTR;
+        return Reference.NULL;
     }
 
     public SplElement memoryView(Arguments arguments, Environment environment, LineFilePos lineFile) {
@@ -300,7 +300,7 @@ public class SplInvokes extends NativeObject {
 
         stdout.println("Memory: " + environment.getMemory().memoryView());
         stdout.println("Available: " + environment.getMemory().availableView());
-        return Reference.NULL_PTR;
+        return Reference.NULL;
     }
 
     public SplElement id(Arguments arguments, Environment environment, LineFilePos lineFile) {
@@ -452,7 +452,7 @@ public class SplInvokes extends NativeObject {
             TokenizeResult braceList = ft.tokenize();
             TextProcessResult tpr = new TextProcessor(braceList, false).process();
             Parser parser = new Parser(tpr);
-            BlockStmt root = parser.parse();
+            BlockStmt root = parser.parse().getRoot();
             BlockEnvironment subEnv = new BlockEnvironment(environment);
             root.evaluate(subEnv);
             if (subEnv.hasName(Constants.MAIN_FN)) {
@@ -475,7 +475,7 @@ public class SplInvokes extends NativeObject {
                     return mainFn.call(targetArgs, environment, lineFile);
                 }
             }
-            return Reference.NULL_PTR;
+            return Reference.NULL;
         } catch (IOException e) {
             throw new NativeError(e);
         }

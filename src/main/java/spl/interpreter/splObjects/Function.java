@@ -144,7 +144,7 @@ public class Function extends UserFunction {
                     "Contract must be callable",
                     lineFile
             );
-            return Reference.NULL_PTR;
+            return Reference.NULL;
         }
     }
 

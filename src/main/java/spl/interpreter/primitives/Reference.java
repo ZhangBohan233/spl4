@@ -6,7 +6,7 @@ public class Reference extends SplElement {
 
     private final int ptr;
 
-    public static final Reference NULL_PTR = new Reference(0);
+    public static final Reference NULL = new Reference(0);
 
     public Reference(int ptr) {
         this.ptr = ptr;
