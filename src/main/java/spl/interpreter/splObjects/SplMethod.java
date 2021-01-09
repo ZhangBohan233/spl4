@@ -8,6 +8,8 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.util.LineFilePos;
 
+import java.util.List;
+
 public class SplMethod extends Function {
 
     private Reference classPtr;
@@ -18,6 +20,11 @@ public class SplMethod extends Function {
                      String definedName,
                      LineFilePos lineFile) {
         super(body, params, classDefEnv, definedName, lineFile);
+    }
+
+    @Override
+    public List<Reference> listAttrReferences() {
+        return List.of(classPtr);
     }
 
     public void setClassPtr(Reference classPtr) {

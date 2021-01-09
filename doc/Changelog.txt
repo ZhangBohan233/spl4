@@ -1,3 +1,10 @@
+===== Version 4039 =====
+2021/01/10
+
+* New garbage collection system:
+    * Memory is now allocating by a simple pointer 'availableHead', every garbage collect process rearranges the memory
+    * Removed 'Invokes.free()'
+
 ===== Version 4038 =====
 2021/01/10
 

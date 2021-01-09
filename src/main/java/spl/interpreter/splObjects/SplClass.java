@@ -52,6 +52,16 @@ public class SplClass extends SplObject {
         checkConstructor();
     }
 
+    @Override
+    public List<Reference> listAttrReferences() {
+        List<Reference> refs = new ArrayList<>();
+        refs.addAll(superclassPointers);
+        refs.addAll(methodPointers.values());
+        refs.addAll(Arrays.asList(mro));
+        refs.add(mroArrayPointer);
+        return refs;
+    }
+
     public static Reference createClassAndAllocate(String className, List<Reference> superclassPointers,
                                                    BlockStmt body, Environment definitionEnv) {
 

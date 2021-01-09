@@ -21,6 +21,11 @@ public class Instance extends SplObject {
         this.env = env;
     }
 
+    @Override
+    public List<Reference> listAttrReferences() {
+        return List.of(clazzPtr);
+    }
+
     public InstanceEnvironment getEnv() {
         return env;
     }

@@ -11,6 +11,13 @@ class X {
     }
 }
 
+class B {
+    var b = 3;
+
+    fn __init__() {
+
+    }
+}
 
 fn main() {
     var a = 3;
@@ -20,10 +27,11 @@ fn main() {
     //b := [];
     //c := [];
     var d;
-    for i := 0; i < 100; i++ {
-        d = "ax" + a;
+    for i := 0; i < 20; i++ {
+        d = "ax" + a + d;
         e := new X();
         //Invokes.gc();
-        //d = d + e.fun();
+        d = d + e.fun();
     }
+    print(d);
 }

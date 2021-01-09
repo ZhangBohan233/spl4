@@ -270,23 +270,6 @@ public class SplInvokes extends NativeObject {
         return new Int(System.currentTimeMillis());
     }
 
-    public SplElement free(Arguments arguments, Environment environment, LineFilePos lineFile) {
-        checkArgCount(arguments, 1, "free", environment, lineFile);
-
-        Reference ptr = (Reference) arguments.getLine().getChildren().get(0).evaluate(environment);
-        SplObject obj = environment.getMemory().get(ptr);
-        int freeLength;
-        if (obj instanceof SplArray) {
-            SplArray array = (SplArray) obj;
-            freeLength = array.length + 1;
-        } else {
-            freeLength = 1;
-        }
-        environment.getMemory().free(ptr, freeLength);
-
-        return Reference.NULL;
-    }
-
     public SplElement gc(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 0, "gc", environment, lineFile);
 
