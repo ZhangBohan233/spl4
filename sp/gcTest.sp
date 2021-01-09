@@ -24,6 +24,6 @@ fn main() {
         d = "ax" + a;
         e := new X();
         //Invokes.gc();
-        d = d + e.fun();
+        //d = d + e.fun();
     }
 }

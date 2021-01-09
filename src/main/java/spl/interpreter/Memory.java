@@ -375,18 +375,77 @@ public class Memory {
     }
 
     private class MemoryRearranger {
+        private final Map<Integer, Reference> refs = new HashMap<>();
+
         private void rearrange() {
+            refs.clear();
+        }
+
+        private void add(Environment env) {
+            if (env == null) return;
+
+//            System.out.println(env);
+
+            Set<SplElement> attr = env.attributes();
+            for (SplElement ele : attr) {
+                if (ele instanceof Reference) {
+                    Reference ptr = (Reference) ele;
+
+                    // the null case represent those constants which has not been set yet
+//                    SplObject obj = get(ptr);
+                    add(ptr);
+//                    markObjectAsUsed(obj, ptr.getPtr());
+                }
+            }
+            add(env.outer);
+            if (env instanceof FunctionEnvironment) {
+                add(((FunctionEnvironment) env).callingEnv);
+            }
+        }
+
+        private void add(SplObject obj) {
+
+        }
+
+        private void add(Reference reference) {
+            refs.put(reference.getPtr(), reference);
+            SplObject obj = get(reference);
+            if (obj instanceof SplArray) {
+                int arrBegin = reference.getPtr() + 1;
+                SplArray array = (SplArray) obj;
+                for (int i = 0; i < array.length; i++) {
+                    int p = arrBegin + i;
+                    SplElement ele = getPrimitive(p);
+                    if (ele instanceof Reference) {
+                        SplObject pointed = get((Reference) ele);
+//                        add(pointed, p);
+                    }
+                }
+            } else if (obj instanceof SplModule) {
+                SplModule module = (SplModule) obj;
+                add(module.getEnv());
+            } else if (obj instanceof Instance) {
+                Instance instance = (Instance) obj;
+                add(instance.getEnv());
+            } else if (obj instanceof SplClass) {
+                SplClass clazz = (SplClass) obj;
+                List<Reference> classPointers = clazz.getAllAttrPointers();
+                for (Reference attrPtr : classPointers) {
+//                    SplObject attrObj = get(attrPtr);
+                    add(attrPtr);
+                }
+            }
+        }
+
+        private void move() {
 
         }
     }
 
     private class GarbageCollector {
 
-        private final Map<Integer, Reference> survivedRefs = new HashMap<>();
-
         private void garbageCollect(Environment baseEnv) {
             long beginTime = System.currentTimeMillis();
-            survivedRefs.clear();
             if (debugs.printGcRes)
                 System.out.println("Doing gc! Available before gc: " + available.availableCount());
 
@@ -404,9 +463,9 @@ public class Memory {
             }
 
             // other roots
-//            for (Environment env : temporaryEnvs) {
-//                mark(env);
-//            }
+            for (Environment env : temporaryEnvs) {
+                mark(env);
+            }
 
             // permanent objects
             for (Reference pr : permanentPointers) {
@@ -415,11 +474,11 @@ public class Memory {
             }
 
             // temp object roots
-//            for (Reference tempPtr : managedPointers) {
-//                SplObject obj = get(tempPtr);
-//                System.out.println(obj);
-//                markObjectAsUsed(obj, tempPtr.getPtr());
-//            }
+            for (Reference tempPtr : managedPointers) {
+                SplObject obj = get(tempPtr);
+                System.out.println(obj);
+                markObjectAsUsed(obj, tempPtr.getPtr());
+            }
 
             // sweep
             sweep();
@@ -453,13 +512,8 @@ public class Memory {
             }
             mark(env.outer);
             if (env instanceof FunctionEnvironment) {
-//            System.out.println("***" + ((FunctionEnvironment) env).callingEnv);
                 mark(((FunctionEnvironment) env).callingEnv);
             }
-//        else
-//            if (env instanceof InstanceEnvironment) {
-//            markGcByEnv(((InstanceEnvironment) env).creationEnvironment);
-//        }
         }
 
         private void markObjectAsUsed(SplObject obj, int objAddr) {
@@ -469,8 +523,6 @@ public class Memory {
 //        if (obj.gcCount > 1) return;  // already marked
 //        System.out.println(obj);
 
-//            switch (type.getPointerType()) {
-//                case PointerType.ARRAY_TYPE:
             if (obj instanceof SplArray) {
                 int arrBegin = objAddr + 1;
                 SplArray array = (SplArray) obj;
@@ -498,7 +550,6 @@ public class Memory {
             }
         }
 
-
         private void sweep() {
             available.clear();
             AvailableList.LnkNode curLast = null;
@@ -507,16 +558,12 @@ public class Memory {
                 if (thing instanceof SplObject) {
                     SplObject obj = (SplObject) thing;
                     if (obj.isGcMarked()) {
-                        obj.resetGeneration();
                         if (obj instanceof SplArray) {
                             p += ((SplArray) obj).length;  // do not add any addresses in this array to available list
                         }
                     } else {
-                        obj.nextGeneration();
-                        if (obj.isDead()) {
-                            curLast = available.addLast(p, curLast);
-                            set(p, null);  // just for visual clearance, not necessary
-                        }
+                        curLast = available.addLast(p, curLast);
+                        set(p, null);  // just for visual clearance, not necessary
                     }
                 } else {
                     curLast = available.addLast(p, curLast);

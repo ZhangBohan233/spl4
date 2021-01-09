@@ -149,9 +149,4 @@ public class SplArray extends SplObject {
     public String toString() {
         return SplElement.typeToString(elementTypeCode) + "[" + length + "]";
     }
-
-    @Override
-    protected int gcGenerationLimit() {
-        return 2;
-    }
 }
