@@ -1,3 +1,9 @@
+===== Version 4043 =====
+2021/01/11
+
+* Bug fixes:
+    * Byte array
+
 ===== Version 4042 =====
 2021/01/11
 

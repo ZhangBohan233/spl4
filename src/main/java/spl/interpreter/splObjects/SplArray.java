@@ -34,6 +34,8 @@ public class SplArray extends SplObject {
                     return SplElement.FLOAT;
                 case "char":
                     return SplElement.CHAR;
+                case "byte":
+                    return SplElement.BYTE;
                 case "boolean":
                     return SplElement.BOOLEAN;
                 case "Object":
@@ -42,7 +44,7 @@ public class SplArray extends SplObject {
                     break;
             }
         }
-        throw new NativeTypeError("Only basic types are valid in array creation.");
+        throw new NativeTypeError("Only basic types are valid in array creation. ");
     }
 
     public static Reference createArray(int eleType, int arrSize, Environment env) {
