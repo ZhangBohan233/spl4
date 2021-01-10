@@ -28,5 +28,8 @@
 * File IO
 * ~~String literal duplicate removal~~ **_DONE_**
 * Reference count garbage collection
-* Memory reallocation during full gc
+* ~~Memory reallocation during full gc~~ **_DONE_**
 * Multithreading
+* String operations (upper, lower)
+* Type wrapper of primitive and abstract object
+* Type of array element

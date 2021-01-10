@@ -1,5 +1,6 @@
 package spl.interpreter.invokes;
 
+import spl.SplInterpreter;
 import spl.ast.*;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.BlockEnvironment;
@@ -306,10 +307,29 @@ public class SplInvokes extends NativeObject {
     public SplElement typeName(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, "typeName", environment, lineFile);
 
-        SplElement element = arguments.getLine().getChildren().get(0).evaluate(environment);
+        SplElement element = arguments.getLine().get(0).evaluate(environment);
 
         String s = element.toString();
         return StringLiteral.createString(s.toCharArray(), environment, lineFile);
+    }
+
+    public SplElement nativeType(Arguments arguments, Environment environment, LineFilePos lineFile) {
+        checkArgCount(arguments, 1, "nativeType", environment, lineFile);
+
+        Reference ele = (Reference) arguments.getLine().get(0).evaluate(environment);
+        SplObject obj = environment.getMemory().get(ele);
+
+        String typeName = SplInterpreter.NATIVE_TYPE_NAMES.get(obj.getClass());
+        if (typeName == null) {
+            return throwExceptionWithError(
+                    environment,
+                    Constants.TYPE_ERROR,
+                    "Unexpected native type.",
+                    lineFile
+            );
+        }
+
+        return environment.get(typeName, lineFile);
     }
 
     public Reference getClass(Arguments arguments, Environment environment, LineFilePos lineFile) {

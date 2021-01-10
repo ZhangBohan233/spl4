@@ -32,6 +32,7 @@ public class BinaryOperator extends BinaryExpr {
 
     private static final Map<String, String> LOGICAL_OP_MAP = Map.of(
             "==", "__eq__",
+            "!=", "__ne__",
             ">", "__gt__",
             "<", "__lt__"
     );
@@ -122,6 +123,12 @@ public class BinaryOperator extends BinaryExpr {
                 SplElement res = opFn.call(EvaluatedArguments.of(l, r), env, lineFile);
                 if (res instanceof Bool) {
                     return res;
+                }
+            } else if (leftObj != null) {
+                if (op.equals("==")) {
+                    return pointerLogical("is", l, r, env, lineFile);
+                } else if (op.equals("!=")) {
+                    return pointerLogical("is not", l, r, env, lineFile);
                 }
             }
         }

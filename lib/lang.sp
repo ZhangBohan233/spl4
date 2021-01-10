@@ -77,6 +77,10 @@ class Wrapper {
     fn __eq__(other) {
         return value == wrap(other).value;
     }
+
+    fn __ne__(other) {
+        return type(this) is not type(other) or not __eq__(other);
+    }
 }
 
 class Integer(Wrapper) {
@@ -444,6 +448,18 @@ class String {
         }
         return true;
     }
+
+    fn __ne__(other) {
+        return type(this) is not type(other) or not __eq__(other);
+    }
+
+    fn toUpper() {
+
+    }
+
+    fn toLower() {
+
+    }
 }
 
 fn anyType(_) {
@@ -504,10 +520,15 @@ fn sleep(mills: int?) {
 }
 
 fn type(obj) {
-    if Object?(obj) {
-        return obj.__class__();
-    } else {
-        return null;
+    return cond {
+        case Object?(obj) -> obj.__class__();
+        case AbstractObject?(obj) -> Invokes.nativeType(obj);
+        case int?(obj) -> int;
+        case float?(obj) -> float;
+        case char?(obj) -> char;
+        case boolean?(obj) -> boolean;
+        case byte?(obj) -> byte;
+        default -> null;
     }
 }
 
@@ -562,9 +583,9 @@ fn hasAttr(obj: Object?, attr: String?) -> boolean? {
     return Invokes.hasStrAttr(obj, attr);
 }
 
-fn setAttr(obj: Object?, attr: String?, value) -> void {
+fn setAttr(obj: Object?, attr: String?, value) {
     if hasAttr(obj, attr) {
-        return Invokes.setAttr(obj, attr, value);
+        Invokes.setAttr(obj, attr, value);
     } else {
         throw new AttributeException("Object '" + obj + "' does not have attribute '" + attr + "'.");
     }

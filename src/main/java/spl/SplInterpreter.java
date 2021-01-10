@@ -37,6 +37,18 @@ public class SplInterpreter {
     private static PrintStream err = System.err;
     private GlobalEnvironment globalEnvironment;
 
+    public static final Map<Class<? extends SplObject>, String> NATIVE_TYPE_NAMES = Map.of(
+            SplInvokes.class, "NativeType_Invoke",
+            NativeFunction.class, "NativeType_NativeFunction",
+            SplArray.class, "NativeType_Array",
+            SplModule.class, "NativeType_Module",
+            SplMethod.class, "NativeType_Method",
+            Function.class, "NativeType_Function",
+            LambdaExpression.class, "NativeType_LambdaExpression",
+            SplClass.class, "NativeType_Class",
+            NativeType.class, "NativeType_NativeType"
+    );
+
     public static void setOut(PrintStream out) {
         SplInterpreter.out = out;
     }
@@ -61,6 +73,16 @@ public class SplInterpreter {
                 Constants.INVOKES,
                 sysPtr,
                 LineFilePos.LF_INTERPRETER);
+
+        for (String name : NATIVE_TYPE_NAMES.values()) {
+            NativeType nt = new NativeType(name);
+            Reference ptr = memory.allocateObject(nt, globalEnvironment);
+            globalEnvironment.defineConstAndSet(
+                    name,
+                    ptr,
+                    LineFilePos.LF_INTERPRETER
+            );
+        }
     }
 
     static void importModules(GlobalEnvironment ge, Map<String, CollectiveElement> imported,

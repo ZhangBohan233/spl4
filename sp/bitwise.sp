@@ -8,4 +8,6 @@ fn main() {
     arr[0] = 34b;
     arr[5] = 356b;
     print(char(arr[5]));
+
+    print(new Integer(1) != type);
 }

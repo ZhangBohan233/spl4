@@ -38,7 +38,7 @@ public class SplArray extends SplObject {
                     return SplElement.BYTE;
                 case "boolean":
                     return SplElement.BOOLEAN;
-                case "Object":
+                case "Object":  // this case refers to AbstractObject
                     return SplElement.POINTER;
                 default:
                     break;
@@ -135,17 +135,28 @@ public class SplArray extends SplObject {
     }
 
     public SplElement getAttr(Node attrNode, Environment env, LineFilePos lineFile) {
-        if (attrNode instanceof NameNode && ((NameNode) attrNode).getName().equals(Constants.ARRAY_LENGTH)) {
-            return new Int(length);
-        } else {
-            SplInvokes.throwException(
-                    env,
-                    Constants.ATTRIBUTE_EXCEPTION,
-                    "Array does not have attribute '" + attrNode + "'. ",
-                    lineFile
-            );
-            return Undefined.ERROR;
+        if (attrNode instanceof NameNode) {
+            String name = ((NameNode) attrNode).getName();
+            if (name.equals(Constants.ARRAY_LENGTH)) {
+                return new Int(length);
+            } else if (name.equals(Constants.ARRAY_TYPE)) {
+                return switch (elementTypeCode) {
+                    case SplElement.INT -> env.get("int", lineFile);
+                    case SplElement.FLOAT -> env.get("float", lineFile);
+                    case SplElement.CHAR -> env.get("char", lineFile);
+                    case SplElement.BOOLEAN -> env.get("boolean", lineFile);
+                    case SplElement.BYTE -> env.get("byte", lineFile);
+                    case SplElement.POINTER -> env.get("Object", lineFile);
+                    default -> throw new NativeTypeError();
+                };
+            }
         }
+        return SplInvokes.throwExceptionWithError(
+                env,
+                Constants.ATTRIBUTE_EXCEPTION,
+                "Array does not have attribute '" + attrNode + "'. ",
+                lineFile
+        );
     }
 
     @Override

@@ -27,6 +27,8 @@ class File {
     }
 }
 
+class Text
+
 class IOError(Exception) {
     fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);

@@ -56,59 +56,6 @@ public class NewExpr extends UnaryExpr {
                 clazzPtr, call.arguments.evalArgs(callEnv), callEnv, lineFile).pointer;
     }
 
-//    private static SplElement initAnonymousClass(Node node,
-//                                                BlockStmt classBody,
-//                                                Environment classDefEnv,
-//                                                Environment callEnv,
-//                                                LineFile lineFile) {
-//        if (node instanceof FuncCall) {
-//            return anonymousInstanceCreation((FuncCall) node, classBody, classDefEnv, callEnv, lineFile);
-//        } else if (node instanceof Dot) {
-//            Dot dot = (Dot) node;
-//            SplElement dotLeft = dot.left.evaluate(classDefEnv);
-//            if (!(dotLeft.getType() instanceof ModuleType)) throw new TypeError();
-//            SplModule module = (SplModule) classDefEnv.getMemory().get((Pointer) dotLeft.getValue());
-//            return initAnonymousClass(dot.right, classBody, module.getEnv(), callEnv, lineFile);
-//        } else {
-//            throw new SplException("Anonymous class instantiation must have a call to its parent constructor. " +
-//                    "Got " + node + " instead. ", lineFile);
-//        }
-//    }
-
-//    private static TypeValue anonymousInstanceCreation(FuncCall call,
-//                                                    BlockStmt classBody,
-//                                                    Environment classDefEnv,
-//                                                    Environment callEnv,
-//                                                    LineFile lineFile) {
-//
-//        TypeRepresent scClazzNode = (TypeRepresent) call.callObj;
-//        Type scType = scClazzNode.evalType(classDefEnv);
-//        if (!(scType instanceof ClassType)) throw new TypeError();
-//        ClassType scClazzType = (ClassType) scType;
-//
-//        // define the anonymous class
-//        // Note that the definition env of the anonymous class is the current calling env
-//        SplClass anClazz = new SplClass(null,
-//                scClazzType,
-//                new ArrayList<>(),
-//                new ArrayList<>(),
-//                classBody,
-//                callEnv,
-//                false,
-//                false);
-//        Pointer anClazzPtr = callEnv.getMemory().allocateObject(anClazz, callEnv);
-//        ClassType anClazzType = new ClassType(anClazzPtr);
-//
-//        Instance.InstanceTypeValue instanceTv = Instance.createInstanceAndAllocate(anClazzType, callEnv, lineFile);
-//        Instance instance = instanceTv.instance;
-//
-//        TypeValue supTv = instance.getEnv().get("super", lineFile);
-//        Instance supIns = (Instance) instance.getEnv().getMemory().get((Pointer) supTv.getValue());
-//
-//        Instance.callInit(supIns, call.arguments, callEnv, lineFile);
-//        return instanceTv.typeValue;
-//    }
-
     private static Reference arrayCreation(IndexingNode node,
                                            Environment classDefEnv,
                                            Environment callEnv,
