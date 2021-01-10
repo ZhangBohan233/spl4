@@ -57,16 +57,11 @@ public class Reference extends SplElement {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Reference pointer = (Reference) o;
-
-        return ptr == pointer.ptr;
+        return this == o;
     }
 
     @Override
     public int hashCode() {
-        return ptr;
+        return super.hashCode();
     }
 }

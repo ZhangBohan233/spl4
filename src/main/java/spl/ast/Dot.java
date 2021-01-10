@@ -21,6 +21,9 @@ public class Dot extends BinaryExpr {
             return right.evaluate(objEnv);
         } else if (right instanceof FuncCall) {
             SplElement funcTv = ((FuncCall) right).getCallObj().evaluate(objEnv);
+            if (objEnv.hasException()) {
+                return Undefined.ERROR;
+            }
             SplCallable callable = (SplCallable) objEnv.getMemory().get((Reference) funcTv);
             EvaluatedArguments ea = ((FuncCall) right).getArguments().evalArgs(oldEnv);
             if (callable instanceof SplMethod) {

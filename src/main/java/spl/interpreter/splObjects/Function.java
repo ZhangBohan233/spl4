@@ -125,7 +125,7 @@ public class Function extends UserFunction {
         }
     }
 
-    private SplElement getContractFunction(Node conNode, Environment callingEnv, LineFilePos lineFile) {
+    private SplElement getContractFunction(Node conNode, LineFilePos lineFile) {
         if (conNode instanceof BinaryOperator) {
             BinaryOperator bo = (BinaryOperator) conNode;
             if (bo.getOperator().equals("or")) {
@@ -133,7 +133,7 @@ public class Function extends UserFunction {
                 Function function = (Function) definitionEnv.getMemory().get(orFn);
                 Arguments args = new Arguments(new Line(lineFile, bo.getLeft(), bo.getRight()), lineFile);
                 SplElement callRes = function.call(args, definitionEnv);
-                if (callingEnv.hasException()) {
+                if (definitionEnv.hasException()) {
                     return Undefined.ERROR;
                 }
                 return callRes;
@@ -143,7 +143,7 @@ public class Function extends UserFunction {
         if (res instanceof Reference) return res;
         else {
             SplInvokes.throwException(
-                    callingEnv,
+                    definitionEnv,
                     Constants.TYPE_ERROR,
                     "Contract must be callable",
                     lineFile
@@ -153,7 +153,7 @@ public class Function extends UserFunction {
     }
 
     private void callContract(Node conNode, SplElement arg, Environment callingEnv, LineFilePos lineFile) {
-        SplElement conFnPtrProb = getContractFunction(conNode, callingEnv, lineFile);
+        SplElement conFnPtrProb = getContractFunction(conNode, lineFile);
         if (callingEnv.hasException()) return;
         Reference conFnPtr = (Reference) conFnPtrProb;
         SplCallable callable = (SplCallable) callingEnv.getMemory().get(conFnPtr);

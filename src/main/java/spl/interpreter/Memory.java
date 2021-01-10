@@ -237,22 +237,25 @@ public class Memory {
 
     private class GarbageCollector {
 
-        private final Map<Integer, List<Reference>> markedRefs = new HashMap<>();
+        private final Map<Integer, Set<Reference>> markedRefs = new HashMap<>();
 
         private void addRef(int addr, Reference ref) {
-            List<Reference> refs = markedRefs.get(addr);
+            Set<Reference> refs = markedRefs.get(addr);
             if (refs != null) {
                 refs.add(ref);
             } else {
-                refs = new ArrayList<>();
+                refs = new HashSet<>();
                 refs.add(ref);
                 markedRefs.put(addr, refs);
             }
         }
 
+        private boolean refAlreadyAdded(int objAddr) {
+            return markedRefs.containsKey(objAddr);
+        }
+
         private void garbageCollect(Environment baseEnv) {
             long beginTime = System.currentTimeMillis();
-            markedRefs.clear();
             if (debugs.printGcRes)
                 System.out.println("Doing gc! Available before gc: " + getAvailableSize());
 
@@ -294,10 +297,7 @@ public class Memory {
         }
 
         private void initMarks() {
-            for (SplThing obj : heap) {
-                if (obj instanceof SplObject)
-                    ((SplObject) obj).clearGcCount();
-            }
+            markedRefs.clear();
         }
 
         private void mark(Environment env) {
@@ -321,9 +321,7 @@ public class Memory {
 
         private void markObjectAsUsed(SplObject obj, int objAddr, Reference ref) {
             if (obj == null) return;
-            if (obj.isGcMarked()) return;
-            obj.incrementGcCount();
-//        System.out.println(obj);
+            if (refAlreadyAdded(objAddr)) return;
 
             if (ref != null) {
                 addRef(objAddr, ref);
@@ -367,10 +365,19 @@ public class Memory {
         private void sweep() {
             int curAddr = 1;
             for (int p = 1; p < heapSize; p++) {
-                List<Reference> refs = markedRefs.get(p);
+                Set<Reference> refs = markedRefs.get(p);
                 if (refs != null) {
-                    int objAddr = refs.get(0).getPtr();
                     int newAddr = curAddr++;
+                    int objAddr = 0;
+                    Reference firstRef = null;
+                    for (Reference ref : refs) {
+                        if (firstRef == null) {
+                            firstRef = ref;
+                            objAddr = firstRef.getPtr();
+                        }
+                        ref.setPtr(newAddr);
+                    }
+
                     SplObject obj = get(objAddr);
                     heap[newAddr] = heap[objAddr];
                     if (obj instanceof SplArray) {
@@ -380,9 +387,7 @@ public class Memory {
                             heap[curAddr++] = heap[objAddr + i + 1];
                         }
                     }
-                    for (Reference ref : refs) {
-                        ref.setPtr(newAddr);
-                    }
+
                 }
             }
             availableHead = curAddr;

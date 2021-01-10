@@ -51,4 +51,5 @@ fn main() {
     Invokes.gc();
     const t6 = clock();
     print("Single gc time: " + (t6 - t5) + "ms");
+    return lst[lst.size() - 1].value;
 }

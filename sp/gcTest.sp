@@ -21,17 +21,18 @@ class B {
 
 fn main() {
     var a = 3;
-    //xx := [new X(), new X()];
-    //Invokes.gc();
-    //gg := "qwe";
-    //b := [];
-    //c := [];
     var d;
-    for i := 0; i < 10; i++ {
+    for i := 0; i < 100; i++ {
         d = "ax" + a + d;
         e := new X();
         //Invokes.gc();
         d = d + e.fun();
     }
     print(d);
+    lst := [];
+    for i := 0; i < 100; i++ {
+        lst.append(i);
+    }
+    Invokes.gc();
+    print(lst);
 }
