@@ -4,6 +4,7 @@ import spl.ast.Arguments;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.util.LineFilePos;
 
 public abstract class NativeFunction extends SplCallable {
@@ -50,13 +51,15 @@ public abstract class NativeFunction extends SplCallable {
     protected abstract SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv);
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
-        checkValidArgCount(arguments.getLine().size(), name, arguments.lineFile);
+        checkValidArgCount(arguments.getLine().size(), name, callingEnv, arguments.lineFile);
+        if (callingEnv.hasException()) return Undefined.ERROR;
 
         return callFuncWithNode(arguments, callingEnv);
     }
 
     public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile) {
-        checkValidArgCount(evaluatedArgs.positionalArgs.size(), name, lineFile);
+        checkValidArgCount(evaluatedArgs.positionalArgs.size(), name, callingEnv, lineFile);
+        if (callingEnv.hasException()) return Undefined.ERROR;
 
         return callFunc(evaluatedArgs, callingEnv);
     }

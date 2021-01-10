@@ -2,6 +2,7 @@ package spl.interpreter.splObjects;
 
 import spl.ast.*;
 import spl.interpreter.EvaluatedArguments;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
@@ -23,18 +24,26 @@ public abstract class SplCallable extends SplObject {
 
     public abstract int maxArgCount();
 
-    protected void checkValidArgCount(int argc, String fnName, LineFilePos callingLf) {
+    protected void checkValidArgCount(int argc, String fnName, Environment callingEnv, LineFilePos callingLf) {
         int leastArg = minArgCount();
         int mostArg = maxArgCount();
         if (argc < leastArg || argc > mostArg) {
             if (leastArg == mostArg) {
-                throw new NativeError(
-                        String.format("Function '%s' expects %d argument(s), got %d. %s\n",
-                                fnName, leastArg, argc, callingLf.toStringFileLine()));
+                SplInvokes.throwException(
+                        callingEnv,
+                        Constants.ARGUMENT_EXCEPTION,
+                        String.format("Function '%s' expects %d argument(s), got %d.",
+                                fnName, leastArg, argc),
+                        callingLf
+                );
             } else {
-                throw new NativeError(
-                        String.format("Function '%s' expects %d to %d arguments, got %d. %s\n",
-                                fnName, leastArg, mostArg, argc, callingLf.toStringFileLine()));
+                SplInvokes.throwException(
+                        callingEnv,
+                        Constants.ARGUMENT_EXCEPTION,
+                        String.format("Function '%s' expects %d to %d argument(s), got %d.",
+                                fnName, leastArg, mostArg, argc),
+                        callingLf
+                );
             }
         }
     }

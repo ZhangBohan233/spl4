@@ -5,10 +5,10 @@ import spl.interpreter.primitives.Int;
 import spl.interpreter.env.Environment;
 import spl.util.LineFilePos;
 
-public class IntNode extends LiteralNode {
+public class IntLiteral extends LiteralNode {
     private final long value;
 
-    public IntNode(long value, LineFilePos lineFile) {
+    public IntLiteral(long value, LineFilePos lineFile) {
         super(lineFile);
 
         this.value = value;

@@ -8,7 +8,7 @@ Escape characters '\\' not working properly.
 ### Function and contract
 
 **ISSUE F01**
-Param contract with default param value
+~~Param contract with default param value~~ **_FIXED_**
 ```
 fn foo(a: int?, b: float? = 2.5) -> int? {
     return a + int(b);

@@ -66,6 +66,7 @@ public class SplArray extends SplObject {
             case SplElement.FLOAT -> SplFloat.ZERO;
             case SplElement.BOOLEAN -> Bool.FALSE;
             case SplElement.CHAR -> Char.NULL_TERMINATOR;
+            case SplElement.BYTE -> SplByte.ZERO;
             case SplElement.POINTER -> Reference.NULL;
             default -> throw new NativeTypeError();
         };

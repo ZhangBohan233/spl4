@@ -5,6 +5,7 @@ import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.FunctionEnvironment;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.util.LineFilePos;
 
 public class LambdaExpression extends UserFunction {
@@ -28,7 +29,8 @@ public class LambdaExpression extends UserFunction {
         String name = toString();
         FunctionEnvironment scope = new FunctionEnvironment(definitionEnv, callingEnv, name);
 
-        checkValidArgCount(evaluatedArgs.positionalArgs.size(), name, lineFile);
+        checkValidArgCount(evaluatedArgs.positionalArgs.size(), name, callingEnv, lineFile);
+        if (callingEnv.hasException()) return Undefined.ERROR;
 
         setArgs(evaluatedArgs, scope);
 

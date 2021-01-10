@@ -5,11 +5,11 @@ import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.SplFloat;
 import spl.util.LineFilePos;
 
-public class FloatNode extends LiteralNode {
+public class FloatLiteral extends LiteralNode {
 
     public final double value;
 
-    public FloatNode(double value, LineFilePos lineFile) {
+    public FloatLiteral(double value, LineFilePos lineFile) {
         super(lineFile);
 
         this.value = value;
@@ -27,6 +27,6 @@ public class FloatNode extends LiteralNode {
 
     @Override
     public String toString() {
-        return String.valueOf(value);
+        return "Float(" + value + ")";
     }
 }

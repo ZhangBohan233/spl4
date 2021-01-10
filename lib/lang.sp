@@ -103,6 +103,12 @@ class Character(Wrapper) {
     }
 }
 
+class Byte(Wrapper) {
+    fn __init__(value) {
+        super.__init__(byte(value));
+    }
+}
+
 class Exception {
     const cause;
     const msg;
@@ -124,6 +130,12 @@ class Exception {
 }
 
 class AttributeException(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
+class ArgumentException(Exception) {
     fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
     }
@@ -514,6 +526,8 @@ fn wrap(value) {
             return new Float(value);
         } case char?(value) {
             return new Character(value);
+        } case byte?(value) {
+            return new Byte(value);
         } case boolean?(value) {
             return new Boolean(value);
         } default {

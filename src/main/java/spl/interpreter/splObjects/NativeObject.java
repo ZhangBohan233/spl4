@@ -56,13 +56,47 @@ public class NativeObject extends SplObject {
                     lineFile
             );
         } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-//            return SplInvokes.throwExceptionWithError(
-//                    callEnv,
-//                    Constants.INVOKE_ERROR,
-//                    "Error occurred while calling '" + methodName + "': " + e.toString() + ".",
-//                    lineFile
-//            );
+//            throw new RuntimeException(e);
+            return SplInvokes.throwExceptionWithError(
+                    callEnv,
+                    Constants.INVOKE_ERROR,
+                    "Error occurred while calling '" + methodName + "': " + e.toString() + ".",
+                    lineFile
+            );
+        }
+    }
+
+    /**
+     * Helper functions
+     */
+
+    public static void checkArgCount(Arguments arguments, int expectArgc, String fnName, Environment env, LineFilePos lineFile) {
+        if (arguments.getLine().getChildren().size() != expectArgc) {
+            SplInvokes.throwException(
+                    env,
+                    Constants.INVOKE_ERROR,
+                    String.format("Invoke %s() takes %d arguments, but %s were given. ",
+                            fnName, expectArgc, arguments.getLine().size()),
+                    lineFile
+            );
+        }
+    }
+
+    public static void checkArgCount(Arguments arguments,
+                                      int minArg,
+                                      int maxArg,
+                                      String fnName,
+                                      Environment env,
+                                      LineFilePos lineFile) {
+        if (arguments.getLine().size() < minArg ||
+                arguments.getLine().size() > maxArg) {
+            SplInvokes.throwException(
+                    env,
+                    Constants.INVOKE_ERROR,
+                    String.format("Invokes.%s takes %d to %d arguments, %d given. ",
+                            fnName, minArg, maxArg, arguments.getLine().size()),
+                    lineFile
+            );
         }
     }
 }

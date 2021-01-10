@@ -5,11 +5,11 @@ import spl.interpreter.primitives.Char;
 import spl.interpreter.primitives.SplElement;
 import spl.util.LineFilePos;
 
-public class CharNode extends LiteralNode {
+public class CharLiteral extends LiteralNode {
 
     public final char ch;
 
-    public CharNode(char ch, LineFilePos lineFile) {
+    public CharLiteral(char ch, LineFilePos lineFile) {
         super(lineFile);
 
         this.ch = ch;

@@ -182,7 +182,8 @@ public class Function extends UserFunction {
 
     protected SplElement callEssential(EvaluatedArguments evaluatedArgs, Environment callingEnv,
                                        FunctionEnvironment scope, LineFilePos argLineFile) {
-        checkValidArgCount(evaluatedArgs.positionalArgs.size(), definedName, argLineFile);
+        checkValidArgCount(evaluatedArgs.positionalArgs.size(), definedName, callingEnv, argLineFile);
+        if (callingEnv.hasException()) return Undefined.ERROR;
 
         checkParamContracts(evaluatedArgs, callingEnv, argLineFile);
 

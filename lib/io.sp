@@ -14,9 +14,16 @@ class File {
     }
 
     fn read() {
+
     }
 
     fn write() {
+    }
+
+    fn close() {
+        if not file.close() {
+            throw new IOError("Cannot close file " + file);
+        }
     }
 }
 
@@ -40,5 +47,9 @@ fn open(file: String?, mode: String?) -> File? or null? {
         };
     }
 
-    return new File(Invokes.openFile(file, m), m);
+    nf := Invokes.openFile(file, m);
+    if nf is null {
+        throw new IOError("Failed to open " + file);
+    }
+    return new File(nf, m);
 }

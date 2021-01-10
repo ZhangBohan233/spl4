@@ -307,13 +307,9 @@ public class Parser {
                                 break;
                             case "const":
                                 varLevel = Declaration.CONST;
-//                                nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
-//                                builder.addNode(new Declaration(Declaration.CONST, nameToken.getIdentifier(), lineFile));
                                 break;
                             case "var":
                                 varLevel = Declaration.VAR;
-//                                nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
-//                                builder.addNode(new Declaration(Declaration.VAR, nameToken.getIdentifier(), lineFile));
                                 break;
                             case "as":
                                 AsExpr asExpr = new AsExpr(lineFile);
@@ -375,16 +371,6 @@ public class Parser {
                                     builder.addNode(elseBodyExpr);
                                 }
                                 break;
-//                            case "cond":
-//                                bodyList = (BraceList) parent.get(index++);
-//                                bodyBlock = parseBlock(bodyList);
-//                                SwitchCaseFactory ccf = new SwitchCaseFactory(bodyBlock);
-//                                if (ccf.isExpr()) {
-//                                    builder.addNode(ccf.buildExpr(lineFile));
-//                                } else {
-//                                    builder.addNode(ccf.buildStmt(lineFile));
-//                                }
-//                                break;
                             case "switch":
                                 conditionList = new BracketList(null, lineFile);
                                 while (!((next = parent.get(index++)) instanceof BraceList)) {
@@ -545,6 +531,8 @@ public class Parser {
                     builder.addNode(sl);
                 } else if (token instanceof CharToken) {
                     builder.addChar(((CharToken) token).getValue(), lineFile);
+                } else if (token instanceof ByteToken) {
+                    builder.addNode(new ByteLiteral(((ByteToken) token).getValue(), lineFile));
                 } else {
                     throw new ParseError("Unexpected token type. ", lineFile);
                 }
@@ -647,7 +635,7 @@ public class Parser {
             if (token instanceof IdToken) {
                 String identifier = ((IdToken) token).getIdentifier();
                 return switch (identifier) {
-                    case ";", "=", "->", ".", "," -> true;
+                    case ";", "=", ":=", "->", ".", "," -> true;
                     default -> FileTokenizer.ALL_BINARY.contains(identifier) ||
                             FileTokenizer.RESERVED.contains(identifier);
                 };

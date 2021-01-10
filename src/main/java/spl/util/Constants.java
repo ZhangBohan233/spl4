@@ -43,6 +43,7 @@ public class Constants {
     public static final String CONTRACT_ERROR = "ContractError";
     public static final String TYPE_ERROR = "TypeError";
     public static final String ATTRIBUTE_EXCEPTION = "AttributeException";
+    public static final String ARGUMENT_EXCEPTION = "ArgumentException";
     public static final String INVOKE_ERROR = "InvokeError";
     public static final String INTERRUPTION = "Interruption";
     public static final String IO_ERROR = "IOError";
@@ -53,13 +54,15 @@ public class Constants {
             SplElement.INT, "Integer",
             SplElement.FLOAT, "Float",
             SplElement.BOOLEAN, "Boolean",
-            SplElement.CHAR, "Character"
+            SplElement.CHAR, "Character",
+            SplElement.BYTE, "Byte"
     );
 
     public static final Map<String, Integer> WRAPPERS_INV = Map.of(
             "Integer", SplElement.INT,
             "Float", SplElement.FLOAT,
             "Boolean", SplElement.BOOLEAN,
-            "Character", SplElement.CHAR
+            "Character", SplElement.CHAR,
+            "Byte", SplElement.BYTE
     );
 }

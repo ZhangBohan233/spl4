@@ -227,11 +227,16 @@ public abstract class Tokenizer {
             if (StringTypes.isInteger(s)) {
                 if (i < len - 2 && list.get(i + 1).equals(".") && StringTypes.isInteger(list.get(i + 2))) {
                     // is a float:   number.number
-                    FloatToken floatToken = new FloatToken(s + "." + list.get(i + 2),
+                    FloatToken floatToken = new FloatToken(
+                            s,
+                            list.get(i + 2),
                             new LineFilePos(lineFile, pos));
                     tokens.add(floatToken);
                     for (int j = i + 1; j < i + 3; j++) startPos += list.get(j).length();
                     i += 2;
+                } else if (i < len - 1 && list.get(i + 1).equals("b")) {
+                    tokens.add(new ByteToken(s, new LineFilePos(lineFile, pos)));
+                    i += 1;
                 } else {
                     tokens.add(new IntToken(s, new LineFilePos(lineFile, pos)));
                 }

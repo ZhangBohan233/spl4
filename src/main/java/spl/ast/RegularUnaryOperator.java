@@ -1,11 +1,13 @@
 package spl.ast;
 
 import spl.interpreter.env.Environment;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Int;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.SplFloat;
 import spl.lexer.SyntaxError;
+import spl.util.Constants;
 import spl.util.LineFilePos;
 
 public class RegularUnaryOperator extends UnaryExpr {
@@ -40,7 +42,10 @@ public class RegularUnaryOperator extends UnaryExpr {
                 }
             }
         }
-        throw new SyntaxError("Operator error. ", getLineFile());
+        return SplInvokes.throwExceptionWithError(
+                env,
+                Constants.TYPE_ERROR,
+                "Operator error ",
+                lineFile);
     }
-
 }

@@ -64,40 +64,6 @@ public class SplInvokes extends NativeObject {
         return Undefined.ERROR;
     }
 
-    /**
-     * Helper functions
-     */
-
-    private static void checkArgCount(Arguments arguments, int expectArgc, String fnName, Environment env, LineFilePos lineFile) {
-        if (arguments.getLine().getChildren().size() != expectArgc) {
-            throwException(
-                    env,
-                    Constants.INVOKE_ERROR,
-                    String.format("Invoke %s() takes %d arguments, but %s were given. ",
-                            fnName, expectArgc, arguments.getLine().size()),
-                    lineFile
-            );
-        }
-    }
-
-    private static void checkArgCount(Arguments arguments,
-                                      int minArg,
-                                      int maxArg,
-                                      String fnName,
-                                      Environment env,
-                                      LineFilePos lineFile) {
-        if (arguments.getLine().size() < minArg ||
-                arguments.getLine().size() > maxArg) {
-            throwException(
-                    env,
-                    Constants.INVOKE_ERROR,
-                    String.format("Invokes.%s takes %d to %d arguments, %d given. ",
-                            fnName, minArg, maxArg, arguments.getLine().size()),
-                    lineFile
-            );
-        }
-    }
-
     private static String getString(SplElement element, Environment environment, LineFilePos lineFile) {
         Reference stringPtr = (Reference) environment.get(Constants.STRING_CLASS, lineFile);
         return getString(element, environment, lineFile, stringPtr);
@@ -430,15 +396,8 @@ public class SplInvokes extends NativeObject {
         Instance fileNameIns = (Instance) env.getMemory().get(fileRef);
         String fileName = extractFromSplString(fileNameIns, env, lineFilePos);
 
-        NativeFile nf;
-        try {
-            nf = new NativeFile(fileName, mode.intValue());
-        } catch (IOException e) {
-            return throwExceptionWithError(env,
-                    Constants.IO_ERROR,
-                    "Cannot open '" + fileName + "'.",
-                    lineFilePos);
-        }
+        NativeFile nf = NativeFile.create(fileName, mode.intValue());
+        if (nf == null) return Reference.NULL;
 
         return env.getMemory().allocateObject(nf, env);
     }

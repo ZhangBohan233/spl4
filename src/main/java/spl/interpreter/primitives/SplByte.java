@@ -1,33 +1,22 @@
 package spl.interpreter.primitives;
 
-public class Char extends SplElement {
+public class SplByte extends SplElement {
+    public static final SplByte ZERO = new SplByte((byte) 0);
 
-    public static final Char NULL_TERMINATOR = new Char('\0');
+    public final byte value;
 
-    public final char value;
-
-    public Char(char value) {
+    public SplByte(byte value) {
         this.value = value;
     }
 
     @Override
-    public String toString() {
-        return String.valueOf(value);
-    }
-
-    @Override
-    public boolean isIntLike() {
-        return true;
-    }
-
-    @Override
     public int type() {
-        return SplElement.CHAR;
+        return SplElement.BYTE;
     }
 
     @Override
     public long intValue() {
-        return value;
+        return value & 0xff;
     }
 
     @Override
@@ -41,17 +30,27 @@ public class Char extends SplElement {
     }
 
     @Override
+    public boolean isIntLike() {
+        return true;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Char anInt = (Char) o;
+        SplByte splByte = (SplByte) o;
 
-        return value == anInt.value;
+        return value == splByte.value;
     }
 
     @Override
     public int hashCode() {
         return value;
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value & 0xff);
     }
 }

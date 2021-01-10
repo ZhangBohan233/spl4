@@ -6,6 +6,7 @@ import spl.interpreter.Memory;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.GlobalEnvironment;
 import spl.interpreter.env.ModuleEnvironment;
+import spl.interpreter.invokes.NativeFile;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.*;
 import spl.interpreter.splErrors.NativeError;
@@ -162,6 +163,30 @@ public class SplInterpreter {
             }
         };
 
+        NativeFunction toByte = new NativeFunction("byte", 1) {
+            @Override
+            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg instanceof Reference) {
+                    return new SplByte(
+                            (byte) Utilities.wrapperToPrimitive(
+                                    (Reference) arg,
+                                    callingEnv,
+                                    LineFilePos.LF_INTERPRETER).intValue());
+                } else {
+                    return new SplByte((byte) arg.intValue());
+                }
+            }
+        };
+
+        NativeFunction isByte = new NativeFunction("byte?", 1) {
+            @Override
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                return Bool.boolValueOf(arg instanceof SplByte);
+            }
+        };
+
         NativeFunction toBool = new NativeFunction("boolean", 1) {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
@@ -274,9 +299,11 @@ public class SplInterpreter {
         Reference ptrIsInt = memory.allocateFunction(isInt, ge);
         Reference ptrFloat = memory.allocateFunction(toFloat, ge);
         Reference ptrChar = memory.allocateFunction(toChar, ge);
+        Reference ptrByte = memory.allocateFunction(toByte, ge);
         Reference ptrBool = memory.allocateFunction(toBool, ge);
         Reference ptrIsFloat = memory.allocateFunction(isFloat, ge);
         Reference ptrIsChar = memory.allocateFunction(isChar, ge);
+        Reference ptrIsByte = memory.allocateFunction(isByte, ge);
         Reference ptrIsBool = memory.allocateFunction(isBool, ge);
         Reference ptrIsAbsObj = memory.allocateFunction(isAbstractObject, ge);
         Reference ptrIsArray = memory.allocateFunction(isArray, ge);
@@ -292,6 +319,8 @@ public class SplInterpreter {
         ge.defineFunction("float?", ptrIsFloat, LineFilePos.LF_INTERPRETER);
         ge.defineFunction("char", ptrChar, LineFilePos.LF_INTERPRETER);
         ge.defineFunction("char?", ptrIsChar, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("byte", ptrByte, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("byte?", ptrIsByte, LineFilePos.LF_INTERPRETER);
         ge.defineFunction("boolean", ptrBool, LineFilePos.LF_INTERPRETER);
         ge.defineFunction("boolean?", ptrIsBool, LineFilePos.LF_INTERPRETER);
         ge.defineFunction("AbstractObject?", ptrIsAbsObj, LineFilePos.LF_INTERPRETER);

@@ -1,3 +1,9 @@
+===== Version 4042 =====
+2021/01/11
+
+* New primitive type: byte
+* Minor bugs fix
+
 ===== Version 4041 =====
 2021/01/10
 
