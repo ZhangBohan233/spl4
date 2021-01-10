@@ -134,14 +134,6 @@ public class Memory {
         return (SplElement) heap[addr];
     }
 
-//    public void free(Reference ptr, int length) {
-////        System.out.println(ptr);
-////        System.out.println(available);
-//        available.addAvaNoSort(ptr.getPtr(), length);
-//        set(ptr, null);
-////        System.out.println(available);
-//    }
-
     public void addPermanentPtr(Reference ref) {
         permanentPointers.add(ref);
     }
@@ -187,7 +179,7 @@ public class Memory {
     public String memoryViewWithAddress() {
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < heap.length; ++i) {
-            sb.append(i).append(": ").append(get(i)).append(", ");
+            sb.append(i).append(": ").append(heap[i]).append(", ");
         }
         sb.append("]");
         return sb.toString();
@@ -344,8 +336,11 @@ public class Memory {
                     int p = arrBegin + i;
                     SplElement ele = getPrimitive(p);
                     if (ele instanceof Reference) {
-                        SplObject pointed = get((Reference) ele);
+                        // Object[] stores reference as array element, they should also be retargeted
+                        Reference refInArray = (Reference) ele;
+                        SplObject pointed = get(refInArray);
                         markObjectAsUsed(pointed, p, null);
+                        addRef(refInArray.getPtr(), refInArray);
                     }
                 }
             } else if (obj instanceof SplModule) {

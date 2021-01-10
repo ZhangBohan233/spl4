@@ -45,6 +45,7 @@ public class Constants {
     public static final String ATTRIBUTE_EXCEPTION = "AttributeException";
     public static final String INVOKE_ERROR = "InvokeError";
     public static final String INTERRUPTION = "Interruption";
+    public static final String IO_ERROR = "IOError";
 
     public static final String INTERRUPTION_INS = "INTERRUPTION";
 

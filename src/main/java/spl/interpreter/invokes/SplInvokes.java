@@ -421,6 +421,28 @@ public class SplInvokes extends NativeObject {
         return Bool.boolValueOf(environment.hasName(name));
     }
 
+    public SplElement openFile(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 2, "openFile", env, lineFilePos);
+
+        Reference fileRef = (Reference) arguments.getLine().get(0).evaluate(env);
+        Int mode = (Int) arguments.getLine().get(1).evaluate(env);
+
+        Instance fileNameIns = (Instance) env.getMemory().get(fileRef);
+        String fileName = extractFromSplString(fileNameIns, env, lineFilePos);
+
+        NativeFile nf;
+        try {
+            nf = new NativeFile(fileName, mode.intValue());
+        } catch (IOException e) {
+            return throwExceptionWithError(env,
+                    Constants.IO_ERROR,
+                    "Cannot open '" + fileName + "'.",
+                    lineFilePos);
+        }
+
+        return env.getMemory().allocateObject(nf, env);
+    }
+
     public SplElement script(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, SplCallable.MAX_ARGS, "script", environment, lineFile);
 

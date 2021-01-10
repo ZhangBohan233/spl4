@@ -1,3 +1,10 @@
+===== Version 4040 =====
+2021/01/10
+
+* Bug fixes:
+    * Type contract function causes error when calling imported functions
+    * Gc error when collecting Object[]: references in array were not moved
+
 ===== Version 4039 =====
 2021/01/10
 

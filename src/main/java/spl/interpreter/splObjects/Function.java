@@ -125,18 +125,22 @@ public class Function extends UserFunction {
         }
     }
 
-    private Reference getContractFunction(Node conNode, Environment callingEnv, LineFilePos lineFile) {
+    private SplElement getContractFunction(Node conNode, Environment callingEnv, LineFilePos lineFile) {
         if (conNode instanceof BinaryOperator) {
             BinaryOperator bo = (BinaryOperator) conNode;
             if (bo.getOperator().equals("or")) {
-                Reference orFn = (Reference) callingEnv.get(Constants.OR_FN, lineFile);
-                Function function = (Function) callingEnv.getMemory().get(orFn);
+                Reference orFn = (Reference) definitionEnv.get(Constants.OR_FN, lineFile);
+                Function function = (Function) definitionEnv.getMemory().get(orFn);
                 Arguments args = new Arguments(new Line(lineFile, bo.getLeft(), bo.getRight()), lineFile);
-                return (Reference) function.call(args, callingEnv);
+                SplElement callRes = function.call(args, definitionEnv);
+                if (callingEnv.hasException()) {
+                    return Undefined.ERROR;
+                }
+                return callRes;
             }
         }
         SplElement res = conNode.evaluate(definitionEnv);
-        if (res instanceof Reference) return (Reference) res;
+        if (res instanceof Reference) return res;
         else {
             SplInvokes.throwException(
                     callingEnv,
@@ -149,8 +153,9 @@ public class Function extends UserFunction {
     }
 
     private void callContract(Node conNode, SplElement arg, Environment callingEnv, LineFilePos lineFile) {
-        Reference conFnPtr = getContractFunction(conNode, callingEnv, lineFile);
+        SplElement conFnPtrProb = getContractFunction(conNode, callingEnv, lineFile);
         if (callingEnv.hasException()) return;
+        Reference conFnPtr = (Reference) conFnPtrProb;
         SplCallable callable = (SplCallable) callingEnv.getMemory().get(conFnPtr);
         EvaluatedArguments contractArgs = EvaluatedArguments.of(arg);
 

@@ -210,14 +210,6 @@ public abstract class Environment {
         return localInnerGet(name, lineFile) != null;
     }
 
-    public void printVars() {
-        System.out.println(variables);
-    }
-
-//    private boolean typeCheck(Type inStock, Type assignment) {
-//        return inStock.isSuperclassOfOrEquals(assignment, this);
-//    }
-
     public abstract void addNamespace(ModuleEnvironment moduleEnvironment);
 
     protected abstract VarEntry searchInNamespaces(String name);

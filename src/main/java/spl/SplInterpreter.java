@@ -234,6 +234,41 @@ public class SplInterpreter {
             }
         };
 
+        NativeFunction isNull = new NativeFunction("null?", 1) {
+            @Override
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg instanceof Reference) {
+                    return Bool.boolValueOf(((Reference) arg).getPtr() == 0);
+                }
+                return Bool.FALSE;
+            }
+        };
+
+        NativeFunction isNatFile = new NativeFunction("NativeFile?", 1) {
+            @Override
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg instanceof Reference) {
+                    SplObject object = callingEnv.getMemory().get((Reference) arg);
+                    return Bool.boolValueOf(object instanceof NativeFile);
+                }
+                return Bool.FALSE;
+            }
+        };
+
+        NativeFunction isModule = new NativeFunction("Module?", 1) {
+            @Override
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg instanceof Reference) {
+                    SplObject object = callingEnv.getMemory().get((Reference) arg);
+                    return Bool.boolValueOf(object instanceof SplModule);
+                }
+                return Bool.FALSE;
+            }
+        };
+
         Memory memory = ge.getMemory();
         Reference ptrInt = memory.allocateFunction(toInt, ge);
         Reference ptrIsInt = memory.allocateFunction(isInt, ge);
@@ -247,6 +282,9 @@ public class SplInterpreter {
         Reference ptrIsArray = memory.allocateFunction(isArray, ge);
         Reference ptrIsCallable = memory.allocateFunction(isCallable, ge);
         Reference ptrIsClass = memory.allocateFunction(isClass, ge);
+        Reference ptrIsNull = memory.allocateFunction(isNull, ge);
+        Reference ptrIsNatFile = memory.allocateFunction(isNatFile, ge);
+        Reference ptrIsModule = memory.allocateFunction(isModule, ge);
 
         ge.defineFunction("int", ptrInt, LineFilePos.LF_INTERPRETER);
         ge.defineFunction("int?", ptrIsInt, LineFilePos.LF_INTERPRETER);
@@ -260,6 +298,9 @@ public class SplInterpreter {
         ge.defineFunction("Array?", ptrIsArray, LineFilePos.LF_INTERPRETER);
         ge.defineFunction("Callable?", ptrIsCallable, LineFilePos.LF_INTERPRETER);
         ge.defineFunction("Class?", ptrIsClass, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("null?", ptrIsNull, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("NativeFile?", ptrIsNatFile, LineFilePos.LF_INTERPRETER);
+        ge.defineFunction("Module?", ptrIsModule, LineFilePos.LF_INTERPRETER);
     }
 
     private static EvaluatedArguments makeSplArgArray(String[] args, GlobalEnvironment globalEnvironment) {

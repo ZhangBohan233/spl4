@@ -56,12 +56,13 @@ public class NativeObject extends SplObject {
                     lineFile
             );
         } catch (InvocationTargetException e) {
-            return SplInvokes.throwExceptionWithError(
-                    callEnv,
-                    Constants.INVOKE_ERROR,
-                    "Error occurred while calling '" + methodName + "': " + e.toString() + ".",
-                    lineFile
-            );
+            throw new RuntimeException(e);
+//            return SplInvokes.throwExceptionWithError(
+//                    callEnv,
+//                    Constants.INVOKE_ERROR,
+//                    "Error occurred while calling '" + methodName + "': " + e.toString() + ".",
+//                    lineFile
+//            );
         }
     }
 }
