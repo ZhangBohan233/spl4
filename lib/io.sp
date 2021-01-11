@@ -7,17 +7,47 @@ const WRITE_B = 4;
 class File {
     const file;
     const mode;
+    const fileLength;
 
     fn __init__(file: NativeFile?, mode: int?) {
         this.file = file;
+        this.fileLength = file.length();
         this.mode = mode;
     }
 
-    fn read() {
+    fn length() {
+        return fileLength;
+    }
+
+    fn position() {
+        return file.position();
+    }
+
+    fn read(size: int? = -1) {
+        if size == -1 {
+            size = fileLength;
+        }
+        var res;
+        switch mode {
+            case READ {
+                res = file.readText(size);
+            } case READ_B {
+                res = file.readBytes(size);
+            } default {
+                throw new IOError("Unexpected mode to read.");
+            }
+        }
+        return res;
+    }
+
+    fn readLine() {
 
     }
 
-    fn write() {
+    fn write(data: byte? or String?) {
+    }
+
+    fn writeLine(line: String?) {
     }
 
     fn close() {
@@ -26,8 +56,6 @@ class File {
         }
     }
 }
-
-class Text
 
 class IOError(Exception) {
     fn __init__(msg=null, cause=null) {

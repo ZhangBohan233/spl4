@@ -9,5 +9,5 @@ fn main() {
     arr[5] = 356b;
     print(char(arr[5]));
 
-    print(new Integer(1) != type);
+    print(type(Invokes));
 }

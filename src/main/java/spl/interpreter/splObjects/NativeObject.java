@@ -60,7 +60,7 @@ public class NativeObject extends SplObject {
             return SplInvokes.throwExceptionWithError(
                     callEnv,
                     Constants.INVOKE_ERROR,
-                    "Error occurred while calling '" + methodName + "': " + e.toString() + ".",
+                    "Error occurred while calling '" + methodName + "': " + e.getCause().toString() + ".",
                     lineFile
             );
         }
@@ -75,7 +75,7 @@ public class NativeObject extends SplObject {
             SplInvokes.throwException(
                     env,
                     Constants.INVOKE_ERROR,
-                    String.format("Invoke %s() takes %d arguments, but %s were given. ",
+                    String.format("%s() takes %d arguments, but %s were given. ",
                             fnName, expectArgc, arguments.getLine().size()),
                     lineFile
             );

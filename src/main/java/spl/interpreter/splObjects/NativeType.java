@@ -8,8 +8,12 @@ public class NativeType extends SplObject {
         this.typeName = typeName;
     }
 
+    public static String shownName(String typeName) {
+        return "NativeType_" + typeName;
+    }
+
     @Override
     public String toString() {
-        return typeName;
+        return shownName(typeName);
     }
 }

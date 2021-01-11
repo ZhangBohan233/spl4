@@ -38,15 +38,15 @@ public class SplInterpreter {
     private GlobalEnvironment globalEnvironment;
 
     public static final Map<Class<? extends SplObject>, String> NATIVE_TYPE_NAMES = Map.of(
-            SplInvokes.class, "NativeType_Invoke",
-            NativeFunction.class, "NativeType_NativeFunction",
-            SplArray.class, "NativeType_Array",
-            SplModule.class, "NativeType_Module",
-            SplMethod.class, "NativeType_Method",
-            Function.class, "NativeType_Function",
-            LambdaExpression.class, "NativeType_LambdaExpression",
-            SplClass.class, "NativeType_Class",
-            NativeType.class, "NativeType_NativeType"
+            SplInvokes.class, "Invoke",
+            NativeFunction.class, "NativeFunction",
+            SplArray.class, "Array",
+            SplModule.class, "Module",
+            SplMethod.class, "Method",
+            Function.class, "Function",
+            LambdaExpression.class, "LambdaExpression",
+            SplClass.class, "Class",
+            NativeType.class, "NativeType"
     );
 
     public static void setOut(PrintStream out) {
@@ -78,7 +78,7 @@ public class SplInterpreter {
             NativeType nt = new NativeType(name);
             Reference ptr = memory.allocateObject(nt, globalEnvironment);
             globalEnvironment.defineConstAndSet(
-                    name,
+                    NativeType.shownName(name),
                     ptr,
                     LineFilePos.LF_INTERPRETER
             );

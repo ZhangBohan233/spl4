@@ -329,7 +329,7 @@ public class SplInvokes extends NativeObject {
             );
         }
 
-        return environment.get(typeName, lineFile);
+        return environment.get(NativeType.shownName(typeName), lineFile);
     }
 
     public Reference getClass(Arguments arguments, Environment environment, LineFilePos lineFile) {

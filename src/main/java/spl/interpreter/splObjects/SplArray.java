@@ -125,6 +125,27 @@ public class SplArray extends SplObject {
         return javaCharArray;
     }
 
+    public static byte[] toJavaByteArray(Reference arrPtr, Memory memory) {
+        int[] lenPtr = toJavaArrayCommon(arrPtr, memory);
+
+        byte[] javaByteArray = new byte[lenPtr[0]];
+
+        for (int i = 0; i < javaByteArray.length; i++) {
+            SplElement value = memory.getPrimitive(lenPtr[1] + i);
+            javaByteArray[i] = (byte) value.intValue();
+        }
+
+        return javaByteArray;
+    }
+
+    public static Reference fromJavaArray(byte[] array, Environment env, LineFilePos lineFilePos) {
+        Reference arrayRef = createArray(SplElement.BYTE, array.length, env);
+        for (int i = 0; i < array.length; i++) {
+            setItemAtIndex(arrayRef, i, new SplByte(array[i]), env, lineFilePos);
+        }
+        return arrayRef;
+    }
+
     private static int[] toJavaArrayCommon(Reference arrPtr, Memory memory) {
         SplArray array = (SplArray) memory.get(arrPtr);
 

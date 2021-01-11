@@ -30,6 +30,7 @@ public class SplClass extends SplObject {
     private Reference[] mro;
     // mro array used by spl
     private Reference mroArrayPointer;
+    private Reference classNameRef;
 
     /**
      * The private constructor, only for in-class call.
@@ -59,6 +60,7 @@ public class SplClass extends SplObject {
         refs.addAll(methodPointers.values());
         refs.addAll(Arrays.asList(mro));
         refs.add(mroArrayPointer);
+        if (classNameRef != null) refs.add(classNameRef);
         return refs;
     }
 
@@ -199,7 +201,10 @@ public class SplClass extends SplObject {
         if (attrNode instanceof NameNode) {
             String name = ((NameNode) attrNode).getName();
             if (name.equals(Constants.CLASS_NAME)) {
-                return StringLiteral.createString(className.toCharArray(), env, lineFile);
+                if (classNameRef == null) {
+                    classNameRef = StringLiteral.createString(className.toCharArray(), env, lineFile);
+                }
+                return classNameRef;
             } else if (name.equals(Constants.CLASS_MRO)) {
                 return mroArrayPointer;
             }
