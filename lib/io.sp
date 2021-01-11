@@ -1,85 +1,92 @@
-const READ = 1;
-const READ_B = 2;
-const WRITE = 3;
-const WRITE_B = 4;
-
-
-class File {
-    const file;
-    const mode;
-    const fileLength;
-
-    fn __init__(file: NativeFile?, mode: int?) {
-        this.file = file;
-        this.fileLength = file.length();
-        this.mode = mode;
-    }
-
-    fn length() {
-        return fileLength;
-    }
-
-    fn position() {
-        return file.position();
-    }
-
-    fn read(size: int? = -1) {
-        if size == -1 {
-            size = fileLength;
-        }
-        var res;
-        switch mode {
-            case READ {
-                res = file.readText(size);
-            } case READ_B {
-                res = file.readBytes(size);
-            } default {
-                throw new IOError("Unexpected mode to read.");
-            }
-        }
-        return res;
-    }
-
-    fn readLine() {
-
-    }
-
-    fn write(data: byte? or String?) {
-    }
-
-    fn writeLine(line: String?) {
-    }
-
-    fn close() {
-        if not file.close() {
-            throw new IOError("Cannot close file " + file);
-        }
-    }
-}
-
 class IOError(Exception) {
     fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
     }
 }
 
-/*
- * Modes: r, w, rb, wb
- */
-fn open(file: String?, mode: String?) -> File? or null? {
-    var m = switch mode {
-        case "r" -> READ;
-        case "w" -> WRITE;
-        case "rb" -> READ_B;
-        case "wb" -> WRITE_B;
-        default -> {
-            throw new IOError("Unknown mode " + mode);
-        };
+class InputStream {
+    fn close() {
+    }
+}
+
+class OutputStream {
+    fn close() {
+    }
+}
+
+class FileInputStream(InputStream) {
+    const file;
+
+    fn __init__(fileName: String?) {
+        file = Invokes.openInputFile(fileName);
+        if file == null {
+            throw new IOError("Cannot open file " + fileName);
+        }
     }
 
-    nf := Invokes.openFile(file, m);
-    if nf is null {
-        throw new IOError("Failed to open " + file);
+    fn read(length: int?) -> array?(byte) {
+        b := file.read(length);
+        if b is null {
+            throw new IOError("Cannot read file " + fileName);
+        }
+        return b;
     }
-    return new File(nf, m);
+
+    fn close() {
+        if not file.close() {
+            throw new IOError("Cannot close file " + fileName);
+        }
+    }
+}
+
+class FileReader {
+    const fis;
+    const bufferSize = 4;
+    var buffer = new byte[0];
+    var bufferPos = 0;
+
+    fn __init__(fileName: String?) {
+        fis = new FileInputStream(fileName);
+    }
+
+    /*
+     * Reads a line from the text file, or null if reaches the end of the file.
+     */
+    fn readLine() -> String? or null? {
+        notFound := true;
+        res := [];
+        while notFound {
+            for ; bufferPos < buffer.length; bufferPos++ {
+                res.append(buffer[bufferPos]);
+                if buffer[bufferPos] == '\n' {
+                    notFound = false;
+                    bufferPos++;
+                    break;
+                }
+            }
+            if notFound {
+                if not _fill() {
+                    break;
+                }
+            }
+        }
+        arr := res.toArray(byte);
+        return Invokes.bytesToString(arr) if arr.length > 0 else null;
+    }
+
+    fn close() {
+        fis.close();
+    }
+
+    /*
+     * Reads the whole file as one string.
+     */
+    fn read() -> String? {
+    }
+
+    fn _fill() -> boolean? {
+        bufferPos = 0;
+        buffer = fis.read(bufferSize);
+        return buffer.length > 0;
+    }
 }

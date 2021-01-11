@@ -33,3 +33,4 @@
 * String operations (upper, lower)
 * Type wrapper of primitive and abstract object
 * Type of array element
+* Add string as the right side operand

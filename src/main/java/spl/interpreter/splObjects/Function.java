@@ -85,32 +85,46 @@ public class Function extends UserFunction {
     private void checkParamContracts(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile) {
         if (hasContract && callingEnv.getMemory().isCheckContract()) {
             int argIndex = 0;
-            for (Parameter param : params) {
+            for (int i = 0; i < params.length; i++) {
+                Parameter param = params[i];
+                String location = "the " + i + "th argument";
                 if (param.unpackCount == 0) {
                     if (argIndex < evaluatedArgs.positionalArgs.size()) {
                         callContract(
                                 param.contract,
                                 evaluatedArgs.positionalArgs.get(argIndex++),
                                 callingEnv,
-                                lineFile);
+                                lineFile,
+                                location);
                     } else if (param.hasDefaultValue()) {
                         // use default value
                         callContract(
                                 param.contract,
                                 param.defaultValue,
                                 callingEnv,
-                                lineFile
+                                lineFile,
+                                location
                         );
                     } else {
                         throw new NativeError("Unexpected error. ");
                     }
                 } else if (param.unpackCount == 1) {
                     for (; argIndex < evaluatedArgs.positionalArgs.size(); argIndex++) {
-                        callContract(param.contract, evaluatedArgs.positionalArgs.get(argIndex), callingEnv, lineFile);
+                        callContract(
+                                param.contract,
+                                evaluatedArgs.positionalArgs.get(argIndex),
+                                callingEnv,
+                                lineFile,
+                                location);
                     }
                 } else if (param.unpackCount == 2) {
                     for (Map.Entry<String, SplElement> entry : evaluatedArgs.keywordArgs.entrySet()) {
-                        callContract(param.contract, entry.getValue(), callingEnv, lineFile);
+                        callContract(
+                                param.contract,
+                                entry.getValue(),
+                                callingEnv,
+                                lineFile,
+                                location);
                     }
                 } else {
                     throw new NativeError("Unexpected error. ");
@@ -121,7 +135,7 @@ public class Function extends UserFunction {
 
     private void checkRtnContract(SplElement rtnValue, Environment callingEnv, LineFilePos lineFile) {
         if (hasContract && callingEnv.getMemory().isCheckContract()) {
-            callContract(rtnContract, rtnValue, callingEnv, lineFile);
+            callContract(rtnContract, rtnValue, callingEnv, lineFile, "return statement");
         }
     }
 
@@ -152,7 +166,8 @@ public class Function extends UserFunction {
         }
     }
 
-    private void callContract(Node conNode, SplElement arg, Environment callingEnv, LineFilePos lineFile) {
+    private void callContract(Node conNode, SplElement arg, Environment callingEnv, LineFilePos lineFile,
+                              String location) {
         SplElement conFnPtrProb = getContractFunction(conNode, lineFile);
         if (callingEnv.hasException()) return;
         Reference conFnPtr = (Reference) conFnPtrProb;
@@ -164,7 +179,8 @@ public class Function extends UserFunction {
             if (!((Bool) result).value) {
                 SplInvokes.throwException(callingEnv,
                         Constants.CONTRACT_ERROR,
-                        "Contract violation when calling '" + definedName + "'. " + "Got " + arg + ". ",
+                        String.format("Contract violation when calling '%s', at %s. Got %s.",
+                                definedName, location, arg),
                         lineFile);
             }
         } else {

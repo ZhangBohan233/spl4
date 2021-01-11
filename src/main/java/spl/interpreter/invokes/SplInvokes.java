@@ -16,10 +16,7 @@ import spl.parser.Parser;
 import spl.util.Constants;
 import spl.util.LineFilePos;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.Scanner;
 
 /**
@@ -407,18 +404,37 @@ public class SplInvokes extends NativeObject {
         return Bool.boolValueOf(environment.hasName(name));
     }
 
-    public SplElement openFile(Arguments arguments, Environment env, LineFilePos lineFilePos) {
-        checkArgCount(arguments, 2, "openFile", env, lineFilePos);
+    public Reference stringToBytes(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 1, "Invokes.stringToBytes", env, lineFilePos);
+
+        Reference strRef = (Reference) arguments.getLine().get(0).evaluate(env);
+        Instance ins = (Instance) env.getMemory().get(strRef);
+        String s = extractFromSplString(ins, env, lineFilePos);
+
+        byte[] b = s.getBytes();
+        return SplArray.fromJavaArray(b, env, lineFilePos);
+    }
+
+    public Reference bytesToString(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 1, "Invokes.bytesToString", env, lineFilePos);
+
+        Reference arrRef = (Reference) arguments.getLine().get(0).evaluate(env);
+
+        byte[] b = SplArray.toJavaByteArray(arrRef, env.getMemory());
+        String s = new String(b);
+        return StringLiteral.createString(s.toCharArray(), env, lineFilePos);
+    }
+
+    public SplElement openInputFile(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 1, "Invokes.openInputFile", env, lineFilePos);
 
         Reference fileRef = (Reference) arguments.getLine().get(0).evaluate(env);
-        Int mode = (Int) arguments.getLine().get(1).evaluate(env);
 
         Instance fileNameIns = (Instance) env.getMemory().get(fileRef);
         String fileName = extractFromSplString(fileNameIns, env, lineFilePos);
 
-        NativeFile nf = NativeFile.create(fileName, mode.intValue());
+        NativeFileInput nf = NativeFileInput.create(fileName);
         if (nf == null) return Reference.NULL;
-
         return env.getMemory().allocateObject(nf, env);
     }
 

@@ -1,10 +1,12 @@
-import io
+import namespace io
 
 fn main() {
-    file := io.open("Untitled.sp", "r");
+    ism := new FileReader("Untitled.sp");
 
-    s := file.read();
-    print(s);
+    print(ism.readLine());
+    print(ism.readLine());
+    print(ism.readLine());
+    print(ism.readLine() is null);
 
-    file.close();
+    ism.close();
 }

@@ -56,14 +56,14 @@ public class NewExpr extends UnaryExpr {
                 clazzPtr, call.arguments.evalArgs(callEnv), callEnv, lineFile).pointer;
     }
 
-    private static Reference arrayCreation(IndexingNode node,
+    private static SplElement arrayCreation(IndexingNode node,
                                            Environment classDefEnv,
                                            Environment callEnv,
                                            LineFilePos lineFile) {
 
         if (node.getArgs().getChildren().size() == 1) {
             Int length = (Int) node.getArgs().getChildren().get(0).evaluate(callEnv);
-            return SplArray.createArray(node.getCallObj(), (int) length.value, callEnv);
+            return SplArray.createArray(node.getCallObj(), (int) length.value, callEnv, lineFile);
         } else {
             throw new NativeError("Array creation must take exactly one int as argument. ", lineFile);
         }

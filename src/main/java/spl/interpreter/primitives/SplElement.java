@@ -45,4 +45,8 @@ public abstract class SplElement implements SplThing {
     public static boolean isPrimitive(SplElement element) {
         return !(element instanceof Reference);
     }
+
+    public boolean valueEquals(SplElement other) {
+        return equals(other);
+    }
 }

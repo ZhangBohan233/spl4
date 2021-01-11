@@ -6,7 +6,7 @@ import spl.interpreter.Memory;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.GlobalEnvironment;
 import spl.interpreter.env.ModuleEnvironment;
-import spl.interpreter.invokes.NativeFile;
+import spl.interpreter.invokes.NativeFileInput;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.*;
 import spl.interpreter.splErrors.NativeError;
@@ -298,7 +298,7 @@ public class SplInterpreter {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 if (arg instanceof Reference) {
                     SplObject object = callingEnv.getMemory().get((Reference) arg);
-                    return Bool.boolValueOf(object instanceof NativeFile);
+                    return Bool.boolValueOf(object instanceof NativeFileInput);
                 }
                 return Bool.FALSE;
             }

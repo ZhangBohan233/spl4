@@ -24,27 +24,43 @@ public class SplArray extends SplObject {
         this.elementTypeCode = elementTypeCode;
     }
 
-    private static int calculateEleType(Node eleNode) {
-        if (eleNode instanceof NameNode) {
-            String name = ((NameNode) eleNode).getName();
-            switch (name) {
-                case "int":
-                    return SplElement.INT;
-                case "float":
-                    return SplElement.FLOAT;
-                case "char":
-                    return SplElement.CHAR;
-                case "byte":
-                    return SplElement.BYTE;
-                case "boolean":
-                    return SplElement.BOOLEAN;
-                case "Object":  // this case refers to AbstractObject
-                    return SplElement.POINTER;
-                default:
-                    break;
-            }
+    private static int calculateEleType(Node eleNode, Environment env, LineFilePos lineFilePos) {
+        SplElement se = eleNode.evaluate(env);
+        if (se.valueEquals(env.get("int", lineFilePos))) return SplElement.INT;
+        else if (se.valueEquals(env.get("float", lineFilePos))) return SplElement.FLOAT;
+        else if (se.valueEquals(env.get("char", lineFilePos))) return SplElement.CHAR;
+        else if (se.valueEquals(env.get("boolean", lineFilePos))) return SplElement.BOOLEAN;
+        else if (se.valueEquals(env.get("byte", lineFilePos))) return SplElement.BYTE;
+        else if (se.valueEquals(env.get("Object", lineFilePos))) return SplElement.POINTER;
+        else {
+            SplInvokes.throwException(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Only basic types are valid in array creation.",
+                    lineFilePos
+            );
+            return -1;
         }
-        throw new NativeTypeError("Only basic types are valid in array creation. ");
+//        if (eleNode instanceof NameNode) {
+//            String name = ((NameNode) eleNode).getName();
+//            switch (name) {
+//                case "int":
+//                    return SplElement.INT;
+//                case "float":
+//                    return SplElement.FLOAT;
+//                case "char":
+//                    return SplElement.CHAR;
+//                case "byte":
+//                    return SplElement.BYTE;
+//                case "boolean":
+//                    return SplElement.BOOLEAN;
+//                case "Object":  // this case refers to AbstractObject
+//                    return SplElement.POINTER;
+//                default:
+//                    break;
+//            }
+//        }
+//        throw new NativeTypeError("Only basic types are valid in array creation. ");
     }
 
     public static Reference createArray(int eleType, int arrSize, Environment env) {
@@ -57,8 +73,10 @@ public class SplArray extends SplObject {
         return arrPtr;
     }
 
-    public static Reference createArray(Node eleNode, int arrSize, Environment env) {
-        return createArray(calculateEleType(eleNode), arrSize, env);
+    public static SplElement createArray(Node eleNode, int arrSize, Environment env, LineFilePos lineFilePos) {
+        int eleType = calculateEleType(eleNode, env, lineFilePos);
+        if (env.hasException()) return Undefined.ERROR;
+        return createArray(eleType, arrSize, env);
     }
 
     public static void fillInitValue(int eleType, Reference arrayPtr, Memory memory, int arrayLength) {

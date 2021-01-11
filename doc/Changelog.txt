@@ -1,3 +1,10 @@
+===== Version 4046 =====
+2021/01/12
+
+* Added library function array?(eleType)
+* Changed the implementation of array type
+* Rewrite io system as streams
+
 ===== Version 4045 =====
 2021/01/12
 

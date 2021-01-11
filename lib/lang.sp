@@ -352,10 +352,15 @@ class List(Iterable) {
 
     contract remove(int?) -> anyType;
 
-    fn toArray() {
-        resArray := new Object[_size];
+    fn toArray(eleType=Object) {
+        eleProc := cond {
+                       case eleType is Object -> lambda x -> x;
+                       case Callable?(eleType) -> eleType;
+                   };
+
+        resArray := new eleType[_size];
         for i := 0; i < _size; i++ {
-            resArray[i] = array[i];
+            resArray[i] = eleProc(array[i]);
         }
         return resArray;
     }
@@ -464,6 +469,10 @@ class String {
 
 fn anyType(_) {
     return true;
+}
+
+fn array?(eleType) {
+    return lambda x -> Array?(x) and x.type is eleType;
 }
 
 fn clock() -> int? {
