@@ -16,6 +16,15 @@ fn foo(a: int?, b: float? = 2.5) -> int? {
 foo(2);  // currently causes error
 ```
 
+**ISSUE F02** \
+Keyword arguments not working
+
+**ISSUE F03** \
+Keyword arguments cannot pass
+```
+fn foo(**kwargs)
+```
+
 ### Class and inheritance
 
 ~~**ISSUE C01**~~ **_FIXED_** \
@@ -34,3 +43,8 @@ class B(A) {
 (new B()).printName();  // expect "B" but currently prints "A"
 
 ```
+
+### Mysterious bugs
+
+**M01**
+Calling `Invokes.print(inputStream.readLine());` does not print anything

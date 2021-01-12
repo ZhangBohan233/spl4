@@ -1,3 +1,14 @@
+===== Version 4047 =====
+2021/01/13
+
+* Reimplemented superclass check
+* Added overriding parameters check
+* New library function 'strJoin'
+* Implemented 'FileReader.read()'
+* Implemented output streams
+* Added more type checkers
+* Minor bugs fix
+
 ===== Version 4046 =====
 2021/01/12
 

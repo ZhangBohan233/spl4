@@ -10,19 +10,18 @@ import spl.util.LineFilePos;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
-public class NativeFileInput extends NativeObject {
+public class NativeInFile extends NativeObject {
 
-    private final InputStream stream;
+    private final FileInputStream stream;
 
-    private NativeFileInput(String fileName) throws IOException {
+    private NativeInFile(String fileName) throws IOException {
         this.stream = new FileInputStream(fileName);
     }
 
-    public static NativeFileInput create(String fileName) {
+    public static NativeInFile create(String fileName) {
         try {
-            return new NativeFileInput(fileName);
+            return new NativeInFile(fileName);
         } catch (IOException e) {
             return null;
         }
@@ -42,8 +41,9 @@ public class NativeFileInput extends NativeObject {
 
     /* Methods can be directly called by spl */
 
+    @SuppressWarnings("unused")
     public Bool close(Arguments args, Environment env, LineFilePos lineFilePos) {
-        checkArgCount(args, 0, "NativeFileInput.close()", env, lineFilePos);
+        checkArgCount(args, 0, "NativeInFile.close()", env, lineFilePos);
         try {
             stream.close();
             return Bool.TRUE;
@@ -53,8 +53,9 @@ public class NativeFileInput extends NativeObject {
         return Bool.FALSE;
     }
 
+    @SuppressWarnings("unused")
     public Reference read(Arguments args, Environment env, LineFilePos lineFilePos) {
-        checkArgCount(args, 1, "NativeFileInput.read()", env, lineFilePos);
+        checkArgCount(args, 1, "NativeInFile.read()", env, lineFilePos);
 
         int readLen = (int) (args.getLine().get(0).evaluate(env)).intValue();
         try {

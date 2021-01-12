@@ -27,10 +27,13 @@
 
 * File IO
 * ~~String literal duplicate removal~~ **_DONE_**
-* Reference count garbage collection
+* ~~Reference count garbage collection~~ **~~DISCARDED~~**
 * ~~Memory reallocation during full gc~~ **_DONE_**
 * Multithreading
 * String operations (upper, lower)
-* Type wrapper of primitive and abstract object
-* Type of array element
+* ~~Type wrapper of primitive and abstract object~~ **_DONE_**
+* ~~Type of array element~~ **_DONE_**
 * Add string as the right side operand
+* Compiled spl file (*.spc)
+* Store docstring in spl object
+* Gc suite for class declaration

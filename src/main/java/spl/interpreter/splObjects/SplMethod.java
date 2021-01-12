@@ -49,8 +49,11 @@ public class SplMethod extends Function {
 
     @Override
     public String toString() {
-        return "Method " + definedName + ": {" + body.getLines().size() + " lines, defined in " +
-                definitionEnv.getMemory().get(classPtr) + "} ";
+        return String.format("Method %s: {%d lines, defined in %s. %s}",
+                definedName,
+                body.getLines().size(),
+                definitionEnv.getMemory().get(classPtr),
+                lineFile);
     }
 
     public Reference getClassPtr() {

@@ -93,9 +93,7 @@ public class Utilities {
 
     @SafeVarargs
     public static Map<String, Integer> mergeMaps(Map<String, Integer>... maps) {
-        Map<String, Integer> res = new HashMap<>();
-        for (Map<String, Integer> m : maps) res.putAll(m);
-        return res;
+        return new MapMerger<>(maps).merge();
     }
 
     public static String typeName(SplElement element) {

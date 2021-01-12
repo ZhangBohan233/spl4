@@ -198,19 +198,28 @@ public class SplInvokes extends NativeObject {
     }
 
     public SplElement println(Arguments arguments, Environment environment, LineFilePos lineFile) {
-        stdout.println(getPrintString(arguments, environment, lineFile));
+        checkArgCount(arguments, 1, "Invokes.println", environment, lineFile);
+
+        String s = getPrintString(arguments, environment, lineFile);
+        stdout.println(s);
 
         return Reference.NULL;
     }
 
     public SplElement print(Arguments arguments, Environment environment, LineFilePos lineFile) {
-        stdout.print(getPrintString(arguments, environment, lineFile));
+        checkArgCount(arguments, 1, "Invokes.print", environment, lineFile);
+
+        String s = getPrintString(arguments, environment, lineFile);
+        stdout.print(s);
 
         return Reference.NULL;
     }
 
     public SplElement printErr(Arguments arguments, Environment environment, LineFilePos lineFile) {
-        stderr.print(getPrintString(arguments, environment, lineFile));
+        checkArgCount(arguments, 1, "Invokes.printErr", environment, lineFile);
+
+        String s = getPrintString(arguments, environment, lineFile);
+        stderr.println(s);
 
         return Reference.NULL;
     }
@@ -433,7 +442,20 @@ public class SplInvokes extends NativeObject {
         Instance fileNameIns = (Instance) env.getMemory().get(fileRef);
         String fileName = extractFromSplString(fileNameIns, env, lineFilePos);
 
-        NativeFileInput nf = NativeFileInput.create(fileName);
+        NativeInFile nf = NativeInFile.create(fileName);
+        if (nf == null) return Reference.NULL;
+        return env.getMemory().allocateObject(nf, env);
+    }
+
+    public SplElement openOutputFile(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 1, "Invokes.openOutputFile", env, lineFilePos);
+
+        Reference fileRef = (Reference) arguments.getLine().get(0).evaluate(env);
+
+        Instance fileNameIns = (Instance) env.getMemory().get(fileRef);
+        String fileName = extractFromSplString(fileNameIns, env, lineFilePos);
+
+        NativeOutFile nf = NativeOutFile.create(fileName);
         if (nf == null) return Reference.NULL;
         return env.getMemory().allocateObject(nf, env);
     }

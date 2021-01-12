@@ -157,6 +157,12 @@ class IndexException(Exception) {
     }
 }
 
+class InheritanceError(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
 class Interruption(Exception) {
     fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
@@ -499,8 +505,12 @@ fn input(prompt: String?="") {
     return Invokes.input(prompt);
 }
 
-fn print(s) {
-    Invokes.println(s);
+fn print(s, line: boolean? = true) {
+    if line {
+        Invokes.println(s);
+    } else {
+        Invokes.print(s);
+    }
 }
 
 fn range(begin, end, step=1) {
@@ -526,6 +536,33 @@ fn sleep(mills: int?) {
     start := clock();
     while clock() - start < mills {  // busy waiting
     }
+}
+
+fn strJoin(deliminator: String?, iter: array?(Object) or Iterable?) -> String? {
+    totalLength := 0;
+    for part in iter {
+        if not String?(part) {
+            throw new TypeError("strJoin only joins strings.");
+        }
+        totalLength += part.length + deliminator.length;
+    }
+    totalLength -= deliminator.length;
+    if totalLength <= 0 {
+        return "";
+    }
+    arr := new char[totalLength];
+    index := 0;
+    for part in iter {
+        for i := 0; i < part.length; i++ {
+            arr[index++] = part.__chars__[i];
+        }
+        if index < totalLength {
+            for i := 0; i < deliminator.length; i++ {
+                arr[index++] = deliminator.__chars__[i];
+            }
+        }
+    }
+    return new String(arr);
 }
 
 fn type(obj) {

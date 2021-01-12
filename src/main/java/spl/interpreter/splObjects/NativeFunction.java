@@ -25,6 +25,10 @@ public abstract class NativeFunction extends SplCallable {
         mostArg = argCount;
     }
 
+    public String getName() {
+        return name;
+    }
+
     /**
      * Override this method only if the function needs unevaluated argument node.
      * <p>
