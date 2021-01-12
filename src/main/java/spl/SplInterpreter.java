@@ -25,7 +25,7 @@ import spl.util.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class SplInterpreter {
@@ -81,9 +81,9 @@ public class SplInterpreter {
                 LineFilePos.LF_INTERPRETER);
     }
 
-    static void importModules(GlobalEnvironment ge, Map<String, CollectiveElement> imported,
+    static void importModules(GlobalEnvironment ge, LinkedHashMap<String, CollectiveElement> imported,
                               Map<String, StringLiteral> strLitBundleMap) throws IOException {
-        Map<String, ParseResult> blocks = parseImportedModules(imported, strLitBundleMap);
+        LinkedHashMap<String, ParseResult> blocks = parseImportedModules(imported, strLitBundleMap);
         for (Map.Entry<String, ParseResult> entry : blocks.entrySet()) {
             ModuleEnvironment moduleScope = new ModuleEnvironment(entry.getKey(), ge);
             entry.getValue().getRoot().evaluate(moduleScope);
@@ -95,10 +95,11 @@ public class SplInterpreter {
         }
     }
 
-    public static Map<String, ParseResult> parseImportedModules(Map<String, CollectiveElement> imported,
-                                                                Map<String, StringLiteral> strLitBundleMap)
+    public static LinkedHashMap<String, ParseResult> parseImportedModules(
+            LinkedHashMap<String, CollectiveElement> imported,
+            Map<String, StringLiteral> strLitBundleMap)
             throws IOException {
-        Map<String, ParseResult> result = new HashMap<>();
+        LinkedHashMap<String, ParseResult> result = new LinkedHashMap<>();
         for (Map.Entry<String, CollectiveElement> entry : imported.entrySet()) {
             Parser psr = new Parser(new TextProcessResult(entry.getValue()), strLitBundleMap);
             ParseResult ce = psr.parse();

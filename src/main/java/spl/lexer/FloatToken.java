@@ -10,7 +10,7 @@ public class FloatToken extends Token {
         super(lineFile);
 
         long dec = IntToken.parse(dotFront);
-        value = dec + Double.parseDouble("0." + dotBack);
+        value = dec + Double.parseDouble("0." + dotBack.replace("_", ""));
     }
 
     public double getValue() {

@@ -9,7 +9,7 @@ public class IntToken extends Token {
     public IntToken(String numStr, LineFilePos lineFile) {
         super(lineFile);
 
-        value = parse(numStr);
+        value = parseWithRadix(numStr);
     }
 
     public long getValue() {
@@ -19,6 +19,21 @@ public class IntToken extends Token {
     @Override
     public String toString() {
         return "IntToken{" + value + "}";
+    }
+
+    private static long parseWithRadix(String numStr) {
+        numStr = numStr.replace("_", "");
+        if (numStr.startsWith("0x")) {
+            return Long.parseLong(numStr.substring(2), 16);
+        } else if (numStr.startsWith("0d")) {
+            return Long.parseLong(numStr.substring(2), 10);
+        } else if (numStr.startsWith("0o")) {
+            return Long.parseLong(numStr.substring(2), 8);
+        } else if (numStr.startsWith("0b")) {
+            return Long.parseLong(numStr.substring(2), 2);
+        } else {
+            return Long.parseLong(numStr);
+        }
     }
 
     static long parse(String numStr) {

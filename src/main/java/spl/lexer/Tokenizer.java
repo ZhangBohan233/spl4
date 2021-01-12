@@ -234,14 +234,16 @@ public abstract class Tokenizer {
                     tokens.add(floatToken);
                     for (int j = i + 1; j < i + 3; j++) startPos += list.get(j).length();
                     i += 2;
-                } else if (i < len - 1 && list.get(i + 1).equals("b")) {
-                    tokens.add(new ByteToken(s, new LineFilePos(lineFile, pos)));
-                    i += 1;
+                } else {
+                    tokens.add(new IntToken(s, new LineFilePos(lineFile, pos)));
+                }
+            } else if (StringTypes.startsWithNum(s)) {
+                if (s.endsWith("b")) {
+                    tokens.add(new ByteToken(s.substring(0, s.length() - 1), new LineFilePos(lineFile, pos)));
                 } else {
                     tokens.add(new IntToken(s, new LineFilePos(lineFile, pos)));
                 }
             } else if (StringTypes.isIdentifier(s)) {
-//                System.out.println(s + " " + pos);
                 tokens.add(new IdToken(s, new LineFilePos(lineFile, pos)));
             } else if (EXTRA_IDENTIFIERS.contains(s)) {
                 tokens.add(new IdToken(s, new LineFilePos(lineFile, pos)));
@@ -316,6 +318,7 @@ public abstract class Tokenizer {
                 {MINUS, GT},
                 {LT, MINUS},
                 {LETTER, DIGIT},
+                {DIGIT, LETTER},
                 {GT, EQ},
                 {LT, EQ},
                 {NOT, EQ},
@@ -385,6 +388,10 @@ public abstract class Tokenizer {
                 if (!(Character.isDigit(c) || c == '_')) return false;
             }
             return s.length() > 0 && s.charAt(0) != '_';
+        }
+
+        private static boolean startsWithNum(String s) {
+            return s.length() > 0 && s.charAt(0) >= '0' && s.charAt(0) <= '9';
         }
 
         public static boolean isIdentifier(String s) {

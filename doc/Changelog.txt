@@ -1,3 +1,12 @@
+===== Version 4048 =====
+2021/01/13
+
+* Added some functions in lib/math
+* Added support of hex, oct, bin numbers
+* Bug fixes:
+    * Modules importing sequence was unpredictable, causing error if any module was imported before lang
+    * Names with number at middle were not recognized
+
 ===== Version 4047 =====
 2021/01/13
 
