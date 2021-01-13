@@ -460,6 +460,14 @@ public class SplInvokes extends NativeObject {
         return env.getMemory().allocateObject(nf, env);
     }
 
+    public SplFloat logE(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 1, "Invokes.logE", env, lineFilePos);
+
+        SplFloat x = (SplFloat) arguments.getLine().get(0).evaluate(env);
+        double d = Math.log(x.floatValue());
+        return new SplFloat(d);
+    }
+
     public SplElement script(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, SplCallable.MAX_ARGS, "script", environment, lineFile);
 

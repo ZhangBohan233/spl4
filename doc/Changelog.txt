@@ -1,3 +1,11 @@
+===== Version 4049 =====
+2021/01/14
+
+* Added more functions in lib/math
+* Optimized pseudo-random generator
+* Bug fixes:
+    * Unexpected arithmetic result of float
+
 ===== Version 4048 =====
 2021/01/13
 

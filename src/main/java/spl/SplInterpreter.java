@@ -147,6 +147,7 @@ public class SplInterpreter {
             @Override
             protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg.getClass() == Int.class) return arg;
                 if (arg instanceof Reference) {
                     return new Int(
                             Utilities.wrapperToPrimitive(
@@ -171,6 +172,7 @@ public class SplInterpreter {
             @Override
             protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg.getClass() == SplFloat.class) return arg;
                 if (arg instanceof Reference) {
                     return new SplFloat(
                             Utilities.wrapperToPrimitive(
@@ -195,6 +197,7 @@ public class SplInterpreter {
             @Override
             protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg.getClass() == Char.class) return arg;
                 if (arg instanceof Reference) {
                     return new Char(
                             (char) Utilities.wrapperToPrimitive(
@@ -219,6 +222,7 @@ public class SplInterpreter {
             @Override
             protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg.getClass() == SplByte.class) return arg;
                 if (arg instanceof Reference) {
                     return new SplByte(
                             (byte) Utilities.wrapperToPrimitive(
@@ -243,6 +247,7 @@ public class SplInterpreter {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg.getClass() == Bool.class) return (Bool) arg;
                 if (arg instanceof Reference) {
                     return Bool.boolValueOf(
                             Utilities.wrapperToPrimitive(

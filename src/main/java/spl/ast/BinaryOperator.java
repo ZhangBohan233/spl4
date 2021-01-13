@@ -254,7 +254,7 @@ public class BinaryOperator extends BinaryExpr {
                     double leftV = leftTv.floatValue();
                     if (rightTv instanceof SplFloat ||
                             rightTv.isIntLike()) {
-                        double rightV = rightTv.intValue();
+                        double rightV = rightTv.floatValue();
                         result = otherLogical(operator, env, leftV, rightV, getLineFile());
                     } else {
                         return SplInvokes.throwExceptionWithError(
