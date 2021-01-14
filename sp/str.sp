@@ -13,4 +13,6 @@ fn main() {
 
     print(a);
     print("");
+
+    print(e.toLower());
 }

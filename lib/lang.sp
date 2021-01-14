@@ -464,12 +464,30 @@ class String {
         return type(this) is not type(other) or not __eq__(other);
     }
 
-    fn toUpper() {
-
+    fn toUpper() -> String? {
+        arr := new char[length];
+        for i := 0; i < length; i++ {
+            c := __chars__[i];
+            if c >= 'a' and c <= 'z' {
+                arr[i] = char(c - 32);
+            } else {
+                arr[i] = c;
+            }
+        }
+        return new String(arr);
     }
 
-    fn toLower() {
-
+    fn toLower() -> String? {
+        arr := new char[length];
+        for i := 0; i < length; i++ {
+            c := __chars__[i];
+            if c >= 'A' and c <= 'Z' {
+                arr[i] = char(c + 32);
+            } else {
+                arr[i] = c;
+            }
+        }
+        return new String(arr);
     }
 }
 

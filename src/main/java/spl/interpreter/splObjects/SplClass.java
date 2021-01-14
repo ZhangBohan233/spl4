@@ -3,7 +3,6 @@ package spl.interpreter.splObjects;
 import spl.ast.*;
 import spl.interpreter.Memory;
 import spl.interpreter.env.Environment;
-import spl.interpreter.env.GlobalEnvironment;
 import spl.interpreter.env.ModuleEnvironment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
@@ -60,8 +59,13 @@ public class SplClass extends SplObject {
 
         SplClass clazz = new SplClass(className, superclassPointers, body, definitionEnv);
         Reference clazzPtr = definitionEnv.getMemory().allocateObject(clazz, definitionEnv);
+
+        definitionEnv.getMemory().addTempPtr(clazzPtr);
+
         clazz.makeMro(clazzPtr);
         clazz.updateMethods(clazzPtr);
+
+        definitionEnv.getMemory().removeTempPtr(clazzPtr);
 
         return clazzPtr;
     }

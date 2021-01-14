@@ -351,14 +351,18 @@ public class Memory {
                 SplClass clazz = (SplClass) obj;
                 List<Reference> classPointers = clazz.getAllAttrPointers();
                 for (Reference attrPtr : classPointers) {
-                    SplObject attrObj = get(attrPtr);
-                    markObjectAsUsed(attrObj, attrPtr.getPtr(), attrPtr);
+                    if (attrPtr != null) {
+                        SplObject attrObj = get(attrPtr);
+                        markObjectAsUsed(attrObj, attrPtr.getPtr(), attrPtr);
+                    }
                 }
             }
 
             List<Reference> attrRefs = obj.listAttrReferences();
             if (attrRefs != null) {
-                for (Reference attrRef : attrRefs) addRef(attrRef.getPtr(), attrRef);
+                for (Reference attrRef : attrRefs) {
+                    if (attrRef != null) addRef(attrRef.getPtr(), attrRef);
+                }
             }
         }
 

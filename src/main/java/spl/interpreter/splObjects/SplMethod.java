@@ -24,7 +24,7 @@ public class SplMethod extends Function {
 
     @Override
     public List<Reference> listAttrReferences() {
-        return List.of(classPtr);
+        return classPtr != null ? List.of(classPtr) : List.of();
     }
 
     public void setClassPtr(Reference classPtr) {

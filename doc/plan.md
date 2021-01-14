@@ -2,7 +2,6 @@
 
 ### Phase 1
 
-
 * ~~Contract in class body~~ **_DONE_**
 * ~~getitem, setitem~~ **_DONE_**
 * ~~error~~ _**DONE**_
@@ -20,20 +19,22 @@
 * ~~Resolve primitive wrapper confusion~~ **_DONE_**
 * ~~Direct contract in function declaration~~ **_DONE_**
 * ~~Reflection~~ **_DONE_**
-* Input stream
+* ~~Input stream~~ **_DONE_**
 * ~~input()~~ **_DONE_**
+
 
 ### Phase 3
 
-* File IO
+* ~~File IO~~ **_DONE_**
 * ~~String literal duplicate removal~~ **_DONE_**
-* ~~Reference count garbage collection~~ **~~DISCARDED~~**
+* ~~Reference count garbage collection~~ **_DISCARDED_**
 * ~~Memory reallocation during full gc~~ **_DONE_**
 * Multithreading
-* String operations (upper, lower)
+* ~~String operations (upper, lower)~~ **_DONE_**
 * ~~Type wrapper of primitive and abstract object~~ **_DONE_**
 * ~~Type of array element~~ **_DONE_**
 * Add string as the right side operand
-* ~~Compiled spl file (*.spc)~~ **~~DONE~~**
+* ~~Compiled spl file (*.spc)~~ **_DONE_**
 * Store docstring in spl object
-* Gc suite for class declaration
+* ~~Gc suite for class declaration~~ **_DONE_**
+* Spc decompiler

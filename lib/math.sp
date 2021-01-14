@@ -129,6 +129,7 @@ fn cos(x: intOrFloat?) -> float? {
     low := 2;
     bound := cosN * 2;
     res := 1;
+    // cos x = sum (-1)^n * x^(2n) / (2n)!
     for i := 0; i < bound; i += 2 {
         ind = -ind;
         res += ind * up / low;
