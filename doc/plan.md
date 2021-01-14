@@ -38,3 +38,4 @@
 * Store docstring in spl object
 * ~~Gc suite for class declaration~~ **_DONE_**
 * Spc decompiler
+* HashDict
