@@ -12,7 +12,6 @@ import spl.interpreter.splObjects.SplObject;
 import spl.util.*;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 public class FuncCall extends Expression {
 
@@ -28,6 +27,12 @@ public class FuncCall extends Expression {
 
         this.callObj = callObj;
         this.arguments = arguments;
+    }
+
+    public static FuncCall reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
+        Expression callObj = Reconstructor.reconstruct(in);
+        Arguments arguments = Reconstructor.reconstruct(in);
+        return new FuncCall(callObj, arguments, lineFilePos);
     }
 
     @Override
@@ -46,6 +51,7 @@ public class FuncCall extends Expression {
             SplCallable function = (SplCallable) obj;
 
             EvaluatedArguments ea = arguments.evalArgs(env);
+            if (env.hasException()) return Undefined.ERROR;
             if (function instanceof SplMethod) {
                 // calling a method inside class
                 Reference thisPtr = (Reference) env.get(Constants.THIS, lineFile);
@@ -86,11 +92,5 @@ public class FuncCall extends Expression {
     protected void internalSave(BytesOut out) throws IOException {
         callObj.save(out);
         arguments.save(out);
-    }
-
-    public static FuncCall reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
-        Expression callObj = Reconstructor.reconstruct(in);
-        Arguments arguments = Reconstructor.reconstruct(in);
-        return new FuncCall(callObj, arguments, lineFilePos);
     }
 }

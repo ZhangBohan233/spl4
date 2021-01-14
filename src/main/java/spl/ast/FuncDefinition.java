@@ -1,19 +1,18 @@
 package spl.ast;
 
-import spl.interpreter.primitives.SplElement;
-import spl.interpreter.splObjects.Function;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Reference;
-import spl.interpreter.splObjects.SplMethod;
+import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
+import spl.interpreter.splObjects.Function;
 import spl.interpreter.splObjects.SplCallable;
+import spl.interpreter.splObjects.SplMethod;
 import spl.util.BytesIn;
 import spl.util.BytesOut;
 import spl.util.LineFilePos;
 import spl.util.Reconstructor;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 public class FuncDefinition extends Expression {
 
@@ -29,9 +28,17 @@ public class FuncDefinition extends Expression {
         this.body = body;
     }
 
+    public static FuncDefinition reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        NameNode name = Reconstructor.reconstruct(is);
+        Line params = Reconstructor.reconstruct(is);
+        BlockStmt body = Reconstructor.reconstruct(is);
+        return new FuncDefinition(name, params, body, lineFilePos);
+    }
+
     @Override
     protected SplElement internalEval(Environment env) {
         Function.Parameter[] params = SplCallable.evalParams(parameters, env);
+        if (env.hasException()) return Undefined.ERROR;
 
         Function function = new Function(body, params, env, name.getName(), getLineFile());
         Reference funcPtr = env.getMemory().allocateFunction(function, env);
@@ -40,8 +47,12 @@ public class FuncDefinition extends Expression {
         return funcPtr;
     }
 
-    public Reference evalAsMethod(Environment classDefEnv) {
-        Function.Parameter[] params = SplCallable.insertThis(SplCallable.evalParams(parameters, classDefEnv));
+    public SplElement evalAsMethod(Environment classDefEnv) {
+        Function.Parameter[] oldParams = SplCallable.evalParams(parameters, classDefEnv);
+        if (classDefEnv.hasException()) return Undefined.ERROR;
+        assert oldParams != null;
+        Function.Parameter[] params = SplCallable.insertThis(oldParams);
+
 
         SplMethod function = new SplMethod(body, params, classDefEnv, name.getName(), getLineFile());
 
@@ -78,12 +89,5 @@ public class FuncDefinition extends Expression {
         name.save(out);
         parameters.save(out);
         body.save(out);
-    }
-
-    public static FuncDefinition reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
-        NameNode name = Reconstructor.reconstruct(is);
-        Line params = Reconstructor.reconstruct(is);
-        BlockStmt body = Reconstructor.reconstruct(is);
-        return new FuncDefinition(name, params, body, lineFilePos);
     }
 }

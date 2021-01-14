@@ -3,12 +3,16 @@ package spl.interpreter.splObjects;
 import spl.ast.*;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.invokes.SplInvokes;
+import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
 import spl.parser.ParseError;
 import spl.util.Constants;
 import spl.util.LineFilePos;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class SplCallable extends SplObject {
 
@@ -17,7 +21,9 @@ public abstract class SplCallable extends SplObject {
     public abstract SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile);
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
-        return call(arguments.evalArgs(callingEnv), callingEnv, arguments.getLineFile());
+        var ea = arguments.evalArgs(callingEnv);
+        if (callingEnv.hasException()) return Undefined.ERROR;
+        return call(ea, callingEnv, arguments.getLineFile());
     }
 
     public abstract int minArgCount();
@@ -50,6 +56,8 @@ public abstract class SplCallable extends SplObject {
 
     public static Parameter[] evalParams(Line parameters, Environment env) {
         Parameter[] params = new Parameter[parameters.getChildren().size()];
+        Set<String> usedNames = new HashSet<>();
+        usedNames.add(Constants.THIS);
 
         // after first
         int optionalLevel = 0;
@@ -58,6 +66,16 @@ public abstract class SplCallable extends SplObject {
             Node node = parameters.getChildren().get(i);
 
             Parameter param = evalOneParam(node, env, optionalLevel).build();
+            if (usedNames.contains(param.name)) {
+                SplInvokes.throwException(
+                        env,
+                        Constants.ARGUMENT_EXCEPTION,
+                        "Duplicate parameter '" + param.name + "'",
+                        node.getLineFile()
+                );
+                return null;
+            }
+            usedNames.add(param.name);
             if (param.hasDefaultValue()) {
                 optionalLevel = 1;
             } else if (param.noneAble()) {
@@ -156,6 +174,9 @@ public abstract class SplCallable extends SplObject {
         public final String name;
         public final SplElement defaultValue;
         public final boolean constant;
+        /**
+         * Unpack count, 0 for normal, 1 for *args, 2 for **kwargs
+         */
         public final int unpackCount;
         Node contract;
 

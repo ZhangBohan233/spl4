@@ -17,12 +17,19 @@ foo(2);  // currently causes error
 ```
 
 **ISSUE F02** \
-Keyword arguments not working
+~~Keyword arguments not working~~ **_FIXED_**
 
 **ISSUE F03** \
-Keyword arguments cannot pass
+~~Keyword arguments cannot pass~~ **_FIXED_**
 ```
 fn foo(**kwargs)
+```
+
+**ISSUE F04** \
+~~No check for conflict keyword argument vs positional argument~~ **_FIXED_**
+```
+fn foo(a=1,b=2) { ... }
+foo(3,a=4);  // should cause an error but does not
 ```
 
 ### Class and inheritance

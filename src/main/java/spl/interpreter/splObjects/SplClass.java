@@ -183,7 +183,9 @@ public class SplClass extends SplObject {
                     classNodes.add(lineNode);
                 } else if (lineNode instanceof FuncDefinition) {
                     FuncDefinition fd = (FuncDefinition) lineNode;
-                    Reference methodPtr = fd.evalAsMethod(definitionEnv);
+                    SplElement mp = fd.evalAsMethod(definitionEnv);
+                    if (definitionEnv.hasException()) return;
+                    Reference methodPtr = (Reference) mp;
                     methodPointers.put(fd.name.getName(), methodPtr);
                 } else if (lineNode instanceof ContractNode) {
                     ((ContractNode) lineNode).evalAsMethod(methodPointers, className, definitionEnv);
@@ -202,7 +204,9 @@ public class SplClass extends SplObject {
                     new BlockStmt(LineFilePos.LF_INTERPRETER),
                     LineFilePos.LF_INTERPRETER);
 
-            Reference constructorPtr = fd.evalAsMethod(definitionEnv);
+            SplElement cp = fd.evalAsMethod(definitionEnv);
+            if (definitionEnv.hasException()) return;
+            Reference constructorPtr = (Reference) cp;
             methodPointers.put(Constants.CONSTRUCTOR, constructorPtr);
         }
     }

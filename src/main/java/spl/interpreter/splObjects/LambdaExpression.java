@@ -29,10 +29,11 @@ public class LambdaExpression extends UserFunction {
         String name = toString();
         FunctionEnvironment scope = new FunctionEnvironment(definitionEnv, callingEnv, name);
 
-        checkValidArgCount(evaluatedArgs.positionalArgs.size(), name, callingEnv, lineFile);
+        checkValidArgCount(evaluatedArgs.positionalArgs.size() + evaluatedArgs.keywordArgs.size(),
+                name, callingEnv, lineFile);
         if (callingEnv.hasException()) return Undefined.ERROR;
 
-        setArgs(evaluatedArgs, scope);
+        setArgs(evaluatedArgs, scope, callingEnv, lineFile);
 
         scope.getMemory().pushStack(scope, lineFile);
         SplElement evalResult = body.evaluate(scope);

@@ -200,7 +200,7 @@ class UnknownTypeError(Exception) {
 }
 
 class Iterator {
-    fn __hasNext__() {
+    fn __hasNext__() -> boolean? {
         throw new NotImplementedError();
     }
 
@@ -210,7 +210,7 @@ class Iterator {
 }
 
 class Iterable {
-    fn __iter__() {
+    fn __iter__() -> Iterator? {
         throw new NotImplementedError();
     }
 }
@@ -400,16 +400,42 @@ class List(Iterable) {
     }
 }
 
-class NaiveDict {
+class Dict(Iterable) {
+    fn __getItem__(key) {
+        return get(key);
+    }
+
+    fn __setItem(key, value) {
+        put(key, value);
+    }
+
+    fn put(key, value) {
+        throw new NotImplementedError();
+    }
+
+    fn get(key) {
+        throw new NotImplementedError();
+    }
+
+    fn size() {
+        throw new NotImplementedError();
+    }
+}
+
+class NaiveDict(Dict) {
 
     const keys;
     const values;
     const length;
 
-    fn __init__(keys, values) {
+    fn __init__(keys: Array?, values: Array?) {
         this.keys = keys;
         this.values = values;
         this.length = keys.length;
+    }
+
+    fn __iter__() {
+        return new ArrayIterator(keys);
     }
 
     fn get(key) {
@@ -419,6 +445,13 @@ class NaiveDict {
             }
         }
         return null;
+    }
+
+    fn put(key, value) {
+    }
+
+    fn size() {
+        return length;
     }
 }
 

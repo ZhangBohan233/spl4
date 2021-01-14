@@ -218,6 +218,21 @@ public class Utilities {
         stackTraceFtn.call(EvaluatedArguments.of(errPtr), globalEnvironment, lineFile);
     }
 
+    public static SplElement unwrap(SplElement ele, Environment env, LineFilePos lineFilePos) {
+        if (ele instanceof Reference) {
+            SplObject obj = env.getMemory().get((Reference) ele);
+            if (obj instanceof Instance) {
+                Instance ins = (Instance) obj;
+                Reference wrapperClassRef = (Reference) env.get(Constants.WRAPPER, lineFilePos);
+                Reference childClassRef = ins.getClazzPtr();
+                if (SplClass.isSuperclassOf(wrapperClassRef, childClassRef, env.getMemory())) {
+                    return ins.getEnv().get(Constants.WRAPPER_ATTR, lineFilePos);
+                }
+            }
+        }
+        return ele;
+    }
+
     public static Reference primitiveToWrapper(SplElement prim, Environment env, LineFilePos lineFile) {
         String wrapperName = Constants.WRAPPERS.get(prim.type());
         return Instance.createInstanceWithInitCall(

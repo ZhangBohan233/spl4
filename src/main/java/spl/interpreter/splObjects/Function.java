@@ -49,7 +49,6 @@ public class Function extends UserFunction {
 
     public void setContract(Environment env, Line paramContractLine, Node rtnContractNode) {
         if (paramContractLine.size() != params.length) {
-//            throw new NativeTypeError("Contracts must match the length of parameters. ", rtnContractNode.getLineFile());
             SplInvokes.throwException(
                     env,
                     Constants.TYPE_ERROR,
@@ -71,13 +70,13 @@ public class Function extends UserFunction {
                     rtnContractNode.getLineFile());
         }
         rtnContract = rtnContractNode;
-//        rtnContract = (Pointer) rtnContractNode.evaluate(env);
 
         hasContract = true;
     }
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
         EvaluatedArguments evaluatedArgs = arguments.evalArgs(callingEnv);
+        if (callingEnv.hasException()) return Undefined.ERROR;
 
         return call(evaluatedArgs, callingEnv, arguments.lineFile);
     }
@@ -198,12 +197,13 @@ public class Function extends UserFunction {
 
     protected SplElement callEssential(EvaluatedArguments evaluatedArgs, Environment callingEnv,
                                        FunctionEnvironment scope, LineFilePos argLineFile) {
-        checkValidArgCount(evaluatedArgs.positionalArgs.size(), definedName, callingEnv, argLineFile);
+        checkValidArgCount(evaluatedArgs.positionalArgs.size() + evaluatedArgs.keywordArgs.size(),
+                definedName, callingEnv, argLineFile);
         if (callingEnv.hasException()) return Undefined.ERROR;
 
         checkParamContracts(evaluatedArgs, callingEnv, argLineFile);
 
-        setArgs(evaluatedArgs, scope);
+        setArgs(evaluatedArgs, scope, callingEnv, argLineFile);
 
         scope.getMemory().pushStack(scope, argLineFile);
         body.evaluate(scope);

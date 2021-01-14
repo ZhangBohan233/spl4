@@ -15,7 +15,9 @@ public class Constants {
     public static final String ITERABLE_CLASS = "Iterable";
     public static final String ARRAY_ITERATOR_CLASS = "ArrayIterator";
     public static final String LIST_CLASS = "List";
+    public static final String DICT_CLASS = "Dict";
     public static final String NAIVE_DICT = "NaiveDict";
+    public static final String WRAPPER = "Wrapper";
     public static final String THIS = "this";
     public static final String SUPER = "super";
     public static final String CLASS_NAME = "__name__";

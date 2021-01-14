@@ -22,4 +22,12 @@ public class EvaluatedArguments {
     public void insertThis(Reference thisPtr) {
         positionalArgs.add(0, thisPtr);
     }
+
+    @Override
+    public String toString() {
+        return "EvaluatedArguments{" +
+                "positionalArgs=" + positionalArgs +
+                ", keywordArgs=" + keywordArgs +
+                '}';
+    }
 }

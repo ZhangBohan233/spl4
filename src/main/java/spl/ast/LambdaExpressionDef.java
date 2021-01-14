@@ -2,6 +2,7 @@ package spl.ast;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.Function;
 import spl.interpreter.splObjects.LambdaExpression;
 import spl.interpreter.splObjects.SplCallable;
@@ -33,6 +34,8 @@ public class LambdaExpressionDef extends Expression {
     @Override
     protected SplElement internalEval(Environment env) {
         Function.Parameter[] params = SplCallable.evalParams(parameters, env);
+        if (env.hasException()) return Undefined.ERROR;
+
         LambdaExpression lambdaExpression = new LambdaExpression(body, params, env, getLineFile());
 
         return env.getMemory().allocateFunction(lambdaExpression, env);

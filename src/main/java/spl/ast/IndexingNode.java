@@ -27,17 +27,6 @@ public class IndexingNode extends Expression {
         this.args = args;
     }
 
-    public static int getIndex(List<Node> arguments, Environment env) {
-        if (arguments.size() != 1) {
-            return -2;
-        }
-        SplElement index = arguments.get(0).evaluate(env);
-        if (!index.isIntLike()) {
-            return -1;
-        }
-        return (int) index.intValue();
-    }
-
     public static IndexingNode reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
         Expression callObj = Reconstructor.reconstruct(in);
         Line args = Reconstructor.reconstruct(in);
@@ -54,40 +43,55 @@ public class IndexingNode extends Expression {
 
     @Override
     protected SplElement internalEval(Environment env) {
-
         return crossEnvEval(env, env);
     }
 
     public SplElement crossEnvEval(Environment definitionEnv, Environment callEnv) {
         SplElement callRes = getCallObj().evaluate(definitionEnv);
         List<Node> arguments = getArgs().getChildren();
-        int index = getIndex(arguments, callEnv);
-        if (index < 0) {
-            if (index == -2)
+
+        if (arguments.size() != 1)
+            return SplInvokes.throwExceptionWithError(
+                    callEnv,
+                    Constants.TYPE_ERROR,
+                    "Index can only have one part.",
+                    lineFile);
+
+        SplElement indexEle = arguments.get(0).evaluate(callEnv);
+        if (indexEle.isIntLike()) {
+            int index = (int) indexEle.intValue();
+
+            Reference objPtr = (Reference) callRes;
+            SplObject obj = callEnv.getMemory().get(objPtr);
+
+            if (obj instanceof SplArray) {
+                return SplArray.getItemAtIndex(objPtr, index, callEnv, lineFile);
+            } else if (obj instanceof Instance) {
+                Instance ins = (Instance) obj;
+                SplMethod getItemFn = (SplMethod)
+                        callEnv.getMemory().get((Reference) ins.getEnv().get(Constants.GET_ITEM_FN, lineFile));
+                return getItemFn.call(EvaluatedArguments.of(objPtr, new Int(index)), callEnv, lineFile);
+            } else {
                 return SplInvokes.throwExceptionWithError(
                         callEnv,
                         Constants.TYPE_ERROR,
-                        "Index can only have one part.",
+                        "Right side of indexing must be array or instance.",
                         lineFile);
-            else
-                return SplInvokes.throwExceptionWithError(
-                        callEnv,
-                        Constants.TYPE_ERROR,
-                        "Index must be int.",
-                        lineFile);
+            }
+        } else {
+            return nonIntIndex(callRes, indexEle, callEnv);
         }
+    }
 
+    private SplElement nonIntIndex(SplElement callRes, SplElement indexEle, Environment callEnv) {
         Reference objPtr = (Reference) callRes;
-
         SplObject obj = callEnv.getMemory().get(objPtr);
 
-        if (obj instanceof SplArray) {
-            return SplArray.getItemAtIndex(objPtr, index, callEnv, lineFile);
-        } else if (obj instanceof Instance) {
+        if (obj instanceof Instance) {
             Instance ins = (Instance) obj;
             SplMethod getItemFn = (SplMethod)
                     callEnv.getMemory().get((Reference) ins.getEnv().get(Constants.GET_ITEM_FN, lineFile));
-            return getItemFn.call(EvaluatedArguments.of(objPtr, new Int(index)), callEnv, lineFile);
+            return getItemFn.call(EvaluatedArguments.of(objPtr, indexEle), callEnv, lineFile);
         } else {
             return SplInvokes.throwExceptionWithError(
                     callEnv,

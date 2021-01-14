@@ -1,3 +1,10 @@
+===== Version 4052 =====
+2021/01/15
+
+* Implemented **kwargs
+* Added supported of indexing with non-int types
+* Added more parameter and argument checks
+
 ===== Version 4051 =====
 2021/01/14
 
