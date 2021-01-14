@@ -1,6 +1,11 @@
 package spl.ast;
 
+import spl.util.BytesOut;
 import spl.util.LineFilePos;
+import spl.util.Utilities;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 public abstract class BinaryExpr extends Expression implements Buildable {
     protected Expression left;
@@ -45,5 +50,12 @@ public abstract class BinaryExpr extends Expression implements Buildable {
     @Override
     public String reprString() {
         return operator;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        out.writeString(operator);
+        left.save(out);
+        right.save(out);
     }
 }

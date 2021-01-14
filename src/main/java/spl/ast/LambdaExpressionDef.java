@@ -5,7 +5,13 @@ import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.Function;
 import spl.interpreter.splObjects.LambdaExpression;
 import spl.interpreter.splObjects.SplCallable;
+import spl.util.BytesIn;
+import spl.util.BytesOut;
 import spl.util.LineFilePos;
+import spl.util.Reconstructor;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 public class LambdaExpressionDef extends Expression {
 
@@ -30,6 +36,17 @@ public class LambdaExpressionDef extends Expression {
         LambdaExpression lambdaExpression = new LambdaExpression(body, params, env, getLineFile());
 
         return env.getMemory().allocateFunction(lambdaExpression, env);
+    }
 
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        parameters.save(out);
+        body.save(out);
+    }
+
+    public static LambdaExpressionDef reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
+        Line params = Reconstructor.reconstruct(in);
+        Expression body = Reconstructor.reconstruct(in);
+        return new LambdaExpressionDef(params, body, lineFilePos);
     }
 }

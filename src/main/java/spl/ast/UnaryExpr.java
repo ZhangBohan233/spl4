@@ -5,8 +5,8 @@ import spl.util.LineFilePos;
 public abstract class UnaryExpr extends Expression implements UnaryBuildable {
 
     protected final String operator;
-    protected Expression value;
     private final boolean atLeft;
+    protected Expression value;
 
     public UnaryExpr(String operator, boolean operatorAtLeft, LineFilePos lineFile) {
         super(lineFile);
@@ -46,13 +46,13 @@ public abstract class UnaryExpr extends Expression implements UnaryBuildable {
         return operator;
     }
 
-    @Override
-    public void setValue(Node value) {
-        this.value = (Expression) value;
+    public Expression getValue() {
+        return value;
     }
 
-    public Node getValue() {
-        return value;
+    @Override
+    public void setValue(Expression value) {
+        this.value = value;
     }
 
     @Override

@@ -6,7 +6,14 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplCallable;
+import spl.util.BytesIn;
+import spl.util.BytesOut;
 import spl.util.LineFilePos;
+import spl.util.Reconstructor;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class FuncDefinition extends Expression {
 
@@ -64,5 +71,19 @@ public class FuncDefinition extends Expression {
 
     public NameNode getName() {
         return name;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        name.save(out);
+        parameters.save(out);
+        body.save(out);
+    }
+
+    public static FuncDefinition reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        NameNode name = Reconstructor.reconstruct(is);
+        Line params = Reconstructor.reconstruct(is);
+        BlockStmt body = Reconstructor.reconstruct(is);
+        return new FuncDefinition(name, params, body, lineFilePos);
     }
 }

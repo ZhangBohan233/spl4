@@ -9,19 +9,21 @@ import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.SplCallable;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplObject;
-import spl.util.Constants;
-import spl.util.LineFilePos;
+import spl.util.*;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 public class FuncCall extends Expression {
 
-    Node callObj;
+    Expression callObj;
     Arguments arguments;
 
     public FuncCall(LineFilePos lineFile) {
         super(lineFile);
     }
 
-    public FuncCall(Node callObj, Arguments arguments, LineFilePos lineFile) {
+    public FuncCall(Expression callObj, Arguments arguments, LineFilePos lineFile) {
         super(lineFile);
 
         this.callObj = callObj;
@@ -72,11 +74,23 @@ public class FuncCall extends Expression {
         this.arguments = arguments;
     }
 
-    public Node getCallObj() {
+    public Expression getCallObj() {
         return callObj;
     }
 
-    public void setCallObj(Node callObj) {
+    public void setCallObj(Expression callObj) {
         this.callObj = callObj;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        callObj.save(out);
+        arguments.save(out);
+    }
+
+    public static FuncCall reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
+        Expression callObj = Reconstructor.reconstruct(in);
+        Arguments arguments = Reconstructor.reconstruct(in);
+        return new FuncCall(callObj, arguments, lineFilePos);
     }
 }

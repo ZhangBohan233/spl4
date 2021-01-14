@@ -5,8 +5,8 @@ import spl.util.LineFilePos;
 public abstract class UnaryStmt extends Statement implements UnaryBuildable {
 
     protected final String operator;
-    protected Node value;
     private final boolean atLeft;
+    protected Expression value;
 
     public UnaryStmt(String operator, boolean operatorAtLeft, LineFilePos lineFile) {
         super(lineFile);
@@ -32,13 +32,13 @@ public abstract class UnaryStmt extends Statement implements UnaryBuildable {
         return atLeft;
     }
 
-    @Override
-    public void setValue(Node value) {
-        this.value = value;
+    public Expression getValue() {
+        return value;
     }
 
-    public Node getValue() {
-        return value;
+    @Override
+    public void setValue(Expression value) {
+        this.value = value;
     }
 
     @Override

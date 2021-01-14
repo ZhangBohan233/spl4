@@ -8,9 +8,7 @@ import spl.util.LineFilePos;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 public class Parser {
 
@@ -191,10 +189,10 @@ public class Parser {
                                 builder.finishPart();
                                 break;
                             case "true":
-                                builder.addNode(new BoolStmt(true, lineFile));
+                                builder.addNode(new BoolLiteral(true, lineFile));
                                 break;
                             case "false":
-                                builder.addNode(new BoolStmt(false, lineFile));
+                                builder.addNode(new BoolLiteral(false, lineFile));
                                 break;
                             case "null":
                                 builder.addNode(new NullExpr(lineFile));
@@ -300,7 +298,7 @@ public class Parser {
                                 bodyBlock = parseBlock(bodyEle);
                                 ClassStmt classStmt = new ClassStmt(
                                         nameToken.getIdentifier(),
-                                        extensions,
+                                        extensions == null ? null : extensions.getChildren(),
                                         bodyBlock,
                                         lineFile);
                                 builder.addNode(classStmt);
@@ -326,7 +324,7 @@ public class Parser {
                                 builder.addNode(new NewExpr(lineFile));
                                 break;
                             case "throw":
-                                builder.addNode(new ThrowStmt(lineFile));
+                                builder.addNode(new ThrowExpr(lineFile));
                                 break;
                             case "if":
                                 conditionList = new BracketList(null, lineFile);
@@ -549,7 +547,7 @@ public class Parser {
                     // is a call to an identifier
                     Line argLine = parseOneLineBlock(bracketList);
                     Node callObj = builder.removeLast();
-                    FuncCall call = new FuncCall(callObj,
+                    FuncCall call = new FuncCall((Expression) callObj,
                             new Arguments(argLine, lineFile),
                             lineFile);
                     builder.addNode(call);
@@ -557,7 +555,7 @@ public class Parser {
                 } else if (probCallObj instanceof BracketList || probCallObj instanceof SqrBracketList) {
                     Line argLine = parseOneLineBlock(bracketList);
                     Node callObj = builder.removeLast();
-                    FuncCall call = new FuncCall(callObj,
+                    FuncCall call = new FuncCall((Expression) callObj,
                             new Arguments(argLine, lineFile),
                             lineFile);
                     builder.addNode(call);
@@ -575,13 +573,13 @@ public class Parser {
                     // is an indexing to an identifier
                     Line argLine = parseSqrBracket(bracketList);
                     Node callObj = builder.removeLast();
-                    IndexingNode indexingNode = new IndexingNode(callObj, argLine, lineFile);
+                    IndexingNode indexingNode = new IndexingNode((Expression) callObj, argLine, lineFile);
                     builder.addNode(indexingNode);
                     return index;
                 } else if (probCallObj instanceof BracketList || probCallObj instanceof SqrBracketList) {
                     Line argLine = parseSqrBracket(bracketList);
                     Node callObj = builder.removeLast();
-                    IndexingNode indexingNode = new IndexingNode(callObj, argLine, bracketList.lineFile);
+                    IndexingNode indexingNode = new IndexingNode((Expression) callObj, argLine, bracketList.lineFile);
                     builder.addNode(indexingNode);
                     return index;
                 }

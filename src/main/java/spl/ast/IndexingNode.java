@@ -10,17 +10,17 @@ import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplArray;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplObject;
-import spl.util.Constants;
-import spl.util.LineFilePos;
+import spl.util.*;
 
+import java.io.IOException;
 import java.util.List;
 
 public class IndexingNode extends Expression {
 
-    private final Node callObj;
+    private final Expression callObj;
     private final Line args;
 
-    public IndexingNode(Node callObj, Line args, LineFilePos lineFile) {
+    public IndexingNode(Expression callObj, Line args, LineFilePos lineFile) {
         super(lineFile);
 
         this.callObj = callObj;
@@ -38,11 +38,17 @@ public class IndexingNode extends Expression {
         return (int) index.intValue();
     }
 
+    public static IndexingNode reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
+        Expression callObj = Reconstructor.reconstruct(in);
+        Line args = Reconstructor.reconstruct(in);
+        return new IndexingNode(callObj, args, lineFilePos);
+    }
+
     public Line getArgs() {
         return args;
     }
 
-    public Node getCallObj() {
+    public Expression getCallObj() {
         return callObj;
     }
 
@@ -94,5 +100,11 @@ public class IndexingNode extends Expression {
     @Override
     public String toString() {
         return callObj + " " + args;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        callObj.save(out);
+        args.save(out);
     }
 }

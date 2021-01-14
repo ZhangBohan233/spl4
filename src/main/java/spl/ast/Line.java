@@ -2,8 +2,11 @@ package spl.ast;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFilePos;
+import spl.util.*;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,5 +65,19 @@ public class Line extends Expression {
     @Override
     public String reprString() {
         return "Line of " + children.size() + " Elements";
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        out.writeList(children);
+    }
+
+    public static Line reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        Line line = new Line(lineFilePos);
+        List<Node> list = is.readList();
+        for (Node node : list) {
+            line.add(node);
+        }
+        return line;
     }
 }

@@ -272,7 +272,7 @@ public class AstBuilder {
                     } else {
                         value = list.remove(index - 1);
                     }
-                    ue.setValue(value);
+                    ue.setValue((Expression) value);
                 } else if (expr instanceof BinaryExpr) {
                     Node right = list.remove(index + 1);
                     Node left = list.remove(index - 1);

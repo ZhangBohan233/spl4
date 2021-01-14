@@ -7,8 +7,9 @@ import spl.interpreter.primitives.Int;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.*;
-import spl.util.Constants;
-import spl.util.LineFilePos;
+import spl.util.*;
+
+import java.io.InputStream;
 
 public class Assignment extends BinaryExpr {
     public Assignment(LineFilePos lineFile) {
@@ -90,5 +91,16 @@ public class Assignment extends BinaryExpr {
 
         assignment(left, rightRes, env, getLineFile());
         return rightRes;
+    }
+
+    public static Assignment reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        String op = is.readString();
+        Expression left = Reconstructor.reconstruct(is);
+        Expression right = Reconstructor.reconstruct(is);
+
+        Assignment ass = new Assignment(lineFilePos);
+        ass.setLeft(left);
+        ass.setRight(right);
+        return ass;
     }
 }

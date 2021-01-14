@@ -1,22 +1,25 @@
 package spl.ast;
 
 import spl.interpreter.EvaluatedArguments;
-import spl.interpreter.Memory;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Char;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplArray;
+import spl.util.BytesIn;
+import spl.util.BytesOut;
 import spl.util.Constants;
 import spl.util.LineFilePos;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 public class StringLiteral extends LiteralNode {
 
-    private Reference litRef = null;
     private final char[] charArray;
+    private Reference litRef = null;
 
     public StringLiteral(char[] charArray, LineFilePos lineFile) {
         super(lineFile);
@@ -24,22 +27,8 @@ public class StringLiteral extends LiteralNode {
         this.charArray = charArray;
     }
 
-    public int length() {
-        return charArray.length;
-    }
-
-    Reference evalRef(Environment env, LineFilePos lineFilePos) {
-        if (litRef == null) {
-            litRef = createString(charArray, env, lineFilePos);
-            env.getMemory().addPermanentPtr(litRef);
-        }
-        return litRef;
-    }
-
-    @Override
-    protected SplElement internalEval(Environment env) {
-        return evalRef(env, lineFile);
-//        return createString(charArray, env, getLineFile());
+    public char[] getCharArray() {
+        return charArray;
     }
 
     public static Reference createString(char[] charArray, Environment env, LineFilePos lineFile) {
@@ -76,6 +65,28 @@ public class StringLiteral extends LiteralNode {
                 EvaluatedArguments.of(arrPtr),
                 env,
                 lineFile).pointer;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        throw new NativeError("Cannot save a string literal directly");
+    }
+
+    public int length() {
+        return charArray.length;
+    }
+
+    Reference evalRef(Environment env, LineFilePos lineFilePos) {
+        if (litRef == null) {
+            litRef = createString(charArray, env, lineFilePos);
+            env.getMemory().addPermanentPtr(litRef);
+        }
+        return litRef;
+    }
+
+    @Override
+    protected SplElement internalEval(Environment env) {
+        return evalRef(env, lineFile);
     }
 
     @Override

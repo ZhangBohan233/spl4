@@ -50,7 +50,7 @@ public class SplInvokes extends NativeObject {
                 lineFile);
         NewExpr newExpr = new NewExpr(lineFile);
         newExpr.setValue(funcCall);
-        ThrowStmt throwStmt = new ThrowStmt(lineFile);
+        ThrowExpr throwStmt = new ThrowExpr(lineFile);
         throwStmt.setValue(newExpr);
 
         throwStmt.evaluate(env);

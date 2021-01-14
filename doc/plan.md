@@ -34,6 +34,6 @@
 * ~~Type wrapper of primitive and abstract object~~ **_DONE_**
 * ~~Type of array element~~ **_DONE_**
 * Add string as the right side operand
-* Compiled spl file (*.spc)
+* ~~Compiled spl file (*.spc)~~ **~~DONE~~**
 * Store docstring in spl object
 * Gc suite for class declaration

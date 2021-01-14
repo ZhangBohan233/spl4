@@ -54,6 +54,8 @@ public class SplInterpreter {
     private static PrintStream err = System.err;
     private GlobalEnvironment globalEnvironment;
 
+    private long vmStartBegin, parseBegin, cacheBegin;
+
     public static void setOut(PrintStream out) {
         SplInterpreter.out = out;
     }
@@ -81,10 +83,8 @@ public class SplInterpreter {
                 LineFilePos.LF_INTERPRETER);
     }
 
-    static void importModules(GlobalEnvironment ge, LinkedHashMap<String, CollectiveElement> imported,
-                              Map<String, StringLiteral> strLitBundleMap) throws IOException {
-        LinkedHashMap<String, ParseResult> blocks = parseImportedModules(imported, strLitBundleMap);
-        for (Map.Entry<String, ParseResult> entry : blocks.entrySet()) {
+    static void importModules(GlobalEnvironment ge, LinkedHashMap<String, ParseResult> parsedModules) {
+        for (Map.Entry<String, ParseResult> entry : parsedModules.entrySet()) {
             ModuleEnvironment moduleScope = new ModuleEnvironment(entry.getKey(), ge);
             entry.getValue().getRoot().evaluate(moduleScope);
             SplModule module = new SplModule(entry.getKey(), moduleScope);
@@ -337,40 +337,79 @@ public class SplInterpreter {
         return EvaluatedArguments.of(argPtr);
     }
 
+    private ParseResult parseSrcFile(ArgumentParser argumentParser) throws Exception {
+        FileTokenizer tokenizer = new FileTokenizer(
+                argumentParser.getMainSrcFile(),
+                argumentParser.importLang() && globalEnvironment == null  // no preset global env
+        );
+        TokenizeResult rootToken = tokenizer.tokenize();
+        TextProcessResult processed = new TextProcessor(rootToken,
+                argumentParser.importLang()).process();  // keep this to let other files import lang
+        if (argumentParser.isPrintTokens()) {
+            out.println(processed.rootList);
+        }
+        Parser parser = new Parser(processed);
+        ParseResult parseResult = parser.parse();
+
+        LinkedHashMap<String, ParseResult> parsedModules = parseImportedModules(
+                processed.importedPaths,
+                parser.getStringLiterals()
+        );
+
+        cacheBegin = System.currentTimeMillis();
+        if (argumentParser.isSaveCache()) {
+            new SplCacheSaver(
+                    argumentParser.getMainSrcFile().getAbsolutePath(),
+                    parseResult,
+                    parsedModules
+            ).save();
+        }
+
+        initMemoryNoImport(argumentParser);
+        importModules(globalEnvironment, parsedModules);
+
+        return parseResult;
+    }
+
+    private ParseResult readCacheFile(ArgumentParser argumentParser) throws Exception {
+        CacheReconstructor cr = new CacheReconstructor(argumentParser.getMainSrcFile().getAbsolutePath());
+        ParseResult root = cr.reconstruct();
+
+        cacheBegin = System.currentTimeMillis();
+        initMemoryNoImport(argumentParser);
+        importModules(globalEnvironment, cr.getParsedModules());
+
+        return root;
+    }
+
+    private void initMemoryNoImport(ArgumentParser argumentParser) {
+        vmStartBegin = System.currentTimeMillis();
+        Memory memory = new Memory();
+        if (argumentParser.isGcInfo()) memory.debugs.setPrintGcRes(true);
+        if (argumentParser.isGcTrigger()) memory.debugs.setPrintGcTrigger(true);
+        memory.setCheckContract(argumentParser.isCheckContract());
+        if (globalEnvironment == null) {
+            globalEnvironment = new GlobalEnvironment(memory);
+            initNatives(globalEnvironment);
+        }
+    }
+
     public void run(String[] args) throws Exception {
         ArgumentParser argumentParser = new ArgumentParser(args);
         if (argumentParser.isAllValid()) {
-            long parseBegin = System.currentTimeMillis();
-            FileTokenizer tokenizer = new FileTokenizer(
-                    argumentParser.getMainSrcFile(),
-                    argumentParser.importLang() && globalEnvironment == null  // no preset global env
-            );
-            TokenizeResult rootToken = tokenizer.tokenize();
-            TextProcessResult processed = new TextProcessor(rootToken,
-                    argumentParser.importLang()).process();  // keep this to let other files import lang
-            if (argumentParser.isPrintTokens()) {
-                out.println(processed.rootList);
-            }
-            Parser parser = new Parser(processed);
-            ParseResult parseResult = parser.parse();
+            parseBegin = System.currentTimeMillis();
+            String srcName = argumentParser.getMainSrcFile().getName();
 
-            long vmStartBegin = System.currentTimeMillis();
-            Memory memory = new Memory();
-            if (globalEnvironment == null) {
-                globalEnvironment = new GlobalEnvironment(memory);
-                initNatives(globalEnvironment);
-            }
-            importModules(globalEnvironment, processed.importedPaths, parser.getStringLiterals());
+            ParseResult parseResult;
+            if (srcName.endsWith(".sp")) parseResult = parseSrcFile(argumentParser);
+            else if (srcName.endsWith(".spc")) parseResult = readCacheFile(argumentParser);
+            else throw new IllegalArgumentException();
 
             if (argumentParser.isPrintAst()) {
                 out.println("===== Ast =====");
                 out.println(parseResult.getRoot());
                 out.println("===== End of spl.ast =====");
             }
-
-            if (argumentParser.isGcInfo()) memory.debugs.setPrintGcRes(true);
-            if (argumentParser.isGcTrigger()) memory.debugs.setPrintGcTrigger(true);
-            memory.setCheckContract(argumentParser.isCheckContract());
 
             long runBegin = System.currentTimeMillis();
 
@@ -386,12 +425,13 @@ public class SplInterpreter {
             long processEnd = System.currentTimeMillis();
 
             if (argumentParser.isPrintMem()) {
-                memory.printMemory();
+                globalEnvironment.getMemory().printMemory();
             }
             if (argumentParser.isTimer()) {
                 out.printf(
-                        "Parse time: %d ms, VM startup time: %d ms, running time: %d ms.%n",
-                        vmStartBegin - parseBegin,
+                        "Parse time: %d ms, cache time: %d ms, VM startup time: %d ms, running time: %d ms.%n",
+                        cacheBegin - parseBegin,
+                        vmStartBegin - cacheBegin,
                         runBegin - vmStartBegin,
                         processEnd - runBegin
                 );

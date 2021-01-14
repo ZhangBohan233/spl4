@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -60,8 +61,12 @@ public class Console {
         Memory memory = new Memory();
         globalEnvironment = new GlobalEnvironment(memory);
 
+        LinkedHashMap<String, ParseResult> parsedModules = SplInterpreter.parseImportedModules(
+                tpr.importedPaths, strLitBundleMap
+        );
+
         SplInterpreter.initNatives(globalEnvironment);
-        SplInterpreter.importModules(globalEnvironment, tpr.importedPaths, strLitBundleMap);
+        SplInterpreter.importModules(globalEnvironment, parsedModules);
 
         SplInvokes invokes =
                 (SplInvokes) memory.get((Reference) globalEnvironment.get(Constants.INVOKES, LineFilePos.LFP_CONSOLE));

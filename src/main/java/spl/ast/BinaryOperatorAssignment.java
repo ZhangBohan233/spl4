@@ -2,7 +2,11 @@ package spl.ast;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
-import spl.util.LineFilePos;
+import spl.util.*;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class BinaryOperatorAssignment extends BinaryExpr {
 
@@ -27,4 +31,22 @@ public class BinaryOperatorAssignment extends BinaryExpr {
         return assignment.evaluate(env);
     }
 
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        super.internalSave(out);
+
+        out.write(Utilities.intToBytes(type));
+    }
+
+    public static BinaryOperatorAssignment reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        String op = is.readString();
+        Expression left = Reconstructor.reconstruct(is);
+        Expression right = Reconstructor.reconstruct(is);
+
+        int type = is.readInt();
+        BinaryOperatorAssignment boa = new BinaryOperatorAssignment(op, type, lineFilePos);
+        boa.setLeft(left);
+        boa.setRight(right);
+        return boa;
+    }
 }

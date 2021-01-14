@@ -1,3 +1,8 @@
+===== Version 4050 =====
+2021/01/14
+
+* Added spl cache compiler, can store compiled spl code as (*.spc)
+
 ===== Version 4049 =====
 2021/01/14
 

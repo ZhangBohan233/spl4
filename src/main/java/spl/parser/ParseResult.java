@@ -6,9 +6,9 @@ import java.util.Map;
 
 public class ParseResult {
 
-    private BlockStmt root;
+    private final BlockStmt root;
 
-    ParseResult(BlockStmt root) {
+    public ParseResult(BlockStmt root) {
         this.root = root;
     }
 

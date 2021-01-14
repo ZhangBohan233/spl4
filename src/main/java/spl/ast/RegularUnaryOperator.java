@@ -6,9 +6,9 @@ import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Int;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.SplFloat;
-import spl.lexer.SyntaxError;
-import spl.util.Constants;
-import spl.util.LineFilePos;
+import spl.util.*;
+
+import java.io.IOException;
 
 public class RegularUnaryOperator extends UnaryExpr {
 
@@ -20,6 +20,22 @@ public class RegularUnaryOperator extends UnaryExpr {
         super(op, true, lineFile);
 
         this.type = type;
+    }
+
+    public static RegularUnaryOperator reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
+        String op = in.readString();  // op
+        int type = in.readInt();
+        Expression value = Reconstructor.reconstruct(in);
+        var ruo = new RegularUnaryOperator(op, type, lineFilePos);
+        ruo.setValue(value);
+        return ruo;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        out.writeString(operator);
+        out.writeInt(type);
+        value.save(out);
     }
 
     @Override

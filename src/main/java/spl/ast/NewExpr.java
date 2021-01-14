@@ -11,13 +11,26 @@ import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplArray;
 import spl.interpreter.splObjects.SplModule;
 import spl.parser.ParseError;
-import spl.util.Constants;
-import spl.util.LineFilePos;
+import spl.util.*;
+
+import java.io.IOException;
 
 public class NewExpr extends UnaryExpr {
 
     public NewExpr(LineFilePos lineFile) {
         super("new", true, lineFile);
+    }
+
+    public static NewExpr reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
+        Expression value = Reconstructor.reconstruct(in);
+        var se = new NewExpr(lineFilePos);
+        se.setValue(value);
+        return se;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        value.save(out);
     }
 
     private static SplElement directInitClass(Node node, Environment classDefEnv, Environment callEnv,

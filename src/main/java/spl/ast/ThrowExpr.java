@@ -5,22 +5,43 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.Instance;
-import spl.util.Constants;
-import spl.util.LineFilePos;
-import spl.util.Utilities;
+import spl.util.*;
 
-public class ThrowStmt extends UnaryExpr {
+import java.io.IOException;
 
-    public ThrowStmt(LineFilePos lineFile) {
+/**
+ * In spl, throw statement is an expression.
+ *
+ * This is useful in the case like
+ * a = switch x {
+ *     case something -> throw new Exception();
+ * }
+ */
+public class ThrowExpr extends UnaryExpr {
+
+    public ThrowExpr(LineFilePos lineFile) {
         super("throw", true, lineFile);
+    }
+
+    public static ThrowExpr reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        Expression value = Reconstructor.reconstruct(is);
+        var rs = new ThrowExpr(lineFilePos);
+        rs.setValue(value);
+        return rs;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        value.save(out);
     }
 
     @Override
     protected SplElement internalEval(Environment env) {
         SplElement content = value.evaluate(env);
         throwException((Reference) content, env, lineFile);
-        return null;
+        return Undefined.ERROR;
     }
 
     static void throwException(Reference exceptionClassPtr, Environment env, LineFilePos lineFile) {

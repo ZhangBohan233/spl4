@@ -3,7 +3,12 @@ package spl.ast;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.splErrors.NativeError;
+import spl.util.BytesIn;
+import spl.util.BytesOut;
 import spl.util.LineFilePos;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 public class ImportStmt extends Statement {
 
@@ -37,5 +42,17 @@ public class ImportStmt extends Statement {
 
     public String getPath() {
         return path;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        out.writeString(path);
+        out.writeString(importName);
+    }
+
+    public static ImportStmt reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
+        String path = in.readString();
+        String name = in.readString();
+        return new ImportStmt(path, name, lineFilePos);
     }
 }

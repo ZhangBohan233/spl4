@@ -196,7 +196,10 @@ public class IdleController implements Initializable {
     @FXML
     void openFileAction() throws IOException {
         FileChooser chooser = new FileChooser();
-        chooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("SPL source file", "*.sp"));
+        chooser.setSelectedExtensionFilter(
+                new FileChooser.ExtensionFilter("SPL source file", "*.sp"));
+        chooser.setSelectedExtensionFilter(
+                new FileChooser.ExtensionFilter("Compiled spl cache", "*.spc"));
 
         File defaultSpDir = new File(System.getProperty("user.dir") + File.separator + "sp");
         if (defaultSpDir.exists()) {

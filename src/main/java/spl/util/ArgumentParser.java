@@ -12,6 +12,7 @@ public class ArgumentParser {
     private boolean timer;
     private boolean gcInfo;
     private boolean gcTrigger;
+    private boolean saveCache;
     private boolean checkContract = true;
     private String msg;
     private String[] splArgs;
@@ -38,6 +39,7 @@ public class ArgumentParser {
                         case "-pm", "--printMem" -> printMem = true;
                         case "-t", "--timer" -> timer = true;
                         case "-nc", "--noContract" -> checkContract = false;
+                        case "-c", "--cache" -> saveCache = true;
                         default -> System.out.println("Unknown flag '" + s + "'");
                     }
                 } else {
@@ -102,6 +104,10 @@ public class ArgumentParser {
 
     public boolean isCheckContract() {
         return checkContract;
+    }
+
+    public boolean isSaveCache() {
+        return saveCache;
     }
 
     public String getMsg() {

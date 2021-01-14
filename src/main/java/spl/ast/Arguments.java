@@ -6,9 +6,12 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.splErrors.NativeTypeError;
 import spl.interpreter.splObjects.*;
 import spl.lexer.SyntaxError;
-import spl.util.Constants;
-import spl.util.LineFilePos;
-import spl.util.Utilities;
+import spl.util.*;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class Arguments extends NonEvaluate {
 
@@ -83,7 +86,17 @@ public class Arguments extends NonEvaluate {
     }
 
     @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        line.save(out);
+    }
+
+    @Override
     public String toString() {
         return "Arg" + line;
+    }
+
+    public static Arguments reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        Line line = Reconstructor.reconstruct(is);
+        return new Arguments(line, lineFilePos);
     }
 }

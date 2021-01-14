@@ -9,8 +9,12 @@ import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.SplCallable;
+import spl.util.BytesIn;
+import spl.util.BytesOut;
 import spl.util.LineFilePos;
+import spl.util.Reconstructor;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +28,29 @@ public class TryStmt extends Statement {
         super(lineFile);
 
         this.body = body;
+    }
+
+    public static TryStmt reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        List<CatchStmt> catchStmts = is.readList();
+        BlockStmt body = Reconstructor.reconstruct(is);
+        boolean hasFinally = is.readBoolean();
+        BlockStmt finallyBlock = null;
+        if (hasFinally) finallyBlock = Reconstructor.reconstruct(is);
+
+        var ts = new TryStmt(body, lineFilePos);
+        for (CatchStmt cs : catchStmts) {
+            ts.addCatch(cs);
+        }
+        ts.setFinallyBlock(finallyBlock);
+        return ts;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        out.writeList(catchStmts);
+        body.save(out);
+        out.writeBoolean(finallyBlock != null);
+        if (finallyBlock != null) finallyBlock.save(out);
     }
 
     public void addCatch(CatchStmt catchStmt) {
@@ -66,7 +93,7 @@ public class TryStmt extends Statement {
 
                 if (!caught)
                     // Exception not caught, throw it to outer
-                    ThrowStmt.throwException(exceptionPtr, env, lineFile);
+                    ThrowExpr.throwException(exceptionPtr, env, lineFile);
             }
 
             if (finallyBlock != null) {
@@ -156,5 +183,4 @@ public class TryStmt extends Statement {
             this.userError = userError;
         }
     }
-
 }

@@ -8,10 +8,9 @@ import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplObject;
 import spl.lexer.SyntaxError;
-import spl.util.Constants;
-import spl.util.LineFilePos;
-import spl.util.Utilities;
+import spl.util.*;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -327,4 +326,20 @@ public class BinaryOperator extends BinaryExpr {
         throw new SyntaxError("Unexpected error. ", lineFile);
     }
 
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        super.internalSave(out);
+        out.writeInt(type);
+    }
+
+    public static BinaryOperator reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        String op = is.readString();
+        Expression left = Reconstructor.reconstruct(is);
+        Expression right = Reconstructor.reconstruct(is);
+        int type = is.readInt();
+        BinaryOperator be = new BinaryOperator(op, type, lineFilePos);
+        be.setLeft(left);
+        be.setRight(right);
+        return be;
+    }
 }

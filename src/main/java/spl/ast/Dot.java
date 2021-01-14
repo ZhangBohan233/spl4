@@ -7,12 +7,24 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.*;
+import spl.util.BytesIn;
 import spl.util.Constants;
 import spl.util.LineFilePos;
+import spl.util.Reconstructor;
 
 public class Dot extends BinaryExpr {
     public Dot(LineFilePos lineFile) {
         super(".", lineFile);
+    }
+
+    public static Dot reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
+        in.readString();  // op
+        Expression left = Reconstructor.reconstruct(in);
+        Expression right = Reconstructor.reconstruct(in);
+        Dot be = new Dot(lineFilePos);
+        be.setLeft(left);
+        be.setRight(right);
+        return be;
     }
 
     private static SplElement crossEnvEval(Node right, Reference leftPtr,
