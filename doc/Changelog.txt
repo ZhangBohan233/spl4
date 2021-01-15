@@ -1,3 +1,12 @@
+===== Version 4053 =====
+2021/01/16
+
+* Implemented HashDict
+* Implemented LinkedList
+* Added parameter error check
+* Added native error check before 'String' class defined in lib/lang
+* Added int overflow check
+
 ===== Version 4052 =====
 2021/01/15
 

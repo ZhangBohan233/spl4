@@ -10,6 +10,7 @@ import spl.interpreter.splObjects.*;
 import spl.util.*;
 
 import java.io.InputStream;
+import java.util.HashMap;
 
 public class Assignment extends BinaryExpr {
     public Assignment(LineFilePos lineFile) {
@@ -52,15 +53,28 @@ public class Assignment extends BinaryExpr {
             IndexingNode indexingNode = (IndexingNode) key;
             Reference arrPtr = (Reference) indexingNode.getCallObj().evaluate(env);
             if (indexingNode.getArgs().getChildren().size() == 1) {
-                Int index = (Int) indexingNode.getArgs().getChildren().get(0).evaluate(env);
+                SplElement index = indexingNode.getArgs().getChildren().get(0).evaluate(env);
                 SplObject obj = env.getMemory().get(arrPtr);
 
                 if (obj instanceof SplArray) {
-                    SplArray.setItemAtIndex(arrPtr, (int) index.value, value, env, lineFile);
+                    if (!(index instanceof Int)) {
+                        SplInvokes.throwException(
+                                env,
+                                Constants.TYPE_ERROR,
+                                "Array index must be int.",
+                                lineFile
+                        );
+                        return;
+                    }
+                    SplArray.setItemAtIndex(arrPtr, (int) ((Int) index).value, value, env, lineFile);
                 } else if (obj instanceof Instance) {
                     Instance ins = (Instance) obj;
+                    SplElement setItem = ins.getEnv().get(Constants.SET_ITEM_FN, lineFile);
+                    if (env.hasException()) {
+                        return;
+                    }
                     SplMethod setItemFn = (SplMethod)
-                            env.getMemory().get((Reference) ins.getEnv().get(Constants.SET_ITEM_FN, lineFile));
+                            env.getMemory().get((Reference) setItem);
                     setItemFn.call(EvaluatedArguments.of(arrPtr, index, value), env, lineFile);
                 } else {
                     SplInvokes.throwException(

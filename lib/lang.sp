@@ -1,15 +1,23 @@
 class Object {
 
-    fn __str__() {
-        return __class__().__name__ + "@" + Invokes.id(this);
-    }
-
-    fn __repr__() {
-        return __class__().__name__ + "@" + Invokes.id(this);
-    }
-
     fn __class__() {
         return Invokes.getClass(this);
+    }
+
+    fn __eq__(other) -> boolean? {
+        return this is other;
+    }
+
+    fn __hash__() -> int? {
+        return Invokes.id(this);
+    }
+
+    fn __str__() -> String? {
+        return __class__().__name__ + "@" + Invokes.id(this);
+    }
+
+    fn __repr__() -> String? {
+        return __class__().__name__ + "@" + Invokes.id(this);
     }
 }
 
@@ -33,53 +41,54 @@ class Wrapper {
     }
 
     fn __add__(other) {
-        return wrap(value + wrap(other).value);
+        return wrap(value + wrapNum(other).value);
     }
 
     contract __add__(wrapper?) -> Wrapper?;
 
 
     fn __sub__(other) {
-        return wrap(value - wrap(other).value);
+        return wrap(value - wrapNum(other).value);
     }
 
     contract __sub__(wrapper?) -> Wrapper?;
 
 
     fn __mul__(other) {
-        return wrap(value * wrap(other).value);
+        return wrap(value * wrapNum(other).value);
     }
 
     contract __mul__(wrapper?) -> Wrapper?;
 
 
     fn __div__(other) {
-        return wrap(value / wrap(other).value);
+        return wrap(value / wrapNum(other).value);
     }
 
     contract __div__(wrapper?) -> Wrapper?;
 
 
     fn __mod__(other) {
-        return wrap(value % wrap(other).value);
+        return wrap(value % wrapNum(other).value);
     }
 
     contract __mod__(wrapper?) -> Wrapper?;
 
     fn __gt__(other) {
-        return value > wrap(other).value;
+        return value > wrapNum(other).value;
     }
 
     fn __lt__(other) {
-        return value < wrap(other).value;
+        return value < wrapNum(other).value;
     }
 
     fn __eq__(other) {
-        return value == wrap(other).value;
+        wrappedOther := wrap(other);
+        return Wrapper?(wrappedOther) and value == wrappedOther.value;
     }
 
     fn __ne__(other) {
-        return type(this) is not type(other) or not __eq__(other);
+        return not __eq__(other);
     }
 }
 
@@ -87,11 +96,19 @@ class Integer(Wrapper) {
     fn __init__(value) {
         super.__init__(int(value));
     }
+
+    fn __hash__() {
+        return value;
+    }
 }
 
 class Float(Wrapper) {
     fn __init__(value) {
         super.__init__(float(value));
+    }
+
+    fn __hash__() {
+        return Invokes.floatToIntBits(value);
     }
 }
 
@@ -99,17 +116,29 @@ class Boolean(Wrapper) {
     fn __init__(value) {
         super.__init__(boolean(value));
     }
+
+    fn __hash__() {
+        return 1 if value else 0;
+    }
 }
 
 class Character(Wrapper) {
     fn __init__(value) {
         super.__init__(char(value));
     }
+
+    fn __hash__() {
+        return int(value);
+    }
 }
 
 class Byte(Wrapper) {
     fn __init__(value) {
         super.__init__(byte(value));
+    }
+
+    fn __hash__() {
+        return int(value);
     }
 }
 
@@ -151,7 +180,7 @@ class ContractError(Exception) {
     }
 }
 
-class IndexException(Exception) {
+class IndexError(Exception) {
     fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
     }
@@ -182,6 +211,18 @@ class NameError(Exception) {
 }
 
 class NotImplementedError(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
+class NullError(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
+class ParameterException(Exception) {
     fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
     }
@@ -373,7 +414,7 @@ class List(Iterable) {
 
     fn _checkIndex(index) {
         if index < 0 or index >= _size {
-            throw new IndexException();
+            throw new IndexError("Index out of list size.");
         }
     }
 
@@ -400,12 +441,115 @@ class List(Iterable) {
     }
 }
 
+class LinkedListNode {
+    var value;
+    var next = null;
+    var prev = null;
+
+    fn __init__(value) {
+        this.value = value;
+    }
+}
+
+class LinkedListIterator(Iterator) {
+    var node;
+
+    fn __init__(head: LinkedListNode?) {
+        this.node = head;
+    }
+
+    fn __hasNext__() {
+        return node is not null;
+    }
+
+    fn __next__() {
+        rtn := node;
+        node = node.next;
+        return rtn;
+    }
+}
+
+class LinkedList(Iterable) {
+    var head = null;
+    var tail = null;
+    var _size = 0;
+
+    fn __init__() {
+    }
+
+    fn __iter__() {
+        return new LinkedListIterator(head);
+    }
+
+    fn __repr__() {
+
+    }
+
+    fn __str__() {
+
+    }
+
+    fn append(value) {
+        node := new LinkedListNode(value);
+        node.prev = tail;
+        if tail is not null {
+            tail.next = node;
+        }
+        tail = node;
+        _size++;
+    }
+
+    fn prepend(value) {
+        node := new LinkedListNode(value);
+        node.next = head;
+        if head is not null {
+            head.prev = node;
+        }
+        head = node;
+        _size++;
+    }
+
+    fn getHead() {
+        return head.value;
+    }
+
+    fn getTail() {
+        return tail.value;
+    }
+
+    fn removeFirst() {
+        if _size == 0 {
+            throw new IndexError("Cannot remove from empty list");
+        }
+        _size--;
+        first := head;
+        head = head.next;
+        head.prev = null;
+        return first.value;
+    }
+
+    fn removeLast() {
+        if _size == 0 {
+            throw new IndexError("Cannot remove from empty list");
+        }
+        -size--;
+        last := tail;
+        tail = tail.prev;
+        tail.prev = null;
+        return last.value;
+    }
+
+    fn size() {
+        return _size;
+    }
+}
+
 class Dict(Iterable) {
     fn __getItem__(key) {
         return get(key);
     }
 
-    fn __setItem(key, value) {
+    fn __setItem__(key, value) {
         put(key, value);
     }
 
@@ -423,7 +567,6 @@ class Dict(Iterable) {
 }
 
 class NaiveDict(Dict) {
-
     const keys;
     const values;
     const length;
@@ -455,8 +598,200 @@ class NaiveDict(Dict) {
     }
 }
 
-class String {
+class HashDictIterator(Iterator) {
+    const dict;
+    var index = 0;
+    var looped = 0;
+    var node = null;
 
+    fn __init__(dict: HashDict?) {
+        this.dict = dict;
+    }
+
+    fn __hasNext__() -> boolean? {
+        return looped < dict.size();
+    }
+
+    fn __next__() {
+        if node is null {
+            while index < dict.array.length {
+                node = dict.array[index++];
+                if node is not null {
+                    break;
+                }
+            }
+        }
+        looped++;
+        cur := node;
+        node = node.next;
+        return unwrap(cur.key);
+    }
+}
+
+class HashEntry {
+    var key;
+    var value;
+    var next = null;
+
+    fn __init__(key, value) {
+        this.key = key;
+        this.value = value;
+    }
+}
+
+class HashDict(Dict) {
+    const loadFactor;
+    var eleCount = 0;
+    var array;
+
+    fn __init__(initCap: int? = 8, loadFactor: float? = 0.75) {
+        this.loadFactor = loadFactor;
+        this.array = new Object[initCap];
+    }
+
+    fn __iter__() {
+        return new HashDictIterator(this);
+    }
+
+    /*
+     * Adds a key and its corresponding value to this dict.
+     *
+     * Do not do this while loop through this dict.
+     */
+    fn put(key, value) {
+        hashCode := hash(key, array.length);
+        entry := array[hashCode];
+        if entry is null {
+            array[hashCode] = new HashEntry(key, value);
+            eleCount++;
+        } else {
+            found := false;
+            node := entry;
+            while node is not null {
+                if node.key == key {
+                    node.value = value;
+                    found = true;
+                    break;
+                }
+                node = node.next;
+            }
+            if not found {
+                newNode := new HashEntry(key, value);
+                newNode.next = entry;
+                array[hashCode] = newNode;
+                eleCount++;
+            }
+        }
+        if _getLoad() > loadFactor {
+            _expand();
+        }
+    }
+
+    fn get(key) {
+        hashCode := hash(key, array.length);
+        entry := array[hashCode];
+        if entry is null {
+            return null;
+        }
+        node := entry;
+        while node is not null {
+            if node.key == key {
+                return unwrap(node.value);
+            }
+            node = node.next;
+        }
+        return null;
+    }
+
+    /*
+     * Removes a key from this dict.
+     *
+     * Do not do this while loop through this dict.
+     */
+    fn remove(key) {
+        hashCode := hash(key, array.length);
+        entry := array[hashCode];
+        if entry is null {
+            return null;
+        }
+        rtn := null;
+        if entry.key == key {
+            // is the head
+            array[hashCode] = entry.next;
+            rtn = entry.value;
+            eleCount--;
+        } else {
+            node := entry;
+            prev := null;
+            while node is not null {
+                if node.key == key {
+                    prev.next = node.next;
+                    rtn = node.value;
+                    eleCount--;
+                }
+                prev = node;
+                node = node.next;
+            }
+        }
+        return unwrap(rtn);
+    }
+
+    fn size() {
+        return eleCount;
+    }
+
+    /*
+     * Returns the actual index in array.
+     */
+    fn hash(key, capacity: int?) -> int? {
+        var code;
+        cond {
+            case Object?(key) {
+                code = key.__hash__();
+            } case AbstractObject?(key) {
+                code = key.__hash__();
+            } default {
+                code = wrap(key).__hash__();
+            }
+        }
+        return code % capacity;
+    }
+
+    fn _getLoad() {
+        return float(eleCount) / array.length;
+    }
+
+    fn _expand() {
+        newArr := new Object[array.length * 2];
+        for i := 0; i < array.length; i++ {
+            oldEntry := array[i];
+            if oldEntry is not null {
+                node := oldEntry;
+                // divide the current link to two links
+                index2 := i + array.length;  // index of the other entry
+                curEntry := null;
+                newEntry := null;
+                while node is not null {
+                    index := hash(node.key, newArr.length);
+                    next := node.next;
+                    if index == i {
+                        node.next = curEntry;
+                        curEntry = node;
+                    } else {
+                        node.next = newEntry;
+                        newEntry = node;
+                    }
+                    node = next;
+                }
+                newArr[i] = curEntry;
+                newArr[index2] = newEntry;
+            }
+        }
+        this.array = newArr;
+    }
+}
+
+class String {
     const __chars__;
     const length;
 
@@ -495,6 +830,14 @@ class String {
 
     fn __ne__(other) {
         return type(this) is not type(other) or not __eq__(other);
+    }
+
+    fn __hash__() {
+        hash := 33;
+        for ch in __chars__ {
+            hash = hash * 33 + int(ch);
+        }
+        return hash;
     }
 
     fn toUpper() -> String? {
@@ -583,7 +926,7 @@ fn repr(obj) {
 }
 
 fn sleep(mills: int?) {
-    mills = unwrap(mills);
+    mills = unwrapNum(mills);
     start := clock();
     while clock() - start < mills {  // busy waiting
     }
@@ -654,14 +997,32 @@ fn wrap(value) {
     }
 }
 
+fn wrapNum(num) {
+    v := wrap(num);
+    if not Wrapper?(v) {
+        throw new TypeError("Cannot wrap non-wrapper object.");
+    }
+    return v;
+}
+
+/*
+ * Unwrap wrappers if it is, or returns the value itself.
+ */
 fn unwrap(value) {
+    if Wrapper?(value) {
+        return value.value;
+    }
+    return value;
+}
+
+fn unwrapNum(num) {
     cond {
-        case Wrapper?(value) {
-            return value.value;
-        } case AbstractObject?(value) {
+        case Wrapper?(num) {
+            return num.value;
+        } case AbstractObject?(num) {
             throw new TypeError("Cannot unwrap non-wrapper object.");
         } default {  // primitive
-            return value;
+            return num;
         }
     }
 }
@@ -701,4 +1062,5 @@ fn getClassByName(name: String?) {
 // Constants
 
 const copyright = "Copyright (C) Trash Software Studio.";
+const NATIVE_ERROR = new Exception();
 const INTERRUPTION = new Interruption("User interruption");

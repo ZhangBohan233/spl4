@@ -99,8 +99,11 @@ public class SplArray extends SplObject {
     public static SplElement getItemAtIndex(Reference arrPtr, int index, Environment env, LineFilePos lineFile) {
         SplArray array = (SplArray) env.getMemory().get(arrPtr);
         if (index < 0 || index >= array.length) {
-//            throw new ArrayIndexError("Index " + index + " out of array length " + array.length + ". ", lineFile);
-            SplInvokes.throwException(env, Constants.INDEX_ERROR, "", lineFile);
+            SplInvokes.throwException(
+                    env,
+                    Constants.INDEX_ERROR,
+                    "Index " + index + " out of array length " + array.length + ".",
+                    lineFile);
             return Undefined.ERROR;
         }
         return env.getMemory().getPrimitive(arrPtr.getPtr() + index + 1);

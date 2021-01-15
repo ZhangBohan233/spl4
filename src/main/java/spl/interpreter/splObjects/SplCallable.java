@@ -65,11 +65,13 @@ public abstract class SplCallable extends SplObject {
         for (int i = 0; i < parameters.getChildren().size(); ++i) {
             Node node = parameters.getChildren().get(i);
 
-            Parameter param = evalOneParam(node, env, optionalLevel).build();
+            ParameterBuilder paramB = evalOneParam(node, env, optionalLevel);
+            if (paramB == null) return null;
+            Parameter param = paramB.build();
             if (usedNames.contains(param.name)) {
                 SplInvokes.throwException(
                         env,
-                        Constants.ARGUMENT_EXCEPTION,
+                        Constants.PARAMETER_EXCEPTION,
                         "Duplicate parameter '" + param.name + "'",
                         node.getLineFile()
                 );
@@ -120,21 +122,44 @@ public abstract class SplCallable extends SplObject {
                     .constant(dec.level == Declaration.CONST);
         } else if (node instanceof Assignment) {
             if (optionalLevel > 1) {
-                throw new ParseError("Optional parameter cannot occur behind *args/**kwargs. ",
-                        node.getLineFile());
+                SplInvokes.throwException(
+                        env,
+                        Constants.PARAMETER_EXCEPTION,
+                        "Optional parameter cannot occur behind *args/**kwargs.",
+                        node.getLineFile()
+                );
+                return null;
             }
             Assignment assignment = (Assignment) node;
             ParameterBuilder left = evalOneParam(assignment.getLeft(), env, 0);
-            return left.defaultValue(assignment.getRight().evaluate(env));
+            if (left == null) return null;
+            SplElement defValue = assignment.getRight().evaluate(env);
+            if (env.hasException()) {
+                return null;
+            }
+            return left.defaultValue(defValue);
         } else if (node instanceof StarExpr) {
-            ParameterBuilder builder = evalOneParam(((StarExpr) node).getValue(), env, 0).unpack();
+            ParameterBuilder builder = evalOneParam(((StarExpr) node).getValue(), env, 0);
+            if (builder == null) return null;
+            builder.unpack();
             if (optionalLevel >= builder.unpackCount + 1) {
-                throw new ParseError("*args cannot occurs behind another *args or **kwargs. ",
-                        node.getLineFile());
+                SplInvokes.throwException(
+                        env,
+                        Constants.PARAMETER_EXCEPTION,
+                        "*args cannot occurs behind another *args or **kwargs.",
+                        node.getLineFile()
+                );
+                return null;
             }
             return builder;
         }
-        throw new ParseError("Unexpected parameter syntax. ", node.getLineFile());
+        SplInvokes.throwException(
+                env,
+                Constants.PARAMETER_EXCEPTION,
+                "Unexpected parameter syntax.",
+                node.getLineFile()
+        );
+        return null;
     }
 
     private static class ParameterBuilder {

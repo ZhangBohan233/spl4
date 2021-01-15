@@ -15,8 +15,12 @@ import spl.lexer.TokenizeResult;
 import spl.parser.Parser;
 import spl.util.Constants;
 import spl.util.LineFilePos;
+import spl.util.Utilities;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.Scanner;
 
 /**
@@ -52,7 +56,6 @@ public class SplInvokes extends NativeObject {
         newExpr.setValue(funcCall);
         ThrowExpr throwStmt = new ThrowExpr(lineFile);
         throwStmt.setValue(newExpr);
-
         throwStmt.evaluate(env);
     }
 
@@ -466,6 +469,14 @@ public class SplInvokes extends NativeObject {
         SplFloat x = (SplFloat) arguments.getLine().get(0).evaluate(env);
         double d = Math.log(x.floatValue());
         return new SplFloat(d);
+    }
+
+    public Int floatToIntBits(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 1, "Invokes.floatToIntBits", env, lineFilePos);
+
+        SplFloat x = (SplFloat) arguments.getLine().get(0).evaluate(env);
+        byte[] arr = Utilities.doubleToBytes(x.floatValue());
+        return new Int(Utilities.bytesToLong(arr));
     }
 
     public SplElement script(Arguments arguments, Environment environment, LineFilePos lineFile) {

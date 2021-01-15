@@ -6,12 +6,14 @@ import spl.ast.NameNode;
 import spl.ast.Node;
 import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
+import spl.interpreter.primitives.Int;
 import spl.interpreter.primitives.SplElement;
 import spl.util.Constants;
 import spl.util.LineFilePos;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 
 public class NativeObject extends SplObject {
 
@@ -38,7 +40,6 @@ public class NativeObject extends SplObject {
                     lineFile
             );
         } catch (InvocationTargetException e) {
-//            throw new RuntimeException(e);
             return SplInvokes.throwExceptionWithError(
                     callEnv,
                     Constants.INVOKE_ERROR,
@@ -46,6 +47,13 @@ public class NativeObject extends SplObject {
                     lineFile
             );
         }
+    }
+
+    @SuppressWarnings("unused")
+    public SplElement __hash__(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 0, "__hash__", env, lineFilePos);
+
+        return new Int(this.hashCode());
     }
 
     /**

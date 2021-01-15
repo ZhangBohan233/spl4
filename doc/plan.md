@@ -38,4 +38,7 @@
 * Store docstring in spl object
 * ~~Gc suite for class declaration~~ **_DONE_**
 * Spc decompiler
-* HashDict
+* ~~HashDict~~ **_DONE_**
+* TreeDict
+* HashDict creation via `{key1=value1, ...}`
+* Wrapper of native types

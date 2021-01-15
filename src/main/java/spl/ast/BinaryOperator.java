@@ -92,7 +92,22 @@ public class BinaryOperator extends BinaryExpr {
         };
     }
 
-    private static SplElement simpleArithmetic(String op, Environment env, double l, double r, LineFilePos lineFile) {
+    private static SplElement simpleArithmeticInt(String op, Environment env, long l, long r, LineFilePos lineFile) {
+        return switch (op) {
+            case "+" -> new Int(l + r);
+            case "-" -> new Int(l - r);
+            case "*" -> new Int(l * r);
+            case "/" -> new Int(l / r);
+            case "%" -> new Int(l % r);
+            default -> SplInvokes.throwExceptionWithError(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Unsupported operation '" + op + "'. ",
+                    lineFile);
+        };
+    }
+
+    private static SplElement simpleArithmeticFloat(String op, Environment env, double l, double r, LineFilePos lineFile) {
         return switch (op) {
             case "+" -> new SplFloat(l + r);
             case "-" -> new SplFloat(l - r);
@@ -184,16 +199,16 @@ public class BinaryOperator extends BinaryExpr {
                     return primitivePointerArithmetic(leftEle, (Reference) rightEle, operator, env, lineFile);
                 }
 
-                SplElement res = simpleArithmetic(operator, env, leftEle.floatValue(), rightEle.floatValue(), lineFile);
-
                 if (leftEle.isIntLike()) {
                     if (rightEle.isIntLike()) {
-                        return new Int(res.intValue());
+                        return simpleArithmeticInt(
+                                operator, env, leftEle.intValue(), rightEle.intValue(), lineFile
+                        );
                     } else if (rightEle instanceof SplFloat) {
-                        return res;
+                        return simpleArithmeticFloat(operator, env, leftEle.floatValue(), rightEle.floatValue(), lineFile);
                     }
                 } else if (leftEle instanceof SplFloat) {
-                    return res;
+                    return simpleArithmeticFloat(operator, env, leftEle.floatValue(), rightEle.floatValue(), lineFile);
                 }
                 return SplInvokes.throwExceptionWithError(
                         env,

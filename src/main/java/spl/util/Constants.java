@@ -42,7 +42,7 @@ public class Constants {
      * Error names
      */
     public static final String NAME_ERROR = "NameError";
-    public static final String INDEX_ERROR = "IndexException";
+    public static final String INDEX_ERROR = "IndexError";
     public static final String CONTRACT_ERROR = "ContractError";
     public static final String TYPE_ERROR = "TypeError";
     public static final String ATTRIBUTE_EXCEPTION = "AttributeException";
@@ -50,9 +50,12 @@ public class Constants {
     public static final String INVOKE_ERROR = "InvokeError";
     public static final String INTERRUPTION = "Interruption";
     public static final String IO_ERROR = "IOError";
+    public static final String NULL_ERROR = "NullError";
     public static final String INHERITANCE_ERROR = "InheritanceError";
+    public static final String PARAMETER_EXCEPTION = "ParameterException";
 
     public static final String INTERRUPTION_INS = "INTERRUPTION";
+    public static final String NATIVE_ERROR_INS = "NATIVE_ERROR";
 
     public static final Map<Integer, String> WRAPPERS = Map.of(
             SplElement.INT, "Integer",
