@@ -19,20 +19,36 @@ public class ClassStmt extends Expression {
 
     private final String className;
     private final BlockStmt body;
+    private final StringLiteralRef docRef;
     private List<Node> superclassesNodes;  // nullable
 
     /**
      * @param className  name of class
      * @param extensions extending node list, null if not specified.
      * @param body       body block
+     * @param docRef     string literal reference of docstring
      * @param lineFile   line file
      */
-    public ClassStmt(String className, List<Node> extensions, BlockStmt body, LineFilePos lineFile) {
+    public ClassStmt(String className, List<Node> extensions, BlockStmt body, StringLiteralRef docRef,
+                     LineFilePos lineFile) {
         super(lineFile);
 
         this.className = className;
         this.superclassesNodes = extensions;
         this.body = body;
+        this.docRef = docRef;
+    }
+
+    public static ClassStmt reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        String name = is.readString();
+        BlockStmt body = Reconstructor.reconstruct(is);
+        boolean hasSc = is.readBoolean();
+        List<Node> superclassNodes = null;
+        if (hasSc) superclassNodes = is.readList();
+        boolean hasDoc = is.readBoolean();
+        StringLiteralRef docRef = null;
+        if (hasDoc) docRef = Reconstructor.reconstruct(is);
+        return new ClassStmt(name, superclassNodes, body, docRef, lineFilePos);
     }
 
     private void validateExtending() {
@@ -54,7 +70,7 @@ public class ClassStmt extends Expression {
             superclassesPointers.add(scPtr);
         }
 
-        Reference clazzPtr = SplClass.createClassAndAllocate(className, superclassesPointers, body, env);
+        Reference clazzPtr = SplClass.createClassAndAllocate(className, superclassesPointers, body, env, docRef);
 
         env.defineVarAndSet(className, clazzPtr, getLineFile());
 
@@ -103,16 +119,7 @@ public class ClassStmt extends Expression {
         body.save(out);
         out.writeBoolean(superclassesNodes != null);
         if (superclassesNodes != null) out.writeList(superclassesNodes);
-    }
-
-    public static ClassStmt reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
-        String name = is.readString();
-        BlockStmt body = Reconstructor.reconstruct(is);
-        boolean hasSc = is.readBoolean();
-        List<Node> superclassNodes = null;
-        if (hasSc) {
-            superclassNodes = is.readList();
-        }
-        return new ClassStmt(name, superclassNodes, body, lineFilePos);
+        out.writeBoolean(docRef != null);
+        if (docRef != null) docRef.save(out);
     }
 }

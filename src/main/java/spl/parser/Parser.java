@@ -13,16 +13,15 @@ import java.util.Map;
 public class Parser {
 
     private final CollectiveElement rootList;
-
-    private int varLevel = Declaration.USELESS;
-
     private final Map<String, StringLiteral> stringLiterals;
+    private int varLevel = Declaration.USELESS;
+    private DocToken activeDoc;
 
     /**
      * Constructor of Parser, for imported module files.
      *
      * @param textProcessResult tokens
-     * @param stringStrLitMap string literals from previous
+     * @param stringStrLitMap   string literals from previous
      */
     public Parser(TextProcessResult textProcessResult, Map<String, StringLiteral> stringStrLitMap) {
         this.rootList = textProcessResult.rootList;
@@ -36,6 +35,109 @@ public class Parser {
      */
     public Parser(TextProcessResult textProcessResult) {
         this(textProcessResult, new HashMap<>());
+    }
+
+    private static boolean notIdentifierOf(Element element, String expectedName) {
+        return !identifierOf(element, expectedName);
+    }
+
+    public static boolean identifierOf(Element element, String expectedName) {
+        return element instanceof AtomicElement &&
+                ((AtomicElement) element).atom instanceof IdToken &&
+                ((IdToken) ((AtomicElement) element).atom).getIdentifier().equals(expectedName);
+    }
+
+    private static boolean isCall(Token token) {
+        if (token instanceof IdToken) {
+            String identifier = ((IdToken) token).getIdentifier();
+            return FileTokenizer.StringTypes.isIdentifier(identifier) &&
+                    !FileTokenizer.RESERVED.contains(identifier);
+        }
+        return false;
+    }
+
+    private static boolean isCall(Token token, Node lastAddedNode) {
+        if (token instanceof IdToken) {
+            String identifier = ((IdToken) token).getIdentifier();
+            if (FileTokenizer.StringTypes.isIdentifier(identifier) &&
+                    !FileTokenizer.RESERVED.contains(identifier))
+                return true;
+            else return identifier.equals(")") || identifier.equals("]") ||
+                    (!(lastAddedNode instanceof BinaryOperator) && identifier.equals(">"));
+        }
+        return false;
+    }
+
+    private static boolean isUnary(Element element) {
+        if (element instanceof AtomicElement) {
+            Token token = ((AtomicElement) element).atom;
+            if (token instanceof IdToken) {
+                String identifier = ((IdToken) token).getIdentifier();
+                return switch (identifier) {
+                    case ";", "=", ":=", "->", ".", "," -> true;
+                    default -> FileTokenizer.ALL_BINARY.contains(identifier) ||
+                            FileTokenizer.RESERVED.contains(identifier);
+                };
+            } else return !(token instanceof IntToken) &&
+                    !(token instanceof FloatToken) &&
+                    !(token instanceof CharToken);
+        } else return !(element instanceof BracketList);
+    }
+
+    private static boolean isUnary(Token token) {
+        if (token instanceof IdToken) {
+            String identifier = ((IdToken) token).getIdentifier();
+            return switch (identifier) {
+                case ";", "=", "->", "(", "[", "{", "}", ".", "," -> true;
+                default -> FileTokenizer.ALL_BINARY.contains(identifier) ||
+                        FileTokenizer.RESERVED.contains(identifier);
+            };
+        } else return !(token instanceof IntToken) && !(token instanceof FloatToken);
+    }
+
+    private static boolean isFuncType(Token token) {
+        if (token instanceof IdToken) {
+            String identifier = ((IdToken) token).getIdentifier();
+            if (identifier.equals(")")) return true;
+            else if (identifier.equals(":")) return true;
+            else return false;
+        } else {
+            return false;
+        }
+    }
+
+    private static ContractNode autoContract(String fnName,
+                                             Line paramBlock,
+                                             Expression rtnContract,
+                                             LineFilePos lineFile) {
+        boolean hasParamContract = false;
+        Line contractLine = new Line(lineFile);
+        for (int i = 0; i < paramBlock.size(); i++) {
+            Node param = paramBlock.get(i);
+            if (param instanceof BinaryExpr) {
+                BinaryExpr be = (BinaryExpr) param;
+                if (be instanceof TypeExpr) {
+                    hasParamContract = true;
+                    contractLine.add(be.getRight());
+                    paramBlock.set(i, be.getLeft());  // replace the contract
+                    continue;
+                } else if (be instanceof Assignment && be.getLeft() instanceof TypeExpr) {
+                    hasParamContract = true;
+                    TypeExpr te = (TypeExpr) be.getLeft();
+                    contractLine.add(te.getRight());
+                    be.setLeft(te.getLeft());
+                    continue;
+                }
+            }
+            contractLine.add(new NameNode(Constants.ANY_TYPE, lineFile));
+        }
+
+        if (rtnContract != null || hasParamContract) {
+            if (rtnContract == null) rtnContract = new NameNode(Constants.ANY_TYPE, lineFile);
+            return new ContractNode(fnName, contractLine, rtnContract, lineFile);
+        } else {
+            return null;
+        }
     }
 
     public Map<String, StringLiteral> getStringLiterals() {
@@ -198,6 +300,12 @@ public class Parser {
                                 builder.addNode(new NullExpr(lineFile));
                                 break;
                             case "fn":  // function definition
+                                DocToken doc = findDoc(index - 1, parent);
+                                StringLiteralRef docRef = null;
+                                if (doc != null) {
+                                    docRef = getLitRef(doc.getDoc(), lineFile);
+                                }
+
                                 next = parent.get(index++);
                                 BracketList paramList;
                                 NameNode name;
@@ -209,17 +317,14 @@ public class Parser {
                                     paramList = (BracketList) next;
                                     name = new NameNode("anonymous function", lineFile);
                                 }
-//                                System.out.println(name + " " + name.lineFile);
+//                                if (doc != null) System.out.println(name + " " + doc.getDoc());
                                 Expression rtnType = null;
                                 next = parent.get(index++);
                                 if (identifierOf(next, "->")) {
-//                                    System.out.println(123212312);
                                     BracketList rtnTypeList = new BracketList(null, lineFile);
-//                                    index++;  // skip
                                     while (!((next = parent.get(index++)) instanceof BraceList)) {
                                         rtnTypeList.add(next);
                                     }
-//                                    System.out.println(rtnTypeList);
                                     rtnType = parseOnePartBlock(rtnTypeList);
                                 }
                                 bodyList = (BraceList) next;
@@ -232,14 +337,12 @@ public class Parser {
                                 // this line must before FuncDefinition
                                 ContractNode autoCont = autoContract(name.getName(), paramBlock, rtnType, lineFile);
 
-                                FuncDefinition def = new FuncDefinition(name, paramBlock, bodyBlock, lineFile);
+                                FuncDefinition def = new FuncDefinition(name, paramBlock, bodyBlock, docRef, lineFile);
                                 builder.addNode(def);
 
                                 if (autoCont != null) {
                                     builder.addNode(autoCont);
                                 }
-//                                builder.finishPart();
-//                                builder.finishLine();
                                 break;
                             case "lambda":
                                 paramList = new BracketList(null, lineFile);
@@ -282,6 +385,12 @@ public class Parser {
                                 builder.addNode(contractNode);
                                 break;
                             case "class":
+                                doc = findDoc(index - 1, parent);
+                                docRef = null;
+                                if (doc != null) {
+                                    docRef = getLitRef(doc.getDoc(), lineFile);
+                                }
+
                                 nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
                                 Element probExtendEle = parent.get(index++);
                                 BraceList bodyEle;
@@ -300,6 +409,7 @@ public class Parser {
                                         nameToken.getIdentifier(),
                                         extensions == null ? null : extensions.getChildren(),
                                         bodyBlock,
+                                        docRef,
                                         lineFile);
                                 builder.addNode(classStmt);
                                 break;
@@ -520,17 +630,14 @@ public class Parser {
                     builder.addFloat(((FloatToken) token).getValue(), lineFile);
                 } else if (token instanceof StrToken) {
                     StrToken strToken = (StrToken) token;
-                    StringLiteral lit = stringLiterals.get(strToken.getLiteral());
-                    if (lit == null) {
-                        lit = new StringLiteral(strToken.getLiteral().toCharArray(), lineFile);
-                        stringLiterals.put(strToken.getLiteral(), lit);
-                    }
-                    StringLiteralRef sl = new StringLiteralRef(lit, lineFile);
+                    StringLiteralRef sl = getLitRef(strToken.getLiteral(), lineFile);
                     builder.addNode(sl);
                 } else if (token instanceof CharToken) {
                     builder.addChar(((CharToken) token).getValue(), lineFile);
                 } else if (token instanceof ByteToken) {
                     builder.addNode(new ByteLiteral(((ByteToken) token).getValue(), lineFile));
+                } else if (token instanceof DocToken) {
+                    activeDoc = (DocToken) token;
                 } else {
                     throw new ParseError("Unexpected token type. ", lineFile);
                 }
@@ -596,106 +703,27 @@ public class Parser {
         return new ParseResult(parseBlock(rootList));
     }
 
-    private static boolean notIdentifierOf(Element element, String expectedName) {
-        return !identifierOf(element, expectedName);
-    }
-
-    public static boolean identifierOf(Element element, String expectedName) {
-        return element instanceof AtomicElement &&
-                ((AtomicElement) element).atom instanceof IdToken &&
-                ((IdToken) ((AtomicElement) element).atom).getIdentifier().equals(expectedName);
-    }
-
-    private static boolean isCall(Token token) {
-        if (token instanceof IdToken) {
-            String identifier = ((IdToken) token).getIdentifier();
-            return FileTokenizer.StringTypes.isIdentifier(identifier) &&
-                    !FileTokenizer.RESERVED.contains(identifier);
+    private StringLiteralRef getLitRef(String s, LineFilePos lineFilePos) {
+        StringLiteral lit = stringLiterals.get(s);
+        if (lit == null) {
+            lit = new StringLiteral(s.toCharArray(), lineFilePos);
+            stringLiterals.put(s, lit);
         }
-        return false;
+        return new StringLiteralRef(lit, lineFilePos);
     }
 
-    private static boolean isCall(Token token, Node lastAddedNode) {
-        if (token instanceof IdToken) {
-            String identifier = ((IdToken) token).getIdentifier();
-            if (FileTokenizer.StringTypes.isIdentifier(identifier) &&
-                    !FileTokenizer.RESERVED.contains(identifier))
-                return true;
-            else return identifier.equals(")") || identifier.equals("]") ||
-                    (!(lastAddedNode instanceof BinaryOperator) && identifier.equals(">"));
-        }
-        return false;
-    }
-
-    private static boolean isUnary(Element element) {
-        if (element instanceof AtomicElement) {
-            Token token = ((AtomicElement) element).atom;
-            if (token instanceof IdToken) {
-                String identifier = ((IdToken) token).getIdentifier();
-                return switch (identifier) {
-                    case ";", "=", ":=", "->", ".", "," -> true;
-                    default -> FileTokenizer.ALL_BINARY.contains(identifier) ||
-                            FileTokenizer.RESERVED.contains(identifier);
-                };
-            } else return !(token instanceof IntToken) &&
-                    !(token instanceof FloatToken) &&
-                    !(token instanceof CharToken);
-        } else return !(element instanceof BracketList);
-    }
-
-    private static boolean isUnary(Token token) {
-        if (token instanceof IdToken) {
-            String identifier = ((IdToken) token).getIdentifier();
-            return switch (identifier) {
-                case ";", "=", "->", "(", "[", "{", "}", ".", "," -> true;
-                default -> FileTokenizer.ALL_BINARY.contains(identifier) ||
-                        FileTokenizer.RESERVED.contains(identifier);
-            };
-        } else return !(token instanceof IntToken) && !(token instanceof FloatToken);
-    }
-
-    private static boolean isFuncType(Token token) {
-        if (token instanceof IdToken) {
-            String identifier = ((IdToken) token).getIdentifier();
-            if (identifier.equals(")")) return true;
-            else if (identifier.equals(":")) return true;
-            else return false;
-        } else {
-            return false;
-        }
-    }
-
-    private static ContractNode autoContract(String fnName,
-                                             Line paramBlock,
-                                             Expression rtnContract,
-                                             LineFilePos lineFile) {
-        boolean hasParamContract = false;
-        Line contractLine = new Line(lineFile);
-        for (int i = 0; i < paramBlock.size(); i++) {
-            Node param = paramBlock.get(i);
-            if (param instanceof BinaryExpr) {
-                BinaryExpr be = (BinaryExpr) param;
-                if (be instanceof TypeExpr) {
-                    hasParamContract = true;
-                    contractLine.add(be.getRight());
-                    paramBlock.set(i, be.getLeft());  // replace the contract
-                    continue;
-                } else if (be instanceof Assignment && be.getLeft() instanceof TypeExpr) {
-                    hasParamContract = true;
-                    TypeExpr te = (TypeExpr) be.getLeft();
-                    contractLine.add(te.getRight());
-                    be.setLeft(te.getLeft());
-                    continue;
+    private DocToken findDoc(int classFnIndex, CollectiveElement block) {
+        int index = classFnIndex - 1;
+        while (index >= 0) {
+            Element ele = block.get(index);
+            if (ele instanceof AtomicElement) {
+                Token token = ((AtomicElement) ele).atom;
+                if (token instanceof DocToken) {
+                    return (DocToken) token;
                 }
             }
-            contractLine.add(new NameNode(Constants.ANY_TYPE, lineFile));
+            break;
         }
-
-        if (rtnContract != null || hasParamContract) {
-            if (rtnContract == null) rtnContract = new NameNode(Constants.ANY_TYPE, lineFile);
-            return new ContractNode(fnName, contractLine, rtnContract, lineFile);
-        } else {
-            return null;
-        }
+        return null;
     }
 }

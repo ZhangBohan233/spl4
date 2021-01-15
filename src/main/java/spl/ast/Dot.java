@@ -77,6 +77,8 @@ public class Dot extends BinaryExpr {
                 return ((NativeObject) leftObj).invoke(right, env, getLineFile());
             } else if (leftObj instanceof SplClass) {
                 return ((SplClass) leftObj).getAttr(ptr, right, env, lineFile);
+            } else if (leftObj instanceof Function) {
+                return ((Function) leftObj).getAttr(right, env, lineFile);
             } else {
                 return SplInvokes.throwExceptionWithError(
                         env,

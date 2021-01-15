@@ -33,12 +33,13 @@
 * ~~String operations (upper, lower)~~ **_DONE_**
 * ~~Type wrapper of primitive and abstract object~~ **_DONE_**
 * ~~Type of array element~~ **_DONE_**
-* Add string as the right side operand
+* ~~Add string as the right side operand~~ **_DISCARDED_**
 * ~~Compiled spl file (*.spc)~~ **_DONE_**
-* Store docstring in spl object
+* ~~Store docstring in spl object~~ **_DONE_**
 * ~~Gc suite for class declaration~~ **_DONE_**
 * Spc decompiler
 * ~~HashDict~~ **_DONE_**
 * TreeDict
 * HashDict creation via `{key1=value1, ...}`
 * Wrapper of native types
+* ~~Get class method statically~~ `Object.__hash__` **_DONE_**

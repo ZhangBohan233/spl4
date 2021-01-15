@@ -1,6 +1,7 @@
 package spl.interpreter.splObjects;
 
 import spl.ast.BlockStmt;
+import spl.ast.StringLiteralRef;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.MethodEnvironment;
@@ -18,8 +19,9 @@ public class SplMethod extends Function {
                      Parameter[] params,
                      Environment classDefEnv,
                      String definedName,
+                     StringLiteralRef docRef,
                      LineFilePos lineFile) {
-        super(body, params, classDefEnv, definedName, lineFile);
+        super(body, params, classDefEnv, definedName, docRef, lineFile);
     }
 
     @Override

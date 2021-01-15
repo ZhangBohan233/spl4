@@ -19,20 +19,35 @@ public class FuncDefinition extends Expression {
     public final NameNode name;
     private final Line parameters;
     private final BlockStmt body;
+    private final StringLiteralRef docRef;
 
-    public FuncDefinition(NameNode name, Line parameters, BlockStmt body, LineFilePos lineFile) {
+    public FuncDefinition(NameNode name, Line parameters, BlockStmt body, StringLiteralRef docRef,
+                          LineFilePos lineFile) {
         super(lineFile);
 
         this.name = name;
         this.parameters = parameters;
         this.body = body;
+        this.docRef = docRef;
     }
 
     public static FuncDefinition reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
         NameNode name = Reconstructor.reconstruct(is);
         Line params = Reconstructor.reconstruct(is);
         BlockStmt body = Reconstructor.reconstruct(is);
-        return new FuncDefinition(name, params, body, lineFilePos);
+        boolean hasDoc = is.readBoolean();
+        StringLiteralRef docRef = null;
+        if (hasDoc) docRef = Reconstructor.reconstruct(is);
+        return new FuncDefinition(name, params, body, docRef, lineFilePos);
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        name.save(out);
+        parameters.save(out);
+        body.save(out);
+        out.writeBoolean(docRef != null);
+        if (docRef != null) docRef.save(out);
     }
 
     @Override
@@ -40,7 +55,7 @@ public class FuncDefinition extends Expression {
         Function.Parameter[] params = SplCallable.evalParams(parameters, env);
         if (env.hasException()) return Undefined.ERROR;
 
-        Function function = new Function(body, params, env, name.getName(), getLineFile());
+        Function function = new Function(body, params, env, name.getName(), docRef, getLineFile());
         Reference funcPtr = env.getMemory().allocateFunction(function, env);
 
         env.defineFunction(name.getName(), funcPtr, getLineFile());
@@ -53,8 +68,7 @@ public class FuncDefinition extends Expression {
         assert oldParams != null;
         Function.Parameter[] params = SplCallable.insertThis(oldParams);
 
-
-        SplMethod function = new SplMethod(body, params, classDefEnv, name.getName(), getLineFile());
+        SplMethod function = new SplMethod(body, params, classDefEnv, name.getName(), docRef, getLineFile());
 
         return classDefEnv.getMemory().allocateFunction(function, classDefEnv);
     }
@@ -82,12 +96,5 @@ public class FuncDefinition extends Expression {
 
     public NameNode getName() {
         return name;
-    }
-
-    @Override
-    protected void internalSave(BytesOut out) throws IOException {
-        name.save(out);
-        parameters.save(out);
-        body.save(out);
     }
 }

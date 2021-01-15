@@ -52,7 +52,7 @@ public class FuncCall extends Expression {
 
             EvaluatedArguments ea = arguments.evalArgs(env);
             if (env.hasException()) return Undefined.ERROR;
-            if (function instanceof SplMethod) {
+            if (function instanceof SplMethod && env.hasName(Constants.THIS)) {
                 // calling a method inside class
                 Reference thisPtr = (Reference) env.get(Constants.THIS, lineFile);
                 ea.insertThis(thisPtr);

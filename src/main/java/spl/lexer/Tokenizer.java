@@ -85,7 +85,8 @@ public abstract class Tokenizer {
 
     final List<Token> tokens = new ArrayList<>();
     boolean inDoc = false;
-
+    StringBuilder docBuilder = new StringBuilder();
+    LineFilePos docLfp;
 
     static CollectiveElement makeTreeListRec(CollectiveElement currentActive, List<Token> tokenList, int index) {
         Token tk = tokenList.get(index);
@@ -144,7 +145,12 @@ public abstract class Tokenizer {
                 if (i < len - 1 && ch == '*' && line.charAt(i + 1) == '/') {
                     // exit doc
                     inDoc = false;
+                    tokens.add(new DocToken(docBuilder.append("*/").toString(), docLfp));
+                    docBuilder.setLength(0);
                     i += 2;
+                    partStartPos = i;
+                } else {
+                    docBuilder.append(ch);
                 }
             } else {
                 // not in doc
@@ -163,6 +169,8 @@ public abstract class Tokenizer {
                     if (i < len - 1 && ch == '/' && line.charAt(i + 1) == '*') {
                         // enter doc
                         inDoc = true;
+                        docLfp = new LineFilePos(lineFile, i);
+                        docBuilder.append("/*");
                         i += 1;
                     } else if (i < len - 1 && ch == '/' && line.charAt(i + 1) == '/') {
                         // enter comment, end of this line
@@ -216,6 +224,7 @@ public abstract class Tokenizer {
         if (nonLiteral.length() > 0) {
             lineTokenize(nonLiteral.toString(), lineFile, partStartPos);
         }
+        if (inDoc) docBuilder.append('\n');
     }
 
     private void lineTokenize(String nonLiteral, LineFilePos.LineFile lineFile, int startPos) {

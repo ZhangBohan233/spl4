@@ -879,6 +879,12 @@ fn clock() -> int? {
     return Invokes.clock();
 }
 
+fn help(obj) {
+    if Class?(obj) or Function?(obj) {
+        print(obj.__doc__);
+    }
+}
+
 fn iter?(x) {
     return Array?(x) or Iterable?(x) or Iterator?(x);
 }

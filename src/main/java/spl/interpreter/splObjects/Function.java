@@ -19,6 +19,7 @@ public class Function extends UserFunction {
 
     protected final BlockStmt body;
     protected final String definedName;
+    private final StringLiteralRef docRef;
     private Node rtnContract;
     private boolean hasContract = false;
 
@@ -26,12 +27,13 @@ public class Function extends UserFunction {
      * Constructor for regular function.
      */
     public Function(BlockStmt body, SplCallable.Parameter[] params, Environment definitionEnv,
-                    String definedName, LineFilePos lineFile) {
+                    String definedName, StringLiteralRef docRef, LineFilePos lineFile) {
 
         super(params, definitionEnv, lineFile);
 
         this.body = body;
         this.definedName = definedName;
+        this.docRef = docRef;
     }
 
     public Node getBody() {
@@ -215,5 +217,20 @@ public class Function extends UserFunction {
         checkRtnContract(rtnValue, callingEnv, lineFile);
 
         return rtnValue;
+    }
+
+    public SplElement getAttr(Node attrNode, Environment env, LineFilePos lineFilePos) {
+        if (attrNode instanceof NameNode) {
+            if (((NameNode) attrNode).getName().equals(Constants.DOC_ATTR)) {
+                if (docRef == null) return Reference.NULL;
+                else return docRef.evaluate(env);
+            }
+        }
+        return SplInvokes.throwExceptionWithError(
+                env,
+                Constants.ATTRIBUTE_EXCEPTION,
+                "Function does not have attribute '" + attrNode + "'. ",
+                lineFilePos
+        );
     }
 }

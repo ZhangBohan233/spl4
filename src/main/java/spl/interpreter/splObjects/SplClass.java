@@ -27,6 +27,7 @@ public class SplClass extends SplObject {
     private final Environment definitionEnv;
     private final List<Node> classNodes = new ArrayList<>();
     private final Map<String, Reference> methodPointers = new HashMap<>();
+    private final StringLiteralRef docRef;
     // mro array used by java
     private Reference[] mro;
     // mro array used by spl
@@ -43,21 +44,23 @@ public class SplClass extends SplObject {
      * @param superclassPointers pointer to direct superclass
      * @param body               class body
      * @param definitionEnv      environment of definition
+     * @param docRef             string literal reference of docstring
      */
     private SplClass(String className, List<Reference> superclassPointers,
-                     BlockStmt body, Environment definitionEnv) {
+                     BlockStmt body, Environment definitionEnv, StringLiteralRef docRef) {
         this.className = className;
         this.superclassPointers = superclassPointers;
         this.definitionEnv = definitionEnv;
+        this.docRef = docRef;
 
         evalBody(body);
         checkConstructor();
     }
 
     public static Reference createClassAndAllocate(String className, List<Reference> superclassPointers,
-                                                   BlockStmt body, Environment definitionEnv) {
+                                                   BlockStmt body, Environment definitionEnv, StringLiteralRef docRef) {
 
-        SplClass clazz = new SplClass(className, superclassPointers, body, definitionEnv);
+        SplClass clazz = new SplClass(className, superclassPointers, body, definitionEnv, docRef);
         Reference clazzPtr = definitionEnv.getMemory().allocateObject(clazz, definitionEnv);
 
         definitionEnv.getMemory().addTempPtr(clazzPtr);
@@ -202,6 +205,7 @@ public class SplClass extends SplObject {
                     new NameNode(Constants.CONSTRUCTOR, LineFilePos.LF_INTERPRETER),
                     new Line(),
                     new BlockStmt(LineFilePos.LF_INTERPRETER),
+                    null,
                     LineFilePos.LF_INTERPRETER);
 
             SplElement cp = fd.evalAsMethod(definitionEnv);
@@ -245,15 +249,19 @@ public class SplClass extends SplObject {
                 return classNameRef;
             } else if (name.equals(Constants.CLASS_MRO)) {
                 return mroArrayPointer;
+            } else if (name.equals(Constants.DOC_ATTR)) {
+                if (docRef == null) return Reference.NULL;
+                else return docRef.evaluate(env);
+            } else if (methodPointers.containsKey(name)) {
+                return methodPointers.get(name);
             }
         }
-        SplInvokes.throwException(
+        return SplInvokes.throwExceptionWithError(
                 env,
                 Constants.ATTRIBUTE_EXCEPTION,
                 "Class does not have attribute '" + attrNode + "'. ",
                 lineFile
         );
-        return Undefined.ERROR;
     }
 
     /**

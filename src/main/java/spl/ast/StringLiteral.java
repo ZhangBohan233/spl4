@@ -8,7 +8,6 @@ import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplArray;
-import spl.util.BytesIn;
 import spl.util.BytesOut;
 import spl.util.Constants;
 import spl.util.LineFilePos;
@@ -25,10 +24,6 @@ public class StringLiteral extends LiteralNode {
         super(lineFile);
 
         this.charArray = charArray;
-    }
-
-    public char[] getCharArray() {
-        return charArray;
     }
 
     public static Reference createString(char[] charArray, Environment env, LineFilePos lineFile) {
@@ -65,6 +60,10 @@ public class StringLiteral extends LiteralNode {
                 EvaluatedArguments.of(arrPtr),
                 env,
                 lineFile).pointer;
+    }
+
+    public char[] getCharArray() {
+        return charArray;
     }
 
     @Override
