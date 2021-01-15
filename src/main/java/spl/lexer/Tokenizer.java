@@ -85,7 +85,8 @@ public abstract class Tokenizer {
 
     final List<Token> tokens = new ArrayList<>();
     boolean inDoc = false;
-
+    StringBuilder docBuilder = new StringBuilder();
+    LineFilePos docLfp;
 
     static CollectiveElement makeTreeListRec(CollectiveElement currentActive, List<Token> tokenList, int index) {
         Token tk = tokenList.get(index);
@@ -144,7 +145,12 @@ public abstract class Tokenizer {
                 if (i < len - 1 && ch == '*' && line.charAt(i + 1) == '/') {
                     // exit doc
                     inDoc = false;
+                    tokens.add(new DocToken(docBuilder.append("*/").toString(), docLfp));
+                    docBuilder.setLength(0);
                     i += 2;
+                    partStartPos = i;
+                } else {
+                    docBuilder.append(ch);
                 }
             } else {
                 // not in doc
@@ -163,6 +169,8 @@ public abstract class Tokenizer {
                     if (i < len - 1 && ch == '/' && line.charAt(i + 1) == '*') {
                         // enter doc
                         inDoc = true;
+                        docLfp = new LineFilePos(lineFile, i);
+                        docBuilder.append("/*");
                         i += 1;
                     } else if (i < len - 1 && ch == '/' && line.charAt(i + 1) == '/') {
                         // enter comment, end of this line
@@ -216,6 +224,7 @@ public abstract class Tokenizer {
         if (nonLiteral.length() > 0) {
             lineTokenize(nonLiteral.toString(), lineFile, partStartPos);
         }
+        if (inDoc) docBuilder.append('\n');
     }
 
     private void lineTokenize(String nonLiteral, LineFilePos.LineFile lineFile, int startPos) {
@@ -227,7 +236,9 @@ public abstract class Tokenizer {
             if (StringTypes.isInteger(s)) {
                 if (i < len - 2 && list.get(i + 1).equals(".") && StringTypes.isInteger(list.get(i + 2))) {
                     // is a float:   number.number
-                    FloatToken floatToken = new FloatToken(s + "." + list.get(i + 2),
+                    FloatToken floatToken = new FloatToken(
+                            s,
+                            list.get(i + 2),
                             new LineFilePos(lineFile, pos));
                     tokens.add(floatToken);
                     for (int j = i + 1; j < i + 3; j++) startPos += list.get(j).length();
@@ -235,8 +246,13 @@ public abstract class Tokenizer {
                 } else {
                     tokens.add(new IntToken(s, new LineFilePos(lineFile, pos)));
                 }
+            } else if (StringTypes.startsWithNum(s)) {
+                if (s.endsWith("b")) {
+                    tokens.add(new ByteToken(s.substring(0, s.length() - 1), new LineFilePos(lineFile, pos)));
+                } else {
+                    tokens.add(new IntToken(s, new LineFilePos(lineFile, pos)));
+                }
             } else if (StringTypes.isIdentifier(s)) {
-//                System.out.println(s + " " + pos);
                 tokens.add(new IdToken(s, new LineFilePos(lineFile, pos)));
             } else if (EXTRA_IDENTIFIERS.contains(s)) {
                 tokens.add(new IdToken(s, new LineFilePos(lineFile, pos)));
@@ -311,6 +327,7 @@ public abstract class Tokenizer {
                 {MINUS, GT},
                 {LT, MINUS},
                 {LETTER, DIGIT},
+                {DIGIT, LETTER},
                 {GT, EQ},
                 {LT, EQ},
                 {NOT, EQ},
@@ -380,6 +397,10 @@ public abstract class Tokenizer {
                 if (!(Character.isDigit(c) || c == '_')) return false;
             }
             return s.length() > 0 && s.charAt(0) != '_';
+        }
+
+        private static boolean startsWithNum(String s) {
+            return s.length() > 0 && s.charAt(0) >= '0' && s.charAt(0) <= '9';
         }
 
         public static boolean isIdentifier(String s) {

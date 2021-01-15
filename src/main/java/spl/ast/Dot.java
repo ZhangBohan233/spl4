@@ -7,12 +7,24 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.*;
+import spl.util.BytesIn;
 import spl.util.Constants;
 import spl.util.LineFilePos;
+import spl.util.Reconstructor;
 
 public class Dot extends BinaryExpr {
     public Dot(LineFilePos lineFile) {
         super(".", lineFile);
+    }
+
+    public static Dot reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
+        in.readString();  // op
+        Expression left = Reconstructor.reconstruct(in);
+        Expression right = Reconstructor.reconstruct(in);
+        Dot be = new Dot(lineFilePos);
+        be.setLeft(left);
+        be.setRight(right);
+        return be;
     }
 
     private static SplElement crossEnvEval(Node right, Reference leftPtr,
@@ -21,6 +33,9 @@ public class Dot extends BinaryExpr {
             return right.evaluate(objEnv);
         } else if (right instanceof FuncCall) {
             SplElement funcTv = ((FuncCall) right).getCallObj().evaluate(objEnv);
+            if (objEnv.hasException()) {
+                return Undefined.ERROR;
+            }
             SplCallable callable = (SplCallable) objEnv.getMemory().get((Reference) funcTv);
             EvaluatedArguments ea = ((FuncCall) right).getArguments().evalArgs(oldEnv);
             if (callable instanceof SplMethod) {
@@ -62,6 +77,8 @@ public class Dot extends BinaryExpr {
                 return ((NativeObject) leftObj).invoke(right, env, getLineFile());
             } else if (leftObj instanceof SplClass) {
                 return ((SplClass) leftObj).getAttr(ptr, right, env, lineFile);
+            } else if (leftObj instanceof Function) {
+                return ((Function) leftObj).getAttr(right, env, lineFile);
             } else {
                 return SplInvokes.throwExceptionWithError(
                         env,

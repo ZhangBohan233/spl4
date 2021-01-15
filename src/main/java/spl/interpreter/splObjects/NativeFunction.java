@@ -4,6 +4,7 @@ import spl.ast.Arguments;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.util.LineFilePos;
 
 public abstract class NativeFunction extends SplCallable {
@@ -24,6 +25,10 @@ public abstract class NativeFunction extends SplCallable {
         mostArg = argCount;
     }
 
+    public String getName() {
+        return name;
+    }
+
     /**
      * Override this method only if the function needs unevaluated argument node.
      * <p>
@@ -36,6 +41,7 @@ public abstract class NativeFunction extends SplCallable {
      */
     protected SplElement callFuncWithNode(Arguments arguments, Environment callingEnv) {
         EvaluatedArguments evaluatedArgs = arguments.evalArgs(callingEnv);
+        if (callingEnv.hasException()) return Undefined.ERROR;
 
         return callFunc(evaluatedArgs, callingEnv);
     }
@@ -50,13 +56,16 @@ public abstract class NativeFunction extends SplCallable {
     protected abstract SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv);
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
-        checkValidArgCount(arguments.getLine().size(), name, arguments.lineFile);
+        checkValidArgCount(arguments.getLine().size(), name, callingEnv, arguments.lineFile);
+        if (callingEnv.hasException()) return Undefined.ERROR;
 
         return callFuncWithNode(arguments, callingEnv);
     }
 
     public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile) {
-        checkValidArgCount(evaluatedArgs.positionalArgs.size(), name, lineFile);
+        checkValidArgCount(evaluatedArgs.positionalArgs.size() + evaluatedArgs.keywordArgs.size(),
+                name, callingEnv, lineFile);
+        if (callingEnv.hasException()) return Undefined.ERROR;
 
         return callFunc(evaluatedArgs, callingEnv);
     }

@@ -103,24 +103,12 @@ public class AstBuilder {
     private Line activeLine = new Line();
     private AstBuilder inner;
 
-//    private void setIndependence(boolean independence) {
-//        baseBlock.setIndependence(independence);
-//    }
-
     Node getLastAddedNode() {
         if (inner == null) {
             if (stack.isEmpty()) return null;
             return stack.get(stack.size() - 1);
         } else {
             return inner.getLastAddedNode();
-        }
-    }
-
-    boolean exprIsEmpty() {
-        if (inner == null) {
-            return stack.isEmpty();
-        } else {
-            return inner.exprIsEmpty();
         }
     }
 
@@ -134,7 +122,7 @@ public class AstBuilder {
 
     void addInt(long value, LineFilePos lineFile) {
         if (inner == null) {
-            stack.add(new IntNode(value, lineFile));
+            stack.add(new IntLiteral(value, lineFile));
         } else {
             inner.addInt(value, lineFile);
         }
@@ -142,35 +130,19 @@ public class AstBuilder {
 
     void addChar(char value, LineFilePos lineFile) {
         if (inner == null) {
-            stack.add(new CharNode(value, lineFile));
+            stack.add(new CharLiteral(value, lineFile));
         } else {
             inner.addChar(value, lineFile);
         }
     }
 
-    void addBoolean(boolean value, LineFilePos lineFile) {
-        if (inner == null) {
-            stack.add(new BoolStmt(value, lineFile));
-        } else {
-            inner.addBoolean(value, lineFile);
-        }
-    }
-
     void addFloat(double value, LineFilePos lineFile) {
         if (inner == null) {
-            stack.add(new FloatNode(value, lineFile));
+            stack.add(new FloatLiteral(value, lineFile));
         } else {
             inner.addFloat(value, lineFile);
         }
     }
-
-//    void addString(char[] charArray, LineFilePos lineFile) {
-//        if (inner == null) {
-//            stack.add(new StringLiteral(charArray, lineFile));
-//        } else {
-//            inner.addString(charArray, lineFile);
-//        }
-//    }
 
     void addUnaryOperator(String op, int type, LineFilePos lineFile) {
         if (inner == null) {
@@ -187,14 +159,6 @@ public class AstBuilder {
             inner.addBinaryOperator(op, type, lineFile);
         }
     }
-
-//    void addBinaryOperatorAssign(String op, int type, LineFile lineFile) {
-//        if (inner == null) {
-//            stack.add(new BinaryOperatorAssignment(op, lineFile));
-//        } else {
-//            inner.addBinaryOperatorAssign(op, lineFile);
-//        }
-//    }
 
     void addFakeTernary(String op, LineFilePos lineFile) {
         if (inner == null) {
@@ -308,7 +272,7 @@ public class AstBuilder {
                     } else {
                         value = list.remove(index - 1);
                     }
-                    ue.setValue(value);
+                    ue.setValue((Expression) value);
                 } else if (expr instanceof BinaryExpr) {
                     Node right = list.remove(index + 1);
                     Node left = list.remove(index - 1);
@@ -336,34 +300,4 @@ public class AstBuilder {
             throw e;
         }
     }
-
-//    private static boolean markElse(Node node) {
-//        if (node instanceof IfStmt) {
-//            IfStmt ifs = (IfStmt) node;
-//            if (markElse(ifs.getBodyBlock())) return true;
-//            if (ifs.getElseBlock() == null) {
-//                ifs.setHasElse(true);
-//                return true;
-//            } else {
-//                markElse(ifs.getElseBlock());
-//            }
-//        }
-//        return false;
-//    }
-//
-//    private static boolean placeElse(Node node, Node element) {
-//        if (node instanceof IfStmt) {
-//            IfStmt ifs = (IfStmt) node;
-//            if (placeElse(ifs.getBodyBlock(), element)) return true;
-//            if (ifs.hasElse()) {
-//                if (ifs.getElseBlock() == null) {
-//                    ifs.setElseBlock(element);
-//                    return true;
-//                } else {
-//                    return placeElse(ifs.getElseBlock(), element);
-//                }
-//            }
-//        }
-//        return false;
-//    }
 }

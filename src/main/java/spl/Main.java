@@ -8,7 +8,11 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         SplInterpreter interpreter = new SplInterpreter();
-        interpreter.run(args);
+        try {
+            interpreter.run(args);
+        } catch (IllegalArgumentException e) {
+            System.err.println(e.getMessage());
+        }
     }
 }
 

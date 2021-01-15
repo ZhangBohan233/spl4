@@ -6,6 +6,8 @@ import spl.interpreter.Memory;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.GlobalEnvironment;
 import spl.interpreter.env.ModuleEnvironment;
+import spl.interpreter.invokes.NativeInFile;
+import spl.interpreter.invokes.NativeOutFile;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.*;
 import spl.interpreter.splErrors.NativeError;
@@ -18,23 +20,41 @@ import spl.lexer.TokenizeResult;
 import spl.lexer.treeList.CollectiveElement;
 import spl.parser.ParseResult;
 import spl.parser.Parser;
-import spl.util.ArgumentParser;
-import spl.util.Constants;
-import spl.util.LineFilePos;
-import spl.util.Utilities;
+import spl.util.*;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class SplInterpreter {
 
+    public static final Map<Class<? extends SplObject>, String> NATIVE_TYPE_NAMES =
+            new MapMerger<>(
+                    Map.of(
+                            SplInvokes.class, "Invoke",
+                            NativeFunction.class, "NativeFunction",
+                            TypeFunction.class, "TypeFunction",
+                            SplArray.class, "Array",
+                            SplModule.class, "Module",
+                            SplMethod.class, "Method",
+                            Function.class, "Function",
+                            LambdaExpression.class, "LambdaExpression",
+                            SplClass.class, "Class",
+                            NativeType.class, "NativeType"
+                    ),
+                    Map.of(
+                            NativeInFile.class, "NativeInFile",
+                            NativeOutFile.class, "NativeOutFile"
+                    )
+            ).merge();
     private static InputStream in = System.in;
     private static PrintStream out = System.out;
     private static PrintStream err = System.err;
     private GlobalEnvironment globalEnvironment;
+
+    private long vmStartBegin, parseBegin, cacheBegin;
 
     public static void setOut(PrintStream out) {
         SplInterpreter.out = out;
@@ -50,6 +70,7 @@ public class SplInterpreter {
 
     static void initNatives(GlobalEnvironment globalEnvironment) {
         initNativeFunctions(globalEnvironment);
+        initNativeTypeCheckers(globalEnvironment);
 
         SplInvokes system = new SplInvokes(out, in, err);
 
@@ -62,11 +83,9 @@ public class SplInterpreter {
                 LineFilePos.LF_INTERPRETER);
     }
 
-    static void importModules(GlobalEnvironment ge, Map<String, CollectiveElement> imported,
-                              Map<String, StringLiteral> strLitBundleMap) throws IOException {
-        Map<String, ParseResult> blocks = parseImportedModules(imported, strLitBundleMap);
-        for (Map.Entry<String, ParseResult> entry : blocks.entrySet()) {
-            ModuleEnvironment moduleScope = new ModuleEnvironment(ge);
+    static void importModules(GlobalEnvironment ge, LinkedHashMap<String, ParseResult> parsedModules) {
+        for (Map.Entry<String, ParseResult> entry : parsedModules.entrySet()) {
+            ModuleEnvironment moduleScope = new ModuleEnvironment(entry.getKey(), ge);
             entry.getValue().getRoot().evaluate(moduleScope);
             SplModule module = new SplModule(entry.getKey(), moduleScope);
 
@@ -76,10 +95,11 @@ public class SplInterpreter {
         }
     }
 
-    public static Map<String, ParseResult> parseImportedModules(Map<String, CollectiveElement> imported,
-                                                                Map<String, StringLiteral> strLitBundleMap)
+    public static LinkedHashMap<String, ParseResult> parseImportedModules(
+            LinkedHashMap<String, CollectiveElement> imported,
+            Map<String, StringLiteral> strLitBundleMap)
             throws IOException {
-        Map<String, ParseResult> result = new HashMap<>();
+        LinkedHashMap<String, ParseResult> result = new LinkedHashMap<>();
         for (Map.Entry<String, CollectiveElement> entry : imported.entrySet()) {
             Parser psr = new Parser(new TextProcessResult(entry.getValue()), strLitBundleMap);
             ParseResult ce = psr.parse();
@@ -89,11 +109,45 @@ public class SplInterpreter {
         return result;
     }
 
+    private static void initNativeTypeCheckers(GlobalEnvironment ge) {
+        Memory memory = ge.getMemory();
+        for (Map.Entry<Class<? extends SplObject>, String> entry : NATIVE_TYPE_NAMES.entrySet()) {
+            final String name = entry.getValue();
+            final String checkerName = name + "?";
+            final Class<? extends SplObject> clazz = entry.getKey();
+            NativeType nt = new NativeType(name);
+            Reference ntPtr = memory.allocateObject(nt, ge);
+            ge.defineConstAndSet(
+                    NativeType.shownName(name),
+                    ntPtr,
+                    LineFilePos.LF_INTERPRETER
+            );
+            NativeFunction checker = new NativeFunction(checkerName, 1) {
+                @Override
+                protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                    SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                    if (arg instanceof Reference) {
+                        SplObject object = callingEnv.getMemory().get((Reference) arg);
+                        return Bool.boolValueOf(clazz.isInstance(object));
+                    }
+                    return Bool.FALSE;
+                }
+            };
+            Reference checkerPtr = memory.allocateFunction(checker, ge);
+            ge.defineConstAndSet(
+                    checkerName,
+                    checkerPtr,
+                    LineFilePos.LF_INTERPRETER
+            );
+        }
+    }
+
     private static void initNativeFunctions(GlobalEnvironment ge) {
-        NativeFunction toInt = new NativeFunction("int", 1) {
+        TypeFunction toInt = new TypeFunction("int", 1) {
             @Override
             protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg.getClass() == Int.class) return arg;
                 if (arg instanceof Reference) {
                     return new Int(
                             Utilities.wrapperToPrimitive(
@@ -114,10 +168,11 @@ public class SplInterpreter {
             }
         };
 
-        NativeFunction toFloat = new NativeFunction("float", 1) {
+        TypeFunction toFloat = new TypeFunction("float", 1) {
             @Override
             protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg.getClass() == SplFloat.class) return arg;
                 if (arg instanceof Reference) {
                     return new SplFloat(
                             Utilities.wrapperToPrimitive(
@@ -138,10 +193,11 @@ public class SplInterpreter {
             }
         };
 
-        NativeFunction toChar = new NativeFunction("char", 1) {
+        TypeFunction toChar = new TypeFunction("char", 1) {
             @Override
             protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg.getClass() == Char.class) return arg;
                 if (arg instanceof Reference) {
                     return new Char(
                             (char) Utilities.wrapperToPrimitive(
@@ -162,10 +218,36 @@ public class SplInterpreter {
             }
         };
 
-        NativeFunction toBool = new NativeFunction("boolean", 1) {
+        TypeFunction toByte = new TypeFunction("byte", 1) {
+            @Override
+            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg.getClass() == SplByte.class) return arg;
+                if (arg instanceof Reference) {
+                    return new SplByte(
+                            (byte) Utilities.wrapperToPrimitive(
+                                    (Reference) arg,
+                                    callingEnv,
+                                    LineFilePos.LF_INTERPRETER).intValue());
+                } else {
+                    return new SplByte((byte) arg.intValue());
+                }
+            }
+        };
+
+        NativeFunction isByte = new NativeFunction("byte?", 1) {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                return Bool.boolValueOf(arg instanceof SplByte);
+            }
+        };
+
+        TypeFunction toBool = new TypeFunction("boolean", 1) {
+            @Override
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                SplElement arg = evaluatedArgs.positionalArgs.get(0);
+                if (arg.getClass() == Bool.class) return (Bool) arg;
                 if (arg instanceof Reference) {
                     return Bool.boolValueOf(
                             Utilities.wrapperToPrimitive(
@@ -198,18 +280,6 @@ public class SplInterpreter {
             }
         };
 
-        NativeFunction isArray = new NativeFunction("Array?", 1) {
-            @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Reference) {
-                    SplObject object = callingEnv.getMemory().get((Reference) arg);
-                    return Bool.boolValueOf(object instanceof SplArray);
-                }
-                return Bool.FALSE;
-            }
-        };
-
         NativeFunction isCallable = new NativeFunction("Callable?", 1) {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
@@ -222,44 +292,36 @@ public class SplInterpreter {
             }
         };
 
-        NativeFunction isClass = new NativeFunction("Class?", 1) {
+        NativeFunction isNull = new NativeFunction("null?", 1) {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 if (arg instanceof Reference) {
-                    SplObject object = callingEnv.getMemory().get((Reference) arg);
-                    return Bool.boolValueOf(object instanceof SplClass);
+                    return Bool.boolValueOf(((Reference) arg).getPtr() == 0);
                 }
                 return Bool.FALSE;
             }
         };
 
-        Memory memory = ge.getMemory();
-        Reference ptrInt = memory.allocateFunction(toInt, ge);
-        Reference ptrIsInt = memory.allocateFunction(isInt, ge);
-        Reference ptrFloat = memory.allocateFunction(toFloat, ge);
-        Reference ptrChar = memory.allocateFunction(toChar, ge);
-        Reference ptrBool = memory.allocateFunction(toBool, ge);
-        Reference ptrIsFloat = memory.allocateFunction(isFloat, ge);
-        Reference ptrIsChar = memory.allocateFunction(isChar, ge);
-        Reference ptrIsBool = memory.allocateFunction(isBool, ge);
-        Reference ptrIsAbsObj = memory.allocateFunction(isAbstractObject, ge);
-        Reference ptrIsArray = memory.allocateFunction(isArray, ge);
-        Reference ptrIsCallable = memory.allocateFunction(isCallable, ge);
-        Reference ptrIsClass = memory.allocateFunction(isClass, ge);
+        NativeFunction[] nativeFunctions = new NativeFunction[]{
+                toInt, isInt,
+                toFloat, isFloat,
+                toChar, isChar,
+                toBool, isBool,
+                toByte, isByte,
+                isAbstractObject,
+                isCallable,
+                isNull
+        };
 
-        ge.defineFunction("int", ptrInt, LineFilePos.LF_INTERPRETER);
-        ge.defineFunction("int?", ptrIsInt, LineFilePos.LF_INTERPRETER);
-        ge.defineFunction("float", ptrFloat, LineFilePos.LF_INTERPRETER);
-        ge.defineFunction("float?", ptrIsFloat, LineFilePos.LF_INTERPRETER);
-        ge.defineFunction("char", ptrChar, LineFilePos.LF_INTERPRETER);
-        ge.defineFunction("char?", ptrIsChar, LineFilePos.LF_INTERPRETER);
-        ge.defineFunction("boolean", ptrBool, LineFilePos.LF_INTERPRETER);
-        ge.defineFunction("boolean?", ptrIsBool, LineFilePos.LF_INTERPRETER);
-        ge.defineFunction("AbstractObject?", ptrIsAbsObj, LineFilePos.LF_INTERPRETER);
-        ge.defineFunction("Array?", ptrIsArray, LineFilePos.LF_INTERPRETER);
-        ge.defineFunction("Callable?", ptrIsCallable, LineFilePos.LF_INTERPRETER);
-        ge.defineFunction("Class?", ptrIsClass, LineFilePos.LF_INTERPRETER);
+        for (NativeFunction nf : nativeFunctions) {
+            allocateAndDefineNatFunc(nf, ge);
+        }
+    }
+
+    private static void allocateAndDefineNatFunc(NativeFunction nativeFunction, Environment ge) {
+        Reference ptr = ge.getMemory().allocateFunction(nativeFunction, ge);
+        ge.defineFunction(nativeFunction.getName(), ptr, LineFilePos.LF_INTERPRETER);
     }
 
     private static EvaluatedArguments makeSplArgArray(String[] args, GlobalEnvironment globalEnvironment) {
@@ -275,30 +337,73 @@ public class SplInterpreter {
         return EvaluatedArguments.of(argPtr);
     }
 
+    private ParseResult parseSrcFile(ArgumentParser argumentParser) throws Exception {
+        FileTokenizer tokenizer = new FileTokenizer(
+                argumentParser.getMainSrcFile(),
+                argumentParser.importLang() && globalEnvironment == null  // no preset global env
+        );
+        TokenizeResult rootToken = tokenizer.tokenize();
+        TextProcessResult processed = new TextProcessor(rootToken,
+                argumentParser.importLang()).process();  // keep this to let other files import lang
+        if (argumentParser.isPrintTokens()) {
+            out.println(processed.rootList);
+        }
+        Parser parser = new Parser(processed);
+        ParseResult parseResult = parser.parse();
+
+        LinkedHashMap<String, ParseResult> parsedModules = parseImportedModules(
+                processed.importedPaths,
+                parser.getStringLiterals()
+        );
+
+        cacheBegin = System.currentTimeMillis();
+        if (argumentParser.isSaveCache()) {
+            new SplCacheSaver(
+                    argumentParser.getMainSrcFile().getAbsolutePath(),
+                    parseResult,
+                    parsedModules
+            ).save();
+        }
+
+        initMemoryNoImport(argumentParser);
+        importModules(globalEnvironment, parsedModules);
+
+        return parseResult;
+    }
+
+    private ParseResult readCacheFile(ArgumentParser argumentParser) throws Exception {
+        CacheReconstructor cr = new CacheReconstructor(argumentParser.getMainSrcFile().getAbsolutePath());
+        ParseResult root = cr.reconstruct();
+
+        cacheBegin = System.currentTimeMillis();
+        initMemoryNoImport(argumentParser);
+        importModules(globalEnvironment, cr.getParsedModules());
+
+        return root;
+    }
+
+    private void initMemoryNoImport(ArgumentParser argumentParser) {
+        vmStartBegin = System.currentTimeMillis();
+        Memory memory = new Memory();
+        if (argumentParser.isGcInfo()) memory.debugs.setPrintGcRes(true);
+        if (argumentParser.isGcTrigger()) memory.debugs.setPrintGcTrigger(true);
+        memory.setCheckContract(argumentParser.isCheckContract());
+        if (globalEnvironment == null) {
+            globalEnvironment = new GlobalEnvironment(memory);
+            initNatives(globalEnvironment);
+        }
+    }
+
     public void run(String[] args) throws Exception {
         ArgumentParser argumentParser = new ArgumentParser(args);
         if (argumentParser.isAllValid()) {
-            long parseBegin = System.currentTimeMillis();
-            FileTokenizer tokenizer = new FileTokenizer(
-                    argumentParser.getMainSrcFile(),
-                    argumentParser.importLang() && globalEnvironment == null  // no preset global env
-            );
-            TokenizeResult rootToken = tokenizer.tokenize();
-            TextProcessResult processed = new TextProcessor(rootToken,
-                    argumentParser.importLang()).process();  // keep this to let other files import lang
-            if (argumentParser.isPrintTokens()) {
-                out.println(processed.rootList);
-            }
-            Parser parser = new Parser(processed);
-            ParseResult parseResult = parser.parse();
+            parseBegin = System.currentTimeMillis();
+            String srcName = argumentParser.getMainSrcFile().getName();
 
-            long vmStartBegin = System.currentTimeMillis();
-            Memory memory = new Memory();
-            if (globalEnvironment == null) {
-                globalEnvironment = new GlobalEnvironment(memory);
-                initNatives(globalEnvironment);
-            }
-            importModules(globalEnvironment, processed.importedPaths, parser.getStringLiterals());
+            ParseResult parseResult;
+            if (srcName.endsWith(".sp")) parseResult = parseSrcFile(argumentParser);
+            else if (srcName.endsWith(".spc")) parseResult = readCacheFile(argumentParser);
+            else throw new IllegalArgumentException("Not a spl source file or a compiled spl file");
 
             if (argumentParser.isPrintAst()) {
                 out.println("===== Ast =====");
@@ -306,16 +411,12 @@ public class SplInterpreter {
                 out.println("===== End of spl.ast =====");
             }
 
-            if (argumentParser.isGcInfo()) memory.debugs.setPrintGcRes(true);
-            if (argumentParser.isGcTrigger()) memory.debugs.setPrintGcTrigger(true);
-            memory.setCheckContract(argumentParser.isCheckContract());
-
             long runBegin = System.currentTimeMillis();
 
             try {
-                parseResult.getRoot().evaluate(globalEnvironment);
-
-                callMain(argumentParser.getSplArgs(), globalEnvironment);
+                if (evaluateGlobal(parseResult)) {
+                    callMain(argumentParser.getSplArgs());
+                }
             } catch (ClassCastException cce) {
                 cce.printStackTrace();
                 throw new NativeTypeError();
@@ -324,12 +425,13 @@ public class SplInterpreter {
             long processEnd = System.currentTimeMillis();
 
             if (argumentParser.isPrintMem()) {
-                memory.printMemory();
+                globalEnvironment.getMemory().printMemory();
             }
             if (argumentParser.isTimer()) {
                 out.printf(
-                        "Parse time: %d ms, VM startup time: %d ms, running time: %d ms.%n",
-                        vmStartBegin - parseBegin,
+                        "Parse time: %d ms, cache time: %d ms, VM startup time: %d ms, running time: %d ms.%n",
+                        cacheBegin - parseBegin,
+                        vmStartBegin - cacheBegin,
                         runBegin - vmStartBegin,
                         processEnd - runBegin
                 );
@@ -343,7 +445,22 @@ public class SplInterpreter {
         this.globalEnvironment = globalEnvironment;
     }
 
-    void callMain(String[] args, GlobalEnvironment globalEnvironment) {
+    /**
+     * Returns {@code true} iff the code without main function runs successfully without any spl error.
+     *
+     * @param parseResult abstract syntax tree
+     * @return {@code true} iff the code without main function runs successfully without any spl error.
+     */
+    boolean evaluateGlobal(ParseResult parseResult) {
+        parseResult.getRoot().evaluate(globalEnvironment);
+        if (globalEnvironment.hasException()) {
+            Utilities.removeErrorAndPrint(globalEnvironment, Main.LF_MAIN);
+            return false;
+        }
+        return true;
+    }
+
+    void callMain(String[] args) {
         if (globalEnvironment.hasName(Constants.MAIN_FN)) {
             Reference mainPtr = (Reference) globalEnvironment.get(Constants.MAIN_FN, Main.LF_MAIN);
 

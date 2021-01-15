@@ -2,12 +2,17 @@ package spl.interpreter.splObjects;
 
 import spl.ast.*;
 import spl.interpreter.EvaluatedArguments;
+import spl.interpreter.invokes.SplInvokes;
+import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
 import spl.parser.ParseError;
 import spl.util.Constants;
 import spl.util.LineFilePos;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class SplCallable extends SplObject {
 
@@ -16,31 +21,43 @@ public abstract class SplCallable extends SplObject {
     public abstract SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile);
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
-        return call(arguments.evalArgs(callingEnv), callingEnv, arguments.getLineFile());
+        var ea = arguments.evalArgs(callingEnv);
+        if (callingEnv.hasException()) return Undefined.ERROR;
+        return call(ea, callingEnv, arguments.getLineFile());
     }
 
     public abstract int minArgCount();
 
     public abstract int maxArgCount();
 
-    protected void checkValidArgCount(int argc, String fnName, LineFilePos callingLf) {
+    protected void checkValidArgCount(int argc, String fnName, Environment callingEnv, LineFilePos callingLf) {
         int leastArg = minArgCount();
         int mostArg = maxArgCount();
         if (argc < leastArg || argc > mostArg) {
             if (leastArg == mostArg) {
-                throw new NativeError(
-                        String.format("Function '%s' expects %d argument(s), got %d. %s\n",
-                                fnName, leastArg, argc, callingLf.toStringFileLine()));
+                SplInvokes.throwException(
+                        callingEnv,
+                        Constants.ARGUMENT_EXCEPTION,
+                        String.format("Function '%s' expects %d argument(s), got %d.",
+                                fnName, leastArg, argc),
+                        callingLf
+                );
             } else {
-                throw new NativeError(
-                        String.format("Function '%s' expects %d to %d arguments, got %d. %s\n",
-                                fnName, leastArg, mostArg, argc, callingLf.toStringFileLine()));
+                SplInvokes.throwException(
+                        callingEnv,
+                        Constants.ARGUMENT_EXCEPTION,
+                        String.format("Function '%s' expects %d to %d argument(s), got %d.",
+                                fnName, leastArg, mostArg, argc),
+                        callingLf
+                );
             }
         }
     }
 
     public static Parameter[] evalParams(Line parameters, Environment env) {
         Parameter[] params = new Parameter[parameters.getChildren().size()];
+        Set<String> usedNames = new HashSet<>();
+        usedNames.add(Constants.THIS);
 
         // after first
         int optionalLevel = 0;
@@ -48,7 +65,19 @@ public abstract class SplCallable extends SplObject {
         for (int i = 0; i < parameters.getChildren().size(); ++i) {
             Node node = parameters.getChildren().get(i);
 
-            Parameter param = evalOneParam(node, env, optionalLevel).build();
+            ParameterBuilder paramB = evalOneParam(node, env, optionalLevel);
+            if (paramB == null) return null;
+            Parameter param = paramB.build();
+            if (usedNames.contains(param.name)) {
+                SplInvokes.throwException(
+                        env,
+                        Constants.PARAMETER_EXCEPTION,
+                        "Duplicate parameter '" + param.name + "'",
+                        node.getLineFile()
+                );
+                return null;
+            }
+            usedNames.add(param.name);
             if (param.hasDefaultValue()) {
                 optionalLevel = 1;
             } else if (param.noneAble()) {
@@ -93,21 +122,44 @@ public abstract class SplCallable extends SplObject {
                     .constant(dec.level == Declaration.CONST);
         } else if (node instanceof Assignment) {
             if (optionalLevel > 1) {
-                throw new ParseError("Optional parameter cannot occur behind *args/**kwargs. ",
-                        node.getLineFile());
+                SplInvokes.throwException(
+                        env,
+                        Constants.PARAMETER_EXCEPTION,
+                        "Optional parameter cannot occur behind *args/**kwargs.",
+                        node.getLineFile()
+                );
+                return null;
             }
             Assignment assignment = (Assignment) node;
             ParameterBuilder left = evalOneParam(assignment.getLeft(), env, 0);
-            return left.defaultValue(assignment.getRight().evaluate(env));
+            if (left == null) return null;
+            SplElement defValue = assignment.getRight().evaluate(env);
+            if (env.hasException()) {
+                return null;
+            }
+            return left.defaultValue(defValue);
         } else if (node instanceof StarExpr) {
-            ParameterBuilder builder = evalOneParam(((StarExpr) node).getValue(), env, 0).unpack();
+            ParameterBuilder builder = evalOneParam(((StarExpr) node).getValue(), env, 0);
+            if (builder == null) return null;
+            builder.unpack();
             if (optionalLevel >= builder.unpackCount + 1) {
-                throw new ParseError("*args cannot occurs behind another *args or **kwargs. ",
-                        node.getLineFile());
+                SplInvokes.throwException(
+                        env,
+                        Constants.PARAMETER_EXCEPTION,
+                        "*args cannot occurs behind another *args or **kwargs.",
+                        node.getLineFile()
+                );
+                return null;
             }
             return builder;
         }
-        throw new ParseError("Unexpected parameter syntax. ", node.getLineFile());
+        SplInvokes.throwException(
+                env,
+                Constants.PARAMETER_EXCEPTION,
+                "Unexpected parameter syntax.",
+                node.getLineFile()
+        );
+        return null;
     }
 
     private static class ParameterBuilder {
@@ -147,6 +199,9 @@ public abstract class SplCallable extends SplObject {
         public final String name;
         public final SplElement defaultValue;
         public final boolean constant;
+        /**
+         * Unpack count, 0 for normal, 1 for *args, 2 for **kwargs
+         */
         public final int unpackCount;
         Node contract;
 

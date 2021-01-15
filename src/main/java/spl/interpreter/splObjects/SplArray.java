@@ -24,25 +24,43 @@ public class SplArray extends SplObject {
         this.elementTypeCode = elementTypeCode;
     }
 
-    private static int calculateEleType(Node eleNode) {
-        if (eleNode instanceof NameNode) {
-            String name = ((NameNode) eleNode).getName();
-            switch (name) {
-                case "int":
-                    return SplElement.INT;
-                case "float":
-                    return SplElement.FLOAT;
-                case "char":
-                    return SplElement.CHAR;
-                case "boolean":
-                    return SplElement.BOOLEAN;
-                case "Object":
-                    return SplElement.POINTER;
-                default:
-                    break;
-            }
+    private static int calculateEleType(Node eleNode, Environment env, LineFilePos lineFilePos) {
+        SplElement se = eleNode.evaluate(env);
+        if (se.valueEquals(env.get("int", lineFilePos))) return SplElement.INT;
+        else if (se.valueEquals(env.get("float", lineFilePos))) return SplElement.FLOAT;
+        else if (se.valueEquals(env.get("char", lineFilePos))) return SplElement.CHAR;
+        else if (se.valueEquals(env.get("boolean", lineFilePos))) return SplElement.BOOLEAN;
+        else if (se.valueEquals(env.get("byte", lineFilePos))) return SplElement.BYTE;
+        else if (se.valueEquals(env.get("Object", lineFilePos))) return SplElement.POINTER;
+        else {
+            SplInvokes.throwException(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Only basic types are valid in array creation.",
+                    lineFilePos
+            );
+            return -1;
         }
-        throw new NativeTypeError("Only basic types are valid in array creation.");
+//        if (eleNode instanceof NameNode) {
+//            String name = ((NameNode) eleNode).getName();
+//            switch (name) {
+//                case "int":
+//                    return SplElement.INT;
+//                case "float":
+//                    return SplElement.FLOAT;
+//                case "char":
+//                    return SplElement.CHAR;
+//                case "byte":
+//                    return SplElement.BYTE;
+//                case "boolean":
+//                    return SplElement.BOOLEAN;
+//                case "Object":  // this case refers to AbstractObject
+//                    return SplElement.POINTER;
+//                default:
+//                    break;
+//            }
+//        }
+//        throw new NativeTypeError("Only basic types are valid in array creation. ");
     }
 
     public static Reference createArray(int eleType, int arrSize, Environment env) {
@@ -55,8 +73,10 @@ public class SplArray extends SplObject {
         return arrPtr;
     }
 
-    public static Reference createArray(Node eleNode, int arrSize, Environment env) {
-        return createArray(calculateEleType(eleNode), arrSize, env);
+    public static SplElement createArray(Node eleNode, int arrSize, Environment env, LineFilePos lineFilePos) {
+        int eleType = calculateEleType(eleNode, env, lineFilePos);
+        if (env.hasException()) return Undefined.ERROR;
+        return createArray(eleType, arrSize, env);
     }
 
     public static void fillInitValue(int eleType, Reference arrayPtr, Memory memory, int arrayLength) {
@@ -66,6 +86,7 @@ public class SplArray extends SplObject {
             case SplElement.FLOAT -> SplFloat.ZERO;
             case SplElement.BOOLEAN -> Bool.FALSE;
             case SplElement.CHAR -> Char.NULL_TERMINATOR;
+            case SplElement.BYTE -> SplByte.ZERO;
             case SplElement.POINTER -> Reference.NULL;
             default -> throw new NativeTypeError();
         };
@@ -78,8 +99,11 @@ public class SplArray extends SplObject {
     public static SplElement getItemAtIndex(Reference arrPtr, int index, Environment env, LineFilePos lineFile) {
         SplArray array = (SplArray) env.getMemory().get(arrPtr);
         if (index < 0 || index >= array.length) {
-//            throw new ArrayIndexError("Index " + index + " out of array length " + array.length + ". ", lineFile);
-            SplInvokes.throwException(env, Constants.INDEX_ERROR, "", lineFile);
+            SplInvokes.throwException(
+                    env,
+                    Constants.INDEX_ERROR,
+                    "Index " + index + " out of array length " + array.length + ".",
+                    lineFile);
             return Undefined.ERROR;
         }
         return env.getMemory().getPrimitive(arrPtr.getPtr() + index + 1);
@@ -122,6 +146,27 @@ public class SplArray extends SplObject {
         return javaCharArray;
     }
 
+    public static byte[] toJavaByteArray(Reference arrPtr, Memory memory) {
+        int[] lenPtr = toJavaArrayCommon(arrPtr, memory);
+
+        byte[] javaByteArray = new byte[lenPtr[0]];
+
+        for (int i = 0; i < javaByteArray.length; i++) {
+            SplElement value = memory.getPrimitive(lenPtr[1] + i);
+            javaByteArray[i] = (byte) value.intValue();
+        }
+
+        return javaByteArray;
+    }
+
+    public static Reference fromJavaArray(byte[] array, Environment env, LineFilePos lineFilePos) {
+        Reference arrayRef = createArray(SplElement.BYTE, array.length, env);
+        for (int i = 0; i < array.length; i++) {
+            setItemAtIndex(arrayRef, i, new SplByte(array[i]), env, lineFilePos);
+        }
+        return arrayRef;
+    }
+
     private static int[] toJavaArrayCommon(Reference arrPtr, Memory memory) {
         SplArray array = (SplArray) memory.get(arrPtr);
 
@@ -132,17 +177,28 @@ public class SplArray extends SplObject {
     }
 
     public SplElement getAttr(Node attrNode, Environment env, LineFilePos lineFile) {
-        if (attrNode instanceof NameNode && ((NameNode) attrNode).getName().equals(Constants.ARRAY_LENGTH)) {
-            return new Int(length);
-        } else {
-            SplInvokes.throwException(
-                    env,
-                    Constants.ATTRIBUTE_EXCEPTION,
-                    "Array does not have attribute '" + attrNode + "'. ",
-                    lineFile
-            );
-            return Undefined.ERROR;
+        if (attrNode instanceof NameNode) {
+            String name = ((NameNode) attrNode).getName();
+            if (name.equals(Constants.ARRAY_LENGTH)) {
+                return new Int(length);
+            } else if (name.equals(Constants.ARRAY_TYPE)) {
+                return switch (elementTypeCode) {
+                    case SplElement.INT -> env.get("int", lineFile);
+                    case SplElement.FLOAT -> env.get("float", lineFile);
+                    case SplElement.CHAR -> env.get("char", lineFile);
+                    case SplElement.BOOLEAN -> env.get("boolean", lineFile);
+                    case SplElement.BYTE -> env.get("byte", lineFile);
+                    case SplElement.POINTER -> env.get("Object", lineFile);
+                    default -> throw new NativeTypeError();
+                };
+            }
         }
+        return SplInvokes.throwExceptionWithError(
+                env,
+                Constants.ATTRIBUTE_EXCEPTION,
+                "Array does not have attribute '" + attrNode + "'. ",
+                lineFile
+        );
     }
 
     @Override

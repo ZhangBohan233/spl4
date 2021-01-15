@@ -15,7 +15,9 @@ public class Constants {
     public static final String ITERABLE_CLASS = "Iterable";
     public static final String ARRAY_ITERATOR_CLASS = "ArrayIterator";
     public static final String LIST_CLASS = "List";
+    public static final String DICT_CLASS = "Dict";
     public static final String NAIVE_DICT = "NaiveDict";
+    public static final String WRAPPER = "Wrapper";
     public static final String THIS = "this";
     public static final String SUPER = "super";
     public static final String CLASS_NAME = "__name__";
@@ -31,7 +33,9 @@ public class Constants {
     public static final String CLASS_MRO = "__mro__";
     public static final String WRAPPER_ATTR = "value";
     public static final String GET_CLASS = "__class__";
+    public static final String DOC_ATTR = "__doc__";
     public static final String ARRAY_LENGTH = "length";
+    public static final String ARRAY_TYPE = "type";
     public static final String ANY_TYPE = "anyType";
     public static final String OR_FN = "orFn";
 
@@ -39,26 +43,34 @@ public class Constants {
      * Error names
      */
     public static final String NAME_ERROR = "NameError";
-    public static final String INDEX_ERROR = "IndexException";
+    public static final String INDEX_ERROR = "IndexError";
     public static final String CONTRACT_ERROR = "ContractError";
     public static final String TYPE_ERROR = "TypeError";
     public static final String ATTRIBUTE_EXCEPTION = "AttributeException";
+    public static final String ARGUMENT_EXCEPTION = "ArgumentException";
     public static final String INVOKE_ERROR = "InvokeError";
     public static final String INTERRUPTION = "Interruption";
+    public static final String IO_ERROR = "IOError";
+    public static final String NULL_ERROR = "NullError";
+    public static final String INHERITANCE_ERROR = "InheritanceError";
+    public static final String PARAMETER_EXCEPTION = "ParameterException";
 
     public static final String INTERRUPTION_INS = "INTERRUPTION";
+    public static final String NATIVE_ERROR_INS = "NATIVE_ERROR";
 
     public static final Map<Integer, String> WRAPPERS = Map.of(
             SplElement.INT, "Integer",
             SplElement.FLOAT, "Float",
             SplElement.BOOLEAN, "Boolean",
-            SplElement.CHAR, "Character"
+            SplElement.CHAR, "Character",
+            SplElement.BYTE, "Byte"
     );
 
     public static final Map<String, Integer> WRAPPERS_INV = Map.of(
             "Integer", SplElement.INT,
             "Float", SplElement.FLOAT,
             "Boolean", SplElement.BOOLEAN,
-            "Character", SplElement.CHAR
+            "Character", SplElement.CHAR,
+            "Byte", SplElement.BYTE
     );
 }

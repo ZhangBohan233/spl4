@@ -1,12 +1,16 @@
 package spl.ast;
 
 
-import spl.interpreter.primitives.SplElement;
-
 import spl.interpreter.env.Environment;
+import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.lexer.SyntaxError;
+import spl.util.BytesIn;
+import spl.util.BytesOut;
 import spl.util.LineFilePos;
+import spl.util.Reconstructor;
+
+import java.io.IOException;
 
 public class Declaration extends Expression {
 
@@ -15,7 +19,6 @@ public class Declaration extends Expression {
     public static final int USELESS = 3;
 
     public final String declaredName;
-
     public final int level;
 
     public Declaration(int level, String name, LineFilePos lineFile) {
@@ -23,6 +26,12 @@ public class Declaration extends Expression {
 
         this.declaredName = name;
         this.level = level;
+    }
+
+    public static Declaration reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        String name = is.readString();
+        int level = is.readInt();
+        return new Declaration(level, name, lineFilePos);
     }
 
     @Override
@@ -48,4 +57,9 @@ public class Declaration extends Expression {
         return Undefined.UNDEFINED;
     }
 
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        out.writeString(declaredName);
+        out.writeInt(level);
+    }
 }

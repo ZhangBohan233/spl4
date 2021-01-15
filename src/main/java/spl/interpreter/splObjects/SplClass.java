@@ -3,6 +3,7 @@ package spl.interpreter.splObjects;
 import spl.ast.*;
 import spl.interpreter.Memory;
 import spl.interpreter.env.Environment;
+import spl.interpreter.env.ModuleEnvironment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
@@ -16,9 +17,9 @@ import java.util.*;
 public class SplClass extends SplObject {
 
     /**
-     * Pointer to superclasses, ordered from closet to furthest.
+     * Pointer to direct superclasses of this class.
      * <p>
-     * For instance, a pointer to class 'Object' is always the last element in this list
+     * This is not equivalent to mro.
      */
     private final List<Reference> superclassPointers;
 
@@ -26,10 +27,12 @@ public class SplClass extends SplObject {
     private final Environment definitionEnv;
     private final List<Node> classNodes = new ArrayList<>();
     private final Map<String, Reference> methodPointers = new HashMap<>();
+    private final StringLiteralRef docRef;
     // mro array used by java
     private Reference[] mro;
     // mro array used by spl
     private Reference mroArrayPointer;
+    private Reference classNameRef;
 
     /**
      * The private constructor, only for in-class call.
@@ -41,37 +44,44 @@ public class SplClass extends SplObject {
      * @param superclassPointers pointer to direct superclass
      * @param body               class body
      * @param definitionEnv      environment of definition
+     * @param docRef             string literal reference of docstring
      */
     private SplClass(String className, List<Reference> superclassPointers,
-                     BlockStmt body, Environment definitionEnv) {
+                     BlockStmt body, Environment definitionEnv, StringLiteralRef docRef) {
         this.className = className;
         this.superclassPointers = superclassPointers;
         this.definitionEnv = definitionEnv;
+        this.docRef = docRef;
 
         evalBody(body);
         checkConstructor();
     }
 
     public static Reference createClassAndAllocate(String className, List<Reference> superclassPointers,
-                                                   BlockStmt body, Environment definitionEnv) {
+                                                   BlockStmt body, Environment definitionEnv, StringLiteralRef docRef) {
 
-        SplClass clazz = new SplClass(className, superclassPointers, body, definitionEnv);
+        SplClass clazz = new SplClass(className, superclassPointers, body, definitionEnv, docRef);
         Reference clazzPtr = definitionEnv.getMemory().allocateObject(clazz, definitionEnv);
+
+        definitionEnv.getMemory().addTempPtr(clazzPtr);
+
         clazz.makeMro(clazzPtr);
         clazz.updateMethods(clazzPtr);
+
+        definitionEnv.getMemory().removeTempPtr(clazzPtr);
 
         return clazzPtr;
     }
 
     public static boolean isSuperclassOf(Reference superclassPtr, SplElement childClassEle, Memory memory) {
+        if (childClassEle.valueEquals(superclassPtr)) return true;
         if (childClassEle instanceof Reference) {
             Reference childClassPtr = (Reference) childClassEle;
-            if (superclassPtr.getPtr() == childClassPtr.getPtr()) return true;
             SplObject splObject = memory.get(childClassPtr);
             if (splObject instanceof SplClass) {
                 SplClass childClazz = (SplClass) splObject;
-                for (Reference supPtr : childClazz.superclassPointers) {
-                    if (isSuperclassOf(superclassPtr, supPtr, memory)) return true;
+                for (Reference supPtr : childClazz.mro) {
+                    if (superclassPtr.valueEquals(supPtr)) return true;
                 }
             }
         }
@@ -82,9 +92,44 @@ public class SplClass extends SplObject {
         for (Reference methodPtr : methodPointers.values()) {
             SplMethod method = (SplMethod) definitionEnv.getMemory().get(methodPtr);
             method.setClassPtr(clazzPtr);
+            checkOverride(method);
         }
     }
 
+    private void checkOverride(SplMethod method) {
+        if (method.definedName.equals(Constants.CONSTRUCTOR)) return;
+        for (int i = 1; i < mro.length; i++) {
+            Reference scRef = mro[i];
+            SplClass sc = (SplClass) definitionEnv.getMemory().get(scRef);
+            Reference scMethodRef = sc.methodPointers.get(method.definedName);
+            if (scMethodRef != null) {
+                SplMethod scMethod = (SplMethod) definitionEnv.getMemory().get(scMethodRef);
+                // System.out.println("Override! " + method.definedName + " from " + className + " to " + sc.className);
+                if (scMethod.params.length != method.params.length) {
+                    SplInvokes.throwException(
+                            definitionEnv,
+                            Constants.INHERITANCE_ERROR,
+                            String.format(
+                                    "Method %s in class %s has different number of parameters from its " +
+                                            "overriding method in class %s.",
+                                    method.definedName,
+                                    getFullName(),
+                                    sc.getFullName()),
+                            method.lineFile
+                    );
+                }
+                return;
+            }
+        }
+    }
+
+    /**
+     * Makes the method resolution order array, ranked from nearest to farthest.
+     * <p>
+     * This first element is always this class.
+     *
+     * @param thisClazzPtr pointer to this class
+     */
     private void makeMro(Reference thisClazzPtr) {
         List<Reference> mro = new ArrayList<>();
         fillMro(mro, thisClazzPtr);
@@ -141,7 +186,9 @@ public class SplClass extends SplObject {
                     classNodes.add(lineNode);
                 } else if (lineNode instanceof FuncDefinition) {
                     FuncDefinition fd = (FuncDefinition) lineNode;
-                    Reference methodPtr = fd.evalAsMethod(definitionEnv);
+                    SplElement mp = fd.evalAsMethod(definitionEnv);
+                    if (definitionEnv.hasException()) return;
+                    Reference methodPtr = (Reference) mp;
                     methodPointers.put(fd.name.getName(), methodPtr);
                 } else if (lineNode instanceof ContractNode) {
                     ((ContractNode) lineNode).evalAsMethod(methodPointers, className, definitionEnv);
@@ -151,10 +198,6 @@ public class SplClass extends SplObject {
         }
     }
 
-//    public List<Pointer> getSuperclassPointers() {
-//        return superclassPointers;
-//    }
-
     private void checkConstructor() {
         if (!methodPointers.containsKey(Constants.CONSTRUCTOR)) {
             // If class no constructor, put an empty default constructor
@@ -162,9 +205,12 @@ public class SplClass extends SplObject {
                     new NameNode(Constants.CONSTRUCTOR, LineFilePos.LF_INTERPRETER),
                     new Line(),
                     new BlockStmt(LineFilePos.LF_INTERPRETER),
+                    null,
                     LineFilePos.LF_INTERPRETER);
 
-            Reference constructorPtr = fd.evalAsMethod(definitionEnv);
+            SplElement cp = fd.evalAsMethod(definitionEnv);
+            if (definitionEnv.hasException()) return;
+            Reference constructorPtr = (Reference) cp;
             methodPointers.put(Constants.CONSTRUCTOR, constructorPtr);
         }
     }
@@ -185,23 +231,37 @@ public class SplClass extends SplObject {
         return className;
     }
 
+    public String getFullName() {
+        if (definitionEnv instanceof ModuleEnvironment) {
+            return ((ModuleEnvironment) definitionEnv).getModuleName() + "$" + getClassName();
+        } else {
+            return getClassName();
+        }
+    }
+
     public SplElement getAttr(Reference selfPtr, Node attrNode, Environment env, LineFilePos lineFile) {
         if (attrNode instanceof NameNode) {
             String name = ((NameNode) attrNode).getName();
             if (name.equals(Constants.CLASS_NAME)) {
-                return StringLiteral.createString(className.toCharArray(), env, lineFile);
+                if (classNameRef == null) {
+                    classNameRef = StringLiteral.createString(className.toCharArray(), env, lineFile);
+                }
+                return classNameRef;
             } else if (name.equals(Constants.CLASS_MRO)) {
                 return mroArrayPointer;
+            } else if (name.equals(Constants.DOC_ATTR)) {
+                if (docRef == null) return Reference.NULL;
+                else return docRef.evaluate(env);
+            } else if (methodPointers.containsKey(name)) {
+                return methodPointers.get(name);
             }
         }
-//        throw new AttributeError("Class does not have attribute '" + attrNode + "'. ", lineFile);
-        SplInvokes.throwException(
+        return SplInvokes.throwExceptionWithError(
                 env,
                 Constants.ATTRIBUTE_EXCEPTION,
                 "Class does not have attribute '" + attrNode + "'. ",
                 lineFile
         );
-        return Undefined.ERROR;
     }
 
     /**
@@ -217,8 +277,18 @@ public class SplClass extends SplObject {
     }
 
     @Override
+    public List<Reference> listAttrReferences() {
+        List<Reference> refs = new ArrayList<>();
+        refs.addAll(superclassPointers);
+        refs.addAll(methodPointers.values());
+        refs.addAll(Arrays.asList(mro));
+        refs.add(mroArrayPointer);
+        if (classNameRef != null) refs.add(classNameRef);
+        return refs;
+    }
+
+    @Override
     public String toString() {
         return "Class " + className + " ";
     }
-
 }

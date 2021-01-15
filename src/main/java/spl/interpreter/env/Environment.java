@@ -140,7 +140,6 @@ public abstract class Environment {
     public void setVar(String name, SplElement value, LineFilePos lineFile) {
         VarEntry entry = innerGet(name, true);
         if (entry == null) {
-//            throw new EnvironmentError("Variable '" + name + "' is not defined in this scope. ", lineFile);
             SplInvokes.throwException(this,
                     Constants.NAME_ERROR,
                     "Variable '" + name + "' is not defined in this scope.",
@@ -152,7 +151,6 @@ public abstract class Environment {
             SplInvokes.throwException(this, Constants.NAME_ERROR, "Constant '" + name + "' is not assignable.",
                     lineFile);
             return;
-//            throw new EnvironmentError("Constant '" + name + "' is not assignable. ", lineFile);
         }
 
         entry.setValue(value);
@@ -161,9 +159,12 @@ public abstract class Environment {
     public SplElement get(String name, LineFilePos lineFile) {
         VarEntry se = innerGet(name, true);
         if (se == null) {
-//            throw new EnvironmentError("Name '" + name + "' not found. ", lineFile);
-            return SplInvokes.throwExceptionWithError(
-                    this, Constants.NAME_ERROR, "Name '" + name + "' not found.", lineFile);
+            if (name.equals("String")) {
+                throw new EnvironmentError("Error occurs before the definition of String class. ", lineFile);
+            } else {
+                return SplInvokes.throwExceptionWithError(
+                        this, Constants.NAME_ERROR, "Name '" + name + "' not found.", lineFile);
+            }
         }
 
         return se.getValue();
@@ -209,14 +210,6 @@ public abstract class Environment {
     protected final boolean localHasName(String name, LineFilePos lineFile) {
         return localInnerGet(name, lineFile) != null;
     }
-
-    public void printVars() {
-        System.out.println(variables);
-    }
-
-//    private boolean typeCheck(Type inStock, Type assignment) {
-//        return inStock.isSuperclassOfOrEquals(assignment, this);
-//    }
 
     public abstract void addNamespace(ModuleEnvironment moduleEnvironment);
 

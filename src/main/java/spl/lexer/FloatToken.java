@@ -4,14 +4,13 @@ import spl.util.LineFilePos;
 
 public class FloatToken extends Token {
 
-    private double value;
-//    private byte[] bytes = new byte[8];
+    private final double value;
 
-    public FloatToken(String numString, LineFilePos lineFile) {
+    public FloatToken(String dotFront, String dotBack, LineFilePos lineFile) {
         super(lineFile);
 
-        value = Double.parseDouble(numString);
-//        Bytes.doubleToBytes(d, bytes, 0);
+        long dec = IntToken.parse(dotFront);
+        value = dec + Double.parseDouble("0." + dotBack.replace("_", ""));
     }
 
     public double getValue() {

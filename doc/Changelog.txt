@@ -1,3 +1,120 @@
+===== Version 4055 =====
+2021/01/16
+
+* Added version check of compiled spl file
+
+===== Version 4054 =====
+2021/01/16
+
+* Added docstring system
+* Access to class method via 'Object.method'
+
+===== Version 4053 =====
+2021/01/16
+
+* Implemented HashDict
+* Implemented LinkedList
+* Added parameter error check
+* Added native error check before 'String' class defined in lib/lang
+* Added int overflow check
+
+===== Version 4052 =====
+2021/01/15
+
+* Implemented **kwargs
+* Added supported of indexing with non-int types
+* Added more parameter and argument checks
+
+===== Version 4051 =====
+2021/01/14
+
+* Optimized garbage collection system
+
+===== Version 4050 =====
+2021/01/14
+
+* Added spl cache compiler, can store compiled spl code as (*.spc)
+
+===== Version 4049 =====
+2021/01/14
+
+* Added more functions in lib/math
+* Optimized pseudo-random generator
+* Bug fixes:
+    * Unexpected arithmetic result of float
+
+===== Version 4048 =====
+2021/01/13
+
+* Added some functions in lib/math
+* Added support of hex, oct, bin numbers
+* Bug fixes:
+    * Modules importing sequence was unpredictable, causing error if any module was imported before lang
+    * Names with number at middle were not recognized
+
+===== Version 4047 =====
+2021/01/13
+
+* Reimplemented superclass check
+* Added overriding parameters check
+* New library function 'strJoin'
+* Implemented 'FileReader.read()'
+* Implemented output streams
+* Added more type checkers
+* Minor bugs fix
+
+===== Version 4046 =====
+2021/01/12
+
+* Added library function array?(eleType)
+* Changed the implementation of array type
+* Rewrite io system as streams
+
+===== Version 4045 =====
+2021/01/12
+
+* Implemented basic IO
+
+===== Version 4044 =====
+2021/01/11
+
+* Added type class of native types
+* Added array attribute 'type'
+* Implemented operator '!='
+* Automatically wraps '==', '!=' to 'is', 'is not' in binary operator of native objects
+
+===== Version 4043 =====
+2021/01/11
+
+* Bug fixes:
+    * Byte array
+
+===== Version 4042 =====
+2021/01/11
+
+* New primitive type: byte
+* Minor bugs fix
+
+===== Version 4041 =====
+2021/01/10
+
+* GC optimization:
+    * Removed gc marks inside each objects
+
+===== Version 4040 =====
+2021/01/10
+
+* Bug fixes:
+    * Type contract function causes error when calling imported functions
+    * Gc error when collecting Object[]: references in array were not moved
+
+===== Version 4039 =====
+2021/01/10
+
+* New garbage collection system:
+    * Memory is now allocating by a simple pointer 'availableHead', every garbage collect process rearranges the memory
+    * Removed 'Invokes.free()'
+
 ===== Version 4038 =====
 2021/01/10
 

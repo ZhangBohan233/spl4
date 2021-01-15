@@ -19,6 +19,7 @@ public class Function extends UserFunction {
 
     protected final BlockStmt body;
     protected final String definedName;
+    private final StringLiteralRef docRef;
     private Node rtnContract;
     private boolean hasContract = false;
 
@@ -26,12 +27,13 @@ public class Function extends UserFunction {
      * Constructor for regular function.
      */
     public Function(BlockStmt body, SplCallable.Parameter[] params, Environment definitionEnv,
-                    String definedName, LineFilePos lineFile) {
+                    String definedName, StringLiteralRef docRef, LineFilePos lineFile) {
 
         super(params, definitionEnv, lineFile);
 
         this.body = body;
         this.definedName = definedName;
+        this.docRef = docRef;
     }
 
     public Node getBody() {
@@ -49,7 +51,6 @@ public class Function extends UserFunction {
 
     public void setContract(Environment env, Line paramContractLine, Node rtnContractNode) {
         if (paramContractLine.size() != params.length) {
-//            throw new NativeTypeError("Contracts must match the length of parameters. ", rtnContractNode.getLineFile());
             SplInvokes.throwException(
                     env,
                     Constants.TYPE_ERROR,
@@ -71,13 +72,13 @@ public class Function extends UserFunction {
                     rtnContractNode.getLineFile());
         }
         rtnContract = rtnContractNode;
-//        rtnContract = (Pointer) rtnContractNode.evaluate(env);
 
         hasContract = true;
     }
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
         EvaluatedArguments evaluatedArgs = arguments.evalArgs(callingEnv);
+        if (callingEnv.hasException()) return Undefined.ERROR;
 
         return call(evaluatedArgs, callingEnv, arguments.lineFile);
     }
@@ -85,32 +86,46 @@ public class Function extends UserFunction {
     private void checkParamContracts(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile) {
         if (hasContract && callingEnv.getMemory().isCheckContract()) {
             int argIndex = 0;
-            for (Parameter param : params) {
+            for (int i = 0; i < params.length; i++) {
+                Parameter param = params[i];
+                String location = "the " + i + "th argument";
                 if (param.unpackCount == 0) {
                     if (argIndex < evaluatedArgs.positionalArgs.size()) {
                         callContract(
                                 param.contract,
                                 evaluatedArgs.positionalArgs.get(argIndex++),
                                 callingEnv,
-                                lineFile);
+                                lineFile,
+                                location);
                     } else if (param.hasDefaultValue()) {
                         // use default value
                         callContract(
                                 param.contract,
                                 param.defaultValue,
                                 callingEnv,
-                                lineFile
+                                lineFile,
+                                location
                         );
                     } else {
                         throw new NativeError("Unexpected error. ");
                     }
                 } else if (param.unpackCount == 1) {
                     for (; argIndex < evaluatedArgs.positionalArgs.size(); argIndex++) {
-                        callContract(param.contract, evaluatedArgs.positionalArgs.get(argIndex), callingEnv, lineFile);
+                        callContract(
+                                param.contract,
+                                evaluatedArgs.positionalArgs.get(argIndex),
+                                callingEnv,
+                                lineFile,
+                                location);
                     }
                 } else if (param.unpackCount == 2) {
                     for (Map.Entry<String, SplElement> entry : evaluatedArgs.keywordArgs.entrySet()) {
-                        callContract(param.contract, entry.getValue(), callingEnv, lineFile);
+                        callContract(
+                                param.contract,
+                                entry.getValue(),
+                                callingEnv,
+                                lineFile,
+                                location);
                     }
                 } else {
                     throw new NativeError("Unexpected error. ");
@@ -121,25 +136,29 @@ public class Function extends UserFunction {
 
     private void checkRtnContract(SplElement rtnValue, Environment callingEnv, LineFilePos lineFile) {
         if (hasContract && callingEnv.getMemory().isCheckContract()) {
-            callContract(rtnContract, rtnValue, callingEnv, lineFile);
+            callContract(rtnContract, rtnValue, callingEnv, lineFile, "return statement");
         }
     }
 
-    private Reference getContractFunction(Node conNode, Environment callingEnv, LineFilePos lineFile) {
+    private SplElement getContractFunction(Node conNode, LineFilePos lineFile) {
         if (conNode instanceof BinaryOperator) {
             BinaryOperator bo = (BinaryOperator) conNode;
             if (bo.getOperator().equals("or")) {
-                Reference orFn = (Reference) callingEnv.get(Constants.OR_FN, lineFile);
-                Function function = (Function) callingEnv.getMemory().get(orFn);
+                Reference orFn = (Reference) definitionEnv.get(Constants.OR_FN, lineFile);
+                Function function = (Function) definitionEnv.getMemory().get(orFn);
                 Arguments args = new Arguments(new Line(lineFile, bo.getLeft(), bo.getRight()), lineFile);
-                return (Reference) function.call(args, callingEnv);
+                SplElement callRes = function.call(args, definitionEnv);
+                if (definitionEnv.hasException()) {
+                    return Undefined.ERROR;
+                }
+                return callRes;
             }
         }
         SplElement res = conNode.evaluate(definitionEnv);
-        if (res instanceof Reference) return (Reference) res;
+        if (res instanceof Reference) return res;
         else {
             SplInvokes.throwException(
-                    callingEnv,
+                    definitionEnv,
                     Constants.TYPE_ERROR,
                     "Contract must be callable",
                     lineFile
@@ -148,9 +167,11 @@ public class Function extends UserFunction {
         }
     }
 
-    private void callContract(Node conNode, SplElement arg, Environment callingEnv, LineFilePos lineFile) {
-        Reference conFnPtr = getContractFunction(conNode, callingEnv, lineFile);
+    private void callContract(Node conNode, SplElement arg, Environment callingEnv, LineFilePos lineFile,
+                              String location) {
+        SplElement conFnPtrProb = getContractFunction(conNode, lineFile);
         if (callingEnv.hasException()) return;
+        Reference conFnPtr = (Reference) conFnPtrProb;
         SplCallable callable = (SplCallable) callingEnv.getMemory().get(conFnPtr);
         EvaluatedArguments contractArgs = EvaluatedArguments.of(arg);
 
@@ -159,7 +180,8 @@ public class Function extends UserFunction {
             if (!((Bool) result).value) {
                 SplInvokes.throwException(callingEnv,
                         Constants.CONTRACT_ERROR,
-                        "Contract violation when calling '" + definedName + "'. " + "Got " + arg + ". ",
+                        String.format("Contract violation when calling '%s', at %s. Got %s.",
+                                definedName, location, arg),
                         lineFile);
             }
         } else {
@@ -177,11 +199,13 @@ public class Function extends UserFunction {
 
     protected SplElement callEssential(EvaluatedArguments evaluatedArgs, Environment callingEnv,
                                        FunctionEnvironment scope, LineFilePos argLineFile) {
-        checkValidArgCount(evaluatedArgs.positionalArgs.size(), definedName, argLineFile);
+        checkValidArgCount(evaluatedArgs.positionalArgs.size() + evaluatedArgs.keywordArgs.size(),
+                definedName, callingEnv, argLineFile);
+        if (callingEnv.hasException()) return Undefined.ERROR;
 
         checkParamContracts(evaluatedArgs, callingEnv, argLineFile);
 
-        setArgs(evaluatedArgs, scope);
+        setArgs(evaluatedArgs, scope, callingEnv, argLineFile);
 
         scope.getMemory().pushStack(scope, argLineFile);
         body.evaluate(scope);
@@ -193,5 +217,20 @@ public class Function extends UserFunction {
         checkRtnContract(rtnValue, callingEnv, lineFile);
 
         return rtnValue;
+    }
+
+    public SplElement getAttr(Node attrNode, Environment env, LineFilePos lineFilePos) {
+        if (attrNode instanceof NameNode) {
+            if (((NameNode) attrNode).getName().equals(Constants.DOC_ATTR)) {
+                if (docRef == null) return Reference.NULL;
+                else return docRef.evaluate(env);
+            }
+        }
+        return SplInvokes.throwExceptionWithError(
+                env,
+                Constants.ATTRIBUTE_EXCEPTION,
+                "Function does not have attribute '" + attrNode + "'. ",
+                lineFilePos
+        );
     }
 }

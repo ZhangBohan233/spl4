@@ -68,10 +68,10 @@ public class SwitchCaseFactory {
     }
 
     public SwitchCaseExpr buildExpr(LineFilePos lineFile) {
-        return new SwitchCaseExpr(expr, cases, defaultCase, lineFile);
+        return new SwitchCaseExpr(cases, defaultCase, lineFile);
     }
 
     public SwitchCaseStmt buildStmt(LineFilePos lineFile) {
-        return new SwitchCaseStmt(expr, cases, defaultCase, lineFile);
+        return new SwitchCaseStmt(cases, defaultCase, lineFile);
     }
 }

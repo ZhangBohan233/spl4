@@ -37,8 +37,10 @@ fn main() {
     print(D.__mro__);
     print(b.foo());
     d := new D();
-    //e := new E();
+    print(d.foo());
+    print(d.super.foo());
     print(Invokes.hasAttr([d], __iter__));
+    print(A?(d));
 
     return d.b;
 }

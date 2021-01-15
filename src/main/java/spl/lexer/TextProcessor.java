@@ -11,14 +11,12 @@ public class TextProcessor {
 
     private final CollectiveElement root;
     private final boolean importLang;
-    private final Map<String, CollectiveElement> importedPaths;
-    private final Map<String, ProcessorModule> importedModules = new HashMap<>();
-    private final ProcessorModule module = new ProcessorModule();
+    private final LinkedHashMap<String, CollectiveElement> importedPaths;
 
     public TextProcessor(TokenizeResult tokenizeResult, boolean importLang) {
         this.root = tokenizeResult.rootList;
         this.importLang = importLang;
-        this.importedPaths = new HashMap<>();
+        this.importedPaths = new LinkedHashMap<>();
     }
 
     private TextProcessor(TokenizeResult tokenizeResult, boolean importLang,
@@ -138,8 +136,6 @@ public class TextProcessor {
                             resultEle.add(new AtomicElement(new IdToken(";", lineFile), resultEle));
                         }
 
-                        importedModules.put(importName, module);
-
                         return index;
                 }
             }
@@ -163,29 +159,5 @@ public class TextProcessor {
         } else {
             return path;
         }
-    }
-
-    static class MacroMatcher {
-        private final String macroName;
-        private final List<MacroSyntax> syntaxList = new ArrayList<>();
-
-        MacroMatcher(String macroName, BraceList body) {
-            this.macroName = macroName;
-            parseBody(body);
-        }
-
-        private void parseBody(BraceList body) {
-
-        }
-    }
-
-    static class MacroSyntax {
-
-    }
-
-    static class ProcessorModule {
-        private final Map<String, MacroMatcher> matcherMap = new HashMap<>();
-
-
     }
 }

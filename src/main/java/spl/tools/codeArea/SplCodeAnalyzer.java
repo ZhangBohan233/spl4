@@ -143,25 +143,25 @@ public class SplCodeAnalyzer extends CodeAnalyzer {
             if (analyzeEnv.has(((NameNode) node).getName())) {
 
             }
-        } else if (node instanceof IntNode) {
-            String num = String.valueOf(((IntNode) node).getValue());
+        } else if (node instanceof IntLiteral) {
+            String num = String.valueOf(((IntLiteral) node).getValue());
             List<CodeArea.Text> line = codeArea.getTextEditor().getLine(lineIndex);
             for (int i = 0; i < num.length(); i++) {
                 int pos = node.getLineFile().getPos() + i;
                 line.get(pos).setPaint(numberPaint);
             }
-        } else if (node instanceof FloatNode) {
-            String num = String.valueOf(((FloatNode) node).getValue());
+        } else if (node instanceof FloatLiteral) {
+            String num = String.valueOf(((FloatLiteral) node).getValue());
             List<CodeArea.Text> line = codeArea.getTextEditor().getLine(lineIndex);
             for (int i = 0; i < num.length(); i++) {
                 int pos = node.getLineFile().getPos() + i;
                 line.get(pos).setPaint(numberPaint);
             }
-        } else if (node instanceof CharNode) {
+        } else if (node instanceof CharLiteral) {
             List<CodeArea.Text> line = codeArea.getTextEditor().getLine(lineIndex);
             int pos = node.getLineFile().getPos();
             line.get(pos).setPaint(stringPaint);
-            if (Utilities.arrayContains(CharToken.ESCAPE_CHARS, ((CharNode) node).ch)) {
+            if (Utilities.arrayContains(CharToken.ESCAPE_CHARS, ((CharLiteral) node).ch)) {
                 line.get(pos + 1).setPaint(keywordPaint);
                 line.get(pos + 2).setPaint(keywordPaint);
                 line.get(pos + 3).setPaint(stringPaint);

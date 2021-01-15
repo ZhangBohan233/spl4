@@ -24,12 +24,11 @@ public class Visualizer extends Application {
     private static Map<String, ParseResult> importedModules;
 
     public static void main(String[] args) throws IOException {
-        new Visualizer().load(args);
-
-        launch();
+        if (new Visualizer().load(args))
+            launch();
     }
 
-    private void load(String[] args) throws IOException {
+    private boolean load(String[] args) throws IOException {
         ArgumentParser argumentParser = new ArgumentParser(args);
         if (argumentParser.isAllValid()) {
             TokenizeResult tr =
@@ -38,7 +37,8 @@ public class Visualizer extends Application {
             Parser psr = new Parser(tpr);
             root = psr.parse().getRoot();
             importedModules = SplInterpreter.parseImportedModules(tpr.importedPaths, psr.getStringLiterals());
-        }
+            return true;
+        } else return false;
     }
 
     @Override

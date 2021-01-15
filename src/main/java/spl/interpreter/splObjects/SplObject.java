@@ -1,22 +1,20 @@
 package spl.interpreter.splObjects;
 
 import spl.interpreter.SplThing;
+import spl.interpreter.primitives.Reference;
+
+import java.util.List;
 
 public abstract class SplObject implements SplThing {
+
     /**
-     * The number of times this object is marked
+     * Returns a list containing all related references of this object, or null if not.
+     * <p>
+     * This method is used by garbage collector.
+     *
+     * @return a list containing all related references of this object, or null if not
      */
-    private int gcCount;
-
-    public void incrementGcCount() {
-        gcCount++;
-    }
-
-    public void clearGcCount() {
-        gcCount = 0;
-    }
-
-    public boolean isGcMarked() {
-        return gcCount > 0;
+    public List<Reference> listAttrReferences() {
+        return null;
     }
 }

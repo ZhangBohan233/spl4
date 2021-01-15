@@ -12,6 +12,7 @@ public abstract class SplElement implements SplThing {
     public static final int BOOLEAN = 4;
     public static final int POINTER = 5;
     public static final int UNDEFINED = 6;
+    public static final int BYTE = 7;
 
     public abstract int type();
 
@@ -36,11 +37,16 @@ public abstract class SplElement implements SplThing {
             case VOID -> "void";
             case POINTER -> "Object";
             case UNDEFINED -> "undefinedType";
+            case BYTE -> "byte";
             default -> throw new NativeTypeError();
         };
     }
 
     public static boolean isPrimitive(SplElement element) {
         return !(element instanceof Reference);
+    }
+
+    public boolean valueEquals(SplElement other) {
+        return equals(other);
     }
 }

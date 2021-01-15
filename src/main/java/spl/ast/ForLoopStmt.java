@@ -13,13 +13,14 @@ import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplArray;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplObject;
-import spl.util.Constants;
-import spl.util.LineFilePos;
-import spl.util.Utilities;
+import spl.util.*;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 public class ForLoopStmt extends ConditionalStmt {
 
-    private final static String forEachSyntaxMsg = "Syntax of for-each loop: 'for i in collection {...}'";
+//    private final static String forEachSyntaxMsg = "Syntax of for-each loop: 'for i in collection {...}'";
     private final BlockStmt condition;
 
     public ForLoopStmt(BlockStmt condition, BlockStmt bodyBlock, LineFilePos lineFile) {
@@ -140,6 +141,15 @@ public class ForLoopStmt extends ConditionalStmt {
                                      Environment parentEnv,
                                      LoopEnvironment titleEnv,
                                      BlockEnvironment bodyEnv) {
+        if (iterator == null) {
+            SplInvokes.throwException(
+                    parentEnv,
+                    Constants.NULL_ERROR,
+                    "Iterator is null.",
+                    loopInvariant.lineFile
+            );
+            return;
+        }
         Reference nextPtr = (Reference) iterator.getEnv().get(Constants.NEXT_FN, lineFile);
         Reference hasNextPtr = (Reference) iterator.getEnv().get(Constants.HAS_NEXT_FN, lineFile);
         SplMethod nextFn = (SplMethod) titleEnv.getMemory().get(nextPtr);
@@ -148,7 +158,9 @@ public class ForLoopStmt extends ConditionalStmt {
         String liName = loopInvariant.declaredName;
         loopInvariant.evaluate(titleEnv);  // declare loop invariant
 
-        Bool bool = (Bool) hasNextFn.call(EvaluatedArguments.of(instancePtr), titleEnv, lineFile);
+        SplElement hasNext = hasNextFn.call(EvaluatedArguments.of(instancePtr), titleEnv, lineFile);
+        if (titleEnv.hasException()) return;
+        Bool bool = (Bool) hasNext;
         while (bool.value) {
             bodyEnv.invalidate();
             SplElement nextVal = nextFn.call(EvaluatedArguments.of(instancePtr), bodyEnv, lineFile);
@@ -159,12 +171,26 @@ public class ForLoopStmt extends ConditionalStmt {
 
             titleEnv.resumeLoop();
 
-            bool = (Bool) hasNextFn.call(EvaluatedArguments.of(instancePtr), titleEnv, lineFile);
+            hasNext = hasNextFn.call(EvaluatedArguments.of(instancePtr), titleEnv, lineFile);
+            if (titleEnv.hasException()) return;
+            bool = (Bool) hasNext;
         }
     }
 
     @Override
     public String toString() {
         return "for " + condition + " do " + bodyBlock;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        condition.save(out);
+        bodyBlock.save(out);
+    }
+
+    public static ForLoopStmt reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
+        BlockStmt cond = Reconstructor.reconstruct(in);
+        BlockStmt body = Reconstructor.reconstruct(in);
+        return new ForLoopStmt(cond, body, lineFilePos);
     }
 }

@@ -2,28 +2,45 @@ package spl.ast;
 
 import spl.interpreter.env.CaseBlockEnvironment;
 import spl.interpreter.env.Environment;
+import spl.util.BytesIn;
+import spl.util.BytesOut;
 import spl.util.LineFilePos;
+import spl.util.Reconstructor;
 
+import java.io.IOException;
 import java.util.List;
 
 public class SwitchCaseStmt extends Statement {
 
-    private final Expression expr;
     private final List<CaseStmt> cases;
     private final CaseStmt defaultCase;
 
-    SwitchCaseStmt(Expression expr, List<CaseStmt> cases, CaseStmt defaultCase, LineFilePos lineFile) {
+    SwitchCaseStmt(List<CaseStmt> cases, CaseStmt defaultCase, LineFilePos lineFile) {
         super(lineFile);
 
-        this.expr = expr;
         this.cases = cases;
         this.defaultCase = defaultCase;
+    }
+
+    public static SwitchCaseStmt reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
+        List<CaseStmt> cases = in.readList();
+        boolean hasDefault = in.readBoolean();
+        CaseStmt defaultCase = null;
+        if (hasDefault) defaultCase = Reconstructor.reconstruct(in);
+        return new SwitchCaseStmt(cases, defaultCase, lineFilePos);
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        out.writeList(cases);
+        out.writeBoolean(defaultCase != null);
+        if (defaultCase != null) defaultCase.save(out);
     }
 
     @Override
     protected void internalProcess(Environment env) {
         boolean execDefault = true;
-        for (CaseStmt caseStmt: cases) {
+        for (CaseStmt caseStmt : cases) {
             boolean caseCondition = caseStmt.evalCondition(env);
             if (caseCondition) {
                 CaseBlockEnvironment blockEnv = new CaseBlockEnvironment(env, false);

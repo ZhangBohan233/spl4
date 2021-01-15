@@ -5,7 +5,12 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 
 import spl.interpreter.primitives.Undefined;
+import spl.util.BytesOut;
 import spl.util.LineFilePos;
+import spl.util.Utilities;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 public abstract class Node {
     public final LineFilePos lineFile;
@@ -20,19 +25,25 @@ public abstract class Node {
         // pre
         if (env.interrupted()) return Reference.NULL;
         if (env.hasException()) return Undefined.ERROR;
-//        env.getMemory().enterNode(this);
 
         // essential
         SplElement res = internalEval(env);
 
         // post
-//        env.getMemory().exitNode();
 //        if (env.hasException()) return null;
 
         return res;
     }
 
     protected abstract SplElement internalEval(Environment env);
+
+    public final void save(BytesOut out) throws IOException {
+        out.writeString(getClass().getName());
+        lineFile.save(out);
+        internalSave(out);
+    }
+
+    protected abstract void internalSave(BytesOut out) throws IOException;
 
     public LineFilePos getLineFile() {
         return lineFile;

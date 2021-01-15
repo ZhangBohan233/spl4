@@ -1,12 +1,15 @@
 package spl.interpreter.splObjects;
 
 import spl.ast.BlockStmt;
+import spl.ast.StringLiteralRef;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.MethodEnvironment;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.util.LineFilePos;
+
+import java.util.List;
 
 public class SplMethod extends Function {
 
@@ -16,8 +19,14 @@ public class SplMethod extends Function {
                      Parameter[] params,
                      Environment classDefEnv,
                      String definedName,
+                     StringLiteralRef docRef,
                      LineFilePos lineFile) {
-        super(body, params, classDefEnv, definedName, lineFile);
+        super(body, params, classDefEnv, definedName, docRef, lineFile);
+    }
+
+    @Override
+    public List<Reference> listAttrReferences() {
+        return classPtr != null ? List.of(classPtr) : List.of();
     }
 
     public void setClassPtr(Reference classPtr) {
@@ -42,8 +51,11 @@ public class SplMethod extends Function {
 
     @Override
     public String toString() {
-        return "Method " + definedName + ": {" + body.getLines().size() + " lines, defined in " +
-                definitionEnv.getMemory().get(classPtr) + "} ";
+        return String.format("Method %s: {%d lines, defined in %s. %s}",
+                definedName,
+                body.getLines().size(),
+                definitionEnv.getMemory().get(classPtr),
+                lineFile);
     }
 
     public Reference getClassPtr() {

@@ -13,7 +13,7 @@ import java.util.*;
 public class Memory {
 
     public static final int INTERVAL = 1;
-    private static final int DEFAULT_HEAP_SIZE = 1024;
+    private static final int DEFAULT_HEAP_SIZE = 8192;
     public final DebugAttributes debugs = new DebugAttributes();
     private final SplThing[] heap;
     private final Set<Environment> temporaryEnvs = new HashSet<>();
@@ -31,14 +31,25 @@ public class Memory {
     private int stackSize;
     private int stackLimit = 1000;
     private boolean checkContract = true;
-    private AvailableList available;
+    private int availableHead = 1;
 
     public Memory() {
         heapSize = DEFAULT_HEAP_SIZE;
         heap = new SplThing[heapSize];
-
-        initAvailable();
     }
+
+//    public static void main(String[] args) {
+//        int[] arr = {0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8};
+//        System.arraycopy(arr, 3, arr, 1, 6);
+//        System.out.println(Arrays.toString(arr));
+//        AvailableList availableList = new AvailableList(16);
+//        System.out.println(availableList.findAva(3));
+//        System.out.println(availableList);
+//        availableList.addAvaSorted(0, 1);
+//        System.out.println(availableList);
+//        System.out.println(availableList.findAva(2));
+//        System.out.println(availableList);
+//    }
 
     public int getHeapSize() {
         return heapSize;
@@ -49,7 +60,11 @@ public class Memory {
     }
 
     public int getHeapUsed() {
-        return heapSize - available.size;
+        return availableHead;
+    }
+
+    public int getAvailableSize() {
+        return heapSize - availableHead;
     }
 
     public void pushStack(FunctionEnvironment newCallEnv, LineFilePos lineFile) {
@@ -69,10 +84,6 @@ public class Memory {
         return callStack;
     }
 
-    private void initAvailable() {
-        available = new AvailableList(heapSize);
-    }
-
     public Reference allocate(int size, Environment env) {
         int ptr = innerAllocate(size);
         if (ptr == -1) {
@@ -81,13 +92,8 @@ public class Memory {
             gc(env);
             ptr = innerAllocate(size);
             if (ptr == -1) {
-                if (available.size >= size) {
-                    reallocate();
-                    ptr = innerAllocate(size);
-                    if (ptr > 0) return new Reference(ptr);
-                }
                 throw new MemoryError("Cannot allocate size " + size + ": no memory available. " +
-                        "Available memory: " + available.availableCount() + ". ");
+                        "Available memory: " + getAvailableSize() + ". ");
 
             }
         }
@@ -95,21 +101,13 @@ public class Memory {
     }
 
     private int innerAllocate(int size) {
-        int ptr;
-        if (size == 1) {
-            ptr = available.firstAva();
+        if (getAvailableSize() >= size) {
+            int ptr = availableHead;
+            availableHead += size;
+            return ptr;
         } else {
-            ptr = available.findAva(size);
+            return -1;
         }
-        return ptr;
-    }
-
-    /**
-     * Rearrange memory to remove fragile memory.
-     */
-    private void reallocate() {
-        MemoryRearranger mr = new MemoryRearranger();
-        mr.rearrange();
     }
 
     public void set(Reference ptr, SplObject obj) {
@@ -136,14 +134,6 @@ public class Memory {
         return (SplElement) heap[addr];
     }
 
-    public void free(Reference ptr, int length) {
-//        System.out.println(ptr);
-//        System.out.println(available);
-        available.addAvaNoSort(ptr.getPtr(), length);
-        set(ptr, null);
-//        System.out.println(available);
-    }
-
     public void addPermanentPtr(Reference ref) {
         permanentPointers.add(ref);
     }
@@ -165,12 +155,11 @@ public class Memory {
     }
 
     public void gc(Environment baseEnv) {
-        System.out.println("gc!!!");
+//        System.out.println("gc!!!");
         garbageCollector.garbageCollect(baseEnv);
     }
 
     public Reference allocateFunction(SplCallable function, Environment env) {
-//        System.out.println("Allocating " + function);
         Reference ptr = allocate(1, env);
         set(ptr, function);
         return ptr;
@@ -183,14 +172,14 @@ public class Memory {
     }
 
     public void printMemory() {
-        System.out.println("Heap used: " + (heapSize - available.size));
+        System.out.println("Heap used: " + getHeapUsed());
         System.out.println(Arrays.toString(heap));
     }
 
     public String memoryViewWithAddress() {
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < heap.length; ++i) {
-            sb.append(i).append(": ").append(get(i)).append(", ");
+            sb.append(i).append(": ").append(heap[i]).append(", ");
         }
         sb.append("]");
         return sb.toString();
@@ -202,7 +191,7 @@ public class Memory {
     }
 
     public String availableView() {
-        return available.availableCount() + ": " + available.toString();
+        return String.valueOf(availableHead);
     }
 
     public void setStackLimit(int stackLimit) {
@@ -215,134 +204,6 @@ public class Memory {
 
     public void setCheckContract(boolean checkContract) {
         this.checkContract = checkContract;
-    }
-
-    //    public static void main(String[] args) {
-//        AvailableList availableList = new AvailableList(16);
-//        System.out.println(availableList.findAva(3));
-//        System.out.println(availableList);
-//        availableList.addAvaSorted(0, 1);
-//        System.out.println(availableList);
-//        System.out.println(availableList.findAva(2));
-//        System.out.println(availableList);
-//    }
-
-    private static class AvailableList {
-
-        private final LnkNode head;
-
-        /**
-         * this size includes the head (0, null), which would never be used.
-         */
-        private int size;
-
-        AvailableList(int size) {
-            LnkNode last = null;
-            for (int i = size - 1; i >= 0; --i) {
-                LnkNode node = new LnkNode();
-                node.next = last;
-                node.value = i;
-                last = node;
-            }
-            head = last;
-            this.size = size;
-        }
-
-        void clear() {
-            head.next = null;
-            size = 1;
-        }
-
-        /**
-         * Add last and returns the temp last
-         *
-         * @param addr    addr to add
-         * @param curLast the current last node, null if it is the head (fixed)
-         * @return the current last node
-         */
-        LnkNode addLast(int addr, LnkNode curLast) {
-            LnkNode node = new LnkNode();
-            node.value = addr;
-            if (curLast == null) curLast = head;
-
-            size++;
-
-            curLast.next = node;
-            return node;
-        }
-
-        int firstAva() {
-            LnkNode node = head.next;
-            if (node == null) return -1;
-            head.next = node.next;
-            size--;
-            return node.value;
-        }
-
-        void addAvaNoSort(int ptr, int intervalsCount) {
-            LnkNode last = new LnkNode();
-            LnkNode firstOfAdd = last;
-            last.value = ptr;
-            for (int i = 1; i < intervalsCount; ++i) {
-                LnkNode n = new LnkNode();
-                n.value = ptr + i * INTERVAL;
-                last.next = n;
-                last = n;
-            }
-            last.next = head.next;
-            head.next = firstOfAdd;
-            size += intervalsCount;
-        }
-
-        int findAva(int size) {
-            LnkNode h = head;
-            while (h.next != null) {
-                int i = 0;
-                LnkNode cur = h.next;
-                for (; i < size - 1; ++i) {
-                    LnkNode next = cur.next;
-                    if (next == null || next.value != cur.value + INTERVAL) break;
-                    cur = next;
-                }
-                if (i == size - 1) {
-                    LnkNode foundNode = h.next;
-                    int found = foundNode.value;
-                    h.next = cur.next;
-                    this.size -= size;
-                    return found;
-                } else {
-                    h = cur;
-                }
-            }
-            return -1;
-        }
-
-        /**
-         * @return count of available memory slots, does not include the head.
-         */
-        public int availableCount() {
-            int s = 0;
-            for (LnkNode n = head; n != null; n = n.next) {
-                s++;
-            }
-            if (s != size) throw new IndexOutOfBoundsException("Expect count: " + size + ", actual count: " + s);
-            return s - 1;  // exclude null
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder stringBuilder = new StringBuilder("Ava[");
-            for (LnkNode n = head; n != null; n = n.next) {
-                stringBuilder.append(n.value).append("->");
-            }
-            stringBuilder.append("]");
-            return stringBuilder.toString();
-        }
-
-        private static class LnkNode {
-            LnkNode next;
-            int value;
-        }
     }
 
     public static class MemoryError extends NativeError {
@@ -374,80 +235,29 @@ public class Memory {
         }
     }
 
-    private class MemoryRearranger {
-        private final Map<Integer, Reference> refs = new HashMap<>();
-
-        private void rearrange() {
-            refs.clear();
-        }
-
-        private void add(Environment env) {
-            if (env == null) return;
-
-//            System.out.println(env);
-
-            Set<SplElement> attr = env.attributes();
-            for (SplElement ele : attr) {
-                if (ele instanceof Reference) {
-                    Reference ptr = (Reference) ele;
-
-                    // the null case represent those constants which has not been set yet
-//                    SplObject obj = get(ptr);
-                    add(ptr);
-//                    markObjectAsUsed(obj, ptr.getPtr());
-                }
-            }
-            add(env.outer);
-            if (env instanceof FunctionEnvironment) {
-                add(((FunctionEnvironment) env).callingEnv);
-            }
-        }
-
-        private void add(SplObject obj) {
-
-        }
-
-        private void add(Reference reference) {
-            refs.put(reference.getPtr(), reference);
-            SplObject obj = get(reference);
-            if (obj instanceof SplArray) {
-                int arrBegin = reference.getPtr() + 1;
-                SplArray array = (SplArray) obj;
-                for (int i = 0; i < array.length; i++) {
-                    int p = arrBegin + i;
-                    SplElement ele = getPrimitive(p);
-                    if (ele instanceof Reference) {
-                        SplObject pointed = get((Reference) ele);
-//                        add(pointed, p);
-                    }
-                }
-            } else if (obj instanceof SplModule) {
-                SplModule module = (SplModule) obj;
-                add(module.getEnv());
-            } else if (obj instanceof Instance) {
-                Instance instance = (Instance) obj;
-                add(instance.getEnv());
-            } else if (obj instanceof SplClass) {
-                SplClass clazz = (SplClass) obj;
-                List<Reference> classPointers = clazz.getAllAttrPointers();
-                for (Reference attrPtr : classPointers) {
-//                    SplObject attrObj = get(attrPtr);
-                    add(attrPtr);
-                }
-            }
-        }
-
-        private void move() {
-
-        }
-    }
-
     private class GarbageCollector {
+
+        private final Map<Integer, Set<Reference>> markedRefs = new HashMap<>();
+
+        private void addRef(int addr, Reference ref) {
+            Set<Reference> refs = markedRefs.get(addr);
+            if (refs != null) {
+                refs.add(ref);
+            } else {
+                refs = new HashSet<>();
+                refs.add(ref);
+                markedRefs.put(addr, refs);
+            }
+        }
+
+        private boolean refAlreadyAdded(int objAddr) {
+            return markedRefs.containsKey(objAddr);
+        }
 
         private void garbageCollect(Environment baseEnv) {
             long beginTime = System.currentTimeMillis();
             if (debugs.printGcRes)
-                System.out.println("Doing gc! Available before gc: " + available.availableCount());
+                System.out.println("Doing gc! Available before gc: " + getAvailableSize());
 
             // set all marks to 0
             initMarks();
@@ -458,7 +268,6 @@ public class Memory {
 
             // call stack roots
             for (StackTraceNode stn : callStack) {
-//            System.out.println("===" + env);
                 mark(stn.env);
             }
 
@@ -470,35 +279,29 @@ public class Memory {
             // permanent objects
             for (Reference pr : permanentPointers) {
                 SplObject obj = get(pr);
-                markObjectAsUsed(obj, pr.getPtr());
+                markObjectAsUsed(obj, pr.getPtr(), pr);
             }
 
             // temp object roots
             for (Reference tempPtr : managedPointers) {
                 SplObject obj = get(tempPtr);
-                System.out.println(obj);
-                markObjectAsUsed(obj, tempPtr.getPtr());
+                markObjectAsUsed(obj, tempPtr.getPtr(), tempPtr);
             }
 
             // sweep
             sweep();
 
             if (debugs.printGcRes)
-                System.out.println("gc done! Available after gc: " + available.availableCount() +
+                System.out.println("gc done! Available after gc: " + getAvailableSize() +
                         ". Time used: " + (System.currentTimeMillis() - beginTime));
         }
 
         private void initMarks() {
-            for (SplThing obj : heap) {
-                if (obj instanceof SplObject)
-                    ((SplObject) obj).clearGcCount();
-            }
+            markedRefs.clear();
         }
 
         private void mark(Environment env) {
             if (env == null) return;
-
-//            System.out.println(env);
 
             Set<SplElement> attr = env.attributes();
             for (SplElement ele : attr) {
@@ -507,7 +310,7 @@ public class Memory {
 
                     // the null case represent those constants which has not been set yet
                     SplObject obj = get(ptr);
-                    markObjectAsUsed(obj, ptr.getPtr());
+                    markObjectAsUsed(obj, ptr.getPtr(), ptr);
                 }
             }
             mark(env.outer);
@@ -516,12 +319,13 @@ public class Memory {
             }
         }
 
-        private void markObjectAsUsed(SplObject obj, int objAddr) {
+        private void markObjectAsUsed(SplObject obj, int objAddr, Reference ref) {
             if (obj == null) return;
-            if (obj.isGcMarked()) return;
-            obj.incrementGcCount();
-//        if (obj.gcCount > 1) return;  // already marked
-//        System.out.println(obj);
+            if (refAlreadyAdded(objAddr)) return;
+
+            if (ref != null) {
+                addRef(objAddr, ref);
+            }
 
             if (obj instanceof SplArray) {
                 int arrBegin = objAddr + 1;
@@ -530,8 +334,11 @@ public class Memory {
                     int p = arrBegin + i;
                     SplElement ele = getPrimitive(p);
                     if (ele instanceof Reference) {
-                        SplObject pointed = get((Reference) ele);
-                        markObjectAsUsed(pointed, p);
+                        // Object[] stores reference as array element, they should also be retargeted
+                        Reference refInArray = (Reference) ele;
+                        SplObject pointed = get(refInArray);
+                        markObjectAsUsed(pointed, p, null);
+                        addRef(refInArray.getPtr(), refInArray);
                     }
                 }
             } else if (obj instanceof SplModule) {
@@ -544,31 +351,50 @@ public class Memory {
                 SplClass clazz = (SplClass) obj;
                 List<Reference> classPointers = clazz.getAllAttrPointers();
                 for (Reference attrPtr : classPointers) {
-                    SplObject attrObj = get(attrPtr);
-                    markObjectAsUsed(attrObj, attrPtr.getPtr());
+                    if (attrPtr != null) {
+                        SplObject attrObj = get(attrPtr);
+                        markObjectAsUsed(attrObj, attrPtr.getPtr(), attrPtr);
+                    }
+                }
+            }
+
+            List<Reference> attrRefs = obj.listAttrReferences();
+            if (attrRefs != null) {
+                for (Reference attrRef : attrRefs) {
+                    if (attrRef != null) addRef(attrRef.getPtr(), attrRef);
                 }
             }
         }
 
         private void sweep() {
-            available.clear();
-            AvailableList.LnkNode curLast = null;
-            for (int p = 1; p < heapSize; ++p) {
-                SplThing thing = getRaw(p);
-                if (thing instanceof SplObject) {
-                    SplObject obj = (SplObject) thing;
-                    if (obj.isGcMarked()) {
-                        if (obj instanceof SplArray) {
-                            p += ((SplArray) obj).length;  // do not add any addresses in this array to available list
+            int curAddr = 1;
+            for (int p = 1; p < heapSize; p++) {
+                Set<Reference> refs = markedRefs.get(p);
+                if (refs != null) {
+                    int newAddr = curAddr++;
+                    int objAddr = 0;
+                    Reference firstRef = null;
+                    for (Reference ref : refs) {
+                        if (firstRef == null) {
+                            firstRef = ref;
+                            objAddr = firstRef.getPtr();
                         }
-                    } else {
-                        curLast = available.addLast(p, curLast);
-                        set(p, null);  // just for visual clearance, not necessary
+                        ref.setPtr(newAddr);
                     }
-                } else {
-                    curLast = available.addLast(p, curLast);
+
+                    SplObject obj = get(objAddr);
+                    heap[newAddr] = heap[objAddr];
+                    if (obj instanceof SplArray) {
+                        SplArray array = (SplArray) obj;
+                        // avoid using System.arraycopy() because this may overlap
+                        for (int i = 0; i < array.length; i++) {
+                            heap[curAddr++] = heap[objAddr + i + 1];
+                        }
+                    }
+
                 }
             }
+            availableHead = curAddr;
         }
     }
 }

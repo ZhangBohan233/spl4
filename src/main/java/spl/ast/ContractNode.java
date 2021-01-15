@@ -5,9 +5,9 @@ import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.splObjects.Function;
 import spl.interpreter.splObjects.SplMethod;
-import spl.util.Constants;
-import spl.util.LineFilePos;
+import spl.util.*;
 
+import java.io.IOException;
 import java.util.Map;
 
 public class ContractNode extends Statement {
@@ -22,6 +22,13 @@ public class ContractNode extends Statement {
         this.fnName = fnName;
         this.paramContracts = paramContracts;
         this.rtnContract = rtnContract;
+    }
+
+    public static ContractNode reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        String name = is.readString();
+        Line param = Reconstructor.reconstruct(is);
+        Expression rtn = Reconstructor.reconstruct(is);
+        return new ContractNode(name, param, rtn, lineFilePos);
     }
 
     @Override
@@ -60,5 +67,12 @@ public class ContractNode extends Statement {
 
     public Line getParamContracts() {
         return paramContracts;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        out.writeString(fnName);
+        paramContracts.save(out);
+        rtnContract.save(out);
     }
 }

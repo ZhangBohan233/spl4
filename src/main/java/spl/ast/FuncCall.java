@@ -9,23 +9,30 @@ import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.SplCallable;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplObject;
-import spl.util.Constants;
-import spl.util.LineFilePos;
+import spl.util.*;
+
+import java.io.IOException;
 
 public class FuncCall extends Expression {
 
-    Node callObj;
+    Expression callObj;
     Arguments arguments;
 
     public FuncCall(LineFilePos lineFile) {
         super(lineFile);
     }
 
-    public FuncCall(Node callObj, Arguments arguments, LineFilePos lineFile) {
+    public FuncCall(Expression callObj, Arguments arguments, LineFilePos lineFile) {
         super(lineFile);
 
         this.callObj = callObj;
         this.arguments = arguments;
+    }
+
+    public static FuncCall reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
+        Expression callObj = Reconstructor.reconstruct(in);
+        Arguments arguments = Reconstructor.reconstruct(in);
+        return new FuncCall(callObj, arguments, lineFilePos);
     }
 
     @Override
@@ -44,7 +51,8 @@ public class FuncCall extends Expression {
             SplCallable function = (SplCallable) obj;
 
             EvaluatedArguments ea = arguments.evalArgs(env);
-            if (function instanceof SplMethod) {
+            if (env.hasException()) return Undefined.ERROR;
+            if (function instanceof SplMethod && env.hasName(Constants.THIS)) {
                 // calling a method inside class
                 Reference thisPtr = (Reference) env.get(Constants.THIS, lineFile);
                 ea.insertThis(thisPtr);
@@ -72,11 +80,17 @@ public class FuncCall extends Expression {
         this.arguments = arguments;
     }
 
-    public Node getCallObj() {
+    public Expression getCallObj() {
         return callObj;
     }
 
-    public void setCallObj(Node callObj) {
+    public void setCallObj(Expression callObj) {
         this.callObj = callObj;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        callObj.save(out);
+        arguments.save(out);
     }
 }

@@ -52,6 +52,6 @@ public class Char extends SplElement {
 
     @Override
     public int hashCode() {
-        return (int) (value ^ (value >>> 32));
+        return value;
     }
 }

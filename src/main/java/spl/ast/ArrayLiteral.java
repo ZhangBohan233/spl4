@@ -2,9 +2,11 @@ package spl.ast;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.Instance;
-import spl.util.Constants;
-import spl.util.LineFilePos;
+import spl.util.*;
+
+import java.io.IOException;
 
 public class ArrayLiteral extends Expression {
 
@@ -16,6 +18,11 @@ public class ArrayLiteral extends Expression {
         this.content = content;
     }
 
+    public static ArrayLiteral reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        Arguments arguments = Reconstructor.reconstruct(is);
+        return new ArrayLiteral(arguments, lineFilePos);
+    }
+
     @Override
     public String toString() {
         return "list[" + content + "]";
@@ -23,6 +30,13 @@ public class ArrayLiteral extends Expression {
 
     @Override
     protected SplElement internalEval(Environment env) {
-        return Instance.createInstanceWithInitCall(Constants.LIST_CLASS, content.evalArgs(env), env, lineFile).pointer;
+        var ea = content.evalArgs(env);
+        if (env.hasException()) return Undefined.ERROR;
+        return Instance.createInstanceWithInitCall(Constants.LIST_CLASS, ea, env, lineFile).pointer;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        content.save(out);
     }
 }

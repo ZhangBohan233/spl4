@@ -3,6 +3,7 @@ package spl.interpreter.primitives;
 public class Int extends SplElement {
 
     public static final Int ZERO = new Int(0);
+    public static final Int NEG_ONE = new Int(-1);
 
     public final long value;
 

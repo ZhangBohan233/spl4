@@ -10,7 +10,11 @@ import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.*;
 
 import java.io.*;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class Utilities {
 
@@ -33,6 +37,94 @@ public class Utilities {
         for (int[] a : array) if (Arrays.equals(a, value)) return true;
         return false;
     }
+
+    public static void intToBytes(int value, byte[] arr, int index) {
+        arr[index] = (byte) (value >> 24);
+        arr[index + 1] = (byte) (value >> 16);
+        arr[index + 2] = (byte) (value >> 8);
+        arr[index + 3] = (byte) value;
+    }
+
+    public static byte[] intToBytes(int value) {
+        byte[] arr = new byte[4];
+        intToBytes(value, arr, 0);
+        return arr;
+    }
+
+    public static int bytesToInt(byte[] arr, int index) {
+        return ((arr[index] & 0xff) << 24) |
+                ((arr[index + 1] & 0xff) << 16) |
+                ((arr[index + 2] & 0xff) << 8) |
+                (arr[index + 3] & 0xff);
+    }
+
+    public static int bytesToInt(byte[] arr) {
+        return bytesToInt(arr, 0);
+    }
+
+    public static void doubleToBytes(double value, byte[] array, int index) {
+        long l = Double.doubleToLongBits(value);
+        for (int i = 0; i < 8; i++) {
+            array[index + i] = (byte) ((l >> 8 * i) & 0xff);
+        }
+    }
+
+    public static double bytesToDouble(byte[] array, int index) {
+        long v = 0;
+        for (int i = 0; i < 8; i++) {
+            v |= ((long) (array[index + i] & 0xff)) << (8 * i);
+        }
+        return Double.longBitsToDouble(v);
+    }
+
+    public static byte[] doubleToBytes(double value) {
+        byte[] arr = new byte[8];
+        doubleToBytes(value, arr, 0);
+        return arr;
+    }
+
+    public static double bytesToDouble(byte[] array) {
+        return bytesToDouble(array, 0);
+    }
+
+    public static void longToBytes(long value, byte[] array, int index) {
+        for (int i = 0; i < 8; i++) {
+            array[index + i] = (byte) ((value >> 8 * i) & 0xff);
+        }
+    }
+
+    public static long bytesToLong(byte[] array, int index) {
+        long v = 0;
+        for (int i = 0; i < 8; i++) {
+            v |= ((long) (array[index + i] & 0xff)) << (8 * i);
+        }
+        return v;
+    }
+
+    public static byte[] longToBytes(long value) {
+        byte[] arr = new byte[8];
+        longToBytes(value, arr, 0);
+        return arr;
+    }
+
+    public static long bytesToLong(byte[] arr) {
+        return bytesToLong(arr, 0);
+    }
+
+    public static byte[] stringToLengthBytes(String s) {
+        byte[] b = s.getBytes(StandardCharsets.UTF_8);
+        byte[] res = new byte[b.length + 4];
+        intToBytes(b.length, res, 0);
+        System.arraycopy(b, 0, res, 4, b.length);
+        return res;
+    }
+
+//    public static String readLengthString(InputStream is) throws IOException {
+//        int length = readInt(is);
+//        byte[] buf = new byte[length];
+//        if (is.read(buf) != length) throw new IOException("Cannot read string");
+//        return new String(buf);
+//    }
 
     public static String readFile(File file) throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(file));
@@ -69,7 +161,7 @@ public class Utilities {
      * <p>
      * This method shows a number that at most 1,024 and a corresponding suffix
      *
-     * @param size   the size to be converted
+     * @param size the size to be converted
      * @return the readable {@code String}
      */
     public static String sizeToReadable(long size) {
@@ -93,9 +185,7 @@ public class Utilities {
 
     @SafeVarargs
     public static Map<String, Integer> mergeMaps(Map<String, Integer>... maps) {
-        Map<String, Integer> res = new HashMap<>();
-        for (Map<String, Integer> m : maps) res.putAll(m);
-        return res;
+        return new MapMerger<>(maps).merge();
     }
 
     public static String typeName(SplElement element) {
@@ -126,6 +216,21 @@ public class Utilities {
         Reference stackTraceFtnPtr = (Reference) errIns.getEnv().get("printStackTrace", lineFile);
         Function stackTraceFtn = (Function) globalEnvironment.getMemory().get(stackTraceFtnPtr);
         stackTraceFtn.call(EvaluatedArguments.of(errPtr), globalEnvironment, lineFile);
+    }
+
+    public static SplElement unwrap(SplElement ele, Environment env, LineFilePos lineFilePos) {
+        if (ele instanceof Reference) {
+            SplObject obj = env.getMemory().get((Reference) ele);
+            if (obj instanceof Instance) {
+                Instance ins = (Instance) obj;
+                Reference wrapperClassRef = (Reference) env.get(Constants.WRAPPER, lineFilePos);
+                Reference childClassRef = ins.getClazzPtr();
+                if (SplClass.isSuperclassOf(wrapperClassRef, childClassRef, env.getMemory())) {
+                    return ins.getEnv().get(Constants.WRAPPER_ATTR, lineFilePos);
+                }
+            }
+        }
+        return ele;
     }
 
     public static Reference primitiveToWrapper(SplElement prim, Environment env, LineFilePos lineFile) {

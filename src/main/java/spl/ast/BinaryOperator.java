@@ -8,10 +8,9 @@ import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplObject;
 import spl.lexer.SyntaxError;
-import spl.util.Constants;
-import spl.util.LineFilePos;
-import spl.util.Utilities;
+import spl.util.*;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,6 +31,7 @@ public class BinaryOperator extends BinaryExpr {
 
     private static final Map<String, String> LOGICAL_OP_MAP = Map.of(
             "==", "__eq__",
+            "!=", "__ne__",
             ">", "__gt__",
             "<", "__lt__"
     );
@@ -92,7 +92,22 @@ public class BinaryOperator extends BinaryExpr {
         };
     }
 
-    private static SplElement simpleArithmetic(String op, Environment env, double l, double r, LineFilePos lineFile) {
+    private static SplElement simpleArithmeticInt(String op, Environment env, long l, long r, LineFilePos lineFile) {
+        return switch (op) {
+            case "+" -> new Int(l + r);
+            case "-" -> new Int(l - r);
+            case "*" -> new Int(l * r);
+            case "/" -> new Int(l / r);
+            case "%" -> new Int(l % r);
+            default -> SplInvokes.throwExceptionWithError(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Unsupported operation '" + op + "'. ",
+                    lineFile);
+        };
+    }
+
+    private static SplElement simpleArithmeticFloat(String op, Environment env, double l, double r, LineFilePos lineFile) {
         return switch (op) {
             case "+" -> new SplFloat(l + r);
             case "-" -> new SplFloat(l - r);
@@ -122,6 +137,12 @@ public class BinaryOperator extends BinaryExpr {
                 SplElement res = opFn.call(EvaluatedArguments.of(l, r), env, lineFile);
                 if (res instanceof Bool) {
                     return res;
+                }
+            } else if (leftObj != null) {
+                if (op.equals("==")) {
+                    return pointerLogical("is", l, r, env, lineFile);
+                } else if (op.equals("!=")) {
+                    return pointerLogical("is not", l, r, env, lineFile);
                 }
             }
         }
@@ -178,16 +199,16 @@ public class BinaryOperator extends BinaryExpr {
                     return primitivePointerArithmetic(leftEle, (Reference) rightEle, operator, env, lineFile);
                 }
 
-                SplElement res = simpleArithmetic(operator, env, leftEle.floatValue(), rightEle.floatValue(), lineFile);
-
                 if (leftEle.isIntLike()) {
                     if (rightEle.isIntLike()) {
-                        return new Int(res.intValue());
+                        return simpleArithmeticInt(
+                                operator, env, leftEle.intValue(), rightEle.intValue(), lineFile
+                        );
                     } else if (rightEle instanceof SplFloat) {
-                        return res;
+                        return simpleArithmeticFloat(operator, env, leftEle.floatValue(), rightEle.floatValue(), lineFile);
                     }
                 } else if (leftEle instanceof SplFloat) {
-                    return res;
+                    return simpleArithmeticFloat(operator, env, leftEle.floatValue(), rightEle.floatValue(), lineFile);
                 }
                 return SplInvokes.throwExceptionWithError(
                         env,
@@ -247,7 +268,7 @@ public class BinaryOperator extends BinaryExpr {
                     double leftV = leftTv.floatValue();
                     if (rightTv instanceof SplFloat ||
                             rightTv.isIntLike()) {
-                        double rightV = rightTv.intValue();
+                        double rightV = rightTv.floatValue();
                         result = otherLogical(operator, env, leftV, rightV, getLineFile());
                     } else {
                         return SplInvokes.throwExceptionWithError(
@@ -320,4 +341,20 @@ public class BinaryOperator extends BinaryExpr {
         throw new SyntaxError("Unexpected error. ", lineFile);
     }
 
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        super.internalSave(out);
+        out.writeInt(type);
+    }
+
+    public static BinaryOperator reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        String op = is.readString();
+        Expression left = Reconstructor.reconstruct(is);
+        Expression right = Reconstructor.reconstruct(is);
+        int type = is.readInt();
+        BinaryOperator be = new BinaryOperator(op, type, lineFilePos);
+        be.setLeft(left);
+        be.setRight(right);
+        return be;
+    }
 }

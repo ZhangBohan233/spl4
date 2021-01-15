@@ -3,36 +3,52 @@ package spl.ast;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Bool;
-import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Reference;
+import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.NativeFunction;
 import spl.interpreter.splObjects.SplClass;
 import spl.interpreter.splObjects.SplObject;
-import spl.util.Constants;
-import spl.util.LineFilePos;
+import spl.util.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ClassStmt extends Expression {
 
     private final String className;
-    private List<Node> superclassesNodes;
     private final BlockStmt body;
+    private final StringLiteralRef docRef;
+    private List<Node> superclassesNodes;  // nullable
 
     /**
      * @param className  name of class
-     * @param extensions extending line, null if not specified.
+     * @param extensions extending node list, null if not specified.
      * @param body       body block
+     * @param docRef     string literal reference of docstring
      * @param lineFile   line file
      */
-    public ClassStmt(String className, Line extensions, BlockStmt body, LineFilePos lineFile) {
+    public ClassStmt(String className, List<Node> extensions, BlockStmt body, StringLiteralRef docRef,
+                     LineFilePos lineFile) {
         super(lineFile);
 
         this.className = className;
-        this.superclassesNodes = extensions == null ? null : extensions.getChildren();
+        this.superclassesNodes = extensions;
         this.body = body;
+        this.docRef = docRef;
+    }
+
+    public static ClassStmt reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        String name = is.readString();
+        BlockStmt body = Reconstructor.reconstruct(is);
+        boolean hasSc = is.readBoolean();
+        List<Node> superclassNodes = null;
+        if (hasSc) superclassNodes = is.readList();
+        boolean hasDoc = is.readBoolean();
+        StringLiteralRef docRef = null;
+        if (hasDoc) docRef = Reconstructor.reconstruct(is);
+        return new ClassStmt(name, superclassNodes, body, docRef, lineFilePos);
     }
 
     private void validateExtending() {
@@ -46,7 +62,6 @@ public class ClassStmt extends Expression {
 
     @Override
     protected SplElement internalEval(Environment env) {
-
         validateExtending();
 
         List<Reference> superclassesPointers = new ArrayList<>();
@@ -55,7 +70,7 @@ public class ClassStmt extends Expression {
             superclassesPointers.add(scPtr);
         }
 
-        Reference clazzPtr = SplClass.createClassAndAllocate(className, superclassesPointers, body, env);
+        Reference clazzPtr = SplClass.createClassAndAllocate(className, superclassesPointers, body, env, docRef);
 
         env.defineVarAndSet(className, clazzPtr, getLineFile());
 
@@ -96,5 +111,15 @@ public class ClassStmt extends Expression {
 
     public BlockStmt getBody() {
         return body;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        out.writeString(className);
+        body.save(out);
+        out.writeBoolean(superclassesNodes != null);
+        if (superclassesNodes != null) out.writeList(superclassesNodes);
+        out.writeBoolean(docRef != null);
+        if (docRef != null) docRef.save(out);
     }
 }
