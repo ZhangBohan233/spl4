@@ -43,3 +43,4 @@
 * HashDict creation via `{key1=value1, ...}`
 * Wrapper of native types
 * ~~Get class method statically~~ `Object.__hash__` **_DONE_**
+* ~~More information in compiled spl file~~ **_DONE_**

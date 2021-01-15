@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class SplCacheSaver {
-
+    public static final int VERSION = 1;
     private final String cacheFileName;
     private final ParseResult parseResult;
     private final LinkedHashMap<String, ParseResult> parsedModules;
@@ -26,6 +26,11 @@ public class SplCacheSaver {
     public void save() {
         try {
             BytesOut bos = new BytesOut(new FileOutputStream(cacheFileName));
+
+            byte[] head = new byte[8];
+            head[0] = (byte) VERSION;
+
+            bos.write(head);
 
             bos.writeInt(parsedModules.size());
             for (Map.Entry<String, ParseResult> entry : parsedModules.entrySet()) {

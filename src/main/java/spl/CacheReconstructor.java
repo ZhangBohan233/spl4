@@ -6,6 +6,7 @@ import spl.util.BytesIn;
 import spl.util.Reconstructor;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.LinkedHashMap;
 
 public class CacheReconstructor {
@@ -19,6 +20,17 @@ public class CacheReconstructor {
 
     public ParseResult reconstruct() throws Exception {
         BytesIn bis = new BytesIn(new FileInputStream(cacheFileName));
+        byte[] head = new byte[8];
+        if (bis.read(head) != 8) {
+            bis.close();
+            throw new IOException("Cannot read head");
+        }
+        int version = head[0] & 0xff;
+        if (version != SplCacheSaver.VERSION) {
+            bis.close();
+            throw new IllegalArgumentException("Cannot decode compiled spl file: version does not match");
+        }
+
         parsedModules = new LinkedHashMap<>();
 
         int modulesCount = bis.readInt();

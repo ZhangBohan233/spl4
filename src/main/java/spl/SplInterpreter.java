@@ -403,7 +403,7 @@ public class SplInterpreter {
             ParseResult parseResult;
             if (srcName.endsWith(".sp")) parseResult = parseSrcFile(argumentParser);
             else if (srcName.endsWith(".spc")) parseResult = readCacheFile(argumentParser);
-            else throw new IllegalArgumentException();
+            else throw new IllegalArgumentException("Not a spl source file or a compiled spl file");
 
             if (argumentParser.isPrintAst()) {
                 out.println("===== Ast =====");

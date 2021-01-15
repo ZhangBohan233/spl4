@@ -1,3 +1,8 @@
+===== Version 4055 =====
+2021/01/16
+
+* Added version check of compiled spl file
+
 ===== Version 4054 =====
 2021/01/16
 
