@@ -1,3 +1,8 @@
+===== Version 4059 =====
+2021/01/18
+
+* Generic call for functions
+
 ===== Version 4058 =====
 2021/01/18
 

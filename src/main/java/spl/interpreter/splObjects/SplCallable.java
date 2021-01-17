@@ -2,11 +2,12 @@ package spl.interpreter.splObjects;
 
 import spl.ast.*;
 import spl.interpreter.EvaluatedArguments;
+import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
+import spl.interpreter.primitives.Reference;
+import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splErrors.NativeError;
-import spl.interpreter.env.Environment;
-import spl.interpreter.primitives.SplElement;
 import spl.parser.ParseError;
 import spl.util.Constants;
 import spl.util.LineFilePos;
@@ -17,42 +18,6 @@ import java.util.Set;
 public abstract class SplCallable extends NativeObject {
 
     public static final int MAX_ARGS = 65535;
-
-    public abstract SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile);
-
-    public SplElement call(Arguments arguments, Environment callingEnv) {
-        var ea = arguments.evalArgs(callingEnv);
-        if (callingEnv.hasException()) return Undefined.ERROR;
-        return call(ea, callingEnv, arguments.getLineFile());
-    }
-
-    public abstract int minArgCount();
-
-    public abstract int maxArgCount();
-
-    protected void checkValidArgCount(int argc, String fnName, Environment callingEnv, LineFilePos callingLf) {
-        int leastArg = minArgCount();
-        int mostArg = maxArgCount();
-        if (argc < leastArg || argc > mostArg) {
-            if (leastArg == mostArg) {
-                SplInvokes.throwException(
-                        callingEnv,
-                        Constants.ARGUMENT_EXCEPTION,
-                        String.format("Function '%s' expects %d argument(s), got %d.",
-                                fnName, leastArg, argc),
-                        callingLf
-                );
-            } else {
-                SplInvokes.throwException(
-                        callingEnv,
-                        Constants.ARGUMENT_EXCEPTION,
-                        String.format("Function '%s' expects %d to %d argument(s), got %d.",
-                                fnName, leastArg, mostArg, argc),
-                        callingLf
-                );
-            }
-        }
-    }
 
     public static Parameter[] evalParams(Line parameters, Environment env) {
         Parameter[] params = new Parameter[parameters.getChildren().size()];
@@ -160,6 +125,49 @@ public abstract class SplCallable extends NativeObject {
                 node.getLineFile()
         );
         return null;
+    }
+
+    public abstract SplElement call(EvaluatedArguments evaluatedArgs,
+                                    Reference[] generics,
+                                    Environment callingEnv,
+                                    LineFilePos lineFilePos);
+
+    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile) {
+        return call(evaluatedArgs, null, callingEnv, lineFile);
+    }
+
+    public SplElement call(Arguments arguments, Environment callingEnv) {
+        var ea = arguments.evalArgs(callingEnv);
+        if (callingEnv.hasException()) return Undefined.ERROR;
+        return call(ea, callingEnv, arguments.getLineFile());
+    }
+
+    public abstract int minArgCount();
+
+    public abstract int maxArgCount();
+
+    protected void checkValidArgCount(int argc, String fnName, Environment callingEnv, LineFilePos callingLf) {
+        int leastArg = minArgCount();
+        int mostArg = maxArgCount();
+        if (argc < leastArg || argc > mostArg) {
+            if (leastArg == mostArg) {
+                SplInvokes.throwException(
+                        callingEnv,
+                        Constants.ARGUMENT_EXCEPTION,
+                        String.format("Function '%s' expects %d argument(s), got %d.",
+                                fnName, leastArg, argc),
+                        callingLf
+                );
+            } else {
+                SplInvokes.throwException(
+                        callingEnv,
+                        Constants.ARGUMENT_EXCEPTION,
+                        String.format("Function '%s' expects %d to %d argument(s), got %d.",
+                                fnName, leastArg, mostArg, argc),
+                        callingLf
+                );
+            }
+        }
     }
 
     private static class ParameterBuilder {

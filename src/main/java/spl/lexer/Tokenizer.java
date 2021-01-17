@@ -1,5 +1,6 @@
 package spl.lexer;
 
+import spl.lexer.tokens.*;
 import spl.lexer.treeList.*;
 import spl.util.LineFilePos;
 import spl.util.Utilities;
@@ -123,6 +124,21 @@ public abstract class Tokenizer {
                         throw new SyntaxError("'}' must close a '{', not a '" + symbol + "'. ",
                                 tk.getLineFile());
                     }
+                case "<":
+                    if (hasClosingArrowBracket(tokenList, index)) {
+                        return new ArrowBracketList(currentActive, tk.getLineFile());
+                    } else {
+                        currentActive.add(new AtomicElement(tk, currentActive));  // less than
+                        return currentActive;
+                    }
+                case ">":
+                    if (currentActive instanceof ArrowBracketList) {
+                        currentActive.parentElement.add(currentActive);
+                        return currentActive.parentElement;
+                    } else {
+                        currentActive.add(new AtomicElement(tk, currentActive));  // greater than
+                        return currentActive;
+                    }
                 default:
                     currentActive.add(new AtomicElement(tk, currentActive));
                     return currentActive;
@@ -131,6 +147,20 @@ public abstract class Tokenizer {
             currentActive.add(new AtomicElement(tk, currentActive));
             return currentActive;
         }
+    }
+
+    private static boolean hasClosingArrowBracket(List<Token> tokenList, int leftArrIndex) {
+        for (int i = leftArrIndex + 1; i < tokenList.size(); i++) {
+            Token tk = tokenList.get(i);
+            if (tk instanceof IdToken) {
+                String symbol = ((IdToken) tk).getIdentifier();
+                switch (symbol) {
+                    case ">": return true;
+                    case ";": return false;
+                }
+            } else if (tk instanceof LiteralToken) return false;
+        }
+        return false;
     }
 
     void proceedLine(String line, LineFilePos.LineFile lineFile) {

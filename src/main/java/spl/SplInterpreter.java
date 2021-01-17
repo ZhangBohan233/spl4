@@ -310,6 +310,13 @@ public class SplInterpreter {
             }
         };
 
+        NativeFunction isAny = new NativeFunction("any?", 1) {
+            @Override
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                return Bool.TRUE;
+            }
+        };
+
         NativeFunction[] nativeFunctions = new NativeFunction[]{
                 toInt, isInt,
                 toFloat, isFloat,
@@ -318,7 +325,8 @@ public class SplInterpreter {
                 toByte, isByte,
                 abstractObject, isAbstractObject,
                 isCallable,
-                isNull
+                isNull,
+                isAny
         };
 
         for (NativeFunction nf : nativeFunctions) {

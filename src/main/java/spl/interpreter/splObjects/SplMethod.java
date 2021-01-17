@@ -39,14 +39,16 @@ public class SplMethod extends Function {
      * Note that {@code evaluatedArguments} has at least one element, which is a reference to "this"
      *
      * @param evaluatedArgs arguments, evaluated
+     * @param generics      actual generics, evaluated
      * @param callingEnv    environment of calling
      * @param argLineFile   line file of argument
      * @return function returns
      */
     @Override
-    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos argLineFile) {
+    public SplElement call(EvaluatedArguments evaluatedArgs, Reference[] generics,
+                           Environment callingEnv, LineFilePos argLineFile) {
         MethodEnvironment scope = new MethodEnvironment(definitionEnv, callingEnv, definedName);
-        return callEssential(evaluatedArgs, callingEnv, scope, argLineFile);
+        return callEssential(evaluatedArgs, generics, callingEnv, scope, argLineFile);
     }
 
     @Override

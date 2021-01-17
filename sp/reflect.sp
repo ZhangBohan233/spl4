@@ -1,3 +1,5 @@
+var glo = 123;
+
 class A {
     var a = 3;
 
@@ -8,12 +10,16 @@ class A {
         return "A:" + str(a);
     }
 
-    fn foo(x: int?) -> String? {
+    fn foo(x) {
         if x > 1 {
             return "great";
         } else {
             throw new Exception("121");
         }
+    }
+
+    fn bar(x) {
+        return x + glo;
     }
 }
 
@@ -32,6 +38,5 @@ fn main() {
     //print(new getClassByName("a")());
     //return a.a;
     //return la(2)(5);
-    b := a.foo(1).length;
-    print(b);
+    print(A.bar(a, 2));
 }

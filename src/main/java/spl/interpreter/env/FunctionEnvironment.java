@@ -26,7 +26,9 @@ public class FunctionEnvironment extends MainAbstractEnvironment {
     /**
      * Resume this environment after returning.
      * <p>
-     * This method is only used for 'finally' block in try-catch-finally statement, when a return statement is
+     * This method is used in two cases:
+     * 1. Checking return contract.
+     * 2. The 'finally' block in try-catch-finally statement, when a return statement is
      * executed in the 'try' or 'catch' block.
      *
      * @return the previous return value, nullable

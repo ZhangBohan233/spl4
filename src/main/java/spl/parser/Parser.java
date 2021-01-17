@@ -2,6 +2,7 @@ package spl.parser;
 
 import spl.ast.*;
 import spl.lexer.*;
+import spl.lexer.tokens.*;
 import spl.lexer.treeList.*;
 import spl.util.Constants;
 import spl.util.LineFilePos;
@@ -15,7 +16,6 @@ public class Parser {
     private final CollectiveElement rootList;
     private final Map<String, StringLiteral> stringLiterals;
     private int varLevel = Declaration.USELESS;
-    private DocToken activeDoc;
 
     /**
      * Constructor of Parser, for imported module files.
@@ -109,6 +109,7 @@ public class Parser {
     private static ContractNode autoContract(String fnName,
                                              Line paramBlock,
                                              Expression rtnContract,
+                                             Line templateLine,
                                              LineFilePos lineFile) {
         boolean hasParamContract = false;
         Line contractLine = new Line(lineFile);
@@ -134,7 +135,7 @@ public class Parser {
 
         if (rtnContract != null || hasParamContract) {
             if (rtnContract == null) rtnContract = new NameNode(Constants.ANY_TYPE, lineFile);
-            return new ContractNode(fnName, contractLine, rtnContract, lineFile);
+            return new ContractNode(fnName, contractLine, rtnContract, templateLine, lineFile);
         } else {
             return null;
         }
@@ -164,6 +165,13 @@ public class Parser {
     private Line parseOneLineBlock(BracketList bracketList) throws IOException {
         AstBuilder builder = parseSomeBlock(bracketList);
         varLevel = Declaration.USELESS;
+        builder.finishPart();
+        return builder.getLine();
+    }
+
+    private Line parseOneLineBlock(ArrowBracketList bracketList) throws IOException {
+        AstBuilder builder = parseSomeBlock(bracketList);
+//        varLevel = Declaration.USELESS;
         builder.finishPart();
         return builder.getLine();
     }
@@ -309,15 +317,24 @@ public class Parser {
                                 next = parent.get(index++);
                                 BracketList paramList;
                                 NameNode name;
+                                Element probParams;
                                 if (next instanceof AtomicElement) {
                                     nameToken = (IdToken) ((AtomicElement) next).atom;
                                     name = new NameNode(nameToken.getIdentifier(), nameToken.getLineFile());
-                                    paramList = (BracketList) parent.get(index++);
+//                                    paramList = (BracketList) parent.get(index++);
+                                    probParams = parent.get(index++);
                                 } else {
-                                    paramList = (BracketList) next;
+//                                    paramList = (BracketList) next;
+                                    probParams = next;
                                     name = new NameNode("anonymous function", lineFile);
                                 }
-//                                if (doc != null) System.out.println(name + " " + doc.getDoc());
+                                Line templateLine = null;
+                                if (probParams instanceof ArrowBracketList) {
+                                    templateLine = parseOneLineBlock((ArrowBracketList) probParams);
+                                    probParams = parent.get(index++);
+                                }
+                                paramList = (BracketList) probParams;
+
                                 Expression rtnType = null;
                                 next = parent.get(index++);
                                 if (identifierOf(next, "->")) {
@@ -331,13 +348,13 @@ public class Parser {
 
                                 Line paramBlock = parseOneLineBlock(paramList);
                                 bodyBlock = parseBlock(bodyList);
-//                                System.out.println(paramBlock);
-//                                System.out.println(rtnType);
 
                                 // this line must before FuncDefinition
-                                ContractNode autoCont = autoContract(name.getName(), paramBlock, rtnType, lineFile);
+                                ContractNode autoCont = autoContract(name.getName(), paramBlock, rtnType, templateLine,
+                                        lineFile);
 
-                                FuncDefinition def = new FuncDefinition(name, paramBlock, bodyBlock, docRef, lineFile);
+                                FuncDefinition def = new FuncDefinition(name, paramBlock, bodyBlock, templateLine,
+                                        docRef, lineFile);
                                 builder.addNode(def);
 
                                 if (autoCont != null) {
@@ -363,7 +380,14 @@ public class Parser {
                                 break;
                             case "contract":
                                 nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
-                                paramList = (BracketList) parent.get(index++);
+                                probParams = parent.get(index++);
+                                templateLine = null;
+                                if (probParams instanceof ArrowBracketList) {
+                                    templateLine = parseOneLineBlock((ArrowBracketList) probParams);
+                                    probParams = parent.get(index++);
+                                }
+
+                                paramList = (BracketList) probParams;
                                 BracketList rtnTypeLst = new BracketList(null, lineFile);
                                 IdToken arrow = ((IdToken) ((AtomicElement) parent.get(index++)).atom);
                                 if (!arrow.getIdentifier().equals("->"))
@@ -381,7 +405,8 @@ public class Parser {
                                 Expression rtnCon = (Expression) rtnLine.getChildren().get(0);
 
                                 ContractNode contractNode =
-                                        new ContractNode(nameToken.getIdentifier(), paramLine, rtnCon, lineFile);
+                                        new ContractNode(nameToken.getIdentifier(), paramLine, rtnCon, templateLine,
+                                                lineFile);
                                 builder.addNode(contractNode);
                                 break;
                             case "class":
@@ -395,12 +420,20 @@ public class Parser {
                                 Element probExtendEle = parent.get(index++);
                                 BraceList bodyEle;
                                 Line extensions;
+                                templateLine = null;
+                                // extending, example:
+                                // class C(A, B) { ... }
+                                if (probExtendEle instanceof ArrowBracketList) {
+                                    templateLine = parseOneLineBlock((ArrowBracketList) probExtendEle);
+                                    probExtendEle = parent.get(index++);
+                                }
                                 if (probExtendEle instanceof BracketList) {
                                     // extending, example:
                                     // class C(A, B) { ... }
                                     bodyEle = (BraceList) parent.get(index++);
                                     extensions = parseOneLineBlock((BracketList) probExtendEle);
                                 } else {
+                                    // class C { ... }
                                     bodyEle = (BraceList) probExtendEle;
                                     extensions = null;
                                 }
@@ -637,7 +670,7 @@ public class Parser {
                 } else if (token instanceof ByteToken) {
                     builder.addNode(new ByteLiteral(((ByteToken) token).getValue(), lineFile));
                 } else if (token instanceof DocToken) {
-                    activeDoc = (DocToken) token;
+                    // do nothing
                 } else {
                     throw new ParseError("Unexpected token type. ", lineFile);
                 }
@@ -649,6 +682,12 @@ public class Parser {
             LineFilePos lineFile = bracketList.lineFile;
             if (index > 1) {
                 Element probCallObj = parent.get(index - 2);
+                Line templateLine = null;
+                if (probCallObj instanceof ArrowBracketList) {
+                    templateLine = parseOneLineBlock((ArrowBracketList) probCallObj);
+                    probCallObj = parent.get(index - 3);
+                }
+
                 if (probCallObj instanceof AtomicElement && isCall(((AtomicElement) probCallObj).atom)) {
 
                     // is a call to an identifier
@@ -656,6 +695,7 @@ public class Parser {
                     Node callObj = builder.removeLast();
                     FuncCall call = new FuncCall((Expression) callObj,
                             new Arguments(argLine, lineFile),
+                            templateLine,
                             lineFile);
                     builder.addNode(call);
                     return index;
@@ -664,6 +704,7 @@ public class Parser {
                     Node callObj = builder.removeLast();
                     FuncCall call = new FuncCall((Expression) callObj,
                             new Arguments(argLine, lineFile),
+                            templateLine,
                             lineFile);
                     builder.addNode(call);
                     return index;
@@ -695,6 +736,8 @@ public class Parser {
             Arguments arguments = new Arguments(contentLine, lineFile);
             ArrayLiteral arrayLiteral = new ArrayLiteral(arguments, lineFile);
             builder.addNode(arrayLiteral);
+        } else if (ele instanceof ArrowBracketList) {
+
         }
         return index;
     }

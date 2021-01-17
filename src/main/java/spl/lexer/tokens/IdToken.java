@@ -1,4 +1,4 @@
-package spl.lexer;
+package spl.lexer.tokens;
 
 import spl.util.LineFilePos;
 

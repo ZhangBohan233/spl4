@@ -17,22 +17,35 @@ public class FuncCall extends Expression {
 
     Expression callObj;
     Arguments arguments;
+    Line genericLine;
 
     public FuncCall(LineFilePos lineFile) {
         super(lineFile);
     }
 
-    public FuncCall(Expression callObj, Arguments arguments, LineFilePos lineFile) {
+    public FuncCall(Expression callObj, Arguments arguments, Line genericLine, LineFilePos lineFile) {
         super(lineFile);
 
         this.callObj = callObj;
         this.arguments = arguments;
+        this.genericLine = genericLine;
     }
 
     public static FuncCall reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
         Expression callObj = Reconstructor.reconstruct(in);
         Arguments arguments = Reconstructor.reconstruct(in);
-        return new FuncCall(callObj, arguments, lineFilePos);
+        boolean hasTemplate = in.readBoolean();
+        Line templateLine = null;
+        if (hasTemplate) templateLine = Reconstructor.reconstruct(in);
+        return new FuncCall(callObj, arguments, templateLine, lineFilePos);
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        callObj.save(out);
+        arguments.save(out);
+        out.writeBoolean(genericLine != null);
+        if (genericLine != null) genericLine.save(out);
     }
 
     @Override
@@ -57,7 +70,9 @@ public class FuncCall extends Expression {
                 Reference thisPtr = (Reference) env.get(Constants.THIS, lineFile);
                 ea.insertThis(thisPtr);
             }
-            return function.call(ea, env, lineFile);
+            Reference[] generics = evalGenerics(env);
+            if (env.hasException()) return Undefined.ERROR;
+            return function.call(ea, generics, env, lineFile);
         } else {
             return SplInvokes.throwExceptionWithError(
                     env,
@@ -65,6 +80,27 @@ public class FuncCall extends Expression {
                     "Object '" + obj + "' is not callable.",
                     lineFile);
         }
+    }
+
+    private Reference[] evalGenerics(Environment callingEnv) {
+        if (genericLine == null) return null;
+        Reference[] generics = new Reference[genericLine.size()];
+        for (int i = 0 ; i < generics.length; i++) {
+            Node n = genericLine.get(i);
+            SplElement se = n.evaluate(callingEnv);
+            if (se instanceof Reference) {
+                generics[i] = (Reference) se;
+            } else {
+                SplInvokes.throwException(
+                        callingEnv,
+                        Constants.ARGUMENT_EXCEPTION,
+                        "Generic must be callable.",
+                        lineFile
+                );
+                return null;
+            }
+        }
+        return generics;
     }
 
     @Override
@@ -86,11 +122,5 @@ public class FuncCall extends Expression {
 
     public void setCallObj(Expression callObj) {
         this.callObj = callObj;
-    }
-
-    @Override
-    protected void internalSave(BytesOut out) throws IOException {
-        callObj.save(out);
-        arguments.save(out);
     }
 }

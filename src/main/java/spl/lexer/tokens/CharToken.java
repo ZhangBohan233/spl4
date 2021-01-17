@@ -1,10 +1,10 @@
-package spl.lexer;
+package spl.lexer.tokens;
 
 import spl.util.LineFilePos;
 
 import java.util.Map;
 
-public class CharToken extends Token {
+public class CharToken extends LiteralToken {
 
     public final static char[] ESCAPE_CHARS = {'\f', '\n', '\t', '\r', '\b', '\0'};
     public final static Map<Character, Character> ESCAPES = Map.of(

@@ -1,8 +1,8 @@
-package spl.lexer;
+package spl.lexer.tokens;
 
 import spl.util.LineFilePos;
 
-public class ByteToken extends Token {
+public class ByteToken extends LiteralToken {
 
     private final byte b;
 

@@ -375,7 +375,7 @@ class List(Iterable) {
         }
     }
 
-    contract insert(int?, anyType) -> void;
+    contract insert(int?, any?) -> void;
 
     fn set(index, value) {
         _checkIndex(index)
@@ -399,7 +399,7 @@ class List(Iterable) {
         }
     }
 
-    contract remove(int?) -> anyType;
+    contract remove(int?) -> any?;
 
     fn toArray(eleType=Object) {
         eleProc := cond {
@@ -929,7 +929,7 @@ fn script(path, *args) {
     return Invokes.script(path, *args);
 }
 
-contract script(String?, String?) -> anyType;
+contract script(String?, String?) -> any?;
 
 fn str(obj) {
     return Invokes.string(obj);

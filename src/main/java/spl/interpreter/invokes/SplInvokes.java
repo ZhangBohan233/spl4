@@ -53,6 +53,7 @@ public class SplInvokes extends NativeObject {
             FuncCall funcCall = new FuncCall(
                     new NameNode(exceptionClassName, lineFile),
                     new Arguments(new Line(lineFile, sl), lineFile),
+                    null,
                     lineFile);
             NewExpr newExpr = new NewExpr(lineFile);
             newExpr.setValue(funcCall);

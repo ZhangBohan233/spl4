@@ -1,8 +1,8 @@
-package spl.lexer;
+package spl.lexer.tokens;
 
 import spl.util.LineFilePos;
 
-public class IntToken extends Token {
+public class IntToken extends LiteralToken {
 
     private final long value;
 

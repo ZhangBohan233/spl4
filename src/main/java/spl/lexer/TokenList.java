@@ -1,5 +1,7 @@
 package spl.lexer;
 
+import spl.lexer.tokens.Token;
+
 import java.util.List;
 
 public class TokenList {

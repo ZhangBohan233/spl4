@@ -36,7 +36,7 @@ public class Constants {
     public static final String DOC_ATTR = "__doc__";
     public static final String ARRAY_LENGTH = "length";
     public static final String ARRAY_TYPE = "type";
-    public static final String ANY_TYPE = "anyType";
+    public static final String ANY_TYPE = "any?";
     public static final String OR_FN = "orFn";
 
     /**

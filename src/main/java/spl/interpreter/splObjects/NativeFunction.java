@@ -3,6 +3,7 @@ package spl.interpreter.splObjects;
 import spl.ast.Arguments;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.util.LineFilePos;
@@ -62,7 +63,8 @@ public abstract class NativeFunction extends SplCallable {
         return callFuncWithNode(arguments, callingEnv);
     }
 
-    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile) {
+    public SplElement call(EvaluatedArguments evaluatedArgs, Reference[] generics,
+                           Environment callingEnv, LineFilePos lineFile) {
         checkValidArgCount(evaluatedArgs.positionalArgs.size() + evaluatedArgs.keywordArgs.size(),
                 name, callingEnv, lineFile);
         if (callingEnv.hasException()) return Undefined.ERROR;

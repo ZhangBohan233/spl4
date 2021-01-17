@@ -1,8 +1,9 @@
-package spl.lexer;
+package spl.lexer.tokens;
 
+import spl.lexer.SyntaxError;
 import spl.util.LineFilePos;
 
-public class StrToken extends Token {
+public class StrToken extends LiteralToken {
 
     private final String literal;
 
