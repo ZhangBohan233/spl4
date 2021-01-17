@@ -14,7 +14,7 @@ import spl.util.LineFilePos;
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class SplCallable extends SplObject {
+public abstract class SplCallable extends NativeObject {
 
     public static final int MAX_ARGS = 65535;
 

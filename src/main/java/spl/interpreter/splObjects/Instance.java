@@ -50,7 +50,7 @@ public class Instance extends SplObject {
                                                            Environment callingEnv,
                                                            LineFilePos lineFile) {
         SplClass clazz = (SplClass) callingEnv.getMemory().get(clazzPtr);
-        return createInstanceAndAllocate(clazz.getMro(), 0, callingEnv, lineFile);
+        return createInstanceAndAllocate(clazz.getMroArray(), 0, callingEnv, lineFile);
     }
 
     public static InstanceAndPtr createInstanceWithInitCall(String className,
@@ -110,7 +110,7 @@ public class Instance extends SplObject {
         }
 
         // define fields
-        for (Node node : clazz.getClassNodes()) {
+        for (Node node : clazz.getFieldNodes().values()) {
             node.evaluate(instanceEnv);
         }
 

@@ -6,6 +6,7 @@ import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Int;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.*;
 import spl.util.*;
 
@@ -51,7 +52,9 @@ public class Assignment extends BinaryExpr {
             objEnv.setVar(((NameNode) ((Dot) key).right).getName(), value, lineFile);
         } else if (key instanceof IndexingNode) {
             IndexingNode indexingNode = (IndexingNode) key;
-            Reference arrPtr = (Reference) indexingNode.getCallObj().evaluate(env);
+            SplElement arrPtrRaw = indexingNode.getCallObj().evaluate(env);
+            if (arrPtrRaw == Undefined.ERROR) return;
+            Reference arrPtr = (Reference) arrPtrRaw;
             if (indexingNode.getArgs().getChildren().size() == 1) {
                 SplElement index = indexingNode.getArgs().getChildren().get(0).evaluate(env);
                 SplObject obj = env.getMemory().get(arrPtr);

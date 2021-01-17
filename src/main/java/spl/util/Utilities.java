@@ -211,10 +211,10 @@ public class Utilities {
         Reference errPtr = globalEnvironment.getExceptionInsPtr();
         globalEnvironment.removeException();
 
-        Instance errIns = (Instance) globalEnvironment.getMemory().get(errPtr);
+        Instance errIns = globalEnvironment.getMemory().get(errPtr);
 
         Reference stackTraceFtnPtr = (Reference) errIns.getEnv().get("printStackTrace", lineFile);
-        Function stackTraceFtn = (Function) globalEnvironment.getMemory().get(stackTraceFtnPtr);
+        Function stackTraceFtn = globalEnvironment.getMemory().get(stackTraceFtnPtr);
         stackTraceFtn.call(EvaluatedArguments.of(errPtr), globalEnvironment, lineFile);
     }
 
@@ -264,7 +264,7 @@ public class Utilities {
 
     public static boolean isInstancePtr(SplElement element, String className, Environment env, LineFilePos lineFile) {
         Reference insFtnPtr = (Reference) env.get(className + "?", lineFile);
-        SplCallable insFtn = (SplCallable) env.getMemory().get(insFtnPtr);
+        SplCallable insFtn = env.getMemory().get(insFtnPtr);
         Bool res = (Bool) insFtn.call(EvaluatedArguments.of(element), env, lineFile);
         return res.value;
     }

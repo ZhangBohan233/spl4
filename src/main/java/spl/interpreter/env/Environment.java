@@ -205,15 +205,11 @@ public abstract class Environment {
     protected abstract void setInNamespaces(String name, SplElement typeValue);
 
     private void throwNameError(String msg, LineFilePos lineFilePos) {
-        if (hasName(Constants.NAME_ERROR) && hasName(Constants.STRING_CLASS)) {
-            SplInvokes.throwException(
-                    this,
-                    Constants.NAME_ERROR,
-                    msg,
-                    lineFilePos);
-        } else {
-            throw new EnvironmentError(msg, lineFilePos);
-        }
+        SplInvokes.throwException(
+                this,
+                Constants.NAME_ERROR,
+                msg,
+                lineFilePos);
     }
 
     @Override

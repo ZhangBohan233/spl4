@@ -118,8 +118,9 @@ public class Memory {
         heap[addr] = obj;
     }
 
-    public SplObject get(Reference ptr) {
-        return (SplObject) heap[ptr.getPtr()];
+    @SuppressWarnings("unchecked")
+    public <T extends SplObject> T get(Reference ptr) {
+        return (T) heap[ptr.getPtr()];
     }
 
     public SplObject get(int addr) {

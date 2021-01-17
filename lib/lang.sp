@@ -13,11 +13,11 @@ class Object {
     }
 
     fn __str__() -> String? {
-        return __class__().__name__ + "@" + Invokes.id(this);
+        return __class__().__name__() + "@" + Invokes.id(this);
     }
 
     fn __repr__() -> String? {
-        return __class__().__name__ + "@" + Invokes.id(this);
+        return __class__().__name__() + "@" + Invokes.id(this);
     }
 }
 
@@ -157,7 +157,7 @@ class Exception {
     }
 
     fn printStackTrace() {
-        Invokes.printErr(__class__().__name__ + ": " + msg + " ");
+        Invokes.printErr(__class__().__name__() + ": " + msg + " ");
         Invokes.printErr(traceMsg);
     }
 }
@@ -223,6 +223,12 @@ class NullError(Exception) {
 }
 
 class ParameterException(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
+class RuntimeSyntaxError(Exception) {
     fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
     }
@@ -307,7 +313,7 @@ class List(Iterable) {
 
     fn __init__(*args) {
         initCapacity := _calculateCapacity(args.length) if args.length > 8 else 8;
-        array = new Object[initCapacity];
+        array = new Obj[initCapacity];
         _size = args.length;
         for var i = 0; i < _size; i++ {
             set(i, args[i]);
@@ -327,24 +333,16 @@ class List(Iterable) {
     }
 
     fn __repr__() {
-        result := "[";
-        for i := 0; i < _size; i++ {
-            item := array[i];
-            if List?(item) or Array?(item) {
-                result += item.__class__().__name__ + "@" + Invokes.id(item);
-            } else {
-                result += repr(item) + ", ";
-            }
-        }
-        return result + "]";
+        return "[" + strJoin(", ",
+                            this,
+                            lambda s -> cond {
+                                case List?(s) -> s.__class__().__name__() + "@" + Invokes.id(s);
+                                default -> repr(s);
+                            }) + "]";
     }
 
     fn __str__() {
-        result := "[";
-        for i := 0; i < _size; i++ {
-            result += (repr(array[i]) + ", ");
-        }
-        return result + "]";
+        return "[" + strJoin(", ", this, repr) + "]";
     }
 
     fn append(value) {
@@ -360,12 +358,16 @@ class List(Iterable) {
     }
 
     fn insert(index, value) {
-        _size++;  // make sure [1,2,3].insert(3, 4) works
+        if index == _size {
+            append(value);
+            return;
+        }
         _checkIndex(index);
 
-        for i := _size - 1; i >= index; i-- {
+        for i := _size; i > index; i-- {
             array[i] = array[i - 1];
         }
+        _size++;
         set(index, value);
 
         if _size == array.length {
@@ -419,7 +421,7 @@ class List(Iterable) {
     }
 
     fn _expand() {
-        newArray := new Object[array.length * 2];
+        newArray := new Obj[array.length * 2];
         for i := 0; i < _size; i++ {
             newArray[i] = array[i];
         }
@@ -427,7 +429,7 @@ class List(Iterable) {
     }
 
     fn _collapse() {
-        newArray := new Object[array.length / 2];
+        newArray := new Obj[array.length / 2];
         for i := 0; i < _size; i++ {
             newArray[i] = array[i];
         }
@@ -646,7 +648,7 @@ class HashDict(Dict) {
 
     fn __init__(initCap: int? = 8, loadFactor: float? = 0.75) {
         this.loadFactor = loadFactor;
-        this.array = new Object[initCap];
+        this.array = new Obj[initCap];
     }
 
     fn __iter__() {
@@ -762,7 +764,7 @@ class HashDict(Dict) {
     }
 
     fn _expand() {
-        newArr := new Object[array.length * 2];
+        newArr := new Obj[array.length * 2];
         for i := 0; i < array.length; i++ {
             oldEntry := array[i];
             if oldEntry is not null {
@@ -881,7 +883,7 @@ fn clock() -> int? {
 
 fn help(obj) {
     if Class?(obj) or Function?(obj) {
-        print(obj.__doc__);
+        print(obj.__doc__());
     }
 }
 
@@ -913,6 +915,12 @@ fn print(s, line: boolean? = true) {
     }
 }
 
+fn printArray(arr: Array?, line: boolean = true) {
+    print("'[", line=false);
+    print(strJoin(", ", arr, repr), line=false);
+    print("]", line=line);
+}
+
 fn range(begin, end, step=1) {
     return new RangeIterator(begin, end, step);
 }
@@ -938,9 +946,16 @@ fn sleep(mills: int?) {
     }
 }
 
-fn strJoin(deliminator: String?, iter: array?(Object) or Iterable?) -> String? {
+fn strJoin(deliminator: String?, iter: array?(Obj) or Iterable?, processor: Callable? = null) -> String? {
+    strIter := iter;
+    if processor is not null {
+        strIter = new List();
+        for part in iter {
+            strIter.append(processor(part));
+        }
+    }
     totalLength := 0;
-    for part in iter {
+    for part in strIter {
         if not String?(part) {
             throw new TypeError("strJoin only joins strings.");
         }
@@ -952,7 +967,7 @@ fn strJoin(deliminator: String?, iter: array?(Object) or Iterable?) -> String? {
     }
     arr := new char[totalLength];
     index := 0;
-    for part in iter {
+    for part in strIter {
         for i := 0; i < part.length; i++ {
             arr[index++] = part.__chars__[i];
         }
@@ -1045,6 +1060,22 @@ fn getAttr(obj: Object?, attr: String?) {
 
 fn hasAttr(obj: Object?, attr: String?) -> boolean? {
     return Invokes.hasStrAttr(obj, attr);
+}
+
+fn listAttr(obj: Object? or Class?) -> array?(Obj) {
+    if Object?(obj) {
+        return listAttr(obj.__class__());
+    } else {
+        return Invokes.listAttr(obj);
+    }
+}
+
+fn listMethod(obj: Object? or Class?) -> array?(Obj) {
+    if Object?(obj) {
+        return listMethod(obj.__class__());
+    } else {
+        return Invokes.listMethod(obj);
+    }
 }
 
 fn setAttr(obj: Object?, attr: String?, value) {

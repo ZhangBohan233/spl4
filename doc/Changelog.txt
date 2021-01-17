@@ -1,3 +1,14 @@
+===== Version 4058 =====
+2021/01/18
+
+* Added two reflection functions: listAttr, listMethod
+* Call method via Clazz.method(obj, ...);
+
+===== Version 4057 =====
+2021/01/17
+
+* Renamed 'AbstractObject' to 'Obj'
+
 ===== Version 4056 =====
 2021/01/17
 

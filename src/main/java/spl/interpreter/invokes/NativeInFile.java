@@ -6,6 +6,7 @@ import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.splObjects.NativeObject;
 import spl.interpreter.splObjects.SplArray;
+import spl.util.Accessible;
 import spl.util.LineFilePos;
 
 import java.io.FileInputStream;
@@ -41,7 +42,7 @@ public class NativeInFile extends NativeObject {
 
     /* Methods can be directly called by spl */
 
-    @SuppressWarnings("unused")
+    @Accessible
     public Bool close(Arguments args, Environment env, LineFilePos lineFilePos) {
         checkArgCount(args, 0, "NativeInFile.close()", env, lineFilePos);
         try {
@@ -53,7 +54,7 @@ public class NativeInFile extends NativeObject {
         return Bool.FALSE;
     }
 
-    @SuppressWarnings("unused")
+    @Accessible
     public Reference read(Arguments args, Environment env, LineFilePos lineFilePos) {
         checkArgCount(args, 1, "NativeInFile.read()", env, lineFilePos);
 

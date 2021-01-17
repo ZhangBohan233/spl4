@@ -268,14 +268,14 @@ public class SplInterpreter {
             }
         };
 
-        TypeFunction abstractObject = new TypeFunction("AbstractObject", 1) {
+        TypeFunction abstractObject = new TypeFunction("Obj", 1) {
             @Override
             protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 return Utilities.wrap(evaluatedArgs.positionalArgs.get(0), callingEnv, LineFilePos.LF_INTERPRETER);
             }
         };
 
-        NativeFunction isAbstractObject = new NativeFunction("AbstractObject?", 1) {
+        NativeFunction isAbstractObject = new NativeFunction("Obj?", 1) {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
@@ -426,6 +426,7 @@ public class SplInterpreter {
                 }
             } catch (ClassCastException cce) {
                 cce.printStackTrace();
+                Utilities.removeErrorAndPrint(globalEnvironment, Main.LF_MAIN);
                 throw new NativeTypeError();
             }
 
@@ -471,7 +472,7 @@ public class SplInterpreter {
         if (globalEnvironment.hasName(Constants.MAIN_FN)) {
             Reference mainPtr = (Reference) globalEnvironment.get(Constants.MAIN_FN, Main.LF_MAIN);
 
-            Function mainFunc = (Function) globalEnvironment.getMemory().get(mainPtr);
+            Function mainFunc = globalEnvironment.getMemory().get(mainPtr);
             if (mainFunc.minArgCount() > 1) {
                 throw new NativeError("Function main takes 0 or 1 arguments.");
             }

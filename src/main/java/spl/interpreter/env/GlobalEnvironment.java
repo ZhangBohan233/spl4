@@ -3,7 +3,9 @@ package spl.interpreter.env;
 import spl.interpreter.Memory;
 import spl.interpreter.primitives.Reference;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class GlobalEnvironment extends MainAbstractEnvironment {

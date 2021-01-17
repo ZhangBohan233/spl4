@@ -5,6 +5,7 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.NativeFunction;
 import spl.interpreter.splObjects.SplClass;
@@ -70,7 +71,8 @@ public class ClassStmt extends Expression {
             superclassesPointers.add(scPtr);
         }
 
-        Reference clazzPtr = SplClass.createClassAndAllocate(className, superclassesPointers, body, env, docRef);
+        SplElement clazzPtr = SplClass.createClassAndAllocate(className, superclassesPointers, body, env, docRef);
+        if (clazzPtr == Undefined.ERROR) return Undefined.ERROR;  // a quicker way to check env.hasException()
 
         env.defineVarAndSet(className, clazzPtr, getLineFile());
 
@@ -83,7 +85,10 @@ public class ClassStmt extends Expression {
                     SplObject obj = callingEnv.getMemory().get((Reference) arg);
                     if (obj instanceof Instance) {
                         Reference argClazzPtr = ((Instance) obj).getClazzPtr();
-                        return Bool.boolValueOf(SplClass.isSuperclassOf(clazzPtr, argClazzPtr, callingEnv.getMemory()));
+                        return Bool.boolValueOf(SplClass.isSuperclassOf(
+                                (Reference) clazzPtr,
+                                argClazzPtr,
+                                callingEnv.getMemory()));
                     }
                 }
                 return Bool.FALSE;

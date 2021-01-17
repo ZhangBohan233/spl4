@@ -11,6 +11,7 @@ import spl.util.LineFilePos;
 import spl.util.Reconstructor;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class Declaration extends Expression {
 
@@ -61,5 +62,23 @@ public class Declaration extends Expression {
     protected void internalSave(BytesOut out) throws IOException {
         out.writeString(declaredName);
         out.writeInt(level);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Declaration that = (Declaration) o;
+
+        if (level != that.level) return false;
+        return Objects.equals(declaredName, that.declaredName);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = declaredName != null ? declaredName.hashCode() : 0;
+        result = 31 * result + level;
+        return result;
     }
 }

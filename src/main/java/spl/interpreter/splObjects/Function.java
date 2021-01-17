@@ -10,6 +10,7 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splErrors.NativeError;
+import spl.util.Accessible;
 import spl.util.Constants;
 import spl.util.LineFilePos;
 
@@ -145,7 +146,7 @@ public class Function extends UserFunction {
             BinaryOperator bo = (BinaryOperator) conNode;
             if (bo.getOperator().equals("or")) {
                 Reference orFn = (Reference) definitionEnv.get(Constants.OR_FN, lineFile);
-                Function function = (Function) definitionEnv.getMemory().get(orFn);
+                Function function = definitionEnv.getMemory().get(orFn);
                 Arguments args = new Arguments(new Line(lineFile, bo.getLeft(), bo.getRight()), lineFile);
                 SplElement callRes = function.call(args, definitionEnv);
                 if (definitionEnv.hasException()) {
@@ -172,7 +173,7 @@ public class Function extends UserFunction {
         SplElement conFnPtrProb = getContractFunction(conNode, lineFile);
         if (callingEnv.hasException()) return;
         Reference conFnPtr = (Reference) conFnPtrProb;
-        SplCallable callable = (SplCallable) callingEnv.getMemory().get(conFnPtr);
+        SplCallable callable = callingEnv.getMemory().get(conFnPtr);
         EvaluatedArguments contractArgs = EvaluatedArguments.of(arg);
 
         SplElement result = callable.call(contractArgs, callingEnv, lineFile);
@@ -219,18 +220,11 @@ public class Function extends UserFunction {
         return rtnValue;
     }
 
-    public SplElement getAttr(Node attrNode, Environment env, LineFilePos lineFilePos) {
-        if (attrNode instanceof NameNode) {
-            if (((NameNode) attrNode).getName().equals(Constants.DOC_ATTR)) {
-                if (docRef == null) return Reference.NULL;
-                else return docRef.evaluate(env);
-            }
-        }
-        return SplInvokes.throwExceptionWithError(
-                env,
-                Constants.ATTRIBUTE_EXCEPTION,
-                "Function does not have attribute '" + attrNode + "'. ",
-                lineFilePos
-        );
+    @Accessible
+    public SplElement __doc__(Arguments args, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(args, 0, "Function.__doc__", env, lineFile);
+
+        if (docRef == null) return Reference.NULL;
+        else return docRef.evaluate(env);
     }
 }

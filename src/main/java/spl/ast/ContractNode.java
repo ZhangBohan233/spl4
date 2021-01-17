@@ -34,19 +34,18 @@ public class ContractNode extends Statement {
     @Override
     protected void internalProcess(Environment env) {
         Reference fnPtr = (Reference) env.get(fnName, getLineFile());
-        Function function = (Function) env.getMemory().get(fnPtr);
+        Function function = env.getMemory().get(fnPtr);
         function.setContract(env, paramContracts, rtnContract);
     }
 
     public void evalAsMethod(Map<String, Reference> classMethods, String className, Environment classDefEnv) {
         Reference methodPtr = classMethods.get(fnName);
         if (methodPtr == null) {
-//            throw new EnvironmentError("Method '" + fnName + "' is not defined. ", lineFile);
             SplInvokes.throwException(classDefEnv, Constants.NAME_ERROR, "Method '" + fnName + "' is not defined.",
                     lineFile);
             return;
         }
-        SplMethod method = (SplMethod) classDefEnv.getMemory().get(methodPtr);
+        SplMethod method = classDefEnv.getMemory().get(methodPtr);
         paramContracts.getChildren().add(0, new NameNode(className + "?", lineFile));
         method.setContract(classDefEnv, paramContracts, rtnContract);
     }

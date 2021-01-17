@@ -21,18 +21,18 @@ public class NativeObject extends SplObject {
     private static SplElement nativeAttribute(NativeObject obj, String attrName, Environment env,
                                               LineFilePos lineFile) {
         try {
-            Field[] fields = obj.getClass().getFields();
-            for (Field field : fields) {
-                Accessible accessible = field.getAnnotation(Accessible.class);
-                if (accessible != null) {
-                    if (field.getName().equals(attrName)) {
-                        return (SplElement) field.get(obj);
-                    }
-                }
+            Field field = obj.getClass().getDeclaredField(attrName);
+            Accessible accessible = field.getAnnotation(Accessible.class);
+            if (accessible != null) {
+                field.setAccessible(true);
+                return (SplElement) field.get(obj);
             }
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException | NoSuchFieldException e) {
             //
         }
+
+        SplElement dynAttr = obj.getDynamicAttr(attrName);
+        if (dynAttr != null) return dynAttr;
 
         return SplInvokes.throwExceptionWithError(
                 env,
@@ -53,13 +53,6 @@ public class NativeObject extends SplObject {
             Method method = obj.getClass().getMethod(methodName, Arguments.class, Environment.class, LineFilePos.class);
 
             return (SplElement) method.invoke(obj, arguments, callEnv, lineFile);
-        } catch (NoSuchMethodException | IllegalAccessException e1) {
-            return SplInvokes.throwExceptionWithError(
-                    callEnv,
-                    Constants.ATTRIBUTE_EXCEPTION,
-                    "Native class '" + obj.getClass() + "' does not have method '" + methodName + "'.",
-                    lineFile
-            );
         } catch (InvocationTargetException e) {
             return SplInvokes.throwExceptionWithError(
                     callEnv,
@@ -67,7 +60,30 @@ public class NativeObject extends SplObject {
                     "Error occurred while calling '" + methodName + "': " + e.getCause().toString() + ".",
                     lineFile
             );
+        } catch (NoSuchMethodException | IllegalAccessException e1) {
+            //
         }
+
+        SplElement dynRes = obj.callDynamicMethod(methodName, arguments, callEnv, lineFile);
+        if (dynRes != null) return dynRes;
+
+        return SplInvokes.throwExceptionWithError(
+                callEnv,
+                Constants.ATTRIBUTE_EXCEPTION,
+                "Native class '" + obj.getClass() + "' does not have method '" + methodName + "'.",
+                lineFile
+        );
+    }
+
+    public SplElement getDynamicAttr(String attrName) {
+        return null;
+    }
+
+    public SplElement callDynamicMethod(String methodName,
+                                        Arguments arguments,
+                                        Environment env,
+                                        LineFilePos lineFilePos) {
+        return null;
     }
 
     /**

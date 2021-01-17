@@ -36,7 +36,7 @@ public class Dot extends BinaryExpr {
             if (objEnv.hasException()) {
                 return Undefined.ERROR;
             }
-            SplCallable callable = (SplCallable) objEnv.getMemory().get((Reference) funcTv);
+            SplCallable callable = objEnv.getMemory().get((Reference) funcTv);
             EvaluatedArguments ea = ((FuncCall) right).getArguments().evalArgs(oldEnv);
             if (callable instanceof SplMethod) {
                 ea.insertThis(leftPtr);  // add "this" ptr
@@ -73,10 +73,6 @@ public class Dot extends BinaryExpr {
                 return crossEnvEval(right, ptr, ((SplModule) leftObj).getEnv(), env, getLineFile());
             } else if (leftObj instanceof NativeObject) {
                 return ((NativeObject) leftObj).invoke(right, env, getLineFile());
-            } else if (leftObj instanceof SplClass) {
-                return ((SplClass) leftObj).getAttr(ptr, right, env, lineFile);
-            } else if (leftObj instanceof Function) {
-                return ((Function) leftObj).getAttr(right, env, lineFile);
             } else {
                 return SplInvokes.throwExceptionWithError(
                         env,

@@ -6,9 +6,9 @@ import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.splObjects.NativeObject;
 import spl.interpreter.splObjects.SplArray;
+import spl.util.Accessible;
 import spl.util.LineFilePos;
 
-import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -34,7 +34,7 @@ public class NativeOutFile extends NativeObject {
 
     /* Methods can be directly called by spl */
 
-    @SuppressWarnings("unused")
+    @Accessible
     public Bool close(Arguments args, Environment env, LineFilePos lineFilePos) {
         checkArgCount(args, 0, "NativeOutFile.close()", env, lineFilePos);
         try {
@@ -46,7 +46,7 @@ public class NativeOutFile extends NativeObject {
         return Bool.FALSE;
     }
 
-    @SuppressWarnings("unused")
+    @Accessible
     public Bool flush(Arguments args, Environment env, LineFilePos lineFilePos) {
         checkArgCount(args, 0, "NativeOutFile.flush()", env, lineFilePos);
         try {
@@ -58,7 +58,7 @@ public class NativeOutFile extends NativeObject {
         return Bool.FALSE;
     }
 
-    @SuppressWarnings("unused")
+    @Accessible
     public Bool write(Arguments args, Environment env, LineFilePos lineFilePos) {
         checkArgCount(args, 1, "NativeOutFile.write()", env, lineFilePos);
         Reference ref = (Reference) args.getLine().get(0).evaluate(env);
