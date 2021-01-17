@@ -29,7 +29,7 @@ public class Arguments extends NonEvaluate {
                                        Environment env, LineFilePos lineFilePos) {
         int arrAddr = arrayPtr.getPtr();
         SplArray array = (SplArray) env.getMemory().get(arrayPtr);
-        for (int j = 0; j < array.length; j++) {
+        for (int j = 0; j < array.length.value; j++) {
             evaluatedArguments.positionalArgs.add(
                     Utilities.unwrap(env.getMemory().getPrimitive(arrAddr + j + 1), env, lineFilePos)
             );

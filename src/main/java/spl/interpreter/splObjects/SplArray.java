@@ -1,27 +1,35 @@
 package spl.interpreter.splObjects;
 
-import spl.ast.NameNode;
 import spl.ast.Node;
 import spl.interpreter.Memory;
 import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.*;
 import spl.interpreter.splErrors.NativeTypeError;
+import spl.util.Accessible;
 import spl.util.Constants;
 import spl.util.LineFilePos;
 
-public class SplArray extends SplObject {
+public class SplArray extends NativeObject {
 
-    public final int length;
+    /**
+     * Fields open
+     */
+    @Accessible
+    public final Int length;
+
+    @Accessible
+    public final Reference type;
 
     /**
      * Element type representation, can be found in static final content of {@code SplElement}
      */
-    public final int elementTypeCode;
+    private final int elementTypeCode;
 
-    public SplArray(int elementTypeCode, int length) {
-        this.length = length;
+    public SplArray(int elementTypeCode, Reference typeRef, int length) {
+        this.length = new Int(length);
         this.elementTypeCode = elementTypeCode;
+        this.type = typeRef;
     }
 
     private static int calculateEleType(Node eleNode, Environment env, LineFilePos lineFilePos) {
@@ -41,36 +49,40 @@ public class SplArray extends SplObject {
             );
             return -1;
         }
-//        if (eleNode instanceof NameNode) {
-//            String name = ((NameNode) eleNode).getName();
-//            switch (name) {
-//                case "int":
-//                    return SplElement.INT;
-//                case "float":
-//                    return SplElement.FLOAT;
-//                case "char":
-//                    return SplElement.CHAR;
-//                case "byte":
-//                    return SplElement.BYTE;
-//                case "boolean":
-//                    return SplElement.BOOLEAN;
-//                case "Object":  // this case refers to AbstractObject
-//                    return SplElement.POINTER;
-//                default:
-//                    break;
-//            }
-//        }
-//        throw new NativeTypeError("Only basic types are valid in array creation. ");
     }
 
-    public static Reference createArray(int eleType, int arrSize, Environment env) {
+    private static SplElement eleToType(int eleType, Environment env, LineFilePos lineFilePos) {
+        return switch (eleType) {
+            case SplElement.INT -> env.get("int", lineFilePos);
+            case SplElement.FLOAT -> env.get("float", lineFilePos);
+            case SplElement.BOOLEAN -> env.get("boolean", lineFilePos);
+            case SplElement.CHAR -> env.get("char", lineFilePos);
+            case SplElement.BYTE -> env.get("byte", lineFilePos);
+            case SplElement.POINTER -> env.get("AbstractObject", lineFilePos);
+            default -> SplInvokes.throwExceptionWithError(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Only basic types are valid in array creation.",
+                    lineFilePos
+            );
+        };
+    }
+
+    public static Reference createArray(int eleType, int arrSize, Environment env, LineFilePos lineFilePos) {
+        SplElement t = eleToType(eleType, env, lineFilePos);
+        if (env.hasException()) return Reference.NULL;
+
         Memory memory = env.getMemory();
         Reference arrPtr = memory.allocate(arrSize + 1, env);
-        SplArray arrIns = new SplArray(eleType, arrSize);
+        SplArray arrIns = new SplArray(eleType, (Reference) t, arrSize);
         memory.set(arrPtr, arrIns);
         fillInitValue(eleType, arrPtr, memory, arrSize);
 
         return arrPtr;
+    }
+
+    public static Reference createArray(int eleType, int arrSize, Environment env) {
+        return createArray(eleType, arrSize, env, LineFilePos.LF_INTERPRETER);
     }
 
     public static SplElement createArray(Node eleNode, int arrSize, Environment env, LineFilePos lineFilePos) {
@@ -98,7 +110,7 @@ public class SplArray extends SplObject {
 
     public static SplElement getItemAtIndex(Reference arrPtr, int index, Environment env, LineFilePos lineFile) {
         SplArray array = (SplArray) env.getMemory().get(arrPtr);
-        if (index < 0 || index >= array.length) {
+        if (index < 0 || index >= array.length.value) {
             SplInvokes.throwException(
                     env,
                     Constants.INDEX_ERROR,
@@ -116,7 +128,7 @@ public class SplArray extends SplObject {
                                       LineFilePos lineFile) {
         SplArray array = (SplArray) env.getMemory().get(arrPtr);
         if (value.type() == array.elementTypeCode) {
-            if (index < 0 || index >= array.length) {
+            if (index < 0 || index >= array.length.value) {
                 SplInvokes.throwException(env,
                         Constants.INDEX_ERROR,
                         "Index " + index + " out of array length " + array.length + ". ",
@@ -173,33 +185,33 @@ public class SplArray extends SplObject {
         int firstEleAddr = arrPtr.getPtr() + 1;
 
         // returns array length and addr of first element
-        return new int[]{array.length, firstEleAddr};
+        return new int[]{(int) array.length.value, firstEleAddr};
     }
 
-    public SplElement getAttr(Node attrNode, Environment env, LineFilePos lineFile) {
-        if (attrNode instanceof NameNode) {
-            String name = ((NameNode) attrNode).getName();
-            if (name.equals(Constants.ARRAY_LENGTH)) {
-                return new Int(length);
-            } else if (name.equals(Constants.ARRAY_TYPE)) {
-                return switch (elementTypeCode) {
-                    case SplElement.INT -> env.get("int", lineFile);
-                    case SplElement.FLOAT -> env.get("float", lineFile);
-                    case SplElement.CHAR -> env.get("char", lineFile);
-                    case SplElement.BOOLEAN -> env.get("boolean", lineFile);
-                    case SplElement.BYTE -> env.get("byte", lineFile);
-                    case SplElement.POINTER -> env.get("Object", lineFile);
-                    default -> throw new NativeTypeError();
-                };
-            }
-        }
-        return SplInvokes.throwExceptionWithError(
-                env,
-                Constants.ATTRIBUTE_EXCEPTION,
-                "Array does not have attribute '" + attrNode + "'. ",
-                lineFile
-        );
-    }
+//    public SplElement getAttr(Node attrNode, Environment env, LineFilePos lineFile) {
+//        if (attrNode instanceof NameNode) {
+//            String name = ((NameNode) attrNode).getName();
+//            if (name.equals(Constants.ARRAY_LENGTH)) {
+//                return new Int(length);
+//            } else if (name.equals(Constants.ARRAY_TYPE)) {
+//                return switch (elementTypeCode) {
+//                    case SplElement.INT -> env.get("int", lineFile);
+//                    case SplElement.FLOAT -> env.get("float", lineFile);
+//                    case SplElement.CHAR -> env.get("char", lineFile);
+//                    case SplElement.BOOLEAN -> env.get("boolean", lineFile);
+//                    case SplElement.BYTE -> env.get("byte", lineFile);
+//                    case SplElement.POINTER -> env.get("Object", lineFile);
+//                    default -> throw new NativeTypeError();
+//                };
+//            }
+//        }
+//        return SplInvokes.throwExceptionWithError(
+//                env,
+//                Constants.ATTRIBUTE_EXCEPTION,
+//                "Array does not have attribute '" + attrNode + "'. ",
+//                lineFile
+//        );
+//    }
 
     @Override
     public String toString() {

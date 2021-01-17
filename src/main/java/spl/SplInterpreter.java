@@ -268,6 +268,13 @@ public class SplInterpreter {
             }
         };
 
+        TypeFunction abstractObject = new TypeFunction("AbstractObject", 1) {
+            @Override
+            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                return Utilities.wrap(evaluatedArgs.positionalArgs.get(0), callingEnv, LineFilePos.LF_INTERPRETER);
+            }
+        };
+
         NativeFunction isAbstractObject = new NativeFunction("AbstractObject?", 1) {
             @Override
             protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
@@ -309,7 +316,7 @@ public class SplInterpreter {
                 toChar, isChar,
                 toBool, isBool,
                 toByte, isByte,
-                isAbstractObject,
+                abstractObject, isAbstractObject,
                 isCallable,
                 isNull
         };

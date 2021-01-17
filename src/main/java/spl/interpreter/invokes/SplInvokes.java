@@ -173,10 +173,10 @@ public class SplInvokes extends NativeObject {
     private static String arrayToString(int arrayAddr, SplArray array, Environment env, Reference stringPtr,
                                         LineFilePos lineFile) {
         StringBuilder builder = new StringBuilder("'[");
-        for (int i = 0; i < array.length; i++) {
+        for (int i = 0; i < array.length.value; i++) {
             SplElement e = env.getMemory().getPrimitive(arrayAddr + i + 1);
             builder.append(getRepr(e, env, lineFile, stringPtr));
-            if (i < array.length - 1) builder.append(", ");
+            if (i < array.length.value - 1) builder.append(", ");
         }
         return builder.append("]").toString();
     }

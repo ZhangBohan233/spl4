@@ -71,8 +71,6 @@ public class Dot extends BinaryExpr {
                 return crossEnvEval(right, ptr, ((Instance) leftObj).getEnv(), env, getLineFile());
             } else if (leftObj instanceof SplModule) {
                 return crossEnvEval(right, ptr, ((SplModule) leftObj).getEnv(), env, getLineFile());
-            } else if (leftObj instanceof SplArray) {
-                return ((SplArray) leftObj).getAttr(right, env, getLineFile());
             } else if (leftObj instanceof NativeObject) {
                 return ((NativeObject) leftObj).invoke(right, env, getLineFile());
             } else if (leftObj instanceof SplClass) {

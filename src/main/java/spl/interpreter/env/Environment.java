@@ -97,8 +97,7 @@ public abstract class Environment {
 
     public void defineVar(String name, LineFilePos lineFile) {
         if (localHasName(name, lineFile)) {
-            SplInvokes.throwException(this, Constants.NAME_ERROR, "Variable '" + name + "' already defined.",
-                    lineFile);
+            throwNameError("Variable '" + name + "' already defined.", lineFile);
             return;
         }
 
@@ -107,9 +106,7 @@ public abstract class Environment {
 
     public void defineVarAndSet(String name, SplElement value, LineFilePos lineFile) {
         if (localHasName(name, lineFile)) {
-//            throw new EnvironmentError("Variable '" + name + "' already defined. ", lineFile);
-            SplInvokes.throwException(this, Constants.NAME_ERROR, "Variable '" + name + "' already defined.",
-                    lineFile);
+            throwNameError("Variable '" + name + "' already defined.", lineFile);
             return;
         }
 
@@ -118,8 +115,7 @@ public abstract class Environment {
 
     public void defineConst(String name, LineFilePos lineFile) {
         if (localHasName(name, lineFile)) {
-            SplInvokes.throwException(this, Constants.NAME_ERROR, "Constant '" + name + "' already defined.",
-                    lineFile);
+            throwNameError("Constant '" + name + "' already defined.", lineFile);
             return;
         }
 
@@ -129,8 +125,7 @@ public abstract class Environment {
 
     public void defineConstAndSet(String name, SplElement value, LineFilePos lineFile) {
         if (localHasName(name, lineFile)) {
-            SplInvokes.throwException(this, Constants.NAME_ERROR, "Constant '" + name + "' already defined.",
-                    lineFile);
+            throwNameError("Constant '" + name + "' already defined.", lineFile);
             return;
         }
 
@@ -140,16 +135,12 @@ public abstract class Environment {
     public void setVar(String name, SplElement value, LineFilePos lineFile) {
         VarEntry entry = innerGet(name, true);
         if (entry == null) {
-            SplInvokes.throwException(this,
-                    Constants.NAME_ERROR,
-                    "Variable '" + name + "' is not defined in this scope.",
-                    lineFile);
+            throwNameError("Variable '" + name + "' is not defined in this scope.", lineFile);
             return;
         }
 
         if (entry.constant && entry.getValue() != Undefined.UNDEFINED) {
-            SplInvokes.throwException(this, Constants.NAME_ERROR, "Constant '" + name + "' is not assignable.",
-                    lineFile);
+            throwNameError("Constant '" + name + "' is not assignable.", lineFile);
             return;
         }
 
@@ -159,12 +150,8 @@ public abstract class Environment {
     public SplElement get(String name, LineFilePos lineFile) {
         VarEntry se = innerGet(name, true);
         if (se == null) {
-            if (name.equals("String")) {
-                throw new EnvironmentError("Error occurs before the definition of String class. ", lineFile);
-            } else {
-                return SplInvokes.throwExceptionWithError(
-                        this, Constants.NAME_ERROR, "Name '" + name + "' not found.", lineFile);
-            }
+            throwNameError("Name '" + name + "' not found.", lineFile);
+            return Undefined.ERROR;
         }
 
         return se.getValue();
@@ -216,6 +203,18 @@ public abstract class Environment {
     protected abstract VarEntry searchInNamespaces(String name);
 
     protected abstract void setInNamespaces(String name, SplElement typeValue);
+
+    private void throwNameError(String msg, LineFilePos lineFilePos) {
+        if (hasName(Constants.NAME_ERROR) && hasName(Constants.STRING_CLASS)) {
+            SplInvokes.throwException(
+                    this,
+                    Constants.NAME_ERROR,
+                    msg,
+                    lineFilePos);
+        } else {
+            throw new EnvironmentError(msg, lineFilePos);
+        }
+    }
 
     @Override
     public boolean equals(Object o) {

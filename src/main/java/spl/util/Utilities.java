@@ -233,6 +233,11 @@ public class Utilities {
         return ele;
     }
 
+    public static Reference wrap(SplElement se, Environment env, LineFilePos lineFilePos) {
+        if (se instanceof Reference) return (Reference) se;
+        else return primitiveToWrapper(se, env, lineFilePos);
+    }
+
     public static Reference primitiveToWrapper(SplElement prim, Environment env, LineFilePos lineFile) {
         String wrapperName = Constants.WRAPPERS.get(prim.type());
         return Instance.createInstanceWithInitCall(

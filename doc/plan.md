@@ -44,3 +44,4 @@
 * Wrapper of native types
 * ~~Get class method statically~~ `Object.__hash__` **_DONE_**
 * ~~More information in compiled spl file~~ **_DONE_**
+* Rename AbstractObject to a shorter name

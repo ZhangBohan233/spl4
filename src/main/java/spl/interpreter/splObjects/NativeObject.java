@@ -8,19 +8,40 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Int;
 import spl.interpreter.primitives.SplElement;
+import spl.util.Accessible;
 import spl.util.Constants;
 import spl.util.LineFilePos;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 
 public class NativeObject extends SplObject {
 
-    private static SplElement nativeAttribute(NativeObject obj, String attrName, LineFilePos lineFile) {
-        // TODO
+    private static SplElement nativeAttribute(NativeObject obj, String attrName, Environment env,
+                                              LineFilePos lineFile) {
+        try {
+            Field[] fields = obj.getClass().getFields();
+            for (Field field : fields) {
+                Accessible accessible = field.getAnnotation(Accessible.class);
+                if (accessible != null) {
+                    if (field.getName().equals(attrName)) {
+                        return (SplElement) field.get(obj);
+                    }
+                }
+            }
+        } catch (IllegalAccessException e) {
+            //
+        }
 
-        return null;
+        return SplInvokes.throwExceptionWithError(
+                env,
+                Constants.ATTRIBUTE_EXCEPTION,
+                String.format("Native object '%s' does not have attribute '%s'.",
+                        obj.getClass().getSimpleName(),
+                        attrName),
+                lineFile
+        );
     }
 
     private static SplElement nativeCall(NativeObject obj,
@@ -49,18 +70,12 @@ public class NativeObject extends SplObject {
         }
     }
 
-    @SuppressWarnings("unused")
-    public SplElement __hash__(Arguments arguments, Environment env, LineFilePos lineFilePos) {
-        checkArgCount(arguments, 0, "__hash__", env, lineFilePos);
-
-        return new Int(this.hashCode());
-    }
-
     /**
      * Helper functions
      */
 
-    public static void checkArgCount(Arguments arguments, int expectArgc, String fnName, Environment env, LineFilePos lineFile) {
+    public static void checkArgCount(Arguments arguments, int expectArgc, String fnName, Environment env,
+                                     LineFilePos lineFile) {
         if (arguments.getLine().getChildren().size() != expectArgc) {
             SplInvokes.throwException(
                     env,
@@ -90,9 +105,16 @@ public class NativeObject extends SplObject {
         }
     }
 
+    @SuppressWarnings("unused")
+    public SplElement __hash__(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 0, "__hash__", env, lineFilePos);
+
+        return new Int(this.hashCode());
+    }
+
     public SplElement invoke(Node node, Environment callEnv, LineFilePos lineFile) {
         if (node instanceof NameNode) {
-            return nativeAttribute(this, ((NameNode) node).getName(), lineFile);
+            return nativeAttribute(this, ((NameNode) node).getName(), callEnv, lineFile);
         } else if (node instanceof FuncCall) {
             if (((FuncCall) node).getCallObj() instanceof NameNode) {
                 String name = ((NameNode) ((FuncCall) node).getCallObj()).getName();

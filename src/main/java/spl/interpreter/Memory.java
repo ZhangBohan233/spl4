@@ -330,7 +330,7 @@ public class Memory {
             if (obj instanceof SplArray) {
                 int arrBegin = objAddr + 1;
                 SplArray array = (SplArray) obj;
-                for (int i = 0; i < array.length; i++) {
+                for (int i = 0; i < array.length.value; i++) {
                     int p = arrBegin + i;
                     SplElement ele = getPrimitive(p);
                     if (ele instanceof Reference) {
@@ -387,7 +387,7 @@ public class Memory {
                     if (obj instanceof SplArray) {
                         SplArray array = (SplArray) obj;
                         // avoid using System.arraycopy() because this may overlap
-                        for (int i = 0; i < array.length; i++) {
+                        for (int i = 0; i < array.length.value; i++) {
                             heap[curAddr++] = heap[objAddr + i + 1];
                         }
                     }
