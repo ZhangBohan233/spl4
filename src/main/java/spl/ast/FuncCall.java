@@ -17,35 +17,28 @@ public class FuncCall extends Expression {
 
     Expression callObj;
     Arguments arguments;
-    Line genericLine;
 
     public FuncCall(LineFilePos lineFile) {
         super(lineFile);
     }
 
-    public FuncCall(Expression callObj, Arguments arguments, Line genericLine, LineFilePos lineFile) {
+    public FuncCall(Expression callObj, Arguments arguments, LineFilePos lineFile) {
         super(lineFile);
 
         this.callObj = callObj;
         this.arguments = arguments;
-        this.genericLine = genericLine;
     }
 
     public static FuncCall reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
         Expression callObj = Reconstructor.reconstruct(in);
         Arguments arguments = Reconstructor.reconstruct(in);
-        boolean hasTemplate = in.readBoolean();
-        Line templateLine = null;
-        if (hasTemplate) templateLine = Reconstructor.reconstruct(in);
-        return new FuncCall(callObj, arguments, templateLine, lineFilePos);
+        return new FuncCall(callObj, arguments, lineFilePos);
     }
 
     @Override
     protected void internalSave(BytesOut out) throws IOException {
         callObj.save(out);
         arguments.save(out);
-        out.writeBoolean(genericLine != null);
-        if (genericLine != null) genericLine.save(out);
     }
 
     @Override
@@ -82,11 +75,12 @@ public class FuncCall extends Expression {
         }
     }
 
-    private Reference[] evalGenerics(Environment callingEnv) {
-        if (genericLine == null) return null;
-        Reference[] generics = new Reference[genericLine.size()];
+    public Reference[] evalGenerics(Environment callingEnv) {
+        if (!(callObj instanceof GenericNode)) return null;
+        GenericNode genericNode = (GenericNode) callObj;
+        Reference[] generics = new Reference[genericNode.getGenericLine().size()];
         for (int i = 0 ; i < generics.length; i++) {
-            Node n = genericLine.get(i);
+            Node n = genericNode.getGenericLine().get(i);
             SplElement se = n.evaluate(callingEnv);
             if (se instanceof Reference) {
                 generics[i] = (Reference) se;

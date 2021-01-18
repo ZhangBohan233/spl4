@@ -61,6 +61,10 @@ public class AstVisualizer implements Initializable {
             for (Node part : ((Line) node).getChildren()) {
                 fill(part, treeItem, "");
             }
+        } else if (node instanceof GenericNode) {
+            GenericNode gn = (GenericNode) node;
+            fill(gn.getObj(), treeItem, "obj");
+            fill(gn.getGenericLine(), treeItem, "generics");
         } else if (node instanceof FuncDefinition) {
             FuncDefinition fd = (FuncDefinition) node;
             fill(fd.getParameters(), treeItem, "params");

@@ -46,3 +46,4 @@
 * ~~More information in compiled spl file~~ **_DONE_**
 * ~~Rename AbstractObject to a shorter name~~ **_DONE_**
 * Generic contract: `fn test<T>(x: T) -> T`
+* Check function scope 'removeReturn'

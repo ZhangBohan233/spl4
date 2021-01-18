@@ -16,17 +16,22 @@ import spl.interpreter.splObjects.SplObject;
 import spl.util.*;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 public class ForLoopStmt extends ConditionalStmt {
 
-//    private final static String forEachSyntaxMsg = "Syntax of for-each loop: 'for i in collection {...}'";
+    //    private final static String forEachSyntaxMsg = "Syntax of for-each loop: 'for i in collection {...}'";
     private final BlockStmt condition;
 
     public ForLoopStmt(BlockStmt condition, BlockStmt bodyBlock, LineFilePos lineFile) {
         super(bodyBlock, lineFile);
 
         this.condition = condition;
+    }
+
+    public static ForLoopStmt reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
+        BlockStmt cond = Reconstructor.reconstruct(in);
+        BlockStmt body = Reconstructor.reconstruct(in);
+        return new ForLoopStmt(cond, body, lineFilePos);
     }
 
     @Override
@@ -106,6 +111,7 @@ public class ForLoopStmt extends ConditionalStmt {
                                 EvaluatedArguments.of(ptr),
                                 parentEnv,
                                 lineFile);
+                if (arrIterator == null) return;
                 forEachLoopIterator(loopInvariant,
                         arrIterator.pointer,
                         arrIterator.instance,
@@ -114,15 +120,15 @@ public class ForLoopStmt extends ConditionalStmt {
                         bodyEnv);
                 return;
             } else if (Utilities.isInstancePtr(ptr, Constants.ITERATOR_CLASS, parentEnv, lineFile)) {
-                Instance iterator = (Instance) parentEnv.getMemory().get(ptr);
+                Instance iterator = parentEnv.getMemory().get(ptr);
                 forEachLoopIterator(loopInvariant, ptr, iterator, parentEnv, titleEnv, bodyEnv);
                 return;
             } else if (Utilities.isInstancePtr(ptr, Constants.ITERABLE_CLASS, parentEnv, lineFile)) {
-                Instance iterable = (Instance) parentEnv.getMemory().get(ptr);
+                Instance iterable = parentEnv.getMemory().get(ptr);
                 Reference iterFnPtr = (Reference) iterable.getEnv().get(Constants.ITER_FN, lineFile);
-                SplMethod iterFn = (SplMethod) parentEnv.getMemory().get(iterFnPtr);
+                SplMethod iterFn = parentEnv.getMemory().get(iterFnPtr);
                 Reference iteratorPtr = (Reference) iterFn.call(EvaluatedArguments.of(ptr), parentEnv, lineFile);
-                Instance iterator = (Instance) parentEnv.getMemory().get(iteratorPtr);
+                Instance iterator = parentEnv.getMemory().get(iteratorPtr);
                 forEachLoopIterator(loopInvariant, iteratorPtr, iterator, parentEnv, titleEnv, bodyEnv);
                 return;
             }
@@ -152,8 +158,8 @@ public class ForLoopStmt extends ConditionalStmt {
         }
         Reference nextPtr = (Reference) iterator.getEnv().get(Constants.NEXT_FN, lineFile);
         Reference hasNextPtr = (Reference) iterator.getEnv().get(Constants.HAS_NEXT_FN, lineFile);
-        SplMethod nextFn = (SplMethod) titleEnv.getMemory().get(nextPtr);
-        SplMethod hasNextFn = (SplMethod) titleEnv.getMemory().get(hasNextPtr);
+        SplMethod nextFn = titleEnv.getMemory().get(nextPtr);
+        SplMethod hasNextFn = titleEnv.getMemory().get(hasNextPtr);
 
         String liName = loopInvariant.declaredName;
         loopInvariant.evaluate(titleEnv);  // declare loop invariant
@@ -186,11 +192,5 @@ public class ForLoopStmt extends ConditionalStmt {
     protected void internalSave(BytesOut out) throws IOException {
         condition.save(out);
         bodyBlock.save(out);
-    }
-
-    public static ForLoopStmt reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
-        BlockStmt cond = Reconstructor.reconstruct(in);
-        BlockStmt body = Reconstructor.reconstruct(in);
-        return new ForLoopStmt(cond, body, lineFilePos);
     }
 }

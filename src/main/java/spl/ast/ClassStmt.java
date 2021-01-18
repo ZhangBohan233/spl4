@@ -22,20 +22,23 @@ public class ClassStmt extends Expression {
     private final BlockStmt body;
     private final StringLiteralRef docRef;
     private List<Node> superclassesNodes;  // nullable
+    private List<Node> templates;  // nullable
 
     /**
      * @param className  name of class
      * @param extensions extending node list, null if not specified.
+     * @param templates  template node list, null if not specified
      * @param body       body block
      * @param docRef     string literal reference of docstring
      * @param lineFile   line file
      */
-    public ClassStmt(String className, List<Node> extensions, BlockStmt body, StringLiteralRef docRef,
+    public ClassStmt(String className, List<Node> extensions, List<Node> templates, BlockStmt body, StringLiteralRef docRef,
                      LineFilePos lineFile) {
         super(lineFile);
 
         this.className = className;
         this.superclassesNodes = extensions;
+        this.templates = templates;
         this.body = body;
         this.docRef = docRef;
     }
@@ -46,10 +49,25 @@ public class ClassStmt extends Expression {
         boolean hasSc = is.readBoolean();
         List<Node> superclassNodes = null;
         if (hasSc) superclassNodes = is.readList();
+        boolean hasTemplates = is.readBoolean();
+        List<Node> templates = null;
+        if (hasTemplates) templates = is.readList();
         boolean hasDoc = is.readBoolean();
         StringLiteralRef docRef = null;
         if (hasDoc) docRef = Reconstructor.reconstruct(is);
-        return new ClassStmt(name, superclassNodes, body, docRef, lineFilePos);
+        return new ClassStmt(name, superclassNodes, templates, body, docRef, lineFilePos);
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        out.writeString(className);
+        body.save(out);
+        out.writeBoolean(superclassesNodes != null);
+        if (superclassesNodes != null) out.writeList(superclassesNodes);
+        out.writeBoolean(templates != null);
+        if (templates != null) out.writeList(templates);
+        out.writeBoolean(docRef != null);
+        if (docRef != null) docRef.save(out);
     }
 
     private void validateExtending() {
@@ -71,7 +89,15 @@ public class ClassStmt extends Expression {
             superclassesPointers.add(scPtr);
         }
 
-        SplElement clazzPtr = SplClass.createClassAndAllocate(className, superclassesPointers, body, env, docRef);
+        String[] templates = null;
+        if (this.templates != null) {
+            templates = ContractNode.getDefinedTemplates(this.templates, env, lineFile);
+            if (env.hasException()) return Undefined.ERROR;
+        }
+
+        SplElement clazzPtr =
+                SplClass.createClassAndAllocate(className, superclassesPointers, templates, body, env, docRef,
+                        lineFile);
         if (clazzPtr == Undefined.ERROR) return Undefined.ERROR;  // a quicker way to check env.hasException()
 
         env.defineVarAndSet(className, clazzPtr, getLineFile());
@@ -116,15 +142,5 @@ public class ClassStmt extends Expression {
 
     public BlockStmt getBody() {
         return body;
-    }
-
-    @Override
-    protected void internalSave(BytesOut out) throws IOException {
-        out.writeString(className);
-        body.save(out);
-        out.writeBoolean(superclassesNodes != null);
-        if (superclassesNodes != null) out.writeList(superclassesNodes);
-        out.writeBoolean(docRef != null);
-        if (docRef != null) docRef.save(out);
     }
 }

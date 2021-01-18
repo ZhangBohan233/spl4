@@ -240,12 +240,14 @@ public class Utilities {
 
     public static Reference primitiveToWrapper(SplElement prim, Environment env, LineFilePos lineFile) {
         String wrapperName = Constants.WRAPPERS.get(prim.type());
-        return Instance.createInstanceWithInitCall(
+        Instance.InstanceAndPtr iap = Instance.createInstanceWithInitCall(
                 wrapperName,
                 EvaluatedArguments.of(prim),
                 env,
                 lineFile
-        ).pointer;
+        );
+        if (iap == null) return Reference.NULL;
+        return iap.pointer;
     }
 
     public static SplElement wrapperToPrimitive(Reference wrapperPtr, Environment env, LineFilePos lineFile) {

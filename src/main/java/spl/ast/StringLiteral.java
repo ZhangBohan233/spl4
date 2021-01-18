@@ -55,11 +55,13 @@ public class StringLiteral extends LiteralNode {
     }
 
     private static Reference createStringInstance(Reference arrPtr, Environment env, LineFilePos lineFile) {
-        return Instance.createInstanceWithInitCall(
+        Instance.InstanceAndPtr iap = Instance.createInstanceWithInitCall(
                 Constants.STRING_CLASS,
                 EvaluatedArguments.of(arrPtr),
                 env,
-                lineFile).pointer;
+                lineFile);
+        if (iap == null) return Reference.NULL;
+        return iap.pointer;
     }
 
     public char[] getCharArray() {

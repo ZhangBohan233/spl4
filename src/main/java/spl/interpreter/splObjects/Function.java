@@ -13,6 +13,7 @@ import spl.interpreter.splErrors.NativeError;
 import spl.util.Accessible;
 import spl.util.Constants;
 import spl.util.LineFilePos;
+import spl.util.Utilities;
 
 import java.util.Map;
 
@@ -210,7 +211,7 @@ public class Function extends UserFunction {
             if (templates == null) return true;
             else {
                 for (String template : templates) {
-                    scope.defineConstAndSet(template, callingEnv.get("any?", lineFilePos), lineFilePos);
+                    scope.defineConstAndSet(template, callingEnv.get(Constants.ANY_TYPE, lineFilePos), lineFilePos);
                 }
             }
         } else {

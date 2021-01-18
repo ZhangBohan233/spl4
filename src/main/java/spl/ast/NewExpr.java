@@ -62,13 +62,17 @@ public class NewExpr extends UnaryExpr {
                                                Environment classDefEnv,
                                                Environment callEnv,
                                                LineFilePos lineFile) {
+        Reference[] generics = call.evalGenerics(callEnv);
+        if (callEnv.hasException()) return Undefined.ERROR;
         Reference clazzPtr = (Reference) call.callObj.evaluate(classDefEnv);
         if (callEnv.hasException()) return Undefined.ERROR;
 
         var ea = call.arguments.evalArgs(callEnv);
         if (callEnv.hasException()) return Undefined.ERROR;
-        return Instance.createInstanceWithInitCall(
-                clazzPtr, ea, callEnv, lineFile).pointer;
+        Instance.InstanceAndPtr iap = Instance.createInstanceWithInitCall(
+                clazzPtr, generics, ea, callEnv, lineFile);
+        if (iap == null) return Undefined.ERROR;
+        return iap.pointer;
     }
 
     private static SplElement arrayCreation(IndexingNode node,

@@ -32,7 +32,9 @@ public class ArrayLiteral extends Expression {
     protected SplElement internalEval(Environment env) {
         var ea = content.evalArgs(env);
         if (env.hasException()) return Undefined.ERROR;
-        return Instance.createInstanceWithInitCall(Constants.LIST_CLASS, ea, env, lineFile).pointer;
+        Instance.InstanceAndPtr iap = Instance.createInstanceWithInitCall(Constants.LIST_CLASS, ea, env, lineFile);
+        if (iap == null) return Undefined.ERROR;
+        return iap.pointer;
     }
 
     @Override

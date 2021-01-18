@@ -9,6 +9,7 @@ import spl.interpreter.splObjects.SplMethod;
 import spl.util.*;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public class ContractNode extends Statement {
@@ -28,26 +29,30 @@ public class ContractNode extends Statement {
         this.templateLine = templateLine;
     }
 
-    public static String[] getDefinedTemplates(Line templateLine, Environment env, LineFilePos lineFilePos) {
+    private static String[] getDefinedTemplates(Line templateLine, Environment env, LineFilePos lineFilePos) {
         if (templateLine != null) {
-            String[] templateNames = new String[templateLine.size()];
-            for (int i = 0; i < templateNames.length; i++) {
-                Node n = templateLine.get(i);
-                if (n instanceof NameNode) {
-                    templateNames[i] = ((NameNode) n).getName();
-                } else {
-                    SplInvokes.throwException(
-                            env,
-                            Constants.NAME_ERROR,
-                            "Template definition with non-name value.",
-                            lineFilePos
-                    );
-                    return null;
-                }
-            }
-            return templateNames;
+            return getDefinedTemplates(templateLine.getChildren(), env, lineFilePos);
         }
         return null;
+    }
+
+    public static String[] getDefinedTemplates(List<Node> list, Environment env, LineFilePos lineFilePos) {
+        String[] templateNames = new String[list.size()];
+        for (int i = 0; i < templateNames.length; i++) {
+            Node n = list.get(i);
+            if (n instanceof NameNode) {
+                templateNames[i] = ((NameNode) n).getName();
+            } else {
+                SplInvokes.throwException(
+                        env,
+                        Constants.NAME_ERROR,
+                        "Template definition with non-name value.",
+                        lineFilePos
+                );
+                return null;
+            }
+        }
+        return templateNames;
     }
 
     public static ContractNode reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {

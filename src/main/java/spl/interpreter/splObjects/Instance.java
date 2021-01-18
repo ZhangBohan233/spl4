@@ -2,14 +2,18 @@ package spl.interpreter.splObjects;
 
 import spl.ast.*;
 import spl.interpreter.EvaluatedArguments;
-import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.InstanceEnvironment;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
+import spl.interpreter.splErrors.NativeError;
+import spl.util.ArrayIterator;
 import spl.util.Constants;
 import spl.util.LineFilePos;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class Instance extends SplObject {
 
@@ -21,52 +25,48 @@ public class Instance extends SplObject {
         this.env = env;
     }
 
-    @Override
-    public List<Reference> listAttrReferences() {
-        return List.of(clazzPtr);
-    }
-
-    public InstanceEnvironment getEnv() {
-        return env;
-    }
-
-    public Reference getClazzPtr() {
-        return clazzPtr;
-    }
-
-    @Override
-    public String toString() {
-        return "Instance to<" + clazzPtr.getPtr() + ">";
-    }
-
     public static InstanceAndPtr createInstanceAndAllocate(String className,
                                                            Environment callingEnv,
                                                            LineFilePos lineFile) {
         Reference clazzPtr = (Reference) callingEnv.get(className, lineFile);
-        return createInstanceAndAllocate(clazzPtr, callingEnv, lineFile);
+        return createInstanceAndAllocate(clazzPtr, null, callingEnv, lineFile);
     }
 
     public static InstanceAndPtr createInstanceAndAllocate(Reference clazzPtr,
+                                                           Reference[] generics,
                                                            Environment callingEnv,
                                                            LineFilePos lineFile) {
-        SplClass clazz = (SplClass) callingEnv.getMemory().get(clazzPtr);
-        return createInstanceAndAllocate(clazz.getMroArray(), 0, callingEnv, lineFile);
+
+        SplClass clazz = callingEnv.getMemory().get(clazzPtr);
+        Map<String, Reference> determinedGens = getDeterminedGenerics(
+                clazz.getTemplates(),
+                generics,
+                clazz.getClassName(),
+                callingEnv,
+                lineFile);
+        if (callingEnv.hasException()) return null;
+        ArrayIterator<Reference> mroIterator = new ArrayIterator<>(clazz.getMroArray());
+        if (mroIterator.next() != clazzPtr) throw new NativeError("Unexpected error.");
+        return createInstanceAndAllocate(mroIterator, clazzPtr, clazz, determinedGens, callingEnv, lineFile);
     }
 
     public static InstanceAndPtr createInstanceWithInitCall(String className,
-                                                     EvaluatedArguments evaluatedArgs,
-                                                     Environment callingEnv,
-                                                     LineFilePos lineFile) {
+                                                            EvaluatedArguments evaluatedArgs,
+                                                            Environment callingEnv,
+                                                            LineFilePos lineFile) {
         InstanceAndPtr iap = createInstanceAndAllocate(className, callingEnv, lineFile);
+        if (iap == null) return null;
         callInit(iap, evaluatedArgs, callingEnv, lineFile);
         return iap;
     }
 
     public static InstanceAndPtr createInstanceWithInitCall(Reference clazzPtr,
+                                                            Reference[] generics,
                                                             EvaluatedArguments evaluatedArgs,
                                                             Environment callingEnv,
                                                             LineFilePos lineFile) {
-        InstanceAndPtr iap = createInstanceAndAllocate(clazzPtr, callingEnv, lineFile);
+        InstanceAndPtr iap = createInstanceAndAllocate(clazzPtr, generics, callingEnv, lineFile);
+        if (iap == null) return null;
         callInit(iap, evaluatedArgs, callingEnv, lineFile);
         return iap;
     }
@@ -74,36 +74,52 @@ public class Instance extends SplObject {
     /**
      * Creates an instance and allocate it in memory.
      *
-     * @param mro        list of multiple resolution order, child at first
-     * @param indexInMro current proceeding index in the mro array
-     * @param callingEnv env where the new instance is created, not the class definition env
-     * @param lineFile   error traceback info of code where instance creation
-     * @return the tuple of the newly created instance, and the {@code TypeValue} contains the pointer to this instance
+     * @param mroIterator        iterator of method resolution order, child at first
+     * @param clazzPtr           pointer to the class to be processed
+     * @param clazz              class to be processed
+     * @param determinedGenerics generics that are already set
+     * @param callingEnv         env where the new instance is created, not the class definition env
+     * @param lineFile           error traceback info of code where instance creation
+     * @return the tuple of the newly created instance, and the a pointer point to that instance
      */
-    private static InstanceAndPtr createInstanceAndAllocate(Reference[] mro,
-                                                            int indexInMro,
+    private static InstanceAndPtr createInstanceAndAllocate(ArrayIterator<Reference> mroIterator,
+                                                            Reference clazzPtr,
+                                                            SplClass clazz,
+                                                            Map<String, Reference> determinedGenerics,
                                                             Environment callingEnv,
                                                             LineFilePos lineFile) {
-
-        Reference clazzPtr = mro[indexInMro];
-
-        SplObject obj = callingEnv.getMemory().get(clazzPtr);
-        SplClass clazz = (SplClass) obj;
         InstanceEnvironment instanceEnv = new InstanceEnvironment(
                 clazz.getClassName(),
                 clazz.getDefinitionEnv(),
                 callingEnv
         );
         callingEnv.getMemory().addTempEnv(instanceEnv);
+        String[] templates = clazz.getTemplates();
+        if (templates != null) {
+            for (String tem : templates) {
+                instanceEnv.defineConstAndSet(tem, determinedGenerics.get(tem), lineFile);
+            }
+        }
 
         Instance instance = new Instance(clazzPtr, instanceEnv);
         Reference instancePtr = callingEnv.getMemory().allocate(1, instanceEnv);
         callingEnv.getMemory().set(instancePtr, instance);
 
         // evaluate superclasses
-        if (indexInMro < mro.length - 1) {
+        if (mroIterator.hasNext()) {
+            Reference supClassPtr = mroIterator.next();
+            SplClass supClazz = callingEnv.getMemory().get(supClassPtr);
+
+            Map<String, Reference> gensForSupClass = new TreeMap<>();
+
             InstanceAndPtr scInsPtr =
-                    createInstanceAndAllocate(mro, indexInMro + 1, callingEnv, lineFile);
+                    createInstanceAndAllocate(
+                            mroIterator,
+                            supClassPtr,
+                            supClazz,
+                            gensForSupClass,
+                            callingEnv,
+                            lineFile);
 
             // define "super"
             instance.getEnv().directDefineConstAndSet(Constants.SUPER, scInsPtr.pointer);
@@ -131,9 +147,9 @@ public class Instance extends SplObject {
      * @param lineFile      line file
      */
     private static void callInit(InstanceAndPtr iap,
-                                EvaluatedArguments evaluatedArgs,
-                                Environment callEnv,
-                                LineFilePos lineFile) {
+                                 EvaluatedArguments evaluatedArgs,
+                                 Environment callEnv,
+                                 LineFilePos lineFile) {
 
         SplMethod constructor = getConstructor(iap.instance, lineFile);
         evaluatedArgs.insertThis(iap.pointer);
@@ -143,15 +159,15 @@ public class Instance extends SplObject {
     private static SplMethod getConstructor(Instance instance, LineFilePos lineFile) {
         InstanceEnvironment env = instance.getEnv();
         Reference constructorPtr = (Reference) env.get(Constants.CONSTRUCTOR, lineFile);
-        SplMethod constructor = (SplMethod) env.getMemory().get(constructorPtr);
+        SplMethod constructor = env.getMemory().get(constructorPtr);
 
         if (env.hasName(Constants.SUPER)) {
             // All classes has superclass except class 'Object'
             Reference superPtr = (Reference) env.get(Constants.SUPER, lineFile);
-            Instance supIns = (Instance) env.getMemory().get(superPtr);
+            Instance supIns = env.getMemory().get(superPtr);
             InstanceEnvironment supEnv = supIns.getEnv();
             Reference supConstPtr = (Reference) supEnv.get(Constants.CONSTRUCTOR, lineFile);
-            SplMethod supConst = (SplMethod) env.getMemory().get(supConstPtr);
+            SplMethod supConst = env.getMemory().get(supConstPtr);
 //            List<Type> supParamTypes = supConst.getFuncType().getParamTypes();
             if (supConst.minArgCount() > 1) {
                 // superclass has a non-trivial constructor
@@ -168,6 +184,50 @@ public class Instance extends SplObject {
         }
 
         return constructor;
+    }
+
+    private static Map<String, Reference> getDeterminedGenerics(String[] templates,
+                                                                Reference[] generics,
+                                                                String className,
+                                                                Environment callingEnv,
+                                                                LineFilePos lineFilePos) {
+        Map<String, Reference> map = new TreeMap<>();
+        if (templates == null) {
+            if (generics == null) {
+                return map;
+            } else {
+                SplInvokes.throwException(
+                        callingEnv,
+                        Constants.ARGUMENT_EXCEPTION,
+                        "Class '" + className + "' does not support generic operation.",
+                        lineFilePos
+                );
+                return null;
+            }
+        } else {
+            if (generics == null) {
+                for (String template : templates) {
+                    map.put(template, (Reference) callingEnv.get(Constants.ANY_TYPE, lineFilePos));
+                }
+            } else {
+                if (templates.length != generics.length) {
+                    SplInvokes.throwException(
+                            callingEnv,
+                            Constants.ARGUMENT_EXCEPTION,
+                            String.format("Class '%s' needs %d genes, %d given",
+                                    className,
+                                    templates.length,
+                                    generics.length),
+                            lineFilePos
+                    );
+                    return null;
+                }
+                for (int i = 0; i < templates.length; i++) {
+                    map.put(templates[i], generics[i]);
+                }
+            }
+            return map;
+        }
     }
 
     private static Node extractOnlyElementFromLine(Line line) {
@@ -225,12 +285,40 @@ public class Instance extends SplObject {
         return true;
     }
 
+    @Override
+    public List<Reference> listAttrReferences() {
+        return List.of(clazzPtr);
+    }
+
+    public InstanceEnvironment getEnv() {
+        return env;
+    }
+
+    public Reference getClazzPtr() {
+        return clazzPtr;
+    }
+
+    @Override
+    public String toString() {
+        return "Instance to<" + clazzPtr.getPtr() + ">";
+    }
+
     public static class InstanceAndPtr {
         public final Instance instance;
         public final Reference pointer;
 
         InstanceAndPtr(Instance instance, Reference pointer) {
             this.instance = instance;
+            this.pointer = pointer;
+        }
+    }
+
+    private static class ClassAndPtr {
+        private final SplClass splClass;
+        private final Reference pointer;
+
+        ClassAndPtr(SplClass splClass, Reference pointer) {
+            this.splClass = splClass;
             this.pointer = pointer;
         }
     }

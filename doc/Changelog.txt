@@ -1,3 +1,9 @@
+===== Version 4060 =====
+2021/01/19
+
+* Redesigned the method resolution system: used C3 algorithm
+* Parser of templated class
+
 ===== Version 4059 =====
 2021/01/18
 

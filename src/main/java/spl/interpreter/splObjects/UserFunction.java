@@ -142,6 +142,7 @@ public abstract class UserFunction extends SplCallable {
                                 EvaluatedArguments.of(keyArrPtr, valueArrPtr),
                                 scope,
                                 lineFile);
+                if (dict == null) return;
                 success = setArg(scope, callingEnv, paramName, dict.pointer, lineFile);
 
                 scope.getMemory().removeTempPtr(valueArrPtr);

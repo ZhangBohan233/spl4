@@ -27,11 +27,13 @@ public class SplClass extends NativeObject {
     private final Environment definitionEnv;
     private final LinkedHashMap<String, Node> fieldNodes = new LinkedHashMap<>();
     private final Map<String, Reference> methodPointers = new HashMap<>();
+    private final String[] templates;
     private final StringLiteralRef docRef;
     // mro array used by spl
     @Accessible
     Reference __mro__;
     // mro array used by java
+    // the first is the self class
     private Reference[] mroArray;
     private Reference classNameRef;
 
@@ -43,14 +45,16 @@ public class SplClass extends NativeObject {
      *
      * @param className          name of class
      * @param superclassPointers pointer to direct superclass
+     * @param templates          defined template names
      * @param body               class body
      * @param definitionEnv      environment of definition
      * @param docRef             string literal reference of docstring
      */
-    private SplClass(String className, List<Reference> superclassPointers,
+    private SplClass(String className, List<Reference> superclassPointers, String[] templates,
                      BlockStmt body, Environment definitionEnv, StringLiteralRef docRef) {
         this.className = className;
         this.superclassPointers = superclassPointers;
+        this.templates = templates;
         this.definitionEnv = definitionEnv;
         this.docRef = docRef;
 
@@ -58,17 +62,21 @@ public class SplClass extends NativeObject {
         checkConstructor();
     }
 
-    public static SplElement createClassAndAllocate(String className, List<Reference> superclassPointers,
-                                                    BlockStmt body, Environment definitionEnv, StringLiteralRef docRef) {
-
-        SplClass clazz = new SplClass(className, superclassPointers, body, definitionEnv, docRef);
+    public static SplElement createClassAndAllocate(String className,
+                                                    List<Reference> superclassPointers,
+                                                    String[] templates,
+                                                    BlockStmt body,
+                                                    Environment definitionEnv,
+                                                    StringLiteralRef docRef,
+                                                    LineFilePos lineFilePos) {
+        SplClass clazz = new SplClass(className, superclassPointers, templates, body, definitionEnv, docRef);
         if (definitionEnv.hasException()) return Undefined.ERROR;
 
         Reference clazzPtr = definitionEnv.getMemory().allocateObject(clazz, definitionEnv);
 
         definitionEnv.getMemory().addTempPtr(clazzPtr);
 
-        clazz.makeMro(clazzPtr);
+        if (!clazz.makeMro(clazzPtr, lineFilePos)) return Undefined.ERROR;
         clazz.updateMethods(clazzPtr);
 
         definitionEnv.getMemory().removeTempPtr(clazzPtr);
@@ -132,50 +140,90 @@ public class SplClass extends NativeObject {
      * This first element is always this class.
      *
      * @param thisClazzPtr pointer to this class
+     * @param lineFilePos  line file pos
+     * @return {@code true} if mro successfully made, {@code false otherwise}
      */
-    private void makeMro(Reference thisClazzPtr) {
-        List<Reference> mro = new ArrayList<>();
-        fillMro(mro, thisClazzPtr);
-        reduceMro(mro);
-        checkValidMro(mro);
+    private boolean makeMro(Reference thisClazzPtr, LineFilePos lineFilePos) {
+        List<Reference> mro = c3mro(thisClazzPtr);
+        if (mro == null) {
+            SplInvokes.throwException(
+                    definitionEnv,
+                    Constants.TYPE_ERROR,
+                    "Cannot make a consistent method resolution order of class " + className,
+                    lineFilePos
+            );
+            return false;
+        }
 
         this.mroArray = mro.toArray(new Reference[0]);
         this.__mro__ = SplArray.createArray(SplElement.POINTER, this.mroArray.length, definitionEnv);
         for (int i = 0; i < this.mroArray.length; i++) {
             SplArray.setItemAtIndex(__mro__, i, this.mroArray[i], definitionEnv, LineFilePos.LF_INTERPRETER);
         }
+        return true;
     }
 
-    private void fillMro(List<Reference> mro, Reference thisClassPtr) {
-        mro.add(thisClassPtr);
-        for (Reference scPtr : superclassPointers) {
-            SplClass sc = definitionEnv.getMemory().get(scPtr);
-            sc.fillMro(mro, scPtr);
+    private List<Reference> c3mro(Reference clazzPtr) {
+        return linearize(clazzPtr);
+    }
+
+    private List<Reference> linearize(Reference clazzPtr) {
+        SplClass clazz = definitionEnv.getMemory().get(clazzPtr);
+        if (clazz.getClassName().equals(Constants.OBJECT_CLASS)) {
+            List<Reference> objList = new ArrayList<>();
+            objList.add(clazzPtr);
+            return objList;  // Do not use List.of(classPtr) because this list must be mutable
         }
+        List<List<Reference>> toMerge = new ArrayList<>();
+        for (Reference sc : clazz.superclassPointers) {
+            toMerge.add(linearize(sc));
+        }
+        List<Reference> lastList = new ArrayList<>(clazz.superclassPointers);
+        toMerge.add(lastList);
+
+        List<Reference> rtn = new ArrayList<>();
+        rtn.add(clazzPtr);
+        List<Reference> merged = merge(toMerge);
+        if (merged == null) return null;  // error
+        rtn.addAll(merged);
+        return rtn;
     }
 
-    /**
-     * Modified the mro list to removes the duplicated mro.
-     * <p>
-     * For example, [D -> B -> A -> Object -> C -> A -> Object] will be reduced to [D -> B -> C -> A -> Object]
-     *
-     * @param mro the mro list to be modified.
-     */
-    private void reduceMro(List<Reference> mro) {
-        Set<Reference> superclasses = new HashSet<>();
-        ListIterator<Reference> reverseIterator = mro.listIterator(mro.size());
-        while (reverseIterator.hasPrevious()) {
-            Reference ptr = reverseIterator.previous();
-            if (superclasses.contains(ptr)) {
-                reverseIterator.remove();
+    private List<Reference> merge(List<List<Reference>> list) {
+        List<Reference> output = new ArrayList<>();
+        int headIndex = 0;
+        while (!list.isEmpty()) {
+            if (headIndex == list.size()) {
+                return null;  // indicator of error
+            }
+            boolean found = false;
+            Reference head = list.get(headIndex).get(0);
+            MID_LOOP:
+            for (int i = 0; i < list.size(); i++) {
+                if (i != headIndex) {
+                    List<Reference> subList = list.get(i);
+                    for (int j = 1; j < subList.size(); j++) {
+                        if (subList.get(j).valueEquals(head)) {
+                            found = true;
+                            break MID_LOOP;
+                        }
+                    }
+                }
+            }
+            if (found) {
+                headIndex++;
             } else {
-                superclasses.add(ptr);
+                Iterator<List<Reference>> iter = list.iterator();
+                while (iter.hasNext()) {
+                    List<Reference> next = iter.next();
+                    next.remove(head);
+                    if (next.isEmpty()) iter.remove();
+                }
+                output.add(head);
+                headIndex = 0;
             }
         }
-    }
-
-    private void checkValidMro(List<Reference> mro) {
-
+        return output;
     }
 
     public Reference[] getMroArray() {
@@ -267,6 +315,10 @@ public class SplClass extends NativeObject {
         } else {
             return getClassName();
         }
+    }
+
+    public String[] getTemplates() {
+        return templates;
     }
 
     @Accessible

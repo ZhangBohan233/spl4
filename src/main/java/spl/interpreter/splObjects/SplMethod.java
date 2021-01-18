@@ -9,7 +9,9 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.util.LineFilePos;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SplMethod extends Function {
 

@@ -1,6 +1,6 @@
 import math
 
-class A<K, V>(Object) {
+class A<K, V> {
     fn __init__() {
 
     }
@@ -10,6 +10,15 @@ class A<K, V>(Object) {
 
     fn foo<T>(a: T) {
         return a;
+    }
+}
+
+class B<G>(A<byte?, G>) {
+
+}
+
+class C<T>(A<T, float?>, B<T>) {
+    fn __init__() {
     }
 }
 
@@ -32,4 +41,6 @@ fn main() {
     print(bar<int?>(2));
     a := new A();
     print(a.foo<int?>(4));
+    c := new C<int?>();
+    print(C.__mro__);
 }

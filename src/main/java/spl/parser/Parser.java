@@ -313,7 +313,6 @@ public class Parser {
                                 if (doc != null) {
                                     docRef = getLitRef(doc.getDoc(), lineFile);
                                 }
-
                                 next = parent.get(index++);
                                 BracketList paramList;
                                 NameNode name;
@@ -321,10 +320,8 @@ public class Parser {
                                 if (next instanceof AtomicElement) {
                                     nameToken = (IdToken) ((AtomicElement) next).atom;
                                     name = new NameNode(nameToken.getIdentifier(), nameToken.getLineFile());
-//                                    paramList = (BracketList) parent.get(index++);
                                     probParams = parent.get(index++);
                                 } else {
-//                                    paramList = (BracketList) next;
                                     probParams = next;
                                     name = new NameNode("anonymous function", lineFile);
                                 }
@@ -441,6 +438,7 @@ public class Parser {
                                 ClassStmt classStmt = new ClassStmt(
                                         nameToken.getIdentifier(),
                                         extensions == null ? null : extensions.getChildren(),
+                                        templateLine == null ? null : templateLine.getChildren(),
                                         bodyBlock,
                                         docRef,
                                         lineFile);
@@ -682,20 +680,16 @@ public class Parser {
             LineFilePos lineFile = bracketList.lineFile;
             if (index > 1) {
                 Element probCallObj = parent.get(index - 2);
-                Line templateLine = null;
                 if (probCallObj instanceof ArrowBracketList) {
-                    templateLine = parseOneLineBlock((ArrowBracketList) probCallObj);
                     probCallObj = parent.get(index - 3);
                 }
 
                 if (probCallObj instanceof AtomicElement && isCall(((AtomicElement) probCallObj).atom)) {
-
                     // is a call to an identifier
                     Line argLine = parseOneLineBlock(bracketList);
                     Node callObj = builder.removeLast();
                     FuncCall call = new FuncCall((Expression) callObj,
                             new Arguments(argLine, lineFile),
-                            templateLine,
                             lineFile);
                     builder.addNode(call);
                     return index;
@@ -704,7 +698,6 @@ public class Parser {
                     Node callObj = builder.removeLast();
                     FuncCall call = new FuncCall((Expression) callObj,
                             new Arguments(argLine, lineFile),
-                            templateLine,
                             lineFile);
                     builder.addNode(call);
                     return index;
@@ -737,7 +730,26 @@ public class Parser {
             ArrayLiteral arrayLiteral = new ArrayLiteral(arguments, lineFile);
             builder.addNode(arrayLiteral);
         } else if (ele instanceof ArrowBracketList) {
-
+            ArrowBracketList bracketList = (ArrowBracketList) ele;
+            LineFilePos lineFile = bracketList.lineFile;
+            if (index > 1) {
+                Element probCallObj = parent.get(index - 2);
+                if (probCallObj instanceof AtomicElement && isCall(((AtomicElement) probCallObj).atom)) {
+                    // is a call to an identifier
+                    Line argLine = parseOneLineBlock(bracketList);
+                    Node callObj = builder.removeLast();
+                    GenericNode genericNode = new GenericNode(callObj, argLine, lineFile);
+                    builder.addNode(genericNode);
+                    return index;
+                } else if (probCallObj instanceof BracketList || probCallObj instanceof SqrBracketList) {
+                    Line argLine = parseOneLineBlock(bracketList);
+                    Node callObj = builder.removeLast();
+                    GenericNode genericNode = new GenericNode(callObj, argLine, lineFile);
+                    builder.addNode(genericNode);
+                    builder.addNode(genericNode);
+                    return index;
+                }
+            }
         }
         return index;
     }
