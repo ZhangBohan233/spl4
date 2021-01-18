@@ -238,15 +238,15 @@ public class Memory {
 
     private class GarbageCollector {
 
-        private final Map<Integer, Set<Reference>> markedRefs = new HashMap<>();
+        private final Map<Integer, Set<ReferenceWrapper>> markedRefs = new HashMap<>();
 
         private void addRef(int addr, Reference ref) {
-            Set<Reference> refs = markedRefs.get(addr);
+            Set<ReferenceWrapper> refs = markedRefs.get(addr);
             if (refs != null) {
-                refs.add(ref);
+                refs.add(new ReferenceWrapper(ref));
             } else {
                 refs = new HashSet<>();
-                refs.add(ref);
+                refs.add(new ReferenceWrapper(ref));
                 markedRefs.put(addr, refs);
             }
         }
@@ -370,12 +370,13 @@ public class Memory {
         private void sweep() {
             int curAddr = 1;
             for (int p = 1; p < heapSize; p++) {
-                Set<Reference> refs = markedRefs.get(p);
+                Set<ReferenceWrapper> refs = markedRefs.get(p);
                 if (refs != null) {
                     int newAddr = curAddr++;
                     int objAddr = 0;
                     Reference firstRef = null;
-                    for (Reference ref : refs) {
+                    for (ReferenceWrapper refW : refs) {
+                        Reference ref = refW.reference;
                         if (firstRef == null) {
                             firstRef = ref;
                             objAddr = firstRef.getPtr();
@@ -396,6 +397,30 @@ public class Memory {
                 }
             }
             availableHead = curAddr;
+        }
+    }
+
+    /**
+     * This class creates a wrapper, which is used as the key in hashmap.
+     *
+     * This class compares two references by their memory location in java. The only way its {@code equals} returns
+     * {@code true} is two references are one.
+     */
+    private static class ReferenceWrapper {
+        private final Reference reference;
+
+        ReferenceWrapper(Reference reference) {
+            this.reference = reference;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return getClass() == o.getClass() && reference == ((ReferenceWrapper) o).reference;
+        }
+
+        @Override
+        public int hashCode() {
+            return reference != null ? reference.hashCode() : 0;
         }
     }
 }

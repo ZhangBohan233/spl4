@@ -1,10 +1,11 @@
 package spl.interpreter.splObjects;
 
-import spl.ast.StringLiteral;
+import spl.ast.*;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.FunctionEnvironment;
 import spl.interpreter.invokes.SplInvokes;
+import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
@@ -27,6 +28,9 @@ public abstract class UserFunction extends SplCallable {
     protected final Function.Parameter[] params;
     protected final LineFilePos lineFile;
 
+    protected Node rtnContract;
+    protected boolean hasContract = false;
+
     private int minArg;
     private int maxArg;
 
@@ -44,26 +48,98 @@ public abstract class UserFunction extends SplCallable {
         if (maxArg == 0) maxArg = parameters.length;
     }
 
-    private boolean hasParamName(String name) {
+    protected boolean hasParamName(String name) {
         for (Parameter param : params) {
             if (param.unpackCount == 2 || param.name.equals(name)) return true;
         }
         return false;
     }
 
+    private SplElement getContractFunction(Node conNode, FunctionEnvironment scope, LineFilePos lineFile) {
+        if (conNode instanceof BinaryOperator) {
+            BinaryOperator bo = (BinaryOperator) conNode;
+            if (bo.getOperator().equals("or")) {
+                Reference orFn = (Reference) scope.get(Constants.OR_FN, lineFile);
+                Function function = scope.getMemory().get(orFn);
+                Arguments args = new Arguments(new Line(lineFile, bo.getLeft(), bo.getRight()), lineFile);
+                SplElement callRes = function.call(args, scope);
+                if (scope.hasException()) {
+                    return Undefined.ERROR;
+                }
+                return callRes;
+            }
+        }
+        SplElement res = conNode.evaluate(scope);
+        if (res instanceof Reference) return res;
+        else {
+            SplInvokes.throwException(
+                    scope,
+                    Constants.TYPE_ERROR,
+                    "Contract must be callable",
+                    lineFile
+            );
+            return Reference.NULL;
+        }
+    }
+
+    protected boolean callContract(Node conNode,
+                                   SplElement arg,
+                                   FunctionEnvironment scope,
+                                   Environment callingEnv,
+                                   LineFilePos lineFile,
+                                   String location) {
+        SplElement conFnPtrProb = getContractFunction(conNode, scope, lineFile);
+        if (scope.hasException()) return false;
+        Reference conFnPtr = (Reference) conFnPtrProb;
+        SplCallable callable = callingEnv.getMemory().get(conFnPtr);
+        EvaluatedArguments contractArgs = EvaluatedArguments.of(arg);
+
+        SplElement result = callable.call(contractArgs, callingEnv, lineFile);
+        if (result instanceof Bool) {
+            if (!((Bool) result).value) {
+                SplInvokes.throwException(callingEnv,
+                        Constants.CONTRACT_ERROR,
+                        String.format("Contract violation when calling '%s', at %s. Got %s.",
+                                scope.definedName, location, arg),
+                        lineFile);
+                return false;
+            }
+        } else {
+            SplInvokes.throwException(callingEnv,
+                    Constants.TYPE_ERROR,
+                    "Contract function must return a boolean. ",
+                    lineFile);
+            return false;
+        }
+        return true;
+    }
+
     private boolean setArg(FunctionEnvironment scope,
                            Environment callingEnv,
-                           String paramName,
+                           Parameter param,
                            SplElement value,
-                           LineFilePos lineFilePos) {
-        if (scope.get(paramName, lineFilePos) == Undefined.UNDEFINED) {
-            scope.setVar(paramName, value, lineFilePos);
+                           boolean checkContract,
+                           LineFilePos lineFilePos,
+                           String location) {
+        if (scope.get(param.name, lineFilePos) == Undefined.UNDEFINED) {
+            scope.setVar(param.name, value, lineFilePos);
+            // set at first, then check. This is to make sure 'this' works
+            if (checkContract) {
+                return callContract(
+                        param.contract,
+                        value,
+                        scope,
+                        callingEnv,
+                        lineFilePos,
+                        location
+                );
+            }
             return true;
         } else {
             SplInvokes.throwException(
                     callingEnv,
                     Constants.ARGUMENT_EXCEPTION,
-                    "Argument '" + paramName + "' already defined.",
+                    "Argument '" + param.name + "' already defined.",
                     lineFile
             );
             return false;
@@ -86,12 +162,15 @@ public abstract class UserFunction extends SplCallable {
             }
         }
 
+        boolean checkContract = hasContract && callingEnv.getMemory().isCheckContract();
+
         Set<String> usedKwargs = new HashSet<>();
         boolean noKwParam = true;
         int argIndex = 0;
         for (int i = 0; i < params.length; ++i) {
             Parameter param = params[i];
             String paramName = param.name;
+            String location = "the " + Utilities.numberToOrder(i) + " argument";
 
             if (param.constant) scope.defineConst(paramName, lineFile);
             else scope.defineVar(paramName, lineFile);  // declare param
@@ -99,13 +178,20 @@ public abstract class UserFunction extends SplCallable {
             boolean success;
             if (param.unpackCount == 0) {
                 if (argIndex < evaluatedArgs.positionalArgs.size()) {
-                    success = setArg(scope, callingEnv, paramName,
-                            evaluatedArgs.positionalArgs.get(argIndex++), lineFile);
+                    success = setArg(scope, callingEnv, param,
+                            evaluatedArgs.positionalArgs.get(argIndex++), checkContract, lineFile, location);
                 } else if (evaluatedArgs.keywordArgs.containsKey(paramName)) {
-                    success = setArg(scope, callingEnv, paramName, evaluatedArgs.keywordArgs.get(paramName), lineFile);
+                    success = setArg(
+                            scope,
+                            callingEnv,
+                            param,
+                            evaluatedArgs.keywordArgs.get(paramName),
+                            checkContract,
+                            lineFile,
+                            location);
                     usedKwargs.add(paramName);
                 } else if (param.defaultValue != null) {
-                    success = setArg(scope, callingEnv, paramName, param.defaultValue, lineFile);
+                    success = setArg(scope, callingEnv, param, param.defaultValue, checkContract, lineFile, location);
                 } else {
                     throw new NativeError("Unexpected error. ", lineFile);
                 }
@@ -127,7 +213,7 @@ public abstract class UserFunction extends SplCallable {
                                 Utilities.primitiveToWrapper(arg, scope, lineFile), scope, lineFile);
                     }
                 }
-                success = setArg(scope, callingEnv, paramName, arrPtr, lineFile);
+                success = setArg(scope, callingEnv, param, arrPtr, checkContract, lineFile, location);
             } else if (param.unpackCount == 2) {  // **kwargs
                 noKwParam = false;
                 int size = evaluatedArgs.keywordArgs.size();
@@ -143,7 +229,7 @@ public abstract class UserFunction extends SplCallable {
                                 scope,
                                 lineFile);
                 if (dict == null) return;
-                success = setArg(scope, callingEnv, paramName, dict.pointer, lineFile);
+                success = setArg(scope, callingEnv, param, dict.pointer, checkContract, lineFile, location);
 
                 scope.getMemory().removeTempPtr(valueArrPtr);
                 scope.getMemory().removeTempPtr(keyArrPtr);

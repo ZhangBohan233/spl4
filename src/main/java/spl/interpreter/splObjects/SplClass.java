@@ -22,6 +22,7 @@ public class SplClass extends NativeObject {
      * This is not equivalent to mro.
      */
     private final List<Reference> superclassPointers;
+    private final Map<Reference, Line> superclassGenerics;
 
     private final String className;
     private final Environment definitionEnv;
@@ -36,6 +37,7 @@ public class SplClass extends NativeObject {
     // the first is the self class
     private Reference[] mroArray;
     private Reference classNameRef;
+    private String mroErrorMsg = "";
 
     /**
      * The private constructor, only for in-class call.
@@ -50,11 +52,17 @@ public class SplClass extends NativeObject {
      * @param definitionEnv      environment of definition
      * @param docRef             string literal reference of docstring
      */
-    private SplClass(String className, List<Reference> superclassPointers, String[] templates,
-                     BlockStmt body, Environment definitionEnv, StringLiteralRef docRef) {
+    private SplClass(String className,
+                     List<Reference> superclassPointers,
+                     String[] templates,
+                     Map<Reference, Line> superclassGenerics,
+                     BlockStmt body,
+                     Environment definitionEnv,
+                     StringLiteralRef docRef) {
         this.className = className;
         this.superclassPointers = superclassPointers;
         this.templates = templates;
+        this.superclassGenerics = superclassGenerics;
         this.definitionEnv = definitionEnv;
         this.docRef = docRef;
 
@@ -65,11 +73,28 @@ public class SplClass extends NativeObject {
     public static SplElement createClassAndAllocate(String className,
                                                     List<Reference> superclassPointers,
                                                     String[] templates,
+                                                    Map<Reference, Line> superclassGenerics,
                                                     BlockStmt body,
                                                     Environment definitionEnv,
                                                     StringLiteralRef docRef,
                                                     LineFilePos lineFilePos) {
-        SplClass clazz = new SplClass(className, superclassPointers, templates, body, definitionEnv, docRef);
+        if (superclassGenerics != null) {
+            for (Map.Entry<Reference, Line> entry : superclassGenerics.entrySet()) {
+                SplClass sc = definitionEnv.getMemory().get(entry.getKey());
+                if (sc.getTemplates() == null || sc.getTemplates().length != entry.getValue().size()) {
+                    return SplInvokes.throwExceptionWithError(
+                            definitionEnv,
+                            Constants.TYPE_ERROR,
+                            String.format("Unequal generic length of class '%s' with superclass '%s'.",
+                                    className, sc.className),
+                            lineFilePos
+                    );
+                }
+            }
+        }
+
+        SplClass clazz = new SplClass(className, superclassPointers, templates, superclassGenerics,
+                body, definitionEnv, docRef);
         if (definitionEnv.hasException()) return Undefined.ERROR;
 
         Reference clazzPtr = definitionEnv.getMemory().allocateObject(clazz, definitionEnv);
@@ -85,14 +110,14 @@ public class SplClass extends NativeObject {
     }
 
     public static boolean isSuperclassOf(Reference superclassPtr, SplElement childClassEle, Memory memory) {
-        if (childClassEle.valueEquals(superclassPtr)) return true;
+        if (childClassEle.equals(superclassPtr)) return true;
         if (childClassEle instanceof Reference) {
             Reference childClassPtr = (Reference) childClassEle;
             SplObject splObject = memory.get(childClassPtr);
             if (splObject instanceof SplClass) {
                 SplClass childClazz = (SplClass) splObject;
                 for (Reference supPtr : childClazz.mroArray) {
-                    if (superclassPtr.valueEquals(supPtr)) return true;
+                    if (superclassPtr.equals(supPtr)) return true;
                 }
             }
         }
@@ -149,7 +174,8 @@ public class SplClass extends NativeObject {
             SplInvokes.throwException(
                     definitionEnv,
                     Constants.TYPE_ERROR,
-                    "Cannot make a consistent method resolution order of class " + className,
+                    String.format("Failed when creating class '%s': %s",
+                            className, mroErrorMsg),
                     lineFilePos
             );
             return false;
@@ -194,6 +220,7 @@ public class SplClass extends NativeObject {
         int headIndex = 0;
         while (!list.isEmpty()) {
             if (headIndex == list.size()) {
+                mroErrorMsg = "Inconsistent method resolution.";
                 return null;  // indicator of error
             }
             boolean found = false;
@@ -203,7 +230,7 @@ public class SplClass extends NativeObject {
                 if (i != headIndex) {
                     List<Reference> subList = list.get(i);
                     for (int j = 1; j < subList.size(); j++) {
-                        if (subList.get(j).valueEquals(head)) {
+                        if (subList.get(j).equals(head)) {
                             found = true;
                             break MID_LOOP;
                         }
@@ -214,10 +241,18 @@ public class SplClass extends NativeObject {
                 headIndex++;
             } else {
                 Iterator<List<Reference>> iter = list.iterator();
+                int rmCount = 0;
                 while (iter.hasNext()) {
                     List<Reference> next = iter.next();
-                    next.remove(head);
+                    if (next.remove(head)) rmCount++;
                     if (next.isEmpty()) iter.remove();
+                }
+                if (rmCount > 2) {  // multiple inheritance
+                    SplClass clazz = definitionEnv.getMemory().get(head);
+                    if (clazz.getTemplates() != null) {
+                        mroErrorMsg = "class '" + clazz.className + "' is a generic class, but is multiple inherited.";
+                        return null;
+                    }
                 }
                 output.add(head);
                 headIndex = 0;
@@ -319,6 +354,10 @@ public class SplClass extends NativeObject {
 
     public String[] getTemplates() {
         return templates;
+    }
+
+    public Map<Reference, Line> getSuperclassGenerics() {
+        return superclassGenerics;
     }
 
     @Accessible

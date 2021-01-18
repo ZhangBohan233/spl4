@@ -5,6 +5,9 @@ class A<K, V> {
 
     }
 
+    fn put(k: K, v: V) {
+    }
+
     fn get(a: K) -> V {
     }
 
@@ -13,11 +16,11 @@ class A<K, V> {
     }
 }
 
-class B<G>(A<byte?, G>) {
+class B<G>(A<float?, G>) {
 
 }
 
-class C<T>(A<T, float?>, B<T>) {
+class C<T>(A<int?, T>) {
     fn __init__() {
     }
 }
@@ -37,10 +40,11 @@ fn xx(x: int?) -> int? {
 }
 
 fn main() {
-    print(foo<int?>(3));
-    print(bar<int?>(2));
-    a := new A();
-    print(a.foo<int?>(4));
-    c := new C<int?>();
+    //print(foo<int?>(3));
+    //print(bar<int?>(2));
+    //a := new A();
+    //print(a.foo<int?>(4));
+    c := new C<String?>();
     print(C.__mro__);
+    c.put(1.5, "xxs");
 }

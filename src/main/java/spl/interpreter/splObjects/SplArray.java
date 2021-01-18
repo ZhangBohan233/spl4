@@ -36,12 +36,12 @@ public class SplArray extends NativeObject {
     }
 
     private static int typeToCode(SplElement se, Environment env, LineFilePos lineFilePos) {
-        if (se.valueEquals(env.get("int", lineFilePos))) return SplElement.INT;
-        else if (se.valueEquals(env.get("float", lineFilePos))) return SplElement.FLOAT;
-        else if (se.valueEquals(env.get("char", lineFilePos))) return SplElement.CHAR;
-        else if (se.valueEquals(env.get("boolean", lineFilePos))) return SplElement.BOOLEAN;
-        else if (se.valueEquals(env.get("byte", lineFilePos))) return SplElement.BYTE;
-        else if (se.valueEquals(env.get("Obj", lineFilePos))) return SplElement.POINTER;
+        if (se.equals(env.get("int", lineFilePos))) return SplElement.INT;
+        else if (se.equals(env.get("float", lineFilePos))) return SplElement.FLOAT;
+        else if (se.equals(env.get("char", lineFilePos))) return SplElement.CHAR;
+        else if (se.equals(env.get("boolean", lineFilePos))) return SplElement.BOOLEAN;
+        else if (se.equals(env.get("byte", lineFilePos))) return SplElement.BYTE;
+        else if (se.equals(env.get("Obj", lineFilePos))) return SplElement.POINTER;
         else {
             SplInvokes.throwException(
                     env,

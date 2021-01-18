@@ -270,4 +270,15 @@ public class Utilities {
         Bool res = (Bool) insFtn.call(EvaluatedArguments.of(element), env, lineFile);
         return res.value;
     }
+
+    public static String numberToOrder(int num) {
+        String s = String.valueOf(num);
+        char last = s.charAt(s.length() - 1);
+        return s + switch (last) {
+            case '1' -> "st";
+            case '2' -> "nd";
+            case '3' -> "rd";
+            default -> "th";
+        };
+    }
 }

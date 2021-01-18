@@ -5,7 +5,6 @@ import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.FunctionEnvironment;
 import spl.interpreter.invokes.SplInvokes;
-import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
@@ -22,8 +21,6 @@ public class Function extends UserFunction {
     protected final BlockStmt body;
     protected final String definedName;
     private final StringLiteralRef docRef;
-    private Node rtnContract;
-    private boolean hasContract = false;
     private String[] templates;
 
     /**
@@ -86,13 +83,14 @@ public class Function extends UserFunction {
         return call(evaluatedArgs, callingEnv, arguments.lineFile);
     }
 
+    @SuppressWarnings("unused")  // maybe it will be useful later
     private void checkParamContracts(EvaluatedArguments evaluatedArgs, FunctionEnvironment scope,
                                      Environment callingEnv, LineFilePos lineFile) {
         if (hasContract && callingEnv.getMemory().isCheckContract()) {
             int argIndex = 0;
             for (int i = 0; i < params.length; i++) {
                 Parameter param = params[i];
-                String location = "the " + i + "th argument";
+                String location = "the " + Utilities.numberToOrder(i) + " argument";
                 if (param.unpackCount == 0) {
                     if (argIndex < evaluatedArgs.positionalArgs.size()) {
                         callContract(
@@ -146,62 +144,6 @@ public class Function extends UserFunction {
                                   Environment callingEnv, LineFilePos lineFile) {
         if (hasContract && callingEnv.getMemory().isCheckContract()) {
             callContract(rtnContract, rtnValue, scope, callingEnv, lineFile, "return statement");
-        }
-    }
-
-    private SplElement getContractFunction(Node conNode, FunctionEnvironment scope, LineFilePos lineFile) {
-        if (conNode instanceof BinaryOperator) {
-            BinaryOperator bo = (BinaryOperator) conNode;
-            if (bo.getOperator().equals("or")) {
-                Reference orFn = (Reference) scope.get(Constants.OR_FN, lineFile);
-                Function function = scope.getMemory().get(orFn);
-                Arguments args = new Arguments(new Line(lineFile, bo.getLeft(), bo.getRight()), lineFile);
-                SplElement callRes = function.call(args, scope);
-                if (scope.hasException()) {
-                    return Undefined.ERROR;
-                }
-                return callRes;
-            }
-        }
-        SplElement res = conNode.evaluate(scope);
-        if (res instanceof Reference) return res;
-        else {
-            SplInvokes.throwException(
-                    scope,
-                    Constants.TYPE_ERROR,
-                    "Contract must be callable",
-                    lineFile
-            );
-            return Reference.NULL;
-        }
-    }
-
-    private void callContract(Node conNode,
-                              SplElement arg,
-                              FunctionEnvironment scope,
-                              Environment callingEnv,
-                              LineFilePos lineFile,
-                              String location) {
-        SplElement conFnPtrProb = getContractFunction(conNode, scope, lineFile);
-        if (scope.hasException()) return;
-        Reference conFnPtr = (Reference) conFnPtrProb;
-        SplCallable callable = callingEnv.getMemory().get(conFnPtr);
-        EvaluatedArguments contractArgs = EvaluatedArguments.of(arg);
-
-        SplElement result = callable.call(contractArgs, callingEnv, lineFile);
-        if (result instanceof Bool) {
-            if (!((Bool) result).value) {
-                SplInvokes.throwException(callingEnv,
-                        Constants.CONTRACT_ERROR,
-                        String.format("Contract violation when calling '%s', at %s. Got %s.",
-                                definedName, location, arg),
-                        lineFile);
-            }
-        } else {
-            SplInvokes.throwException(callingEnv,
-                    Constants.TYPE_ERROR,
-                    "Contract function must return a boolean. ",
-                    lineFile);
         }
     }
 
@@ -261,8 +203,6 @@ public class Function extends UserFunction {
         if (callingEnv.hasException()) return Undefined.ERROR;
 
         if (!defineGenerics(generics, scope, callingEnv, lineFile)) return Undefined.ERROR;
-
-        checkParamContracts(evaluatedArgs, scope, callingEnv, argLineFile);
 
         setArgs(evaluatedArgs, scope, callingEnv, argLineFile);
 

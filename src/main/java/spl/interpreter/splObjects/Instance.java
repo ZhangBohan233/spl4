@@ -97,6 +97,7 @@ public class Instance extends SplObject {
         String[] templates = clazz.getTemplates();
         if (templates != null) {
             for (String tem : templates) {
+//                System.out.println(tem + " " + determinedGenerics.get(tem));
                 instanceEnv.defineConstAndSet(tem, determinedGenerics.get(tem), lineFile);
             }
         }
@@ -110,8 +111,29 @@ public class Instance extends SplObject {
             Reference supClassPtr = mroIterator.next();
             SplClass supClazz = callingEnv.getMemory().get(supClassPtr);
 
-            Map<String, Reference> gensForSupClass = new TreeMap<>();
+            // deal with templates
+            String[] scTemplates = supClazz.getTemplates();
+            Map<String, Reference> gensForSupClass = null;
+            if (scTemplates != null) {
+                gensForSupClass = new TreeMap<>();
+                Line scGens;
+                if (clazz.getSuperclassGenerics() == null ||
+                        (scGens = clazz.getSuperclassGenerics().get(supClassPtr)) == null) {
+                    // class A<T> { ... }
+                    // class B<X>(A) { ... }
+                    for (String template : supClazz.getTemplates()) {
+                        gensForSupClass.put(template, (Reference) callingEnv.get(Constants.ANY_TYPE, lineFile));
+                    }
+                } else {
+                    assert scGens.size() == scTemplates.length;
+                    for (int i = 0; i < scTemplates.length; i++) {
+                        Reference scGen = (Reference) scGens.get(i).evaluate(instanceEnv);
+                        gensForSupClass.put(scTemplates[i], scGen);
+                    }
+                }
+            }
 
+            // initialize superclass
             InstanceAndPtr scInsPtr =
                     createInstanceAndAllocate(
                             mroIterator,
@@ -120,6 +142,8 @@ public class Instance extends SplObject {
                             gensForSupClass,
                             callingEnv,
                             lineFile);
+
+//            System.out.println(supClazz.getClassName() + scInsPtr.instance.getEnv().names());
 
             // define "super"
             instance.getEnv().directDefineConstAndSet(Constants.SUPER, scInsPtr.pointer);

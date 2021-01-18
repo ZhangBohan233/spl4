@@ -24,10 +24,6 @@ public abstract class SplElement implements SplThing {
 
     public abstract boolean isIntLike();
 
-    public char charValue() {
-        return (char) intValue();
-    }
-
     public static String typeToString(int type) {
         return switch (type) {
             case INT -> "int";
@@ -44,9 +40,5 @@ public abstract class SplElement implements SplThing {
 
     public static boolean isPrimitive(SplElement element) {
         return !(element instanceof Reference);
-    }
-
-    public boolean valueEquals(SplElement other) {
-        return equals(other);
     }
 }

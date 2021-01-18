@@ -57,16 +57,11 @@ public class Reference extends SplElement {
 
     @Override
     public boolean equals(Object o) {
-        return this == o;
+        return getClass() == o.getClass() && ptr == ((Reference) o).ptr;
     }
 
     @Override
     public int hashCode() {
         return super.hashCode();
-    }
-
-    @Override
-    public boolean valueEquals(SplElement other) {
-        return getClass() == other.getClass() && ptr == ((Reference) other).ptr;
     }
 }

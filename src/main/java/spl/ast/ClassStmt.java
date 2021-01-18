@@ -14,7 +14,9 @@ import spl.util.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ClassStmt extends Expression {
 
@@ -22,7 +24,7 @@ public class ClassStmt extends Expression {
     private final BlockStmt body;
     private final StringLiteralRef docRef;
     private List<Node> superclassesNodes;  // nullable
-    private List<Node> templates;  // nullable
+    private final List<Node> templates;  // nullable
 
     /**
      * @param className  name of class
@@ -84,10 +86,15 @@ public class ClassStmt extends Expression {
         validateExtending();
 
         List<Reference> superclassesPointers = new ArrayList<>();
+        Map<Reference, Line> superclassGenerics = new HashMap<>();
         for (Node superclassesNode : superclassesNodes) {
             Reference scPtr = (Reference) superclassesNode.evaluate(env);
             superclassesPointers.add(scPtr);
+            if (superclassesNode instanceof GenericNode) {
+                superclassGenerics.put(scPtr, ((GenericNode) superclassesNode).getGenericLine());
+            }
         }
+        if (superclassGenerics.size() == 0) superclassGenerics = null;
 
         String[] templates = null;
         if (this.templates != null) {
@@ -96,8 +103,8 @@ public class ClassStmt extends Expression {
         }
 
         SplElement clazzPtr =
-                SplClass.createClassAndAllocate(className, superclassesPointers, templates, body, env, docRef,
-                        lineFile);
+                SplClass.createClassAndAllocate(className, superclassesPointers, templates, superclassGenerics,
+                        body, env, docRef, lineFile);
         if (clazzPtr == Undefined.ERROR) return Undefined.ERROR;  // a quicker way to check env.hasException()
 
         env.defineVarAndSet(className, clazzPtr, getLineFile());

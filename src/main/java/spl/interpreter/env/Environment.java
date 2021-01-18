@@ -95,6 +95,10 @@ public abstract class Environment {
         return attrs;
     }
 
+    public Set<String> names() {
+        return new HashSet<>(variables.keySet());
+    }
+
     public void defineVar(String name, LineFilePos lineFile) {
         if (localHasName(name, lineFile)) {
             throwNameError("Variable '" + name + "' already defined.", lineFile);
