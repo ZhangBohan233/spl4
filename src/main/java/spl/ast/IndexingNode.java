@@ -68,7 +68,7 @@ public class IndexingNode extends Expression {
                 return SplArray.getItemAtIndex(objPtr, index, callEnv, lineFile);
             } else if (obj instanceof Instance) {
                 Instance ins = (Instance) obj;
-                SplMethod getItemFn = (SplMethod)
+                SplMethod getItemFn =
                         callEnv.getMemory().get((Reference) ins.getEnv().get(Constants.GET_ITEM_FN, lineFile));
                 return getItemFn.call(EvaluatedArguments.of(objPtr, new Int(index)), callEnv, lineFile);
             } else {
@@ -89,7 +89,7 @@ public class IndexingNode extends Expression {
 
         if (obj instanceof Instance) {
             Instance ins = (Instance) obj;
-            SplMethod getItemFn = (SplMethod)
+            SplMethod getItemFn =
                     callEnv.getMemory().get((Reference) ins.getEnv().get(Constants.GET_ITEM_FN, lineFile));
             return getItemFn.call(EvaluatedArguments.of(objPtr, indexEle), callEnv, lineFile);
         } else {

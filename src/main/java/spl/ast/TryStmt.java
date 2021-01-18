@@ -107,7 +107,6 @@ public class TryStmt extends Statement {
                 finallyBlock.evaluate(finallyEnv);
                 fe.setReturn(rtn, lineFile);
             }
-
     }
 
     @Override

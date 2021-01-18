@@ -1,3 +1,9 @@
+===== Version 4062 =====
+2021/01/19
+
+* Migrated the handler of "x? or y?" from contract to binary operator
+* Implemented generic library types in 'lib/lang'
+
 ===== Version 4061 =====
 2021/01/19
 

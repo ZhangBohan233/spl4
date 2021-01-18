@@ -69,12 +69,10 @@ public class Bool extends SplElement {
             SplInvokes.throwExceptionWithError(
                     env,
                     Constants.TYPE_ERROR,
-                    "Statement takes boolean value as condition.",
+                    "Boolean statement takes boolean value as condition.",
                     lineFile
             );
             return FALSE;
         }
-//            throw new NativeTypeError("Statement takes " +
-//                    "boolean value as condition. ", lineFile);
     }
 }

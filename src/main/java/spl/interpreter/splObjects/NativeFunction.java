@@ -26,6 +26,7 @@ public abstract class NativeFunction extends SplCallable {
         mostArg = argCount;
     }
 
+    @Override
     public String getName() {
         return name;
     }

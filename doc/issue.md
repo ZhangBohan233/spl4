@@ -53,6 +53,14 @@ class B(A) {
 
 ```
 
+**ISSUE C02** \
+Generic name conflicting
+```
+class M<K, V>(HashDict<K, V or int?>) { { ... }
+dict := new M<int?, float?>();
+```
+In class `HashDict`, `V` should represent `float? or int?`, but it actually represents `float?`
+
 ### Mysterious bugs
 
 **M01**

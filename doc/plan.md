@@ -11,7 +11,7 @@
 ### Phase 2
 
 * ~~Type of arithmetic~~ **_DONE_**
-* Pattern matching contract, example: `contract foo(int?, A?) -> A?`
+* ~~Pattern matching contract, example:~~ `contract foo(int?, A?) -> A?` **_REPLACED_**
 * ~~Invoke call "hasAttr"~~ **_DONE_**
 * ~~Syntax sugar of unary function,~~ example: `int? or float?` **_DONE_**
 * ~~Duplicate literal removal~~ **_DISCARDED_**
@@ -45,5 +45,10 @@
 * ~~Get class method statically~~ `Object.__hash__` **_DONE_**
 * ~~More information in compiled spl file~~ **_DONE_**
 * ~~Rename AbstractObject to a shorter name~~ **_DONE_**
-* Generic contract: `fn test<T>(x: T) -> T`
-* Check function scope 'removeReturn'
+* ~~Generic contract:~~ `fn test<T>(x: T) -> T` **_DONE_**
+* ~~Check function scope 'removeReturn'~~ **_CHECKED_**
+
+### 4.0 Release
+* Generic array
+* Reflection on generics
+* Find a way to deal with contract overriding

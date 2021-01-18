@@ -71,7 +71,7 @@ public class SplInvokes extends NativeObject {
         return Undefined.ERROR;
     }
 
-    private static String getString(SplElement element, Environment environment, LineFilePos lineFile) {
+    public static String getString(SplElement element, Environment environment, LineFilePos lineFile) {
         Reference stringPtr = (Reference) environment.get(Constants.STRING_CLASS, lineFile);
         return getString(element, environment, lineFile, stringPtr);
     }

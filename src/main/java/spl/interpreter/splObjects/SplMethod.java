@@ -9,9 +9,7 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.util.LineFilePos;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class SplMethod extends Function {
 
@@ -29,10 +27,6 @@ public class SplMethod extends Function {
     @Override
     public List<Reference> listAttrReferences() {
         return classPtr != null ? List.of(classPtr) : List.of();
-    }
-
-    public void setClassPtr(Reference classPtr) {
-        this.classPtr = classPtr;
     }
 
     /**
@@ -64,5 +58,14 @@ public class SplMethod extends Function {
 
     public Reference getClassPtr() {
         return classPtr;
+    }
+
+    public void setClassPtr(Reference classPtr) {
+        this.classPtr = classPtr;
+    }
+
+    @Override
+    public String getName() {
+        return ((SplClass) definitionEnv.getMemory().get(classPtr)).getClassName() + "." + definedName;
     }
 }

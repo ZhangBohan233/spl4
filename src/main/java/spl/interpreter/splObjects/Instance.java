@@ -6,6 +6,8 @@ import spl.interpreter.env.Environment;
 import spl.interpreter.env.InstanceEnvironment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
+import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splErrors.NativeError;
 import spl.util.ArrayIterator;
 import spl.util.Constants;
@@ -97,7 +99,6 @@ public class Instance extends SplObject {
         String[] templates = clazz.getTemplates();
         if (templates != null) {
             for (String tem : templates) {
-//                System.out.println(tem + " " + determinedGenerics.get(tem));
                 instanceEnv.defineConstAndSet(tem, determinedGenerics.get(tem), lineFile);
             }
         }
@@ -127,7 +128,10 @@ public class Instance extends SplObject {
                 } else {
                     assert scGens.size() == scTemplates.length;
                     for (int i = 0; i < scTemplates.length; i++) {
-                        Reference scGen = (Reference) scGens.get(i).evaluate(instanceEnv);
+                        SplElement probScGen = scGens.get(i).evaluate(instanceEnv);
+                        if (probScGen == Undefined.ERROR) return null;
+                        Reference scGen = (Reference) probScGen;
+                        System.out.println(scTemplates[i] + " " + scGens.get(i) + " " + callingEnv.getMemory().get(scGen));
                         gensForSupClass.put(scTemplates[i], scGen);
                     }
                 }
@@ -146,6 +150,7 @@ public class Instance extends SplObject {
 //            System.out.println(supClazz.getClassName() + scInsPtr.instance.getEnv().names());
 
             // define "super"
+            if (scInsPtr == null) return null;
             instance.getEnv().directDefineConstAndSet(Constants.SUPER, scInsPtr.pointer);
         }
 

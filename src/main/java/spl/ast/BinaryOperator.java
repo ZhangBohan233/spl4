@@ -4,6 +4,7 @@ import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.*;
+import spl.interpreter.splObjects.Function;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplObject;
@@ -329,13 +330,31 @@ public class BinaryOperator extends BinaryExpr {
                     return Bool.FALSE;
                 }
             } else if (operator.equals("or")) {
-                Bool leftRes = Bool.evalBoolean(left, env, getLineFile());
-                if (env.hasException()) return Undefined.ERROR;
-                if (!leftRes.value) {
-                    return Bool.evalBoolean(right, env, getLineFile());
-                } else {
-                    return Bool.TRUE;
+                SplElement leftRawRes = left.evaluate(env);
+                if (leftRawRes instanceof Bool) {
+                    Bool leftRes = (Bool) leftRawRes;
+                    if (env.hasException()) return Undefined.ERROR;
+                    if (!leftRes.value) {
+                        return Bool.evalBoolean(right, env, getLineFile());
+                    } else {
+                        return Bool.TRUE;
+                    }
+                } else if (leftRawRes instanceof Reference) {
+                    SplElement rightRes = right.evaluate(env);
+                    Reference orFn = (Reference) env.get(Constants.OR_FN, lineFile);
+                    Function function = env.getMemory().get(orFn);
+                    EvaluatedArguments ea = EvaluatedArguments.of(leftRawRes, rightRes);
+                    SplElement callRes = function.call(ea, env, lineFile);
+                    if (env.hasException()) {
+                        return Undefined.ERROR;
+                    }
+                    return callRes;
                 }
+                return SplInvokes.throwExceptionWithError(
+                        env,
+                        Constants.TYPE_ERROR,
+                        "Binary operator type error.",
+                        lineFile);
             }
         }
         throw new SyntaxError("Unexpected error. ", lineFile);

@@ -3,7 +3,6 @@ package spl.ast;
 import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
-import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.Function;
 import spl.interpreter.splObjects.SplMethod;
 import spl.util.*;

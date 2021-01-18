@@ -84,7 +84,7 @@ public class SplClass extends NativeObject {
                 if (sc.getTemplates() == null || sc.getTemplates().length != entry.getValue().size()) {
                     return SplInvokes.throwExceptionWithError(
                             definitionEnv,
-                            Constants.TYPE_ERROR,
+                            Constants.INHERITANCE_ERROR,
                             String.format("Unequal generic length of class '%s' with superclass '%s'.",
                                     className, sc.className),
                             lineFilePos
@@ -173,7 +173,7 @@ public class SplClass extends NativeObject {
         if (mro == null) {
             SplInvokes.throwException(
                     definitionEnv,
-                    Constants.TYPE_ERROR,
+                    Constants.INHERITANCE_ERROR,
                     String.format("Failed when creating class '%s': %s",
                             className, mroErrorMsg),
                     lineFilePos

@@ -50,6 +50,11 @@ public class LambdaExpression extends UserFunction {
     }
 
     @Override
+    public String getName() {
+        return toString();
+    }
+
+    @Override
     public String toString() {
         return "lambda#" + lambdaId;
     }

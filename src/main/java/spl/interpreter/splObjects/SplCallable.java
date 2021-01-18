@@ -142,6 +142,8 @@ public abstract class SplCallable extends NativeObject {
         return call(ea, callingEnv, arguments.getLineFile());
     }
 
+    public abstract String getName();
+
     public abstract int minArgCount();
 
     public abstract int maxArgCount();

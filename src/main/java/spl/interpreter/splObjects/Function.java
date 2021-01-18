@@ -219,6 +219,11 @@ public class Function extends UserFunction {
         return rtnValue;
     }
 
+    @Override
+    public String getName() {
+        return definedName;
+    }
+
     @Accessible
     public SplElement __doc__(Arguments args, Environment env, LineFilePos lineFilePos) {
         checkArgCount(args, 0, "Function.__doc__", env, lineFile);

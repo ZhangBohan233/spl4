@@ -8,6 +8,7 @@ import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splErrors.RuntimeSyntaxError;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplArray;
@@ -127,7 +128,9 @@ public class ForLoopStmt extends ConditionalStmt {
                 Instance iterable = parentEnv.getMemory().get(ptr);
                 Reference iterFnPtr = (Reference) iterable.getEnv().get(Constants.ITER_FN, lineFile);
                 SplMethod iterFn = parentEnv.getMemory().get(iterFnPtr);
-                Reference iteratorPtr = (Reference) iterFn.call(EvaluatedArguments.of(ptr), parentEnv, lineFile);
+                SplElement iterRes = iterFn.call(EvaluatedArguments.of(ptr), parentEnv, lineFile);
+                if (iterRes == Undefined.ERROR) return;
+                Reference iteratorPtr = (Reference) iterRes;
                 Instance iterator = parentEnv.getMemory().get(iteratorPtr);
                 forEachLoopIterator(loopInvariant, iteratorPtr, iterator, parentEnv, titleEnv, bodyEnv);
                 return;

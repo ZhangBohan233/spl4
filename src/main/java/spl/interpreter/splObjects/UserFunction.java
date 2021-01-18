@@ -55,20 +55,20 @@ public abstract class UserFunction extends SplCallable {
         return false;
     }
 
-    private SplElement getContractFunction(Node conNode, FunctionEnvironment scope, LineFilePos lineFile) {
-        if (conNode instanceof BinaryOperator) {
-            BinaryOperator bo = (BinaryOperator) conNode;
-            if (bo.getOperator().equals("or")) {
-                Reference orFn = (Reference) scope.get(Constants.OR_FN, lineFile);
-                Function function = scope.getMemory().get(orFn);
-                Arguments args = new Arguments(new Line(lineFile, bo.getLeft(), bo.getRight()), lineFile);
-                SplElement callRes = function.call(args, scope);
-                if (scope.hasException()) {
-                    return Undefined.ERROR;
-                }
-                return callRes;
-            }
-        }
+    public static SplElement getContractFunction(Node conNode, FunctionEnvironment scope, LineFilePos lineFile) {
+//        if (conNode instanceof BinaryOperator) {
+//            BinaryOperator bo = (BinaryOperator) conNode;
+//            if (bo.getOperator().equals("or")) {
+//                Reference orFn = (Reference) scope.get(Constants.OR_FN, lineFile);
+//                Function function = scope.getMemory().get(orFn);
+//                Arguments args = new Arguments(new Line(lineFile, bo.getLeft(), bo.getRight()), lineFile);
+//                SplElement callRes = function.call(args, scope);
+//                if (scope.hasException()) {
+//                    return Undefined.ERROR;
+//                }
+//                return callRes;
+//            }
+//        }
         SplElement res = conNode.evaluate(scope);
         if (res instanceof Reference) return res;
         else {
@@ -99,8 +99,11 @@ public abstract class UserFunction extends SplCallable {
             if (!((Bool) result).value) {
                 SplInvokes.throwException(callingEnv,
                         Constants.CONTRACT_ERROR,
-                        String.format("Contract violation when calling '%s', at %s. Got %s.",
-                                scope.definedName, location, arg),
+                        String.format("Contract violation when calling '%s', at %s. Expected '%s', got %s.",
+                                scope.definedName,
+                                location,
+                                callable.getName(),
+                                SplInvokes.getRepr(arg, callingEnv, lineFile)),
                         lineFile);
                 return false;
             }

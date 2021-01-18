@@ -22,7 +22,7 @@ class Object {
 }
 
 fn wrapper?(obj) {
-    return (not AbstractObject?(obj)) or Wrapper?(obj);
+    return (not Obj?(obj)) or Wrapper?(obj);
 }
 
 class Wrapper {
@@ -204,6 +204,12 @@ class InvokeError(Exception) {
     }
 }
 
+class MutationError(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
 class NameError(Exception) {
     fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
@@ -246,17 +252,17 @@ class UnknownTypeError(Exception) {
     }
 }
 
-class Iterator {
+class Iterator<T> {
     fn __hasNext__() -> boolean? {
         throw new NotImplementedError();
     }
 
-    fn __next__() {
+    fn __next__() -> T {
         throw new NotImplementedError();
     }
 }
 
-class Iterable {
+class Iterable<T> {
     fn __iter__() -> Iterator? {
         throw new NotImplementedError();
     }
@@ -281,7 +287,7 @@ class ArrayIterator(Iterator) {
     }
 }
 
-class RangeIterator(Iterator) {
+class RangeIterator(Iterator<int?>) {
     var current;
     const end;
     const step;
@@ -307,7 +313,7 @@ class RangeIterator(Iterator) {
     }
 }
 
-class List(Iterable) {
+class List<T>(Iterable<T>) {
     var array;
     var _size;
 
@@ -336,7 +342,7 @@ class List(Iterable) {
         return "[" + strJoin(", ",
                             this,
                             lambda s -> cond {
-                                case List?(s) -> s.__class__().__name__() + "@" + Invokes.id(s);
+                                case List?(s) -> Object.__str__(s);
                                 default -> repr(s);
                             }) + "]";
     }
@@ -345,19 +351,19 @@ class List(Iterable) {
         return "[" + strJoin(", ", this, repr) + "]";
     }
 
-    fn append(value) {
+    fn append(value: T) {
         set(_size++, value);
         if _size == array.length {
             _expand();
         }
     }
 
-    fn get(index) {
+    fn get(index: int?) -> T {
         _checkIndex(index)
         return array[index];
     }
 
-    fn insert(index, value) {
+    fn insert(index: int?, value: T) {
         if index == _size {
             append(value);
             return;
@@ -375,9 +381,7 @@ class List(Iterable) {
         }
     }
 
-    contract insert(int?, any?) -> void;
-
-    fn set(index, value) {
+    fn set(index: int?, value: T) {
         _checkIndex(index)
         wrapper := wrap(value);
         array[index] = wrapper;
@@ -387,7 +391,7 @@ class List(Iterable) {
         return _size;
     }
 
-    fn remove(index) {
+    fn remove(index: int?) {
         _checkIndex(index);
         item := get(index);
         for i := index; i < _size; i++ {
@@ -398,8 +402,6 @@ class List(Iterable) {
             _collapse();
         }
     }
-
-    contract remove(int?) -> any?;
 
     fn toArray(eleType=Object) {
         eleProc := cond {
@@ -443,17 +445,17 @@ class List(Iterable) {
     }
 }
 
-class LinkedListNode {
+class LinkedListNode<T> {
     var value;
     var next = null;
     var prev = null;
 
-    fn __init__(value) {
+    fn __init__(value: T) {
         this.value = value;
     }
 }
 
-class LinkedListIterator(Iterator) {
+class LinkedListIterator<T>(Iterator<T>) {
     var node;
 
     fn __init__(head: LinkedListNode?) {
@@ -464,14 +466,14 @@ class LinkedListIterator(Iterator) {
         return node is not null;
     }
 
-    fn __next__() {
+    fn __next__() -> T {
         rtn := node;
         node = node.next;
-        return rtn;
+        return rtn.value;
     }
 }
 
-class LinkedList(Iterable) {
+class LinkedList<T>(Iterable<T>) {
     var head = null;
     var tail = null;
     var _size = 0;
@@ -480,46 +482,58 @@ class LinkedList(Iterable) {
     }
 
     fn __iter__() {
-        return new LinkedListIterator(head);
+        return new LinkedListIterator<T>(head);
     }
 
     fn __repr__() {
-
+        return __str__();
     }
 
     fn __str__() {
-
+        return "[" + strJoin("->", this, repr) + "]";
     }
 
-    fn append(value) {
-        node := new LinkedListNode(value);
+    fn append(value: T) {
+        node := new LinkedListNode<T>(value);
         node.prev = tail;
         if tail is not null {
             tail.next = node;
+        }
+        if head is null {
+            head = node;
         }
         tail = node;
         _size++;
     }
 
-    fn prepend(value) {
-        node := new LinkedListNode(value);
+    fn prepend(value: T) {
+        node := new LinkedListNode<T>(value);
         node.next = head;
         if head is not null {
             head.prev = node;
+        }
+        if tail is null {
+            tail = node;
         }
         head = node;
         _size++;
     }
 
-    fn getHead() {
+    fn getHead() -> T {
+        if _size == 0 {
+            throw new IndexError("Cannot get head from empty list");
+        }
         return head.value;
     }
 
-    fn getTail() {
+    fn getTail() -> T {
+        if _size == 0 {
+            throw new IndexError("Cannot get tail from empty list");
+        }
         return tail.value;
     }
 
-    fn removeFirst() {
+    fn removeFirst() -> T {
         if _size == 0 {
             throw new IndexError("Cannot remove from empty list");
         }
@@ -530,7 +544,7 @@ class LinkedList(Iterable) {
         return first.value;
     }
 
-    fn removeLast() {
+    fn removeLast() -> T {
         if _size == 0 {
             throw new IndexError("Cannot remove from empty list");
         }
@@ -546,7 +560,7 @@ class LinkedList(Iterable) {
     }
 }
 
-class Dict(Iterable) {
+class Dict<K, V>(Iterable<K>) {
     fn __getItem__(key) {
         return get(key);
     }
@@ -555,11 +569,11 @@ class Dict(Iterable) {
         put(key, value);
     }
 
-    fn put(key, value) {
+    fn put(key: K, value: V) {
         throw new NotImplementedError();
     }
 
-    fn get(key) {
+    fn get(key: K) -> V or null? {
         throw new NotImplementedError();
     }
 
@@ -568,7 +582,7 @@ class Dict(Iterable) {
     }
 }
 
-class NaiveDict(Dict) {
+class NaiveDict<K, V>(Dict<K, V>) {
     const keys;
     const values;
     const length;
@@ -583,7 +597,7 @@ class NaiveDict(Dict) {
         return new ArrayIterator(keys);
     }
 
-    fn get(key) {
+    fn get(key: K) -> V or null? {
         for var i = 0; i < length; i++ {
             if (keys[i] == key) {
                 return values[i];
@@ -593,6 +607,7 @@ class NaiveDict(Dict) {
     }
 
     fn put(key, value) {
+        throw new MutationError("NaiveDict is immutable.");
     }
 
     fn size() {
@@ -600,7 +615,7 @@ class NaiveDict(Dict) {
     }
 }
 
-class HashDictIterator(Iterator) {
+class HashDictIterator<K>(Iterator<K>) {
     const dict;
     var index = 0;
     var looped = 0;
@@ -614,7 +629,7 @@ class HashDictIterator(Iterator) {
         return looped < dict.size();
     }
 
-    fn __next__() {
+    fn __next__() -> T {
         if node is null {
             while index < dict.array.length {
                 node = dict.array[index++];
@@ -630,18 +645,18 @@ class HashDictIterator(Iterator) {
     }
 }
 
-class HashEntry {
+class HashEntry<K, V> {
     var key;
     var value;
     var next = null;
 
-    fn __init__(key, value) {
+    fn __init__(key: K, value: V) {
         this.key = key;
         this.value = value;
     }
 }
 
-class HashDict(Dict) {
+class HashDict<K, V>(Dict<K, V>) {
     const loadFactor;
     var eleCount = 0;
     var array;
@@ -652,7 +667,15 @@ class HashDict(Dict) {
     }
 
     fn __iter__() {
-        return new HashDictIterator(this);
+        return new HashDictIterator<K>(this);
+    }
+
+    fn __repr__() {
+        return __str__();
+    }
+
+    fn __str__() {
+        return "{" + strJoin(", ", this, lambda k -> repr(k) + "=" + repr(get(k))) + "}";
     }
 
     /*
@@ -660,7 +683,7 @@ class HashDict(Dict) {
      *
      * Do not do this while loop through this dict.
      */
-    fn put(key, value) {
+    fn put(key: K, value: V) {
         hashCode := hash(key, array.length);
         entry := array[hashCode];
         if entry is null {
@@ -689,7 +712,7 @@ class HashDict(Dict) {
         }
     }
 
-    fn get(key) {
+    fn get(key: K) -> V or null? {
         hashCode := hash(key, array.length);
         entry := array[hashCode];
         if entry is null {
@@ -710,7 +733,7 @@ class HashDict(Dict) {
      *
      * Do not do this while loop through this dict.
      */
-    fn remove(key) {
+    fn remove(key: K) -> V or null? {
         hashCode := hash(key, array.length);
         entry := array[hashCode];
         if entry is null {
@@ -750,7 +773,7 @@ class HashDict(Dict) {
         cond {
             case Object?(key) {
                 code = key.__hash__();
-            } case AbstractObject?(key) {
+            } case Obj?(key) {
                 code = key.__hash__();
             } default {
                 code = wrap(key).__hash__();
@@ -983,7 +1006,7 @@ fn strJoin(deliminator: String?, iter: array?(Obj) or Iterable?, processor: Call
 fn type(obj) {
     return cond {
         case Object?(obj) -> obj.__class__();
-        case AbstractObject?(obj) -> Invokes.nativeType(obj);
+        case Obj?(obj) -> Invokes.nativeType(obj);
         case int?(obj) -> int;
         case float?(obj) -> float;
         case char?(obj) -> char;
@@ -1040,7 +1063,7 @@ fn unwrapNum(num) {
     cond {
         case Wrapper?(num) {
             return num.value;
-        } case AbstractObject?(num) {
+        } case Obj?(num) {
             throw new TypeError("Cannot unwrap non-wrapper object.");
         } default {  // primitive
             return num;
@@ -1094,6 +1117,14 @@ fn getClassByName(name: String?) {
         }
     }
     throw new AttributeException("Name ''" + name + "' does not exist or is not a class.");
+}
+
+fn listGenerics(obj: Object?) {
+
+}
+
+fn getGenerics(obj: Object?, name: String?) -> Callable? {
+
 }
 
 // Constants
