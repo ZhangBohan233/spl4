@@ -3,5 +3,6 @@ fn main() {
     print(d);
     s := {1, 2, 3, 8};
     print(s);
+    print(genericDict(d));
     return s.size();
 }

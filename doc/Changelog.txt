@@ -1,3 +1,8 @@
+===== Version 4065 =====
+2021/01/20
+
+* Implemented library function 'genericDict'
+
 ===== Version 4064 =====
 2021/01/20
 

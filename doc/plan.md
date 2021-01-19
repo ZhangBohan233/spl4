@@ -40,7 +40,7 @@
 * Spc decompiler
 * ~~HashDict~~ **_DONE_**
 * TreeDict
-* HashDict creation via `{key1=value1, ...}`
+* ~~HashDict creation via~~ `{key1=value1, ...}` **_DONE_**
 * Wrapper of native types
 * ~~Get class method statically~~ `Object.__hash__` **_DONE_**
 * ~~More information in compiled spl file~~ **_DONE_**
@@ -48,10 +48,12 @@
 * ~~Generic contract:~~ `fn test<T>(x: T) -> T` **_DONE_**
 * ~~Check function scope 'removeReturn'~~ **_CHECKED_**
 
-### 4.0 Release
+
+### 4.0 Alpha
 * Generic array
 * Reflection on generics
 * Find a way to deal with contract overriding
-* Set and set creation via `{e1, e2, ...}`
+* ~~Set and set creation via~~ `{e1, e2, ...}` **_DONE_**
 * Abstract class, avoiding a class to be instantiated
-* Generic contract `List?<T>`
+* ~~Generic contract~~ `List?<T>` **_DISCARDED_**
+* private

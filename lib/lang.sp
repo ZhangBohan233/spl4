@@ -1199,12 +1199,8 @@ fn getClassByName(name: String?) {
     throw new AttributeException("Name ''" + name + "' does not exist or is not a class.");
 }
 
-fn listGenerics(obj: Object?) {
-
-}
-
-fn getGenerics(obj: Object?, name: String?) -> Callable? {
-
+fn genericDict(obj: Object?) -> Dict? {
+    return Invokes.listGenerics(obj);
 }
 
 // Constants

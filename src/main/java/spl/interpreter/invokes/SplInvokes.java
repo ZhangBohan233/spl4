@@ -450,6 +450,17 @@ public class SplInvokes extends NativeObject {
         return stringArrayOfKeys(env, lineFilePos, methods.size(), methods.keySet());
     }
 
+    @Accessible
+    public SplElement listGenerics(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 1, "Invokes.listGenerics", env, lineFilePos);
+
+        Reference ref = (Reference) arguments.getLine().get(0).evaluate(env);
+        Instance instance = env.getMemory().get(ref);
+
+        Map<String, SplElement> map = instance.getEnv().getGenericsMap();
+        return DictSetLiteral.javaMapToSplMap(map, env, lineFilePos);
+    }
+
     private SplElement stringArrayOfKeys(Environment env,
                                          LineFilePos lineFilePos,
                                          int size,

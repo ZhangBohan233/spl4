@@ -2,6 +2,7 @@ package spl.ast;
 
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
@@ -12,6 +13,7 @@ import spl.util.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 public class DictSetLiteral extends Expression {
 
@@ -90,6 +92,21 @@ public class DictSetLiteral extends Expression {
             if (value == Undefined.ERROR) return Undefined.ERROR;
 
             putFn.call(EvaluatedArguments.of(iap.pointer, value), env, lineFile);
+        }
+        return iap.pointer;
+    }
+
+    public static SplElement javaMapToSplMap(Map<String, SplElement> map, Environment env, LineFilePos lineFilePos) {
+        Instance.InstanceAndPtr iap = Instance.createInstanceWithInitCall(
+                Constants.HASH_DICT, EvaluatedArguments.of(), env, lineFilePos);
+        if (iap == null) return Undefined.ERROR;
+        Reference putFnPtr = (Reference) iap.instance.getEnv().get(Constants.SET_ITEM_FN, lineFilePos);
+        SplCallable putFn = env.getMemory().get(putFnPtr);
+
+        for (Map.Entry<String, SplElement> entry : map.entrySet()) {
+            SplElement key = StringLiteral.createString(entry.getKey().toCharArray(), env, lineFilePos);
+
+            putFn.call(EvaluatedArguments.of(iap.pointer, key, entry.getValue()), env, lineFilePos);
         }
         return iap.pointer;
     }

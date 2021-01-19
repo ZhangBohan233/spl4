@@ -76,6 +76,14 @@ public class InstanceEnvironment extends MainAbstractEnvironment {
         return generics.get(name);
     }
 
+    public Map<String, SplElement> getGenericsMap() {
+        Map<String, SplElement> map = new HashMap<>();
+        for (Map.Entry<String, VarEntry> entry : generics.entrySet()) {
+            map.put(entry.getKey(), entry.getValue().getValue());
+        }
+        return map;
+    }
+
     @Override
     public String toString() {
         return "InstanceEnv of '" + className + "'";
