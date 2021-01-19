@@ -1,3 +1,12 @@
+===== Version 4064 =====
+2021/01/20
+
+* Added an 'interface' class 'Collection'
+* Implemented library type HashSet
+* New syntax:
+    * HashDict creation via `{k1=v1, k2=v2, ...}`
+    * HashDict creation via `{e1, e2, ...}`
+
 ===== Version 4063 =====
 2021/01/19
 

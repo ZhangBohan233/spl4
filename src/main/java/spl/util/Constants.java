@@ -17,6 +17,8 @@ public class Constants {
     public static final String LIST_CLASS = "List";
     public static final String DICT_CLASS = "Dict";
     public static final String NAIVE_DICT = "NaiveDict";
+    public static final String HASH_DICT = "HashDict";
+    public static final String HASH_SET = "HashSet";
     public static final String WRAPPER = "Wrapper";
     public static final String THIS = "this";
     public static final String SUPER = "super";
@@ -30,6 +32,7 @@ public class Constants {
     public static final String HAS_NEXT_FN = "__hasNext__";
     public static final String GET_ITEM_FN = "__getItem__";
     public static final String SET_ITEM_FN = "__setItem__";
+    public static final String PUT_FN = "put";
     public static final String STRING_CHARS = "__chars__";
     public static final String CLASS_MRO = "__mro__";
     public static final String WRAPPER_ATTR = "value";

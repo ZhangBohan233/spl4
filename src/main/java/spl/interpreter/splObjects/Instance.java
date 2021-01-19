@@ -134,7 +134,7 @@ public class Instance extends SplObject {
 //                        System.out.println(scTemplates[i] + " " + scGens.get(i) + " " + callingEnv.getMemory().get(scGen));
                         gensForSupClass.put(scTemplates[i], scGen);
                     }
-                    System.out.println(supClazz.getClassName() + " " + gensForSupClass);
+//                    System.out.println(supClazz.getClassName() + " " + gensForSupClass);
                 }
             }
 

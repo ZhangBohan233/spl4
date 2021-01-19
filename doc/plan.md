@@ -52,3 +52,6 @@
 * Generic array
 * Reflection on generics
 * Find a way to deal with contract overriding
+* Set and set creation via `{e1, e2, ...}`
+* Abstract class, avoiding a class to be instantiated
+* Generic contract `List?<T>`

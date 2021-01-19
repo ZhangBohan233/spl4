@@ -14,7 +14,7 @@ fn main() {
     dict[4] = -2;
     dict[18] = 1.2;
     dict.remove(1);
-    print(dict);
+    print(repr(dict));
     print(dict.get(333));
     return dict.size();
 }

@@ -268,6 +268,15 @@ class Iterable<T> {
     }
 }
 
+/*
+ * Extending this class indicates that the child class has collective elements.
+ */
+class Collection {
+    fn size() -> int {
+        throw new NotImplementedError();
+    }
+}
+
 class ArrayIterator(Iterator) {
     const array;
     const endIndex;
@@ -313,7 +322,7 @@ class RangeIterator(Iterator<int?>) {
     }
 }
 
-class List<T>(Iterable<T>) {
+class List<T>(Iterable<T>, Collection) {
     var array;
     var _size;
 
@@ -340,11 +349,11 @@ class List<T>(Iterable<T>) {
 
     fn __repr__() {
         return "[" + strJoin(", ",
-                            this,
-                            lambda s -> cond {
-                                case List?(s) -> Object.__str__(s);
-                                default -> repr(s);
-                            }) + "]";
+                             this,
+                             lambda s -> cond {
+                                 case Collection?(s) -> Object.__str__(s);
+                                 default -> repr(s);
+                             }) + "]";
     }
 
     fn __str__() {
@@ -473,7 +482,7 @@ class LinkedListIterator<T>(Iterator<T>) {
     }
 }
 
-class LinkedList<T>(Iterable<T>) {
+class LinkedList<T>(Iterable<T>, Collection) {
     var head = null;
     var tail = null;
     var _size = 0;
@@ -486,7 +495,12 @@ class LinkedList<T>(Iterable<T>) {
     }
 
     fn __repr__() {
-        return __str__();
+        return "[" + strJoin("->",
+                             this,
+                             lambda s -> cond {
+                                 case Collection?(s) -> Object.__str__(s);
+                                 default -> repr(s);
+                             }) + "]";
     }
 
     fn __str__() {
@@ -560,13 +574,31 @@ class LinkedList<T>(Iterable<T>) {
     }
 }
 
-class Dict<K, V>(Iterable<K>) {
+class Dict<K, V>(Iterable<K>, Collection) {
     fn __getItem__(key) {
         return get(key);
     }
 
     fn __setItem__(key, value) {
         put(key, value);
+    }
+
+    fn __repr__() {
+        return "{" + strJoin(", ",
+                             this,
+                             lambda k -> repr(k) + "=" +
+                                 cond {
+                                     case Collection?(get(k)) -> Object.__str__(get(k));
+                                     default -> repr(get(k));
+                                 }) + "}";
+    }
+
+    fn __str__() {
+        return "{" + strJoin(", ", this, lambda k -> repr(k) + "=" + repr(get(k))) + "}";
+    }
+
+    fn contains(key: K) -> boolean? {
+        return get(key) is not null;
     }
 
     fn put(key: K, value: V) {
@@ -668,14 +700,6 @@ class HashDict<K, V>(Dict<K, V>) {
 
     fn __iter__() {
         return new HashDictIterator<K>(this);
-    }
-
-    fn __repr__() {
-        return __str__();
-    }
-
-    fn __str__() {
-        return "{" + strJoin(", ", this, lambda k -> repr(k) + "=" + repr(get(k))) + "}";
     }
 
     /*
@@ -813,6 +837,62 @@ class HashDict<K, V>(Dict<K, V>) {
             }
         }
         this.array = newArr;
+    }
+}
+
+class Set<T>(Iterable<T>, Collection) {
+    fn __repr__() {
+        return "{" + strJoin(", ",
+                             this,
+                             lambda s -> cond {
+                                 case Collection?(s) -> Object.__str__(s);
+                                 default -> repr(s);
+                             }) + "}";
+    }
+
+    fn __str__() {
+        return "{" + strJoin(", ", this, repr) + "}";
+    }
+
+    fn remove(item: T) -> T or null? {
+        throw new NotImplementedError();
+    }
+
+    fn contains(key: K) -> boolean? {
+        throw new NotImplementedError();
+    }
+
+    fn put(item: T) {
+        throw new NotImplementedError();
+    }
+}
+
+class HashSet<T>(Set<T>) {
+    const dict;
+    const present = new Object();
+
+    fn __init__(initCap: int? = 8, loadFactor: float? = 0.75) {
+        dict = new HashDict<T, Object?>(initCap, loadFactor);
+    }
+
+    fn __iter__() {
+        return new HashDictIterator<T>(dict);
+    }
+
+    fn contains(key: K) -> boolean? {
+        return dict.contains(key);
+    }
+
+    fn put(item: T) {
+        dict.put(item, present);
+    }
+
+    fn remove(item: T) -> T or null? {
+        return dict.remove(item);
+    }
+
+    fn size() {
+        return dict.size();
     }
 }
 

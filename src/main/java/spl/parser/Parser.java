@@ -1,7 +1,10 @@
 package spl.parser;
 
 import spl.ast.*;
-import spl.lexer.*;
+import spl.lexer.FileTokenizer;
+import spl.lexer.SyntaxError;
+import spl.lexer.TextProcessResult;
+import spl.lexer.Tokenizer;
 import spl.lexer.tokens.*;
 import spl.lexer.treeList.*;
 import spl.util.Constants;
@@ -164,6 +167,13 @@ public class Parser {
 
     private Line parseOneLineBlock(BracketList bracketList) throws IOException {
         AstBuilder builder = parseSomeBlock(bracketList);
+        varLevel = Declaration.USELESS;
+        builder.finishPart();
+        return builder.getLine();
+    }
+
+    private Line parseOneLineBlock(BraceList braceList) throws IOException {
+        AstBuilder builder = parseSomeBlock(braceList);
         varLevel = Declaration.USELESS;
         builder.finishPart();
         return builder.getLine();
@@ -750,6 +760,11 @@ public class Parser {
                     return index;
                 }
             }
+        } else if (ele instanceof BraceList) {
+            // dict or set creation
+            BraceList braceList = (BraceList) ele;
+            Line content = parseOneLineBlock(braceList);
+            builder.addNode(DictSetLiteral.create(content, braceList.lineFile));
         }
         return index;
     }
