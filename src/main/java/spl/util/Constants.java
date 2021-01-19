@@ -20,6 +20,7 @@ public class Constants {
     public static final String WRAPPER = "Wrapper";
     public static final String THIS = "this";
     public static final String SUPER = "super";
+    public static final String INSTANCE_NAME = "__instance__";
     public static final String CLASS_NAME = "__name__";
     public static final String CONSTRUCTOR = "__init__";
     public static final String TO_STRING_FN = "__str__";

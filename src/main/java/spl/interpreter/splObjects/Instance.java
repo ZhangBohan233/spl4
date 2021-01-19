@@ -92,20 +92,20 @@ public class Instance extends SplObject {
                                                             LineFilePos lineFile) {
         InstanceEnvironment instanceEnv = new InstanceEnvironment(
                 clazz.getClassName(),
-                clazz.getDefinitionEnv(),
-                callingEnv
+                clazz.getDefinitionEnv()
         );
         callingEnv.getMemory().addTempEnv(instanceEnv);
+
+        Instance instance = new Instance(clazzPtr, instanceEnv);
+        Reference instancePtr = callingEnv.getMemory().allocateObject(instance, instanceEnv);
+        instanceEnv.defineConstAndSet(Constants.INSTANCE_NAME, instancePtr, lineFile);
+
         String[] templates = clazz.getTemplates();
         if (templates != null) {
             for (String tem : templates) {
-                instanceEnv.defineConstAndSet(tem, determinedGenerics.get(tem), lineFile);
+                instanceEnv.defineGeneric(tem, determinedGenerics.get(tem), lineFile);
             }
         }
-
-        Instance instance = new Instance(clazzPtr, instanceEnv);
-        Reference instancePtr = callingEnv.getMemory().allocate(1, instanceEnv);
-        callingEnv.getMemory().set(instancePtr, instance);
 
         // evaluate superclasses
         if (mroIterator.hasNext()) {
@@ -131,9 +131,10 @@ public class Instance extends SplObject {
                         SplElement probScGen = scGens.get(i).evaluate(instanceEnv);
                         if (probScGen == Undefined.ERROR) return null;
                         Reference scGen = (Reference) probScGen;
-                        System.out.println(scTemplates[i] + " " + scGens.get(i) + " " + callingEnv.getMemory().get(scGen));
+//                        System.out.println(scTemplates[i] + " " + scGens.get(i) + " " + callingEnv.getMemory().get(scGen));
                         gensForSupClass.put(scTemplates[i], scGen);
                     }
+                    System.out.println(supClazz.getClassName() + " " + gensForSupClass);
                 }
             }
 
@@ -147,8 +148,6 @@ public class Instance extends SplObject {
                             callingEnv,
                             lineFile);
 
-//            System.out.println(supClazz.getClassName() + scInsPtr.instance.getEnv().names());
-
             // define "super"
             if (scInsPtr == null) return null;
             instance.getEnv().directDefineConstAndSet(Constants.SUPER, scInsPtr.pointer);
@@ -160,6 +159,7 @@ public class Instance extends SplObject {
         }
 
         // define methods
+//        System.out.println(clazz.getClassName() + " " + clazz.getMethodPointers().keySet());
         for (Map.Entry<String, Reference> entry : clazz.getMethodPointers().entrySet()) {
             instanceEnv.defineFunction(entry.getKey(), entry.getValue(), lineFile);
         }
@@ -197,7 +197,6 @@ public class Instance extends SplObject {
             InstanceEnvironment supEnv = supIns.getEnv();
             Reference supConstPtr = (Reference) supEnv.get(Constants.CONSTRUCTOR, lineFile);
             SplMethod supConst = env.getMemory().get(supConstPtr);
-//            List<Type> supParamTypes = supConst.getFuncType().getParamTypes();
             if (supConst.minArgCount() > 1) {
                 // superclass has a non-trivial constructor
                 if (noLeadingSuperCall(constructor)) {

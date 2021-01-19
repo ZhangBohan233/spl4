@@ -40,11 +40,5 @@ fn xx(x: int?) -> int? {
 }
 
 fn main() {
-    //print(foo<int?>(3));
-    //print(bar<int?>(2));
-    //a := new A();
-    //print(a.foo<int?>(4));
-    c := new C<String?>();
-    print(C.__mro__);
-    c.put(1.5, "xxs");
+
 }

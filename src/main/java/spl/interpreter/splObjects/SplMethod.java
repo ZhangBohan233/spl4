@@ -13,6 +13,7 @@ import java.util.List;
 
 public class SplMethod extends Function {
 
+    public final int methodDefClassId;
     private Reference classPtr;
 
     public SplMethod(BlockStmt body,
@@ -20,8 +21,11 @@ public class SplMethod extends Function {
                      Environment classDefEnv,
                      String definedName,
                      StringLiteralRef docRef,
+                     int methodDefClassId,
                      LineFilePos lineFile) {
         super(body, params, classDefEnv, definedName, docRef, lineFile);
+
+        this.methodDefClassId = methodDefClassId;
     }
 
     @Override
@@ -43,7 +47,7 @@ public class SplMethod extends Function {
     @Override
     public SplElement call(EvaluatedArguments evaluatedArgs, Reference[] generics,
                            Environment callingEnv, LineFilePos argLineFile) {
-        MethodEnvironment scope = new MethodEnvironment(definitionEnv, callingEnv, definedName);
+        MethodEnvironment scope = new MethodEnvironment(definitionEnv, callingEnv, definedName, methodDefClassId);
         return callEssential(evaluatedArgs, generics, callingEnv, scope, argLineFile);
     }
 

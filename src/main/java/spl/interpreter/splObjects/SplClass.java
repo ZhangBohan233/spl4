@@ -16,6 +16,12 @@ import java.util.*;
 
 public class SplClass extends NativeObject {
 
+    private static int classCount = 0;
+
+    /**
+     * A unique identifier of this class
+     */
+    public final int classId = classCount++;
     /**
      * Pointer to direct superclasses of this class.
      * <p>
@@ -298,7 +304,7 @@ public class SplClass extends NativeObject {
             fieldNodes.put(((Declaration) left).declaredName, ass);
         } else if (lineNode instanceof FuncDefinition) {
             FuncDefinition fd = (FuncDefinition) lineNode;
-            SplElement mp = fd.evalAsMethod(definitionEnv);
+            SplElement mp = fd.evalAsMethod(definitionEnv, classId);
             if (definitionEnv.hasException()) return false;
             Reference methodPtr = (Reference) mp;
             methodPointers.put(fd.name.getName(), methodPtr);
@@ -321,7 +327,7 @@ public class SplClass extends NativeObject {
                     null,
                     LineFilePos.LF_INTERPRETER);
 
-            SplElement cp = fd.evalAsMethod(definitionEnv);
+            SplElement cp = fd.evalAsMethod(definitionEnv, classId);
             if (definitionEnv.hasException()) return;
             Reference constructorPtr = (Reference) cp;
             methodPointers.put(Constants.CONSTRUCTOR, constructorPtr);

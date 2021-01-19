@@ -71,14 +71,15 @@ public class FuncDefinition extends Expression {
         return funcPtr;
     }
 
-    public SplElement evalAsMethod(Environment classDefEnv) {
+    public SplElement evalAsMethod(Environment classDefEnv, int defClassId) {
         Function.Parameter[] oldParams = SplCallable.evalParams(parameters, classDefEnv);
         if (classDefEnv.hasException()) return Undefined.ERROR;
 
         assert oldParams != null;
         Function.Parameter[] params = SplCallable.insertThis(oldParams);
 
-        SplMethod function = new SplMethod(body, params, classDefEnv, name.getName(), docRef, getLineFile());
+        SplMethod function = new SplMethod(body, params, classDefEnv, name.getName(), docRef, defClassId,
+                getLineFile());
 
         return classDefEnv.getMemory().allocateFunction(function, classDefEnv);
     }

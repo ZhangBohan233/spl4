@@ -208,7 +208,7 @@ public abstract class Environment {
 
     protected abstract void setInNamespaces(String name, SplElement typeValue);
 
-    private void throwNameError(String msg, LineFilePos lineFilePos) {
+    protected void throwNameError(String msg, LineFilePos lineFilePos) {
         SplInvokes.throwException(
                 this,
                 Constants.NAME_ERROR,

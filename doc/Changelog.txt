@@ -1,3 +1,10 @@
+===== Version 4063 =====
+2021/01/19
+
+* Added new instance attribute: __instance__
+* Bug fixes:
+    * Resolved issue #C02: generic name conflicting
+
 ===== Version 4062 =====
 2021/01/19
 

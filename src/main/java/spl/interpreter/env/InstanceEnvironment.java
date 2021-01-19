@@ -1,22 +1,23 @@
 package spl.interpreter.env;
 
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splObjects.Instance;
+import spl.util.Constants;
+import spl.util.LineFilePos;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class InstanceEnvironment extends MainAbstractEnvironment {
-
-    /**
-     * Store the reference to the environment where this instance is created. Used only for gc.
-     */
-    public final Environment creationEnvironment;
     private final String className;
+    private final Map<String, VarEntry> generics = new HashMap<>();
 
-    public InstanceEnvironment(String className, Environment definitionEnv, Environment creationEnvironment) {
+    public InstanceEnvironment(String className, Environment definitionEnv) {
         super(definitionEnv.getMemory(), definitionEnv);
 
         this.className = className;
-        this.creationEnvironment = creationEnvironment;
     }
 
     public void directDefineConstAndSet(String name, SplElement value) {
@@ -37,20 +38,42 @@ public class InstanceEnvironment extends MainAbstractEnvironment {
     }
 
     private VarEntry searchSuper(String name) {
-        VarEntry tv = variables.get(name);
+        VarEntry instanceEntry = variables.get(Constants.INSTANCE_NAME);
+        if (instanceEntry == null) {
+            throw new EnvironmentError("Unexpected error: '" + Constants.INSTANCE_NAME + "' not in scope.");
+        }
+        VarEntry varEntry = generics.get(name);
+        if (varEntry != null) {
+            return varEntry;
+        }
 
-        if (tv == null) {
-            VarEntry superTv = variables.get("super");
+        varEntry = variables.get(name);
+        if (varEntry == null) {
+            VarEntry superTv = variables.get(Constants.SUPER);
             if (superTv == null) return null;
             else {
-                Instance instance = (Instance) getMemory().get((Reference) superTv.getValue());
-                return instance.getEnv().searchSuper(name);
+                Instance supIns = getMemory().get((Reference) superTv.getValue());
+                return supIns.getEnv().searchSuper(name);
             }
-        } else return tv;
+        } else return varEntry;
     }
 
-    public boolean selfContains(String name) {
-        return variables.containsKey(name);
+    public void defineGeneric(String name, Reference value, LineFilePos lineFilePos) {
+        VarEntry varEntry = innerGet(name, true);
+        if (varEntry != null) {
+            SplInvokes.throwException(
+                    this,
+                    Constants.NAME_ERROR,
+                    "Generic name '" + name + "' already defined in this scope.",
+                    lineFilePos
+            );
+            return;
+        }
+        generics.put(name, VarEntry.constEntry(value));
+    }
+
+    protected VarEntry getGeneric(String name) {  // nullable
+        return generics.get(name);
     }
 
     @Override

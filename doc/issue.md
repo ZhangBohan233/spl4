@@ -53,7 +53,7 @@ class B(A) {
 
 ```
 
-**ISSUE C02** \
+~~**ISSUE C02**~~ **_FIXED_** \
 Generic name conflicting
 ```
 class M<K, V>(HashDict<K, V or int?>) { { ... }

@@ -34,7 +34,11 @@ public class ClassStmt extends Expression {
      * @param docRef     string literal reference of docstring
      * @param lineFile   line file
      */
-    public ClassStmt(String className, List<Node> extensions, List<Node> templates, BlockStmt body, StringLiteralRef docRef,
+    public ClassStmt(String className,
+                     List<Node> extensions,
+                     List<Node> templates,
+                     BlockStmt body,
+                     StringLiteralRef docRef,
                      LineFilePos lineFile) {
         super(lineFile);
 
