@@ -1,3 +1,11 @@
+===== Version 4066 =====
+2021/01/20
+
+* Generic array
+* Changed some error messages related to types and contracts
+* Bug fixes:
+    * Parser error when combining 'and', 'or', 'not' with parenthesis
+
 ===== Version 4065 =====
 2021/01/20
 

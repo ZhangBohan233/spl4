@@ -59,7 +59,7 @@ public class BinaryOperator extends BinaryExpr {
             String fnName = ARITHMETIC_OP_MAP.get(operator);
             Environment instanceEnv = ((Instance) leftObj).getEnv();
             Reference fnPtr = (Reference) instanceEnv.get(fnName, lineFile);
-            SplMethod opFn = (SplMethod) env.getMemory().get(fnPtr);
+            SplMethod opFn = env.getMemory().get(fnPtr);
             return opFn.call(EvaluatedArguments.of(leftPtr, rightEle), env, lineFile);
         } else {
             return SplInvokes.throwExceptionWithError(
@@ -134,7 +134,7 @@ public class BinaryOperator extends BinaryExpr {
                 String fnName = LOGICAL_OP_MAP.get(op);
                 Environment instanceEnv = ((Instance) leftObj).getEnv();
                 Reference fnPtr = (Reference) instanceEnv.get(fnName, lineFile);
-                SplMethod opFn = (SplMethod) env.getMemory().get(fnPtr);
+                SplMethod opFn = env.getMemory().get(fnPtr);
                 SplElement res = opFn.call(EvaluatedArguments.of(l, r), env, lineFile);
                 if (res instanceof Bool) {
                     return res;

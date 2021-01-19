@@ -99,11 +99,11 @@ public abstract class UserFunction extends SplCallable {
             if (!((Bool) result).value) {
                 SplInvokes.throwException(callingEnv,
                         Constants.CONTRACT_ERROR,
-                        String.format("Contract violation when calling '%s', at %s. Expected '%s', got %s.",
+                        String.format("Contract violation when calling '%s', at %s. Expected '%s', got '%s'.",
                                 scope.definedName,
                                 location,
                                 callable.getName(),
-                                SplInvokes.getRepr(arg, callingEnv, lineFile)),
+                                Utilities.typeName(result, callingEnv, lineFile)),
                         lineFile);
                 return false;
             }

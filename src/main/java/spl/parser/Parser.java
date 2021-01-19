@@ -54,7 +54,7 @@ public class Parser {
         if (token instanceof IdToken) {
             String identifier = ((IdToken) token).getIdentifier();
             return FileTokenizer.StringTypes.isIdentifier(identifier) &&
-                    !FileTokenizer.RESERVED.contains(identifier);
+                    !FileTokenizer.KEYWORDS.contains(identifier);
         }
         return false;
     }
@@ -63,7 +63,7 @@ public class Parser {
         if (token instanceof IdToken) {
             String identifier = ((IdToken) token).getIdentifier();
             if (FileTokenizer.StringTypes.isIdentifier(identifier) &&
-                    !FileTokenizer.RESERVED.contains(identifier))
+                    !FileTokenizer.KEYWORDS.contains(identifier))
                 return true;
             else return identifier.equals(")") || identifier.equals("]") ||
                     (!(lastAddedNode instanceof BinaryOperator) && identifier.equals(">"));
@@ -79,7 +79,7 @@ public class Parser {
                 return switch (identifier) {
                     case ";", "=", ":=", "->", ".", "," -> true;
                     default -> FileTokenizer.ALL_BINARY.contains(identifier) ||
-                            FileTokenizer.RESERVED.contains(identifier);
+                            FileTokenizer.KEYWORDS.contains(identifier);
                 };
             } else return !(token instanceof IntToken) &&
                     !(token instanceof FloatToken) &&
@@ -93,7 +93,7 @@ public class Parser {
             return switch (identifier) {
                 case ";", "=", "->", "(", "[", "{", "}", ".", "," -> true;
                 default -> FileTokenizer.ALL_BINARY.contains(identifier) ||
-                        FileTokenizer.RESERVED.contains(identifier);
+                        FileTokenizer.KEYWORDS.contains(identifier);
             };
         } else return !(token instanceof IntToken) && !(token instanceof FloatToken);
     }

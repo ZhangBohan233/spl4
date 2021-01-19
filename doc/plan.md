@@ -41,7 +41,7 @@
 * ~~HashDict~~ **_DONE_**
 * TreeDict
 * ~~HashDict creation via~~ `{key1=value1, ...}` **_DONE_**
-* Wrapper of native types
+* ~~Wrapper of native types~~ **_DISCARDED_**
 * ~~Get class method statically~~ `Object.__hash__` **_DONE_**
 * ~~More information in compiled spl file~~ **_DONE_**
 * ~~Rename AbstractObject to a shorter name~~ **_DONE_**
@@ -50,8 +50,8 @@
 
 
 ### 4.0 Alpha
-* Generic array
-* Reflection on generics
+* ~~Generic array~~ **_DONE_**
+* ~~Reflection on generics~~ **_DONE_**
 * Find a way to deal with contract overriding
 * ~~Set and set creation via~~ `{e1, e2, ...}` **_DONE_**
 * Abstract class, avoiding a class to be instantiated

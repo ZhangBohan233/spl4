@@ -1,6 +1,7 @@
 package spl.interpreter.splObjects;
 
 import spl.ast.Node;
+import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.Memory;
 import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
@@ -9,6 +10,7 @@ import spl.interpreter.splErrors.NativeTypeError;
 import spl.util.Accessible;
 import spl.util.Constants;
 import spl.util.LineFilePos;
+import spl.util.Utilities;
 
 public class SplArray extends NativeObject {
 
@@ -24,15 +26,19 @@ public class SplArray extends NativeObject {
     @Accessible
     final Reference type;
 
+    @Accessible
+    final Reference generics;  // this might be Reference.NULL
+
     /**
      * Element type representation, can be found in static final content of {@code SplElement}
      */
     private final int elementTypeCode;
 
-    public SplArray(int elementTypeCode, Reference typeRef, int length) {
+    private SplArray(int elementTypeCode, Reference typeRef, Reference genericFn, int length) {
         this.length = new Int(length);
         this.elementTypeCode = elementTypeCode;
         this.type = typeRef;
+        this.generics = genericFn;
     }
 
     private static int typeToCode(SplElement se, Environment env, LineFilePos lineFilePos) {
@@ -41,16 +47,7 @@ public class SplArray extends NativeObject {
         else if (se.equals(env.get("char", lineFilePos))) return SplElement.CHAR;
         else if (se.equals(env.get("boolean", lineFilePos))) return SplElement.BOOLEAN;
         else if (se.equals(env.get("byte", lineFilePos))) return SplElement.BYTE;
-        else if (se.equals(env.get("Obj", lineFilePos))) return SplElement.POINTER;
-        else {
-            SplInvokes.throwException(
-                    env,
-                    Constants.TYPE_ERROR,
-                    "Only basic types are valid in array creation.",
-                    lineFilePos
-            );
-            return -1;
-        }
+        else return SplElement.POINTER;
     }
 
     private static SplElement codeToType(int eleType, Environment env, LineFilePos lineFilePos) {
@@ -60,7 +57,7 @@ public class SplArray extends NativeObject {
             case SplElement.BOOLEAN -> env.get("boolean", lineFilePos);
             case SplElement.CHAR -> env.get("char", lineFilePos);
             case SplElement.BYTE -> env.get("byte", lineFilePos);
-            case SplElement.POINTER -> env.get("Obj", lineFilePos);
+            case SplElement.POINTER -> env.get(Constants.OBJ, lineFilePos);
             default -> SplInvokes.throwExceptionWithError(
                     env,
                     Constants.TYPE_ERROR,
@@ -72,11 +69,12 @@ public class SplArray extends NativeObject {
 
     public static Reference createArray(int eleType,
                                         Reference typeRef,
+                                        Reference generics,
                                         int arrSize,
                                         Environment env) {
         Memory memory = env.getMemory();
         Reference arrPtr = memory.allocate(arrSize + 1, env);
-        SplArray arrIns = new SplArray(eleType, typeRef, arrSize);
+        SplArray arrIns = new SplArray(eleType, typeRef, generics, arrSize);
         memory.set(arrPtr, arrIns);
         fillInitValue(eleType, arrPtr, memory, arrSize);
         return arrPtr;
@@ -86,7 +84,7 @@ public class SplArray extends NativeObject {
         SplElement t = codeToType(eleType, env, lineFilePos);
         if (env.hasException()) return Reference.NULL;
 
-        return createArray(eleType, (Reference) t, arrSize, env);
+        return createArray(eleType, (Reference) t, Reference.NULL, arrSize, env);
     }
 
     public static Reference createArray(int eleType, int arrSize, Environment env) {
@@ -97,8 +95,15 @@ public class SplArray extends NativeObject {
         SplElement type = eleNode.evaluate(env);
         if (env.hasException()) return Undefined.ERROR;
         int eleType = typeToCode(type, env, lineFilePos);
-
-        return createArray(eleType, (Reference) type, arrSize, env);
+        Reference genericFn = Reference.NULL;
+        if (eleType == SplElement.POINTER) {
+            Reference obj = (Reference) env.get(Constants.OBJ, lineFilePos);
+            if (!type.equals(obj)) {
+                genericFn = (Reference) type;
+                type = obj;
+            }
+        }
+        return createArray(eleType, (Reference) type, genericFn, arrSize, env);
     }
 
     public static void fillInitValue(int eleType, Reference arrayPtr, Memory memory, int arrayLength) {
@@ -144,6 +149,28 @@ public class SplArray extends NativeObject {
                         "Index " + index + " out of array length " + array.length + ". ",
                         lineFile);
                 return;
+            }
+            if (array.generics != Reference.NULL && env.getMemory().isCheckContract()) {
+                SplCallable genericFn = env.getMemory().get(array.generics);
+                SplElement genRes = genericFn.call(EvaluatedArguments.of(value), env, lineFile);
+                if (!(genRes instanceof Bool)) {
+                    SplInvokes.throwException(
+                            env,
+                            Constants.TYPE_ERROR,
+                            "Array generic function must return boolean.",
+                            lineFile);
+                    return;
+                }
+                if (!((Bool) genRes).value) {
+                    SplInvokes.throwException(
+                            env,
+                            Constants.TYPE_ERROR,
+                            String.format("Generic array has generic '%s', but received element %s.",
+                                    genericFn.getName(),
+                                    Utilities.typeName(value, env, lineFile)),
+                            lineFile);
+                    return;
+                }
             }
             env.getMemory().set(arrPtr.getPtr() + index + 1, value);
         } else {

@@ -977,7 +977,7 @@ fn anyType(_) {
 }
 
 fn array?(eleType) {
-    return lambda x -> Array?(x) and x.type is eleType;
+    return lambda x -> Array?(x) and (x.type is eleType or x.generics is eleType);
 }
 
 fn clock() -> int? {

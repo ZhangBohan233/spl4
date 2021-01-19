@@ -188,8 +188,16 @@ public class Utilities {
         return new MapMerger<>(maps).merge();
     }
 
-    public static String typeName(SplElement element) {
-        return element.getClass().toString();
+    public static String typeName(SplElement element, Environment env, LineFilePos lineFilePos) {
+        Reference typeFnPtr = (Reference) env.get(Constants.TYPE_FN, lineFilePos);
+        SplCallable typeFn = env.getMemory().get(typeFnPtr);
+        SplElement res = typeFn.call(EvaluatedArguments.of(element), env, lineFilePos);
+        if (res instanceof Reference) {
+            SplObject typeObj = env.getMemory().get((Reference) res);
+            if (typeObj instanceof SplClass) return ((SplClass) typeObj).getClassName();
+            if (typeObj instanceof SplCallable) return ((SplCallable) typeObj).getName();
+        }
+        return element.getClass().getSimpleName();
     }
 
     public static String classRefToString(Reference classRef, Environment env) {
