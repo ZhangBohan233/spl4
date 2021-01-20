@@ -149,7 +149,7 @@ public class Parser {
     }
 
     private AstBuilder parseSomeBlock(CollectiveElement collectiveElement) throws IOException {
-        AstBuilder builder = new AstBuilder();
+        AstBuilder builder = new AstBuilder(collectiveElement.lineFile);
         int i = 0;
         while (i < collectiveElement.size()) {
             i = parseOne(collectiveElement, i, builder);

@@ -98,6 +98,10 @@ public class ContractNode extends Statement {
         method.setContract(classDefEnv, paramContracts, rtnContract, templateNames);
     }
 
+    public String getFnName() {
+        return fnName;
+    }
+
     @Override
     public String toString() {
         return "Contract (" + paramContracts + ") -> " + rtnContract + ";";

@@ -25,8 +25,8 @@ public class FileTokenizer extends Tokenizer {
         this.importLang = importLang;
     }
 
-    private static BraceList makeTreeList(List<Token> tokenList) {
-        BraceList root = new BraceList(null, LineFilePos.LF_TOKENIZER);
+    private BraceList makeTreeList(List<Token> tokenList) {
+        BraceList root = new BraceList(null, new LineFilePos(new LineFilePos.LineFile(0, srcFile), 0));
         CollectiveElement currentActive = root;
         for (int i = 0; i < tokenList.size(); ++i) {
             currentActive = makeTreeListRec(currentActive, tokenList, i);

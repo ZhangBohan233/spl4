@@ -154,4 +154,12 @@ public class ClassStmt extends Expression {
     public BlockStmt getBody() {
         return body;
     }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public List<Node> getTemplates() {
+        return templates;
+    }
 }

@@ -12,6 +12,9 @@ class A<K, V> {
     }
 }
 
+/*
+ * A class that overrides templated class
+ */
 class B<K>(A<int?, K>) {
 
 }

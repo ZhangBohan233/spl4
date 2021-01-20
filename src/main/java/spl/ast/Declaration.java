@@ -35,18 +35,20 @@ public class Declaration extends Expression {
         return new Declaration(level, name, lineFilePos);
     }
 
-    @Override
-    public String toString() {
-        String levelStr = "";
-        if (level == VAR) {
-            levelStr = "var";
-        } else if (level == CONST) {
-            levelStr = "const";
-        }
-        return levelStr + " " + declaredName;
+    public String getLevelString() {
+        return switch (level) {
+            case VAR -> "var";
+            case CONST -> "const";
+            default -> "";
+        };
     }
 
-    //    @Override
+    @Override
+    public String toString() {
+        return getLevelString() + " " + declaredName;
+    }
+
+    @Override
     protected SplElement internalEval(Environment env) {
         if (level == VAR) {
             env.defineVar(declaredName, lineFile);

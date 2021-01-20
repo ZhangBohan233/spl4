@@ -44,4 +44,8 @@ public class StringLiteralRef extends LiteralNode {
         }
         return new StringLiteralRef(literal, lineFilePos);
     }
+
+    public String getLiteralString() {
+        return new String(literal.getCharArray());
+    }
 }

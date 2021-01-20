@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 public class CacheReconstructor {
 
     private final String cacheFileName;
+    private String srcAbsPath;
     private LinkedHashMap<String, ParseResult> parsedModules;
 
     public CacheReconstructor(String cacheFileName) {
@@ -30,6 +31,7 @@ public class CacheReconstructor {
             bis.close();
             throw new IllegalArgumentException("Cannot decode compiled spl file: version does not match");
         }
+        srcAbsPath = bis.readString();
 
         parsedModules = new LinkedHashMap<>();
 
@@ -49,5 +51,9 @@ public class CacheReconstructor {
 
     public LinkedHashMap<String, ParseResult> getParsedModules() {
         return parsedModules;
+    }
+
+    public String getSrcAbsPath() {
+        return srcAbsPath;
     }
 }

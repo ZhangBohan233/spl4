@@ -39,4 +39,8 @@ public class BoolLiteral extends LiteralNode {
     protected void internalSave(BytesOut out) throws IOException {
         out.writeBoolean(value.booleanValue());
     }
+
+    public boolean getValue() {
+        return value.booleanValue();
+    }
 }

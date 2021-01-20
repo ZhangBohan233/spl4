@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public abstract class Node {
-    public final LineFilePos lineFile;
+    protected LineFilePos lineFile;
 
     static int spaceCount = 0;  // used for printing spl.ast
 

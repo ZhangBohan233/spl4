@@ -37,7 +37,7 @@
 * ~~Compiled spl file (*.spc)~~ **_DONE_**
 * ~~Store docstring in spl object~~ **_DONE_**
 * ~~Gc suite for class declaration~~ **_DONE_**
-* Spc decompiler
+* ~~Spc decompiler~~ **_PARTIALLY DONE_**
 * ~~HashDict~~ **_DONE_**
 * TreeDict
 * ~~HashDict creation via~~ `{key1=value1, ...}` **_DONE_**
@@ -57,3 +57,4 @@
 * Abstract class, avoiding a class to be instantiated
 * ~~Generic contract~~ `List?<T>` **_DISCARDED_**
 * private
+* Config file

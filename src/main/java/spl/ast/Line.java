@@ -27,6 +27,10 @@ public class Line extends Expression {
         for (Node node : nodes) add(node);
     }
 
+    public void setLineFilePos(LineFilePos lineFilePos) {
+        this.lineFile = lineFilePos;
+    }
+
     public Node get(int index) {
         return children.get(index);
     }

@@ -80,7 +80,7 @@ public class Function extends UserFunction {
         EvaluatedArguments evaluatedArgs = arguments.evalArgs(callingEnv);
         if (callingEnv.hasException()) return Undefined.ERROR;
 
-        return call(evaluatedArgs, callingEnv, arguments.lineFile);
+        return call(evaluatedArgs, callingEnv, arguments.getLineFile());
     }
 
     @SuppressWarnings("unused")  // maybe it will be useful later

@@ -11,4 +11,6 @@ fn main() {
 
     c := new (lambda x -> true)[5];
     print(c.type);
+    print(type(0b));
+    print(type(0b11))
 }

@@ -1,3 +1,10 @@
+===== Version 4067 =====
+2021/01/20
+
+* Implemented a basic decompiler
+* Recorded line file information in root block
+* Optimize AstBuilder
+
 ===== Version 4066 =====
 2021/01/20
 

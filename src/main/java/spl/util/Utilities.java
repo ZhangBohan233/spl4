@@ -11,10 +11,8 @@ import spl.interpreter.splObjects.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Pattern;
 
 public class Utilities {
 
@@ -28,8 +26,8 @@ public class Utilities {
         return false;
     }
 
-    public static boolean arrayContains(String[] array, String value) {
-        for (String a : array) if (a.equals(value)) return true;
+    public static <T> boolean arrayContains(T[] array, T value) {
+        for (T t : array) if (Objects.equals(t, value)) return true;
         return false;
     }
 
@@ -119,13 +117,6 @@ public class Utilities {
         return res;
     }
 
-//    public static String readLengthString(InputStream is) throws IOException {
-//        int length = readInt(is);
-//        byte[] buf = new byte[length];
-//        if (is.read(buf) != length) throw new IOException("Cannot read string");
-//        return new String(buf);
-//    }
-
     public static String readFile(File file) throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(file));
         StringBuilder builder = new StringBuilder();
@@ -176,16 +167,18 @@ public class Utilities {
     }
 
     @SafeVarargs
-    public static Set<String> mergeSets(Set<String>... sets) {
-        Set<String> res = new HashSet<>();
-        for (Set<String> s : sets) res.addAll(s);
+    public static <E> Set<E> mergeSets(Set<E>... sets) {
+        Set<E> res = new HashSet<>();
+        for (Set<E> s : sets) res.addAll(s);
 
         return res;
     }
 
     @SafeVarargs
-    public static Map<String, Integer> mergeMaps(Map<String, Integer>... maps) {
-        return new MapMerger<>(maps).merge();
+    public static <K, V> Map<K, V> mergeMaps(Map<K, V>... maps) {
+        Map<K, V> merged = new HashMap<>();
+        for (Map<K, V> map : maps) merged.putAll(map);
+        return merged;
     }
 
     public static String typeName(SplElement element, Environment env, LineFilePos lineFilePos) {
@@ -288,5 +281,33 @@ public class Utilities {
             case '3' -> "rd";
             default -> "th";
         };
+    }
+
+    public static String representFileFromFile(File srcFile, File targetFile) {
+        if (srcFile.equals(targetFile)) return "";
+        String[] srcPath = srcFile.getAbsolutePath().split(Pattern.quote(File.separator));
+        String[] targetPath = targetFile.getAbsolutePath().split(Pattern.quote(File.separator));
+        int index = 0;
+        int commonDirLength = Math.min(srcPath.length - 1, targetPath.length - 1);
+        for (; index < commonDirLength; index++) {
+            if (!srcPath[index].equals(targetPath[index])) break;
+        }
+        if (index == srcPath.length - 1) {
+            return String.join(File.separator, Arrays.copyOfRange(targetPath, index, targetPath.length));
+        }
+        int backCount = srcPath.length - 1 - index;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0 ; i < backCount; i++) {
+            sb.append("..").append(File.separator);
+        }
+        return sb.append(String.join(File.separator, Arrays.copyOfRange(targetPath, index, targetPath.length)))
+                .toString();
+    }
+
+    public static void main(String[] args) {
+        System.out.println(representFileFromFile(
+                new File("sp/decomp.sp"), new File("sp/imp/a.sp")));
+        System.out.println(representFileFromFile(
+                new File("sp/decomp.sp"), new File("lib/lang.sp")));
     }
 }

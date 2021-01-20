@@ -39,4 +39,8 @@ public class CharLiteral extends LiteralNode {
     public static CharLiteral reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
         return new CharLiteral(is.readChar(), lineFilePos);
     }
+
+    public char getValue() {
+        return ch;
+    }
 }

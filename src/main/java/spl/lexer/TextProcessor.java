@@ -14,6 +14,9 @@ public class TextProcessor {
 
     private final CollectiveElement root;
     private final boolean importLang;
+    /**
+     * Keeps evaluation order exactly the same as the parse order.
+     */
     private final LinkedHashMap<String, CollectiveElement> importedPaths;
 
     public TextProcessor(TokenizeResult tokenizeResult, boolean importLang) {

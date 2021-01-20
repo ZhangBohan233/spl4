@@ -8,7 +8,6 @@ import spl.util.BytesOut;
 import spl.util.LineFilePos;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 public class ImportStmt extends Statement {
 
@@ -22,9 +21,20 @@ public class ImportStmt extends Statement {
         this.importName = importName;
     }
 
+    public static ImportStmt reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
+        String path = in.readString();
+        String name = in.readString();
+        return new ImportStmt(path, name, lineFilePos);
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        out.writeString(path);
+        out.writeString(importName);
+    }
+
     @Override
     protected void internalProcess(Environment env) {
-
         // This step is to avoid duplicate module creation.
         // Any import from a same file should point to a same module
         Reference ptr = env.getImportedModulePtr(path);
@@ -44,15 +54,7 @@ public class ImportStmt extends Statement {
         return path;
     }
 
-    @Override
-    protected void internalSave(BytesOut out) throws IOException {
-        out.writeString(path);
-        out.writeString(importName);
-    }
-
-    public static ImportStmt reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
-        String path = in.readString();
-        String name = in.readString();
-        return new ImportStmt(path, name, lineFilePos);
+    public String getImportName() {
+        return importName;
     }
 }

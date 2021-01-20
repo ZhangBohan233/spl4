@@ -31,7 +31,7 @@ import java.util.Map;
 public class SplInterpreter {
 
     public static final Map<Class<? extends SplObject>, String> NATIVE_TYPE_NAMES =
-            new MapMerger<>(
+            Utilities.mergeMaps(
                     Map.of(
                             SplInvokes.class, "Invoke",
                             NativeFunction.class, "NativeFunction",
@@ -48,13 +48,14 @@ public class SplInterpreter {
                             NativeInFile.class, "NativeInFile",
                             NativeOutFile.class, "NativeOutFile"
                     )
-            ).merge();
+            );
     private static InputStream in = System.in;
     private static PrintStream out = System.out;
     private static PrintStream err = System.err;
     private GlobalEnvironment globalEnvironment;
 
-    private long vmStartBegin, parseBegin, cacheBegin;
+    private long vmStartBegin;
+    private long cacheBegin;
 
     public static void setOut(PrintStream out) {
         SplInterpreter.out = out;
@@ -374,7 +375,7 @@ public class SplInterpreter {
         cacheBegin = System.currentTimeMillis();
         if (argumentParser.isSaveCache()) {
             new SplCacheSaver(
-                    argumentParser.getMainSrcFile().getAbsolutePath(),
+                    argumentParser.getMainSrcFile(),
                     parseResult,
                     parsedModules
             ).save();
@@ -412,7 +413,7 @@ public class SplInterpreter {
     public void run(String[] args) throws Exception {
         ArgumentParser argumentParser = new ArgumentParser(args);
         if (argumentParser.isAllValid()) {
-            parseBegin = System.currentTimeMillis();
+            long parseBegin = System.currentTimeMillis();
             String srcName = argumentParser.getMainSrcFile().getName();
 
             ParseResult parseResult;
