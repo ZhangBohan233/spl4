@@ -6,14 +6,15 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.splObjects.*;
+import spl.util.Configs;
 import spl.util.LineFilePos;
 
 import java.util.*;
 
 public class Memory {
 
-    public static final int INTERVAL = 1;
-    private static final int DEFAULT_HEAP_SIZE = 8192;
+//    public static final int INTERVAL = 1;
+    private static final int DEFAULT_HEAP_SIZE = Configs.getInt("heapSize", 8192);
     public final DebugAttributes debugs = new DebugAttributes();
     private final SplThing[] heap;
     private final Set<Environment> temporaryEnvs = new HashSet<>();
@@ -27,10 +28,10 @@ public class Memory {
     private final Set<Reference> permanentPointers = new HashSet<>();
     private final Deque<StackTraceNode> callStack = new ArrayDeque<>();
     private final GarbageCollector garbageCollector = new GarbageCollector();
-    private int heapSize;
+    private final int heapSize;
     private int stackSize;
     private int stackLimit = 1000;
-    private boolean checkContract = true;
+    private boolean checkContract;
     private int availableHead = 1;
 
     public Memory() {
@@ -53,10 +54,6 @@ public class Memory {
 
     public int getHeapSize() {
         return heapSize;
-    }
-
-    public void setHeapSize(int heapSize) {
-        this.heapSize = heapSize;
     }
 
     public int getHeapUsed() {

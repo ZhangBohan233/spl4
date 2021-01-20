@@ -976,8 +976,18 @@ fn anyType(_) {
     return true;
 }
 
+/*
+ * This function returns a boolean function that:
+ *     It returns true if and only if the argument is an array and:
+ *         1. The array has element type that is exactly 'eleType', or
+ *         2. The array is a generic array and has the generic is exactly 'eleType'
+ *
+ * For example, `array?(Object?)(new String?[2])` returns false although 'String' extends 'Object'.
+ */
 fn array?(eleType) {
-    return lambda x -> Array?(x) and (x.type is eleType or x.generics is eleType);
+    return fn arrayType(x) {
+        return Array?(x) and (x.type is eleType or x.generics is eleType);
+    }
 }
 
 fn clock() -> int? {

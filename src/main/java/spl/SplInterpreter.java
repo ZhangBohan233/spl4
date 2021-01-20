@@ -1,5 +1,6 @@
 package spl;
 
+import spl.ast.NameNode;
 import spl.ast.StringLiteral;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.Memory;
@@ -341,7 +342,13 @@ public class SplInterpreter {
     }
 
     private static EvaluatedArguments makeSplArgArray(String[] args, GlobalEnvironment globalEnvironment) {
-        Reference argPtr = SplArray.createArray(SplElement.POINTER, args.length, globalEnvironment);
+        SplElement argP = SplArray.createArray(
+                new NameNode(Constants.STRING_CLASS + "?", LineFilePos.LF_INTERPRETER),
+                args.length,
+                globalEnvironment,
+                LineFilePos.LF_INTERPRETER);
+
+        Reference argPtr = (Reference) argP;
         for (int i = 0; i < args.length; ++i) {
 
             // create String instance

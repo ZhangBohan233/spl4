@@ -13,7 +13,7 @@ public class ArgumentParser {
     private boolean gcInfo;
     private boolean gcTrigger;
     private boolean saveCache;
-    private boolean checkContract = true;
+    private boolean checkContract = Configs.getBoolean("contract", true);
     private String msg;
     private String[] splArgs;
 

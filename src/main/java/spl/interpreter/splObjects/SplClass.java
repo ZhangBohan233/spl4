@@ -5,6 +5,7 @@ import spl.interpreter.Memory;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.ModuleEnvironment;
 import spl.interpreter.invokes.SplInvokes;
+import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
@@ -113,6 +114,19 @@ public class SplClass extends NativeObject {
         definitionEnv.getMemory().removeTempPtr(clazzPtr);
 
         return clazzPtr;
+    }
+
+    public boolean isSuperclassOf(SplElement childClassEle, Memory memory) {
+        if (childClassEle instanceof Reference) {
+            SplObject childClassObj = memory.get((Reference) childClassEle);
+            if (childClassObj instanceof SplClass) {
+                for (Reference supPtr : ((SplClass) childClassObj).mroArray) {
+                    SplClass supClass = memory.get(supPtr);
+                    if (supClass == this) return true;
+                }
+            }
+        }
+        return false;
     }
 
     public static boolean isSuperclassOf(Reference superclassPtr, SplElement childClassEle, Memory memory) {
@@ -382,6 +396,14 @@ public class SplClass extends NativeObject {
 
         if (docRef == null) return Reference.NULL;
         else return docRef.evaluate(env);
+    }
+
+    @Accessible
+    public SplElement __superclassOf__(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 1, "Class.__superclassOf__", env, lineFilePos);
+
+        SplElement sub = arguments.getLine().get(0).evaluate(env);
+        return Bool.boolValueOf(isSuperclassOf(sub, env.getMemory()));
     }
 
     @Override

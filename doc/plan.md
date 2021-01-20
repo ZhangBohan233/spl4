@@ -56,5 +56,5 @@
 * ~~Set and set creation via~~ `{e1, e2, ...}` **_DONE_**
 * Abstract class, avoiding a class to be instantiated
 * ~~Generic contract~~ `List?<T>` **_DISCARDED_**
-* private
+* private, protected
 * Config file

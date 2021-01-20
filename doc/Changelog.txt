@@ -1,3 +1,9 @@
+===== Version 4068 =====
+2021/01/21
+
+* Implemented config loader
+* Added a method of class: __superclassOf__
+
 ===== Version 4067 =====
 2021/01/20
 
