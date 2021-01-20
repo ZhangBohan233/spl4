@@ -98,7 +98,11 @@ public class ForLoopStmt extends ConditionalStmt {
         if (inExpr.left instanceof Declaration)
             loopInvariant = (Declaration) inExpr.left;
         else if (inExpr.left instanceof NameNode)
-            loopInvariant = new Declaration(Declaration.VAR, ((NameNode) inExpr.left).getName(), lineFile);
+            loopInvariant = new Declaration(
+                    Declaration.VAR,
+                    Declaration.PUBLIC,
+                    ((NameNode) inExpr.left).getName(),
+                    lineFile);
         else
             throw new RuntimeSyntaxError("Loop invariant must either be declaration or name. ", lineFile);
 

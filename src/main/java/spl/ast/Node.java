@@ -15,8 +15,6 @@ import java.io.OutputStream;
 public abstract class Node {
     protected LineFilePos lineFile;
 
-    static int spaceCount = 0;  // used for printing spl.ast
-
     public Node(LineFilePos lineFile) {
         this.lineFile = lineFile;
     }

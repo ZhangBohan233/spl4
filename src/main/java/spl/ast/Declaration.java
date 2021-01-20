@@ -8,7 +8,6 @@ import spl.lexer.SyntaxError;
 import spl.util.BytesIn;
 import spl.util.BytesOut;
 import spl.util.LineFilePos;
-import spl.util.Reconstructor;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -19,41 +18,61 @@ public class Declaration extends Expression {
     public static final int CONST = 2;
     public static final int USELESS = 3;
 
+    public static final int PUBLIC = 11;
+    public static final int PROTECTED = 12;
+    public static final int PRIVATE = 13;
+
     public final String declaredName;
     public final int level;
+    public final int access;
 
-    public Declaration(int level, String name, LineFilePos lineFile) {
+    public Declaration(int level, int access, String name, LineFilePos lineFile) {
         super(lineFile);
 
         this.declaredName = name;
         this.level = level;
+        this.access = access;
     }
 
     public static Declaration reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
         String name = is.readString();
         int level = is.readInt();
-        return new Declaration(level, name, lineFilePos);
+        int access = is.readInt();
+        return new Declaration(level, access, name, lineFilePos);
     }
 
     public String getLevelString() {
-        return switch (level) {
-            case VAR -> "var";
-            case CONST -> "const";
+        String modifier = switch (access) {
+            case PROTECTED -> "protected ";
+            case PRIVATE -> "private ";
+            default -> "";
+        };
+        return modifier + switch (level) {
+            case VAR -> "var ";
+            case CONST -> "const ";
             default -> "";
         };
     }
 
     @Override
     public String toString() {
-        return getLevelString() + " " + declaredName;
+        return getLevelString() + declaredName;
     }
 
     @Override
     protected SplElement internalEval(Environment env) {
         if (level == VAR) {
-            env.defineVar(declaredName, lineFile);
+            switch (access) {
+                case PROTECTED -> env.defineProtectedVar(declaredName, lineFile);
+                case PRIVATE -> env.definePrivateVar(declaredName, lineFile);
+                default -> env.defineVar(declaredName, lineFile);
+            }
         } else if (level == CONST) {
-            env.defineConst(declaredName, lineFile);
+            switch (access) {
+                case PROTECTED -> env.defineProtectedConst(declaredName, lineFile);
+                case PRIVATE -> env.definePrivateConst(declaredName, lineFile);
+                default -> env.defineConst(declaredName, lineFile);
+            }
         } else {
             throw new SyntaxError("Unknown declaration type. ", lineFile);
         }

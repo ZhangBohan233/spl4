@@ -98,7 +98,7 @@ public class Instance extends SplObject {
 
         Instance instance = new Instance(clazzPtr, instanceEnv);
         Reference instancePtr = callingEnv.getMemory().allocateObject(instance, instanceEnv);
-        instanceEnv.defineConstAndSet(Constants.INSTANCE_NAME, instancePtr, lineFile);
+        instanceEnv.directDefineConstAndSet(Constants.INSTANCE_NAME, instancePtr);
 
         String[] templates = clazz.getTemplates();
         if (templates != null) {

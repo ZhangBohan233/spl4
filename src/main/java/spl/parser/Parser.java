@@ -19,6 +19,7 @@ public class Parser {
     private final CollectiveElement rootList;
     private final Map<String, StringLiteral> stringLiterals;
     private int varLevel = Declaration.USELESS;
+    private int accessLevel = Declaration.PUBLIC;
 
     /**
      * Constructor of Parser, for imported module files.
@@ -160,6 +161,7 @@ public class Parser {
     private BlockStmt parseBlock(CollectiveElement collectiveElement) throws IOException {
         AstBuilder builder = parseSomeBlock(collectiveElement);
         varLevel = Declaration.USELESS;
+        accessLevel = Declaration.PUBLIC;
         builder.finishPart();
         builder.finishLine();
         return builder.getBaseBlock();
@@ -168,6 +170,7 @@ public class Parser {
     private Line parseOneLineBlock(BracketList bracketList) throws IOException {
         AstBuilder builder = parseSomeBlock(bracketList);
         varLevel = Declaration.USELESS;
+        accessLevel = Declaration.PUBLIC;
         builder.finishPart();
         return builder.getLine();
     }
@@ -175,6 +178,7 @@ public class Parser {
     private Line parseOneLineBlock(BraceList braceList) throws IOException {
         AstBuilder builder = parseSomeBlock(braceList);
         varLevel = Declaration.USELESS;
+        accessLevel = Declaration.PUBLIC;
         builder.finishPart();
         return builder.getLine();
     }
@@ -281,10 +285,12 @@ public class Parser {
                         switch (identifier) {
                             case "=":
                                 varLevel = Declaration.USELESS;
+                                accessLevel = Declaration.PUBLIC;
                                 builder.addNode(new Assignment(lineFile));
                                 break;
                             case ":=":
                                 varLevel = Declaration.USELESS;
+                                accessLevel = Declaration.PUBLIC;
                                 builder.addNode(new QuickAssignment(lineFile));
                                 break;
                             case ":":
@@ -301,11 +307,13 @@ public class Parser {
                                 break;
                             case ";":
                                 varLevel = Declaration.USELESS;
+                                accessLevel = Declaration.PUBLIC;
                                 builder.finishPart();
                                 builder.finishLine();
                                 break;
                             case ",":
                                 varLevel = Declaration.USELESS;
+                                accessLevel = Declaration.PUBLIC;
                                 builder.finishPart();
                                 break;
                             case "true":
@@ -460,13 +468,19 @@ public class Parser {
                             case "var":
                                 varLevel = Declaration.VAR;
                                 break;
+                            case "private":
+                                accessLevel = Declaration.PRIVATE;
+                                break;
+                            case "protected":
+                                accessLevel = Declaration.PROTECTED;
+                                break;
                             case "as":
                                 AsExpr asExpr = new AsExpr(lineFile);
                                 builder.addNode(asExpr);
                                 break;
                             case "in":
                                 builder.addNode(new InExpr(lineFile));
-                                varLevel = Declaration.USELESS;
+                                varLevel = Declaration.USELESS;  // special
                                 break;
                             case "return":
                                 builder.addNode(new ReturnStmt(lineFile));
@@ -655,10 +669,8 @@ public class Parser {
                                 builder.addNode(new NamespaceNode(namespace, lineFile));
                                 break;
                             default:
-                                if (varLevel == Declaration.VAR) {
-                                    builder.addNode(new Declaration(Declaration.VAR, identifier, lineFile));
-                                } else if (varLevel == Declaration.CONST) {
-                                    builder.addNode(new Declaration(Declaration.CONST, identifier, lineFile));
+                                if (varLevel == Declaration.VAR || varLevel == Declaration.CONST) {
+                                    builder.addNode(new Declaration(varLevel, accessLevel, identifier, lineFile));
                                 } else {
                                     builder.addNode(new NameNode(identifier, lineFile));
                                 }

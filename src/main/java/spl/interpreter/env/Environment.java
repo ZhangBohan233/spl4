@@ -104,8 +104,31 @@ public abstract class Environment {
             throwNameError("Variable '" + name + "' already defined.", lineFile);
             return;
         }
-
         variables.put(name, VarEntry.varEntry());
+    }
+
+    public void definePrivateVar(String name, LineFilePos lineFilePos) {
+        SplInvokes.throwException(this, Constants.RUNTIME_SYNTAX_ERROR, "Unsupported modifier: private.", lineFilePos);
+    }
+
+    public void definePrivateConst(String name, LineFilePos lineFilePos) {
+        SplInvokes.throwException(this, Constants.RUNTIME_SYNTAX_ERROR, "Unsupported modifier: private.", lineFilePos);
+    }
+
+    public void definePrivateFunction(String name, LineFilePos lineFilePos) {
+        SplInvokes.throwException(this, Constants.RUNTIME_SYNTAX_ERROR, "Unsupported modifier: private.", lineFilePos);
+    }
+
+    public void defineProtectedVar(String name, LineFilePos lineFilePos) {
+        SplInvokes.throwException(this, Constants.RUNTIME_SYNTAX_ERROR, "Unsupported modifier: private.", lineFilePos);
+    }
+
+    public void defineProtectedConst(String name, LineFilePos lineFilePos) {
+        SplInvokes.throwException(this, Constants.RUNTIME_SYNTAX_ERROR, "Unsupported modifier: private.", lineFilePos);
+    }
+
+    public void defineProtectedFunction(String name, LineFilePos lineFilePos) {
+        SplInvokes.throwException(this, Constants.RUNTIME_SYNTAX_ERROR, "Unsupported modifier: private.", lineFilePos);
     }
 
     public void defineVarAndSet(String name, SplElement value, LineFilePos lineFile) {
@@ -161,7 +184,7 @@ public abstract class Environment {
         return se.getValue();
     }
 
-    public boolean hasName(String name) {
+    public final boolean hasName(String name) {
         return innerGet(name, true) != null;
     }
 
@@ -188,6 +211,15 @@ public abstract class Environment {
         return tv;
     }
 
+    /**
+     * A slightly different method from {@code innerGet}.
+     * <p>
+     * This method does not penetrate any main environment.
+     *
+     * @param name     name
+     * @param lineFile debug info
+     * @return the entry, if has
+     */
     protected VarEntry localInnerGet(String name, LineFilePos lineFile) {
         VarEntry tv = variables.get(name);
         if (tv == null) {

@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class SplCacheSaver {
-    public static final int VERSION = 2;
+    public static final int VERSION = 3;
     private final String srcAbsPath;
     private final String cacheFileName;
     private final ParseResult parseResult;
