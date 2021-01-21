@@ -495,7 +495,7 @@ class LinkedList<T>(Iterable<T>, Collection) {
     }
 
     fn __repr__() {
-        return "[" + strJoin("->",
+        return "[" + strJoin(", ",
                              this,
                              lambda s -> cond {
                                  case Collection?(s) -> Object.__str__(s);
@@ -504,7 +504,7 @@ class LinkedList<T>(Iterable<T>, Collection) {
     }
 
     fn __str__() {
-        return "[" + strJoin("->", this, repr) + "]";
+        return "[" + strJoin(", ", this, repr) + "]";
     }
 
     fn append(value: T) {
@@ -695,7 +695,7 @@ class HashDict<K, V>(Dict<K, V>) {
 
     fn __init__(initCap: int? = 8, loadFactor: float? = 0.75) {
         this.loadFactor = loadFactor;
-        this.array = new Obj[initCap];
+        this.array = new HashEntry?[initCap];
     }
 
     fn __iter__() {
@@ -811,7 +811,7 @@ class HashDict<K, V>(Dict<K, V>) {
     }
 
     fn _expand() {
-        newArr := new Obj[array.length * 2];
+        newArr := new HashEntry?[array.length * 2];
         for i := 0; i < array.length; i++ {
             oldEntry := array[i];
             if oldEntry is not null {
@@ -837,6 +837,305 @@ class HashDict<K, V>(Dict<K, V>) {
             }
         }
         this.array = newArr;
+    }
+}
+
+class TreeEntry<K, V> {
+    var key;
+    var value;
+    var left = null;
+    var right = null;
+    var height = 1;
+
+    fn __init__(key: K, value: V) {
+        this.key = key;
+        this.value = value;
+    }
+}
+
+class TDValueContainer {
+    var node = null;
+}
+
+/*
+ * An implementation of binary search tree.
+ *
+ * This is an AVL implementation
+ */
+class TreeDict<K, V>(Dict<K, V>) {
+    var root = null;
+    var _size = 0;
+
+    fn __init__() {
+    }
+
+    fn __iter__() {
+        return linearize().__iter__();
+    }
+
+    fn put(key: K, value: V) {
+        root = _insert(key, value, root);
+    }
+
+    fn get(key: K) -> V {
+        return _get(key, root);
+    }
+
+    fn linearize(reverse: boolean? = false) -> LinkedList? {
+        list := new LinkedList<K>();
+        _lin(root, list, reverse);
+        return list;
+    }
+
+    fn maxKey() -> K {
+        if root is null {
+            return null;
+        }
+        return _max(root).key;
+    }
+
+    fn minKey() -> K {
+        if root is null {
+            return null;
+        }
+        return _min(root).key;
+    }
+
+    fn remove(key: K) -> V {
+        container := new TDValueContainer();
+        root = _delete(key, root, container);
+        if container.node is null {
+            return null;
+        }
+        return container.node.value;
+    }
+
+    fn size() {
+        return _size;
+    }
+
+    fn printTree() {
+        _printNode(root, 0, "n");
+    }
+
+    fn _printNode(node, indent, msg) {
+        if node is not null {
+            print(" " * indent + msg + ": " + str(node.key) + ": " + str(node.value));
+            _printNode(node.left, indent + 2, "l");
+            _printNode(node.right, indent + 2, "r");
+        }
+    }
+
+    fn _lin(node, list, reverse) {
+        if node is not null {
+            _lin(node.left, list, reverse);
+            if reverse {
+                list.prepend(node.key);
+            } else {
+                list.append(node.key);
+            }
+            _lin(node.right, list, reverse);
+        }
+    }
+
+    fn _max(node) {
+        if node.right is null {
+            return node;
+        }
+        return _max(node.right);
+    }
+
+    fn _min(node) {
+        if node.left is null {
+            return node;
+        }
+        return _min(node.left);
+    }
+
+    fn _get(key, node) {
+        if node is null {
+            return null;
+        }
+        cond {
+            case key < node.key {
+                return _get(key, node.left);
+            } case key > node.key {
+                return _get(key, node.right);
+            } default {
+                return node.value;
+            }
+        }
+    }
+
+    fn _height(node) {
+        if node is null {
+            return 0;
+        }
+        return node.height;
+    }
+
+    fn _balanceFactor(node) {
+        if node is null {
+            return 0;
+        }
+        return _height(node.right) - _height(node.left);
+    }
+
+    /*
+     * Insert and returns the new root at this level.
+     */
+    fn _insert(key, value, node) {
+        if node is null {
+            _size++;
+            return new TreeEntry<K, V>(key, value);
+        }
+        cond {
+            case key < node.key {
+                node.left = _insert(key, value, node.left);
+            }
+            case key > node.key {
+                node.right = _insert(key, value, node.right);
+            }
+            default {
+                node.value = value;
+                return node;
+            }
+        }
+        leftH := _height(node.left);
+        rightH := _height(node.right);
+        node.height = 1 + max(leftH, rightH);
+        bf := rightH - leftH
+        leftBf := _balanceFactor(node.left);
+        rightBf := _balanceFactor(node.right);
+        if bf < -1 {  // left longer
+            if leftBf < 0 {
+                return _rotationLL(node);
+            }
+            if leftBf > 0 {
+                return _rotationLR(node);
+            }
+            // it is impossible that the bf of left child is 0
+            throw new IndexError("Unexpected case.");
+        }
+        if bf > 1 {
+            if rightBf < 0 {
+                return _rotationRL(node);
+            }
+            if rightBf > 0 {
+                return _rotationRR(node);
+            }
+            throw new IndexError("Unexpected case.");
+        }
+        return node;
+    }
+
+    fn _delete(key, node, container=null) {
+        if node is null {
+            return null;
+        }
+        var ret;
+        cond {
+            case key < node.key {
+                node.left = _delete(key, node.left, container);
+                ret = node;
+            }
+            case key > node.key {
+                node.right = _delete(key, node.right, container);
+                ret = node;
+            }
+            default {
+                if container is not null {
+                    container.node = node;
+                }
+                cond {
+                    case node.left is null {
+                        rn := node.right;
+                        node.right = null;
+                        _size--;
+                        if rn is null {
+                            return null;
+                        }
+                        ret = rn;
+                    }
+                    case node.right is null {
+                        ln := node.left;
+                        node.left = null;
+                        _size--;
+                        ret = ln;  // the last case guarantees ln is not null
+                    }
+                    default {
+                        replacement := _min(node.right);  // use the minimum element that is bigger than node
+                        replacement.right = _delete(replacement.key, node.right);  // remove that element from its pos
+                        replacement.left = node.left;
+
+                        //node.left = null;
+                        //node.right = null;
+
+                        ret = replacement;
+                    }
+                }
+            }
+        }
+
+        leftH := _height(ret.left);
+        rightH := _height(ret.right);
+        ret.height = 1 + max(leftH, rightH);
+        bf := rightH - leftH
+        leftBf := _balanceFactor(ret.left);
+        rightBf := _balanceFactor(ret.right);
+        if bf < -1 {  // left longer
+            if leftBf <= 0 {
+                return _rotationLL(ret);
+            }
+            if leftBf > 0 {
+                return _rotationLR(ret);
+            }
+        }
+        if bf > 1 {
+            if rightBf < 0 {
+                return _rotationRL(ret);
+            }
+            if rightBf >= 0 {
+                return _rotationRR(ret);
+            }
+        }
+        return ret;
+    }
+
+    /* The full name of _rotateLL is 'do rotation in the Left-Left case' */
+
+    fn _rotationLL(node) {
+        temp := node.left.right;
+        newRoot := node.left;
+        newRoot.right = node;
+        node.left = temp;
+
+        node.height = 1 + max(_height(node.left), _height(node.right));
+        newRoot.height = 1 + max(_height(newRoot.left), _height(newRoot.right));
+
+        return newRoot;
+    }
+
+    fn _rotationRR(node) {
+        temp := node.right.left;
+        newRoot := node.right;
+        newRoot.left = node;
+        node.right = temp;
+
+        node.height = 1 + max(_height(node.left), _height(node.right));
+        newRoot.height = 1 + max(_height(newRoot.left), _height(newRoot.right));
+
+        return newRoot;
+    }
+
+    fn _rotationLR(node) {
+        node.left := _rotationRR(node.left);
+        return _rotationLL(node);
+    }
+
+    fn _rotationRL(node) {
+        node.right := _rotationLL(node.right);
+        return _rotationRR(node);
     }
 }
 
@@ -876,7 +1175,36 @@ class HashSet<T>(Set<T>) {
     }
 
     fn __iter__() {
-        return new HashDictIterator<T>(dict);
+        return dict.__iter__();
+    }
+
+    fn contains(key: K) -> boolean? {
+        return dict.contains(key);
+    }
+
+    fn put(item: T) {
+        dict.put(item, present);
+    }
+
+    fn remove(item: T) -> T or null? {
+        return dict.remove(item);
+    }
+
+    fn size() {
+        return dict.size();
+    }
+}
+
+class TreeSet<T>(Set<T>) {
+    const dict;
+    const present = new Object();
+
+    fn __init__(initCap: int? = 8, loadFactor: float? = 0.75) {
+        dict = new TreeDict<T, Object?>();
+    }
+
+    fn __iter__() {
+        return dict.__iter__();
     }
 
     fn contains(key: K) -> boolean? {
@@ -933,8 +1261,23 @@ class String {
         return true;
     }
 
+    fn __mul__(multiplier: int?) -> String? {
+        if multiplier < 0 {
+            throw new ArgumentException("String multiplication must have non-negative multiplier.");
+        }
+        destLen := length * multiplier;
+        array := new char[destLen];
+        for i := 0; i < multiplier; i++ {
+            st := i * length;
+            for j := 0; j < length; j++ {
+                array[st + j] = __chars__[j];
+            }
+        }
+        return new String(array);
+    }
+
     fn __ne__(other) {
-        return type(this) is not type(other) or not __eq__(other);
+        return not __eq__(other);
     }
 
     fn __hash__() {
@@ -1018,6 +1361,14 @@ fn orFn(fn1: Callable?, fn2: Callable?) {
 
 fn input(prompt: String?="") {
     return Invokes.input(prompt);
+}
+
+fn max(a, b) {
+    return a if a > b else b;
+}
+
+fn min(a, b) {
+    return b if a > b else a;
 }
 
 fn print(s, line: boolean? = true) {

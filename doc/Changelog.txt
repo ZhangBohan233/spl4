@@ -1,3 +1,11 @@
+===== Version 4069 =====
+2021/01/21
+
+* String multiplication
+* Implemented library types: TreeDict, TreeSet
+* Bug fixes:
+    * Parse error of '< ... >'
+
 ===== Version 4068 =====
 2021/01/21
 

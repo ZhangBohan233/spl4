@@ -107,7 +107,7 @@ public class IdleController implements Initializable {
         Set<String> builtinNames = new HashSet<>(console.getGlobalEnvironment().keyAttributes().keySet());
 
         Reference langRef = (Reference) console.getGlobalEnvironment().get("lang", LineFilePos.LFP_CONSOLE);
-        SplModule langModule = (SplModule) console.getGlobalEnvironment().getMemory().get(langRef);
+        SplModule langModule = console.getGlobalEnvironment().getMemory().get(langRef);
         builtinNames.addAll(langModule.getEnv().keyAttributes().keySet());
 
         codeAnalyzer.setBuiltinNames(builtinNames);
@@ -339,14 +339,14 @@ public class IdleController implements Initializable {
                 return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Lambda Function"));
             } else if (obj instanceof NativeFunction) {
                 return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Native Function"));
-            } else if (obj instanceof NativeObject) {
-                return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Native Object"));
             } else if (obj instanceof SplArray) {
                 return new TreeItem<>(new EnvTableItem(varName, SplInvokes.pointerToString(
                         ref, env, LineFilePos.LFP_CONSOLE
                 ), obj.toString()));
             } else if (obj instanceof SplClass) {
                 return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Class"));
+            } else if (obj instanceof NativeObject) {
+                return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Native Object"));
             } else {
                 return new TreeItem<>(new EnvTableItem(varName, ref.toString(), obj.getClass().getTypeName()));
             }

@@ -58,7 +58,9 @@ public class BinaryOperator extends BinaryExpr {
         if (leftObj instanceof Instance) {
             String fnName = ARITHMETIC_OP_MAP.get(operator);
             Environment instanceEnv = ((Instance) leftObj).getEnv();
-            Reference fnPtr = (Reference) instanceEnv.get(fnName, lineFile);
+            SplElement fnEle = instanceEnv.get(fnName, lineFile);
+            if (fnEle == Undefined.ERROR) return fnEle;
+            Reference fnPtr = (Reference) fnEle;
             SplMethod opFn = env.getMemory().get(fnPtr);
             return opFn.call(EvaluatedArguments.of(leftPtr, rightEle), env, lineFile);
         } else {

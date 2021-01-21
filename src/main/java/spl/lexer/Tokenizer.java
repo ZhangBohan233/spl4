@@ -158,6 +158,7 @@ public abstract class Tokenizer {
                     case ">": return true;
                     case ";": return false;
                 }
+                if (RESERVED.contains(symbol)) return false;  // except 'and', 'or', 'not', so do not use KEYWORDS
             } else if (tk instanceof LiteralToken) return false;
         }
         return false;

@@ -6,6 +6,7 @@ import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Int;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplArray;
 import spl.interpreter.splObjects.SplMethod;
@@ -68,8 +69,10 @@ public class IndexingNode extends Expression {
                 return SplArray.getItemAtIndex(objPtr, index, callEnv, lineFile);
             } else if (obj instanceof Instance) {
                 Instance ins = (Instance) obj;
+                SplElement getItemFnEle = ins.getEnv().get(Constants.GET_ITEM_FN, lineFile);
+                if (getItemFnEle == Undefined.ERROR) return getItemFnEle;
                 SplMethod getItemFn =
-                        callEnv.getMemory().get((Reference) ins.getEnv().get(Constants.GET_ITEM_FN, lineFile));
+                        callEnv.getMemory().get((Reference) getItemFnEle);
                 return getItemFn.call(EvaluatedArguments.of(objPtr, new Int(index)), callEnv, lineFile);
             } else {
                 return SplInvokes.throwExceptionWithError(
@@ -89,8 +92,10 @@ public class IndexingNode extends Expression {
 
         if (obj instanceof Instance) {
             Instance ins = (Instance) obj;
+            SplElement getItemFnEle = ins.getEnv().get(Constants.GET_ITEM_FN, lineFile);
+            if (getItemFnEle == Undefined.ERROR) return getItemFnEle;
             SplMethod getItemFn =
-                    callEnv.getMemory().get((Reference) ins.getEnv().get(Constants.GET_ITEM_FN, lineFile));
+                    callEnv.getMemory().get((Reference) getItemFnEle);
             return getItemFn.call(EvaluatedArguments.of(objPtr, indexEle), callEnv, lineFile);
         } else {
             return SplInvokes.throwExceptionWithError(

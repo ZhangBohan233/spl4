@@ -52,9 +52,11 @@
 ### 4.0 Alpha
 * ~~Generic array~~ **_DONE_**
 * ~~Reflection on generics~~ **_DONE_**
-* Find a way to deal with contract overriding
+* ~~Find a way to deal with contract overriding~~ **_DISCARDED_**
 * ~~Set and set creation via~~ `{e1, e2, ...}` **_DONE_**
 * Abstract class, avoiding a class to be instantiated
 * ~~Generic contract~~ `List?<T>` **_DISCARDED_**
-* private, protected
-* Config file
+* ~~private, protected~~ **_DISCARDED_**
+* ~~Config file~~ **_DONE_**
+* Wrapper of System.in, out, err
+* String format

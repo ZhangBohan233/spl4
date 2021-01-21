@@ -59,18 +59,6 @@ public class Parser {
         return false;
     }
 
-    private static boolean isCall(Token token, Node lastAddedNode) {
-        if (token instanceof IdToken) {
-            String identifier = ((IdToken) token).getIdentifier();
-            if (FileTokenizer.StringTypes.isIdentifier(identifier) &&
-                    !FileTokenizer.KEYWORDS.contains(identifier))
-                return true;
-            else return identifier.equals(")") || identifier.equals("]") ||
-                    (!(lastAddedNode instanceof BinaryOperator) && identifier.equals(">"));
-        }
-        return false;
-    }
-
     private static boolean isUnary(Element element) {
         if (element instanceof AtomicElement) {
             Token token = ((AtomicElement) element).atom;
@@ -83,30 +71,9 @@ public class Parser {
                 };
             } else return !(token instanceof IntToken) &&
                     !(token instanceof FloatToken) &&
-                    !(token instanceof CharToken);
+                    !(token instanceof CharToken) &&
+                    !(token instanceof StrToken);
         } else return !(element instanceof BracketList);
-    }
-
-    private static boolean isUnary(Token token) {
-        if (token instanceof IdToken) {
-            String identifier = ((IdToken) token).getIdentifier();
-            return switch (identifier) {
-                case ";", "=", "->", "(", "[", "{", "}", ".", "," -> true;
-                default -> FileTokenizer.ALL_BINARY.contains(identifier) ||
-                        FileTokenizer.KEYWORDS.contains(identifier);
-            };
-        } else return !(token instanceof IntToken) && !(token instanceof FloatToken);
-    }
-
-    private static boolean isFuncType(Token token) {
-        if (token instanceof IdToken) {
-            String identifier = ((IdToken) token).getIdentifier();
-            if (identifier.equals(")")) return true;
-            else if (identifier.equals(":")) return true;
-            else return false;
-        } else {
-            return false;
-        }
     }
 
     private static ContractNode autoContract(String fnName,
@@ -682,7 +649,8 @@ public class Parser {
                 } else {
                     throw new ParseError("Unexpected token type. ", lineFile);
                 }
-            } catch (ClassCastException cce) {
+            } catch (ClassCastException | IndexOutOfBoundsException cce) {
+                cce.printStackTrace();
                 throw new SyntaxError("Syntax error, caused by " + cce, lineFile);
             }
         } else if (ele instanceof BracketList) {
