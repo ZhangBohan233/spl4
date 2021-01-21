@@ -74,10 +74,12 @@ public abstract class Tokenizer {
     );
 
     public static final Set<String> RESERVED = Set.of(
-            "class", "fn", "if", "else", "new", "return", "break",
-            "continue", "true", "false", "null", "while", "for", "import", "namespace",
-            "const", "var", "assert", "as", "super", "this", "lambda",
-            "cond", "switch", "case", "default", "fallthrough", "in", "yield"
+            "class", "fn", "if", "else", "new",
+            "return", "break", "continue", "true", "false",
+            "null", "while", "for", "import", "namespace",
+            "const", "var", "assert", "as", "super",
+            "this", "lambda", "cond", "switch", "case",
+            "default", "fallthrough", "in", "yield"
     );
 
     public static final Set<String> KEYWORDS = Utilities.mergeSets(

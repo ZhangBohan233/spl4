@@ -8,14 +8,14 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.*;
-import spl.util.*;
-
-import java.io.InputStream;
-import java.util.HashMap;
+import spl.util.BytesIn;
+import spl.util.Constants;
+import spl.util.LineFilePos;
+import spl.util.Reconstructor;
 
 public class Assignment extends BinaryExpr {
     public Assignment(LineFilePos lineFile) {
-        super("=", lineFile);
+        super("=", false, lineFile);
     }
 
     public static void assignment(Node key, SplElement value, Environment env, LineFilePos lineFile) {
@@ -23,7 +23,6 @@ public class Assignment extends BinaryExpr {
             env.setVar(((NameNode) key).getName(), value, lineFile);
         } else if (key instanceof Declaration) {
             key.evaluate(env);
-
             env.setVar(((Declaration) key).declaredName, value, lineFile);
         } else if (key instanceof Dot) {
             SplElement dotLeft = ((Dot) key).left.evaluate(env);
@@ -100,16 +99,8 @@ public class Assignment extends BinaryExpr {
         }
     }
 
-    @Override
-    protected SplElement internalEval(Environment env) {
-        SplElement rightRes = right.evaluate(env);
-
-        assignment(left, rightRes, env, getLineFile());
-        return rightRes;
-    }
-
     public static Assignment reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
-        String op = is.readString();
+        is.readString();
         Expression left = Reconstructor.reconstruct(is);
         Expression right = Reconstructor.reconstruct(is);
 
@@ -117,5 +108,13 @@ public class Assignment extends BinaryExpr {
         ass.setLeft(left);
         ass.setRight(right);
         return ass;
+    }
+
+    @Override
+    protected SplElement internalEval(Environment env) {
+        SplElement rightRes = right.evaluate(env);
+
+        assignment(left, rightRes, env, getLineFile());
+        return rightRes;
     }
 }

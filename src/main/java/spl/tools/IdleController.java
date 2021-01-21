@@ -14,6 +14,7 @@ import javafx.scene.paint.Paint;
 import javafx.stage.FileChooser;
 import spl.Console;
 import spl.SplInterpreter;
+import spl.Visualizer;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.InstanceEnvironment;
@@ -83,8 +84,8 @@ public class IdleController implements Initializable {
         setCodeAreaListener();
         setConsoleListener();
         setTableFactories();
-
         refreshTable();
+
         recordBuiltinNames();
 
         codeAreaRow.prefHeightProperty().addListener(((observable, oldValue, newValue) -> {
@@ -220,6 +221,14 @@ public class IdleController implements Initializable {
         openingFile.save(text);
     }
 
+    @FXML
+    void viewAstAction() throws IOException {
+        saveFileAction();
+        if (!Visualizer.run(new String[]{openingFile.getFile().getAbsolutePath()}, false)) {
+            idleIO.err.println("Cannot start ast visualizer");
+        }
+    }
+
     private void setRunningUi() {
         Platform.runLater(() -> {
             stopButton.setDisable(false);
@@ -293,64 +302,71 @@ public class IdleController implements Initializable {
             if (ref.getPtr() == 0) {
                 return new TreeItem<>(new EnvTableItem(varName, "null", "null"));
             }
-            SplObject obj = env.getMemory().get(ref);
-            TreeItem<EnvTableItem> ti;
-            if (obj instanceof Instance) {
-                Instance ins = (Instance) obj;
-                InstanceEnvironment insEnv = ins.getEnv();
-                ti = new TreeItem<>(new EnvTableItem(
-                        varName,
-                        SplInvokes.pointerToString(ref, env, LineFilePos.LFP_CONSOLE),
-                        Utilities.classRefToRepr((Reference) ((SplMethod) env.getMemory()
-                                        .get((Reference)
-                                                insEnv.get(Constants.GET_CLASS, LineFilePos.LFP_CONSOLE)))
-                                        .call(
-                                                EvaluatedArguments.of(ref),
-                                                console.getGlobalEnvironment(),
-                                                LineFilePos.LFP_CONSOLE),
-                                console.getGlobalEnvironment())));
-                for (Map.Entry<String, SplElement> entry : insEnv.keyAttributes().entrySet()) {
-                    TreeItem<EnvTableItem> eti =
-                            createTreeItem(entry.getKey(), entry.getValue(), insEnv);
-                    ti.getChildren().add(eti);
+            try {
+                SplObject obj = env.getMemory().get(ref);
+                TreeItem<EnvTableItem> ti;
+                if (obj instanceof Instance) {
+                    Instance ins = (Instance) obj;
+                    InstanceEnvironment insEnv = ins.getEnv();
+                    ti = new TreeItem<>(new EnvTableItem(
+                            varName,
+                            SplInvokes.pointerToString(ref, env, LineFilePos.LFP_CONSOLE),
+                            Utilities.classRefToRepr((Reference) ((SplMethod) env.getMemory()
+                                            .get((Reference)
+                                                    insEnv.get(Constants.GET_CLASS, LineFilePos.LFP_CONSOLE)))
+                                            .call(
+                                                    EvaluatedArguments.of(ref),
+                                                    console.getGlobalEnvironment(),
+                                                    LineFilePos.LFP_CONSOLE),
+                                    console.getGlobalEnvironment())));
+                    if (varName.equals(Constants.INSTANCE_NAME)) {
+                        return ti;
+                    }
+                    for (Map.Entry<String, SplElement> entry : insEnv.keyAttributes().entrySet()) {
+                        TreeItem<EnvTableItem> eti =
+                                createTreeItem(entry.getKey(), entry.getValue(), insEnv);
+                        ti.getChildren().add(eti);
+                    }
+                } else if (obj instanceof SplModule) {
+                    ModuleEnvironment modEnv = ((SplModule) obj).getEnv();
+                    ti = new TreeItem<>(new EnvTableItem(
+                            varName,
+                            ref.toString(),
+                            "Module"
+                    ));
+                    for (Map.Entry<String, SplElement> entry : modEnv.keyAttributes().entrySet()) {
+                        TreeItem<EnvTableItem> eti =
+                                createTreeItem(entry.getKey(), entry.getValue(), modEnv);
+                        ti.getChildren().add(eti);
+                    }
+                } else if (obj instanceof SplMethod) {
+                    return new TreeItem<>(new EnvTableItem(
+                            varName,
+                            ref.toString(),
+                            "Method of " + Utilities.classRefToRepr(
+                                    ((SplMethod) obj).getClassPtr(),
+                                    console.getGlobalEnvironment())));
+                } else if (obj instanceof Function) {
+                    return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Function"));
+                } else if (obj instanceof LambdaExpression) {
+                    return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Lambda Function"));
+                } else if (obj instanceof NativeFunction) {
+                    return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Native Function"));
+                } else if (obj instanceof SplArray) {
+                    return new TreeItem<>(new EnvTableItem(varName, SplInvokes.pointerToString(
+                            ref, env, LineFilePos.LFP_CONSOLE
+                    ), obj.toString()));
+                } else if (obj instanceof SplClass) {
+                    return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Class"));
+                } else if (obj instanceof NativeObject) {
+                    return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Native Object"));
+                } else {
+                    return new TreeItem<>(new EnvTableItem(varName, ref.toString(), obj.getClass().getTypeName()));
                 }
-            } else if (obj instanceof SplModule) {
-                ModuleEnvironment modEnv = ((SplModule) obj).getEnv();
-                ti = new TreeItem<>(new EnvTableItem(
-                        varName,
-                        ref.toString(),
-                        "Module"
-                ));
-                for (Map.Entry<String, SplElement> entry : modEnv.keyAttributes().entrySet()) {
-                    TreeItem<EnvTableItem> eti =
-                            createTreeItem(entry.getKey(), entry.getValue(), modEnv);
-                    ti.getChildren().add(eti);
-                }
-            } else if (obj instanceof SplMethod) {
-                return new TreeItem<>(new EnvTableItem(
-                        varName,
-                        ref.toString(),
-                        "Method of " + Utilities.classRefToRepr(
-                                ((SplMethod) obj).getClassPtr(),
-                                console.getGlobalEnvironment())));
-            } else if (obj instanceof Function) {
-                return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Function"));
-            } else if (obj instanceof LambdaExpression) {
-                return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Lambda Function"));
-            } else if (obj instanceof NativeFunction) {
-                return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Native Function"));
-            } else if (obj instanceof SplArray) {
-                return new TreeItem<>(new EnvTableItem(varName, SplInvokes.pointerToString(
-                        ref, env, LineFilePos.LFP_CONSOLE
-                ), obj.toString()));
-            } else if (obj instanceof SplClass) {
-                return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Class"));
-            } else if (obj instanceof NativeObject) {
-                return new TreeItem<>(new EnvTableItem(varName, ref.toString(), "Native Object"));
-            } else {
-                return new TreeItem<>(new EnvTableItem(varName, ref.toString(), obj.getClass().getTypeName()));
+                return ti;
+            } catch (Exception e) {
+                return new TreeItem<>(new EnvTableItem(varName, ref.toString(), ""));
             }
-            return ti;
         }
     }
 

@@ -195,7 +195,6 @@ public class AstBuilder {
                     if (node instanceof Buildable && ((Buildable) node).notFulfilled()) {
                         int pre = PRECEDENCES.get(((Buildable) node).getOperator());
                         if (node instanceof UnaryExpr || node instanceof UnaryStmt) {
-
                             // eval right side unary operator first
                             // for example, "- -3" is -(-3)
                             if (pre >= maxPre) {
@@ -203,10 +202,12 @@ public class AstBuilder {
                                 index = i;
                             }
                         } else if (node instanceof BinaryExpr) {
-
-                            // eval left side binary operator first
-                            // for example, "2 * 8 / 4" is (2 * 8) / 4
-                            if (pre > maxPre) {
+                            BinaryExpr be = (BinaryExpr) node;
+                            // for most times, eval left side binary operator first
+                            // for example, if eval left first, "2 * 8 / 4" is (2 * 8) / 4
+                            // if eval right first, then "x = y = 3" is x = (y = 3)
+                            if (be.isLeftFirst() && pre > maxPre ||
+                                    !be.isLeftFirst() && pre >= maxPre) {
                                 maxPre = pre;
                                 index = i;
                             }
