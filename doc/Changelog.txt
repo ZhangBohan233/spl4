@@ -1,3 +1,10 @@
+===== Version 4072 =====
+2021/01/22
+
+* New syntax:
+    * assert
+* Implemented custom stdin, stdout, stderr
+
 ===== Version 4071 =====
 2021/01/22
 

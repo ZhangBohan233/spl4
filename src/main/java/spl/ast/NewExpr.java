@@ -91,16 +91,7 @@ public class NewExpr extends UnaryExpr {
     @Override
     protected SplElement internalEval(Environment env) {
         if (value instanceof AnonymousClassExpr) {
-//            AnonymousClassExpr ace = (AnonymousClassExpr) value;
-//            Node content = ace.getContent();
-//            if (content instanceof BlockStmt) {
-//                return initAnonymousClass(ace.left, (BlockStmt) content, env, env, getLineFile());
-//            } else
-//            if (ace.left instanceof IndexingNode && content instanceof ArrayLiteral) {
-//                return createArrayWithLiteral((IndexingNode) ace.left, (ArrayLiteral) content, env, env, getLineFile());
-//            } else {
             throw new ParseError("Unexpected expression in right side of '<-'. ", getLineFile());
-//            }
         } else {
             return directInitClass(value, env, env, getLineFile());
         }

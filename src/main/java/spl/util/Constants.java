@@ -61,6 +61,7 @@ public class Constants {
     public static final String INHERITANCE_ERROR = "InheritanceError";
     public static final String PARAMETER_EXCEPTION = "ParameterException";
     public static final String RUNTIME_SYNTAX_ERROR = "RuntimeSyntaxError";
+    public static final String ASSERTION_ERROR = "AssertionError";
 
     public static final String INTERRUPTION_INS = "INTERRUPTION";
     public static final String NATIVE_ERROR_INS = "NATIVE_ERROR";

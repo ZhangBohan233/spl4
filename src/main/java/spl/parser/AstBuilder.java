@@ -89,7 +89,8 @@ public class AstBuilder {
             "namespace", 150,
             "throw", 100,
             "yield", 0,
-            "return", 0
+            "return", 0,
+            "assert" , 0
     );
 
     private static final Map<String, Integer> PRECEDENCES = Utilities.mergeMaps(

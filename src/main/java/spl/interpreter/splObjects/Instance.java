@@ -38,7 +38,16 @@ public class Instance extends SplObject {
                                                            Reference[] generics,
                                                            Environment callingEnv,
                                                            LineFilePos lineFile) {
-
+        SplObject probClazz = callingEnv.getMemory().get(clazzPtr);
+        if (!(probClazz instanceof SplClass)) {
+            SplInvokes.throwException(
+                    callingEnv,
+                    Constants.TYPE_ERROR,
+                    "Cannot initialize a non-class object.",
+                    lineFile
+            );
+            return null;
+        }
         SplClass clazz = callingEnv.getMemory().get(clazzPtr);
         Map<String, Reference> determinedGens = getDeterminedGenerics(
                 clazz.getTemplates(),

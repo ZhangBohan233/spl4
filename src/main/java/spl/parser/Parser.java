@@ -621,6 +621,9 @@ public class Parser {
                                 String namespace = ((IdToken) ((AtomicElement) parent.get(index++)).atom).getIdentifier();
                                 builder.addNode(new NamespaceNode(namespace, lineFile));
                                 break;
+                            case "assert":
+                                builder.addNode(new AssertStmt(lineFile));
+                                break;
                             default:
                                 if (varLevel == Declaration.VAR) {
                                     builder.addNode(new Declaration(Declaration.VAR, identifier, lineFile));

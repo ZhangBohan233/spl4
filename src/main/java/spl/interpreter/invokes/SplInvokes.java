@@ -227,8 +227,8 @@ public class SplInvokes extends NativeObject {
     }
 
     @Accessible
-    public SplElement printErr(Arguments arguments, Environment environment, LineFilePos lineFile) {
-        checkArgCount(arguments, 1, "Invokes.printErr", environment, lineFile);
+    public SplElement printlnErr(Arguments arguments, Environment environment, LineFilePos lineFile) {
+        checkArgCount(arguments, 1, "Invokes.printlnErr", environment, lineFile);
 
         String s = getPrintString(arguments, environment, lineFile);
         stderr.println(s);
@@ -237,12 +237,18 @@ public class SplInvokes extends NativeObject {
     }
 
     @Accessible
+    public SplElement printErr(Arguments arguments, Environment environment, LineFilePos lineFile) {
+        checkArgCount(arguments, 1, "Invokes.printErr", environment, lineFile);
+
+        String s = getPrintString(arguments, environment, lineFile);
+        stderr.print(s);
+
+        return Reference.NULL;
+    }
+
+    @Accessible
     public SplElement input(Arguments arguments, Environment environment, LineFilePos lineFile) {
-        checkArgCount(arguments, 1, "input", environment, lineFile);
-
-        // input(prompt)
-
-        print(new Arguments(new Line(lineFile, arguments.getLine().get(0)), lineFile), environment, lineFile);
+        checkArgCount(arguments, 0, "Invokes.input", environment, lineFile);
 
         Scanner sc = new Scanner(stdin);
         String next = sc.next();

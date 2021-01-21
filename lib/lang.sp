@@ -157,8 +157,8 @@ class Exception {
     }
 
     fn printStackTrace() {
-        Invokes.printErr(__class__().__name__() + ": " + msg + " ");
-        Invokes.printErr(traceMsg);
+        printErr(__class__().__name__() + ": " + msg + " ");
+        printErr(traceMsg);
     }
 }
 
@@ -169,6 +169,12 @@ class AttributeException(Exception) {
 }
 
 class ArgumentException(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
+class AssertionError(Exception) {
     fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
     }
@@ -1398,6 +1404,156 @@ class String {
     }
 }
 
+class InputStream {
+    fn close() {
+    }
+
+    /*
+     * Reads one byte from the stream,
+     */
+    fn readOne() -> int? {
+        throw new NotImplementedError();
+    }
+}
+
+class OutputStream {
+    fn close() {
+    }
+
+    /*
+     * Writes one byte to the stream.
+     */
+    fn writeOne(b: byte?) {
+        throw new NotImplementedError();
+    }
+
+    /*
+     * Writes all buffered data to the actual stream.
+     */
+    fn flush() {
+        throw new NotImplementedError();
+    }
+}
+
+class PrintStream(OutputStream) {
+    fn print(s, line: boolean? = true) {
+        throw new NotImplementedError();
+    }
+
+    fn flush() {
+    }
+
+    fn writeOne(b: byte?) {
+    }
+}
+
+/*
+ * Native wrapper class of stdout
+ */
+class NativeOutStream(PrintStream) {
+    fn print(s, line: boolean? = true) {
+        if line {
+            Invokes.println(s);
+        } else {
+            Invokes.print(s);
+        }
+    }
+}
+
+/*
+ * Native wrapper class of stderr
+ */
+class NativeErrStream(PrintStream) {
+    fn print(s, line: boolean? = true) {
+        if line {
+            Invokes.printlnErr(s);
+        } else {
+            Invokes.printErr(s);
+        }
+    }
+}
+
+class Reader {
+    fn readLine(omitEol: boolean? = false) {
+        throw new NotImplementedError();
+    }
+
+    fn close() {
+    }
+}
+
+class StreamReader {
+    const fis;
+    const bufferSize = 64;
+    var buffer = new byte[0];
+    var bufferPos = 0;
+
+    fn __init__(inputStream: InputStream?) {
+        fis = inputStream;
+    }
+
+    /*
+     * Reads a line from the text file, or null if reaches the end of the file.
+     */
+    fn readLine(omitEol: boolean? = false) -> String? or null? {
+        notFound := true;
+        res := [];
+        while notFound {
+            for ; bufferPos < buffer.length; bufferPos++ {
+                b := buffer[bufferPos];
+                if buffer[bufferPos] == '\n' {
+                    if not omitEol {
+                        res.append(b);
+                    }
+                    notFound = false;
+                    bufferPos++;
+                    break;
+                } else {
+                    res.append(b);
+                }
+            }
+            if notFound {
+                if not _fill() {
+                    break;
+                }
+            }
+        }
+        arr := res.toArray(byte);
+        return Invokes.bytesToString(arr) if arr.length > 0 else null;
+    }
+
+    fn close() {
+        fis.close();
+    }
+
+    /*
+     * Reads the whole file as one string.
+     */
+    fn read() -> String? {
+        lst := [];
+        var s;
+        while (s = readLine()) is not null {
+            lst.append(s);
+        }
+        return strJoin("", lst);
+    }
+
+    fn _fill() -> boolean? {
+        bufferPos = 0;
+        buffer = fis.read(bufferSize);
+        return buffer.length > 0;
+    }
+}
+
+/*
+ * Native wrapper class of stdin
+ */
+class NativeReader(Reader) {
+    fn readLine(omitEol: boolean? = false) {
+        return Invokes.input();
+    }
+}
+
 fn anyType(_) {
     return true;
 }
@@ -1443,7 +1599,8 @@ fn orFn(fn1: Callable?, fn2: Callable?) {
 }
 
 fn input(prompt: String?="") {
-    return Invokes.input(prompt);
+    print(prompt, line=false);
+    return stdin.readLine();
 }
 
 fn max(a, b) {
@@ -1455,11 +1612,11 @@ fn min(a, b) {
 }
 
 fn print(s, line: boolean? = true) {
-    if line {
-        Invokes.println(s);
-    } else {
-        Invokes.print(s);
-    }
+    stdout.print(s, line);
+}
+
+fn printErr(s, line: boolean? = true) {
+    stderr.print(s, line);
 }
 
 fn printArray(arr: Array?, line: boolean = true) {
@@ -1647,8 +1804,25 @@ fn genericDict(obj: Object?) -> Dict? {
     return Invokes.listGenerics(obj);
 }
 
+fn setIn(newIn: Reader?) {
+    stdin = newIn;
+}
+
+fn setOut(out: PrintStream?) {
+    stdout = out;
+}
+
+fn setErr(err: PrintStream?) {
+    stderr = err;
+}
+
 // Constants
 
 const copyright = "Copyright (C) Trash Software Studio.";
 const NATIVE_ERROR = new Exception();
 const INTERRUPTION = new Interruption("User interruption");
+
+// Variables
+var stdout = new NativeOutStream();
+var stderr = new NativeErrStream();
+var stdin = new NativeReader();

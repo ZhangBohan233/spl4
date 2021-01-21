@@ -54,11 +54,16 @@
 * ~~Reflection on generics~~ **_DONE_**
 * ~~Find a way to deal with contract overriding~~ **_DISCARDED_**
 * ~~Set and set creation via~~ `{e1, e2, ...}` **_DONE_**
-* Abstract class, avoiding a class to be instantiated
+* ~~Abstract class, avoiding a class to be instantiated~~ **_DISCARDED_**
 * ~~Generic contract~~ `List?<T>` **_DISCARDED_**
 * ~~private, protected~~ **_DISCARDED_**
 * ~~Config file~~ **_DONE_**
-* Wrapper of System.in, out, err
+* ~~Wrapper of System.in, out, err~~ **_DONE_**
 * ~~String format~~ **_DONE_**
+* ~~Assert~~ **_DONE_**
+
+
+### After 4.0 alpha
 * Iterator remove
-* Assert
+* Unittest
+* Anonymous class

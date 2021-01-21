@@ -79,7 +79,7 @@ public abstract class Tokenizer {
             "null", "while", "for", "import", "namespace",
             "const", "var", "assert", "as", "super",
             "this", "lambda", "cond", "switch", "case",
-            "default", "fallthrough", "in", "yield"
+            "default", "fallthrough", "in", "yield", "sync"
     );
 
     public static final Set<String> KEYWORDS = Utilities.mergeSets(
