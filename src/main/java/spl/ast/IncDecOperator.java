@@ -54,10 +54,8 @@ public class IncDecOperator extends Expression implements Buildable {
     @Override
     protected SplElement internalEval(Environment env) {
         SplElement current = value.evaluate(env);
-//        SplElement current = vtv.getValue();
         SplElement result = null;
         if (SplElement.isPrimitive(current)) {
-//            PrimitiveType pt = (PrimitiveType) vtv.getType();
             if (current.isIntLike()) {
                 if (isIncrement) {
                     result = new Int(current.intValue() + 1);

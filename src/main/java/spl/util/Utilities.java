@@ -186,11 +186,12 @@ public class Utilities {
         SplCallable typeFn = env.getMemory().get(typeFnPtr);
         SplElement res = typeFn.call(EvaluatedArguments.of(element), env, lineFilePos);
         if (res instanceof Reference) {
+            if (res == Reference.NULL) return "null";
             SplObject typeObj = env.getMemory().get((Reference) res);
             if (typeObj instanceof SplClass) return ((SplClass) typeObj).getClassName();
             if (typeObj instanceof SplCallable) return ((SplCallable) typeObj).getName();
         }
-        return element.getClass().getSimpleName();
+        return res.getClass().getSimpleName();
     }
 
     public static String classRefToString(Reference classRef, Environment env) {

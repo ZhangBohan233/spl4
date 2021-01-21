@@ -103,7 +103,7 @@ public abstract class UserFunction extends SplCallable {
                                 scope.definedName,
                                 location,
                                 callable.getName(),
-                                Utilities.typeName(result, callingEnv, lineFile)),
+                                Utilities.typeName(arg, callingEnv, lineFile)),
                         lineFile);
                 return false;
             }

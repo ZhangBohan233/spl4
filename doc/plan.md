@@ -39,7 +39,7 @@
 * ~~Gc suite for class declaration~~ **_DONE_**
 * ~~Spc decompiler~~ **_PARTIALLY DONE_**
 * ~~HashDict~~ **_DONE_**
-* TreeDict
+* ~~TreeDict~~ **_DONE_**
 * ~~HashDict creation via~~ `{key1=value1, ...}` **_DONE_**
 * ~~Wrapper of native types~~ **_DISCARDED_**
 * ~~Get class method statically~~ `Object.__hash__` **_DONE_**
@@ -59,4 +59,4 @@
 * ~~private, protected~~ **_DISCARDED_**
 * ~~Config file~~ **_DONE_**
 * Wrapper of System.in, out, err
-* String format
+* ~~String format~~ **_DONE_**

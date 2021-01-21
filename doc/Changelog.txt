@@ -1,3 +1,8 @@
+===== Version 4070 =====
+2021/01/21
+
+* Implemented string format
+
 ===== Version 4069 =====
 2021/01/21
 

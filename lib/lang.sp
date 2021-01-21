@@ -1261,6 +1261,10 @@ class String {
         return true;
     }
 
+    fn __getItem__(index: int?) -> char? {
+        return __chars__[index];
+    }
+
     fn __mul__(multiplier: int?) -> String? {
         if multiplier < 0 {
             throw new ArgumentException("String multiplication must have non-negative multiplier.");
@@ -1286,6 +1290,85 @@ class String {
             hash = hash * 33 + int(ch);
         }
         return hash;
+    }
+
+    fn format(*args) -> String? {
+        plainList := new List<String?>();
+        patternList := new List<String?>();
+        curBegin := 0;
+        argIndex := 0;
+        for i := 0; i < length - 1; i++ {
+            c := __chars__[i];
+            if c == '%' {
+                next := __chars__[i + 1];
+                switch next {
+                    case 'd' {
+                        plainList.append(substring(curBegin, i));
+                        curBegin = i + 2;
+                        patternList.append(str(int(args[argIndex++])));
+                        i++;
+                    }
+                    case 'f' {
+                        plainList.append(substring(curBegin, i));
+                        curBegin = i + 2;
+                        patternList.append(str(float(args[argIndex++])));
+                        i++;
+                    }
+                    case 's' {
+                        plainList.append(substring(curBegin, i));
+                        curBegin = i + 2;
+                        patternList.append(str(args[argIndex++]));
+                        i++;
+                    }
+                }
+            }
+        }
+        plainList.append(substring(curBegin));
+        totalLen := 0;
+        for part in plainList {
+            totalLen += part.length;
+        }
+        for part in patternList {
+            totalLen += part.length;
+        }
+        array := new char[totalLen];
+        index := 0;
+        for i := 0; i < patternList.size(); i++ {
+            pla := plainList.get(i);
+            pat := patternList.get(i);
+            for j := 0; j < pla.length; j++ {
+                array[index++] = pla[j];
+            }
+            for j := 0; j < pat.length; j++ {
+                array[index++] = pat[j];
+            }
+        }
+        pla := plainList.get(plainList.size() - 1);
+        for j := 0; j < pla.length; j++ {
+            array[index++] = pla[j];
+        }
+        return new String(array);
+    }
+
+    fn substring(begin: int?, end: int? or null? = null) -> String? {
+        if end is null {
+            end = length;
+        }
+        if begin > end {
+            throw new IndexError("End must greater than begin.");
+        }
+        if begin < 0 {
+            throw new IndexError("Negative index.");
+        }
+        if end > length {
+             throw new IndexError("Index out of string length.");
+        }
+        size := end - begin;
+        array := new char[size];
+        for i := 0; i < size; i++ {
+            array[i] = __chars__[i + begin];
+        }
+        return new String(array);
     }
 
     fn toUpper() -> String? {

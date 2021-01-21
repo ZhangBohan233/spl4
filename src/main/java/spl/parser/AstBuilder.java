@@ -258,7 +258,12 @@ public class AstBuilder {
                 }
             }
         } catch (IndexOutOfBoundsException e) {
-            System.out.println("Error when " + list);
+            System.out.print("Error when " + list);
+            if (list.size() > 0) {
+                System.out.println(". " + list.get(0).getLineFile().toStringFileLine());
+            } else {
+                System.out.println();
+            }
             throw e;
         }
     }
