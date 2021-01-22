@@ -388,6 +388,7 @@ public class Parser {
                                 builder.addNode(contractNode);
                                 break;
                             case "class":
+                                isConst = varLevel == Declaration.CONST;
                                 doc = findDoc(index - 1, parent);
                                 docRef = null;
                                 if (doc != null) {
@@ -422,6 +423,7 @@ public class Parser {
                                         templateLine == null ? null : templateLine.getChildren(),
                                         bodyBlock,
                                         docRef,
+                                        isConst,
                                         lineFile);
                                 builder.addNode(classStmt);
                                 break;

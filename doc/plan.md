@@ -68,3 +68,5 @@
 * Anonymous class
 * ~~Multithreading~~ **_DONE_**
 * ~~Const fn: avoid it to be overridden~~ **_DONE_**
+* ~~Const class~~ **_DONE_**
+* Json

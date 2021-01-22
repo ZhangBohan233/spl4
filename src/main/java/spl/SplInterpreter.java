@@ -9,7 +9,6 @@ import spl.interpreter.env.GlobalEnvironment;
 import spl.interpreter.env.ModuleEnvironment;
 import spl.interpreter.invokes.NativeInFile;
 import spl.interpreter.invokes.NativeOutFile;
-import spl.interpreter.invokes.NativeThread;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.*;
 import spl.interpreter.splErrors.NativeError;

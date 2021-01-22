@@ -37,6 +37,7 @@ public class SplClass extends NativeObject {
     private final Map<String, Reference> methodPointers = new HashMap<>();
     private final Set<String> constMethods = new HashSet<>();
     private final String[] templates;
+    private final boolean isConst;
     private final StringLiteralRef docRef;
     @Accessible
     Reference __checker__;
@@ -68,13 +69,15 @@ public class SplClass extends NativeObject {
                      Map<Reference, Line> superclassGenerics,
                      BlockStmt body,
                      Environment definitionEnv,
-                     StringLiteralRef docRef) {
+                     StringLiteralRef docRef,
+                     boolean isConst) {
         this.className = className;
         this.superclassPointers = superclassPointers;
         this.templates = templates;
         this.superclassGenerics = superclassGenerics;
         this.definitionEnv = definitionEnv;
         this.docRef = docRef;
+        this.isConst = isConst;
 
         evalBody(body, definitionEnv);
         checkConstructor();
@@ -87,6 +90,7 @@ public class SplClass extends NativeObject {
                                                     BlockStmt body,
                                                     Environment definitionEnv,
                                                     StringLiteralRef docRef,
+                                                    boolean isConst,
                                                     LineFilePos lineFilePos) {
         if (superclassGenerics != null) {
             for (Map.Entry<Reference, Line> entry : superclassGenerics.entrySet()) {
@@ -104,7 +108,7 @@ public class SplClass extends NativeObject {
         }
 
         SplClass clazz = new SplClass(className, superclassPointers, templates, superclassGenerics,
-                body, definitionEnv, docRef);
+                body, definitionEnv, docRef, isConst);
         if (definitionEnv.hasException()) return Undefined.ERROR;
 
         Reference clazzPtr = definitionEnv.getMemory().allocateObject(clazz, definitionEnv);
@@ -217,9 +221,24 @@ public class SplClass extends NativeObject {
         }
 
         this.mroArray = mro.toArray(new Reference[0]);
+        for (int i = 1; i < mroArray.length; i++) {
+            SplClass supClass = definitionEnv.getMemory().get(mroArray[i]);
+            if (supClass.isConst) {
+                SplInvokes.throwException(
+                        definitionEnv,
+                        Constants.INHERITANCE_ERROR,
+                        String.format("Class '%s' is const, which cannot be overridden by class '%s'.",
+                                supClass.className,
+                                className),
+                        lineFilePos
+                );
+                return false;
+            }
+        }
+
         this.__mro__ = SplArray.createArray(SplElement.POINTER, this.mroArray.length, definitionEnv);
-        for (int i = 0; i < this.mroArray.length; i++) {
-            SplArray.setItemAtIndex(__mro__, i, this.mroArray[i], definitionEnv, LineFilePos.LF_INTERPRETER);
+        for (int i = 0; i < mroArray.length; i++) {
+            SplArray.setItemAtIndex(__mro__, i, mroArray[i], definitionEnv, LineFilePos.LF_INTERPRETER);
         }
         return true;
     }

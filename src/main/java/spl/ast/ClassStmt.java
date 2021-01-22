@@ -21,6 +21,7 @@ public class ClassStmt extends Expression {
     private final StringLiteralRef docRef;
     private final List<Node> templates;  // nullable
     private List<Node> superclassesNodes;  // nullable
+    private final boolean isConst;
 
     /**
      * @param className  name of class
@@ -35,6 +36,7 @@ public class ClassStmt extends Expression {
                      List<Node> templates,
                      BlockStmt body,
                      StringLiteralRef docRef,
+                     boolean isConst,
                      LineFilePos lineFile) {
         super(lineFile);
 
@@ -43,11 +45,13 @@ public class ClassStmt extends Expression {
         this.templates = templates;
         this.body = body;
         this.docRef = docRef;
+        this.isConst = isConst;
     }
 
     public static ClassStmt reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
         String name = is.readString();
         BlockStmt body = Reconstructor.reconstruct(is);
+        boolean isConst = is.readBoolean();
         boolean hasSc = is.readBoolean();
         List<Node> superclassNodes = null;
         if (hasSc) superclassNodes = is.readList();
@@ -57,13 +61,14 @@ public class ClassStmt extends Expression {
         boolean hasDoc = is.readBoolean();
         StringLiteralRef docRef = null;
         if (hasDoc) docRef = Reconstructor.reconstruct(is);
-        return new ClassStmt(name, superclassNodes, templates, body, docRef, lineFilePos);
+        return new ClassStmt(name, superclassNodes, templates, body, docRef, isConst, lineFilePos);
     }
 
     @Override
     protected void internalSave(BytesOut out) throws IOException {
         out.writeString(className);
         body.save(out);
+        out.writeBoolean(isConst);
         out.writeBoolean(superclassesNodes != null);
         if (superclassesNodes != null) out.writeList(superclassesNodes);
         out.writeBoolean(templates != null);
@@ -104,7 +109,7 @@ public class ClassStmt extends Expression {
 
         SplElement clazzPtr =
                 SplClass.createClassAndAllocate(className, superclassesPointers, templates, superclassGenerics,
-                        body, env, docRef, lineFile);
+                        body, env, docRef, isConst, lineFile);
         if (clazzPtr == Undefined.ERROR) return Undefined.ERROR;  // a quicker way to check env.hasException()
 
         env.defineVarAndSet(className, clazzPtr, getLineFile());

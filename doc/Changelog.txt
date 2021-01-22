@@ -1,3 +1,9 @@
+===== Version 4078 =====
+2021/01/23
+
+* New syntax:
+    * `const class` which avoids the class to be overridden.
+
 ##### SPL4 Alpha 2 #####
 ===== Version 4077 =====
 2021/01/23
