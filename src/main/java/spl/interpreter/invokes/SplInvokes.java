@@ -439,7 +439,7 @@ public class SplInvokes extends NativeObject {
         SplClass clazz = env.getMemory().get(ref);
 
         LinkedHashMap<String, Node> fields = clazz.getFieldNodes();
-        return stringArrayOfKeys(env, lineFilePos, fields.size(), fields.keySet());
+        return stringArrayOfKeysSort(env, lineFilePos, fields.size(), fields.keySet());
     }
 
     /**
@@ -453,12 +453,12 @@ public class SplInvokes extends NativeObject {
         SplClass clazz = env.getMemory().get(ref);
 
         Map<String, Reference> methods = clazz.getMethodPointers();
-        return stringArrayOfKeys(env, lineFilePos, methods.size(), methods.keySet());
+        return stringArrayOfKeysSort(env, lineFilePos, methods.size(), methods.keySet());
     }
 
     @Accessible
-    public SplElement listGenerics(Arguments arguments, Environment env, LineFilePos lineFilePos) {
-        checkArgCount(arguments, 1, "Invokes.listGenerics", env, lineFilePos);
+    public SplElement genericsMap(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 1, "Invokes.genericsMap", env, lineFilePos);
 
         Reference ref = (Reference) arguments.getLine().get(0).evaluate(env);
         Instance instance = env.getMemory().get(ref);
@@ -467,15 +467,29 @@ public class SplInvokes extends NativeObject {
         return DictSetLiteral.javaMapToSplMap(map, env, lineFilePos);
     }
 
-    private SplElement stringArrayOfKeys(Environment env,
-                                         LineFilePos lineFilePos,
-                                         int size,
-                                         Set<String> strings) {
+    @Accessible
+    public SplElement listTemplates(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 1, "Invokes.listTemplates", env, lineFilePos);
+
+        Reference ref = (Reference) arguments.getLine().get(0).evaluate(env);
+        SplClass clazz = env.getMemory().get(ref);
+
+        String[] templates = clazz.getTemplates();
+        if (templates == null) templates = new String[0];
+        return SplArray.fromJavaArray(templates, env, lineFilePos);
+    }
+
+    private SplElement stringArrayOfKeysSort(Environment env,
+                                             LineFilePos lineFilePos,
+                                             int size,
+                                             Set<String> strings) {
         Reference arrRef = SplArray.createArray(SplElement.POINTER, size, env, lineFilePos);
         if (env.hasException()) return Undefined.ERROR;
+        List<String> sorted = new ArrayList<>(strings);
+        Collections.sort(sorted);
 
         int index = 0;
-        for (String name : strings) {
+        for (String name : sorted) {
             Reference strRef = StringLiteral.createString(name.toCharArray(), env, lineFilePos);
             SplArray.setItemAtIndex(arrRef, index, strRef, env, lineFilePos);
             index++;
@@ -596,7 +610,7 @@ public class SplInvokes extends NativeObject {
                 Reference mainPtr = (Reference) subEnv.get(Constants.MAIN_FN, lineFile);
                 Function mainFn = environment.getMemory().get(mainPtr);
 
-                if (mainFn.minArgCount() == 0) {
+                if (mainFn.minPosArgCount() == 0) {
                     if (evaluatedArgs.positionalArgs.size() > 1)
                         throw new NativeError("spl.Main function in script '" + path + "' does not require " +
                                 "command line argument, but arguments are given. ", lineFile);

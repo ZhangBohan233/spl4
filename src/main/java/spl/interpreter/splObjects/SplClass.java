@@ -37,6 +37,8 @@ public class SplClass extends NativeObject {
     private final Map<String, Reference> methodPointers = new HashMap<>();
     private final String[] templates;
     private final StringLiteralRef docRef;
+    @Accessible
+    Reference __checker__;
     // mro array used by spl
     @Accessible
     Reference __mro__;
@@ -114,6 +116,10 @@ public class SplClass extends NativeObject {
         definitionEnv.getMemory().removeTempPtr(clazzPtr);
 
         return clazzPtr;
+    }
+
+    public void setChecker(Reference checkFnPtr) {
+        this.__checker__ = checkFnPtr;
     }
 
     public boolean isSuperclassOf(SplElement childClassEle, Memory memory) {
@@ -421,24 +427,13 @@ public class SplClass extends NativeObject {
         return null;
     }
 
-    /**
-     * This method is used for gc.
-     *
-     * @return a list containing all pointers that should not be collected by gc.
-     */
-    public List<Reference> getAllAttrPointers() {
-        List<Reference> res = new ArrayList<>();
-        res.add(__mro__);
-        res.addAll(methodPointers.values());
-        return res;
-    }
-
     @Override
     public List<Reference> listAttrReferences() {
         List<Reference> refs = new ArrayList<>();
         refs.addAll(superclassPointers);
         refs.addAll(methodPointers.values());
         refs.addAll(Arrays.asList(mroArray));
+        refs.add(__checker__);
         refs.add(__mro__);
         if (classNameRef != null) refs.add(classNameRef);
         return refs;

@@ -206,7 +206,7 @@ public class Instance extends SplObject {
             InstanceEnvironment supEnv = supIns.getEnv();
             Reference supConstPtr = (Reference) supEnv.get(Constants.CONSTRUCTOR, lineFile);
             SplMethod supConst = env.getMemory().get(supConstPtr);
-            if (supConst.minArgCount() > 1) {
+            if (supConst.minPosArgCount() > 1) {
                 // superclass has a non-trivial constructor
                 if (noLeadingSuperCall(constructor)) {
                     throw new NativeError("Constructor of child class must first call super.__init__() with matching " +
@@ -346,16 +346,6 @@ public class Instance extends SplObject {
 
         InstanceAndPtr(Instance instance, Reference pointer) {
             this.instance = instance;
-            this.pointer = pointer;
-        }
-    }
-
-    private static class ClassAndPtr {
-        private final SplClass splClass;
-        private final Reference pointer;
-
-        ClassAndPtr(SplClass splClass, Reference pointer) {
-            this.splClass = splClass;
             this.pointer = pointer;
         }
     }

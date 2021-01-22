@@ -345,15 +345,6 @@ public class Memory {
             } else if (obj instanceof Instance) {
                 Instance instance = (Instance) obj;
                 mark(instance.getEnv());
-            } else if (obj instanceof SplClass) {
-                SplClass clazz = (SplClass) obj;
-                List<Reference> classPointers = clazz.getAllAttrPointers();
-                for (Reference attrPtr : classPointers) {
-                    if (attrPtr != null) {
-                        SplObject attrObj = get(attrPtr);
-                        markObjectAsUsed(attrObj, attrPtr.getPtr(), attrPtr);
-                    }
-                }
             }
 
             List<Reference> attrRefs = obj.listAttrReferences();

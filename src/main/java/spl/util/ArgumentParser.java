@@ -45,7 +45,7 @@ public class ArgumentParser {
                 } else {
                     mainSrcFile = new File(s);
                     if (!mainSrcFile.exists()) {
-                        msg = "Source file does not exist.";
+                        msg = "Source file '" + s + "' does not exist.";
                         allValid = false;
                         return;
                     }

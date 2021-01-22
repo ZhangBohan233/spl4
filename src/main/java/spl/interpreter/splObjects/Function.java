@@ -198,7 +198,7 @@ public class Function extends UserFunction {
                                        Environment callingEnv,
                                        FunctionEnvironment scope,
                                        LineFilePos argLineFile) {
-        checkValidArgCount(evaluatedArgs.positionalArgs.size() + evaluatedArgs.keywordArgs.size(),
+        checkValidArgCount(evaluatedArgs.positionalArgs.size(), evaluatedArgs.keywordArgs.size(),
                 definedName, callingEnv, argLineFile);
         if (callingEnv.hasException()) return Undefined.ERROR;
 

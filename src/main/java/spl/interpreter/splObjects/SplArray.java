@@ -1,6 +1,7 @@
 package spl.interpreter.splObjects;
 
 import spl.ast.Node;
+import spl.ast.StringLiteral;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.Memory;
 import spl.interpreter.env.Environment;
@@ -212,6 +213,17 @@ public class SplArray extends NativeObject {
         Reference arrayRef = createArray(SplElement.BYTE, array.length, env);
         for (int i = 0; i < array.length; i++) {
             setItemAtIndex(arrayRef, i, new SplByte(array[i]), env, lineFilePos);
+        }
+        return arrayRef;
+    }
+
+    public static Reference fromJavaArray(String[] array, Environment env, LineFilePos lineFilePos) {
+        Reference obj = (Reference) env.get(Constants.OBJ, lineFilePos);
+        Reference isString = (Reference) env.get(Constants.STRING_CLASS + "?", lineFilePos);
+        Reference arrayRef = createArray(SplElement.POINTER, obj, isString , array.length, env);
+        for (int i = 0; i < array.length; i++) {
+            SplElement key = StringLiteral.createString(array[i].toCharArray(), env, lineFilePos);
+            setItemAtIndex(arrayRef, i, key, env, lineFilePos);
         }
         return arrayRef;
     }

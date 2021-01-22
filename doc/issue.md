@@ -34,6 +34,12 @@ fn foo(a=1,b=2) { ... }
 foo(3,a=4);  // should cause an error but does not
 ```
 
+**ISSUE F05** \
+Java anonymous class invoke error.
+```
+int.__checker__
+```
+
 ### Class and inheritance
 
 ~~**ISSUE C01**~~ **_FIXED_** \

@@ -1,15 +1,11 @@
 package spl.ast;
 
-import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
-import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
-import spl.interpreter.splObjects.Instance;
-import spl.interpreter.splObjects.NativeFunction;
+import spl.interpreter.splObjects.CheckerFunction;
 import spl.interpreter.splObjects.SplClass;
-import spl.interpreter.splObjects.SplObject;
 import spl.util.*;
 
 import java.io.IOException;
@@ -23,8 +19,8 @@ public class ClassStmt extends Expression {
     private final String className;
     private final BlockStmt body;
     private final StringLiteralRef docRef;
-    private List<Node> superclassesNodes;  // nullable
     private final List<Node> templates;  // nullable
+    private List<Node> superclassesNodes;  // nullable
 
     /**
      * @param className  name of class
@@ -114,25 +110,12 @@ public class ClassStmt extends Expression {
         env.defineVarAndSet(className, clazzPtr, getLineFile());
 
         String iofName = className + "?";
-        NativeFunction instanceOfFunc = new NativeFunction(iofName, 1) {
-            @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Reference) {
-                    SplObject obj = callingEnv.getMemory().get((Reference) arg);
-                    if (obj instanceof Instance) {
-                        Reference argClazzPtr = ((Instance) obj).getClazzPtr();
-                        return Bool.boolValueOf(SplClass.isSuperclassOf(
-                                (Reference) clazzPtr,
-                                argClazzPtr,
-                                callingEnv.getMemory()));
-                    }
-                }
-                return Bool.FALSE;
-            }
-        };
+        CheckerFunction instanceOfFunc = new CheckerFunction(iofName, (Reference) clazzPtr);
         Reference iofPtr = env.getMemory().allocateFunction(instanceOfFunc, env);
         env.defineVarAndSet(iofName, iofPtr, getLineFile());
+
+        SplClass clazz = env.getMemory().get((Reference) clazzPtr);
+        clazz.setChecker(iofPtr);
 
         return clazzPtr;
     }

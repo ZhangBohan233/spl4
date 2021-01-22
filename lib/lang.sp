@@ -12,11 +12,11 @@ class Object {
         return Invokes.id(this);
     }
 
-    fn __str__() -> String? {
+    fn __repr__() -> String? {
         return __class__().__name__() + "@" + Invokes.id(this);
     }
 
-    fn __repr__() -> String? {
+    fn __str__() -> String? {
         return __class__().__name__() + "@" + Invokes.id(this);
     }
 }
@@ -1790,18 +1790,54 @@ fn setAttr(obj: Object?, attr: String?, value) {
     }
 }
 
-fn getClassByName(name: String?) {
+fn getClassByName(name: String?) -> Class? {
     if Invokes.hasGlobalName(name) {
         value := Invokes.getGlobalByName(name);
-        if Class?(value) {
-            return value;
-        }
     }
     throw new AttributeException("Name ''" + name + "' does not exist or is not a class.");
 }
 
 fn genericDict(obj: Object?) -> Dict? {
-    return Invokes.listGenerics(obj);
+    return Invokes.genericsMap(obj);
+}
+
+fn listTemplates(clazz: Class? or Object?) -> array?(String?) {
+    if Object?(clazz) {
+        return listTemplates(clazz.__class__());
+    }
+    return Invokes.listTemplates(clazz);
+}
+
+/*
+ * Usage: genericOf(GenClass?)(object);
+ */
+fn genericOf(clazz: Callable? or Class?, *generics: Callable?) {
+    if CheckerFunction?(clazz) {
+        return genericOf(clazz.__class__, *generics);
+    }
+    if not Class?(clazz) {
+        throw new TypeError("Not a generic type.");
+    }
+    typeChecker := clazz.__checker__;
+
+    return fn genericChecker(obj) -> boolean? {
+        if typeChecker(obj) {
+            temps := listTemplates(clazz);
+            if temps.length != generics.length {
+                return false;
+            }
+            gens := genericDict(obj);
+            for i := 0; i < temps.length; i++ {
+                actual := gens[temps[i]];
+                given := generics[i];
+                if actual != given {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
 }
 
 fn setIn(newIn: Reader?) {

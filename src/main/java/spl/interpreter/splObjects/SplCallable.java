@@ -132,7 +132,7 @@ public abstract class SplCallable extends NativeObject {
                                     Environment callingEnv,
                                     LineFilePos lineFilePos);
 
-    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile) {
+    public final SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile) {
         return call(evaluatedArgs, null, callingEnv, lineFile);
     }
 
@@ -144,31 +144,43 @@ public abstract class SplCallable extends NativeObject {
 
     public abstract String getName();
 
-    public abstract int minArgCount();
+    public abstract int minPosArgCount();
 
-    public abstract int maxArgCount();
+    public abstract int maxPosArgCount();
 
-    protected void checkValidArgCount(int argc, String fnName, Environment callingEnv, LineFilePos callingLf) {
-        int leastArg = minArgCount();
-        int mostArg = maxArgCount();
-        if (argc < leastArg || argc > mostArg) {
-            if (leastArg == mostArg) {
+    public abstract int maxKwArgCount();
+
+    protected void checkValidArgCount(int posArgs, int kwArgs, String fnName, Environment callingEnv, LineFilePos callingLf) {
+        int leastPosArg = minPosArgCount();
+        int mostPosArg = maxPosArgCount();
+        int mostKwArg = maxKwArgCount();  // Note that minimum number of keyword arguments is always 0
+        if (posArgs < leastPosArg || posArgs > mostPosArg) {
+            if (leastPosArg == mostPosArg) {
                 SplInvokes.throwException(
                         callingEnv,
                         Constants.ARGUMENT_EXCEPTION,
-                        String.format("Function '%s' expects %d argument(s), got %d.",
-                                fnName, leastArg, argc),
+                        String.format("Function '%s' expects %d positional argument(s), got %d.",
+                                fnName, leastPosArg, posArgs),
                         callingLf
                 );
             } else {
                 SplInvokes.throwException(
                         callingEnv,
                         Constants.ARGUMENT_EXCEPTION,
-                        String.format("Function '%s' expects %d to %d argument(s), got %d.",
-                                fnName, leastArg, mostArg, argc),
+                        String.format("Function '%s' expects %d to %d positional argument(s), got %d.",
+                                fnName, leastPosArg, mostPosArg, posArgs),
                         callingLf
                 );
             }
+        }
+        if (kwArgs > mostKwArg) {
+            SplInvokes.throwException(
+                    callingEnv,
+                    Constants.ARGUMENT_EXCEPTION,
+                    String.format("Function '%s' expects at most %d keyword argument(s), got %d.",
+                            fnName, mostKwArg, kwArgs),
+                    callingLf
+            );
         }
     }
 

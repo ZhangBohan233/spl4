@@ -36,7 +36,7 @@ public class LambdaExpression extends UserFunction {
         String name = toString();
         FunctionEnvironment scope = new FunctionEnvironment(definitionEnv, callingEnv, name);
 
-        checkValidArgCount(evaluatedArgs.positionalArgs.size() + evaluatedArgs.keywordArgs.size(),
+        checkValidArgCount(evaluatedArgs.positionalArgs.size(), evaluatedArgs.keywordArgs.size(),
                 name, callingEnv, lineFile);
         if (callingEnv.hasException()) return Undefined.ERROR;
 

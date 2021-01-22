@@ -10,7 +10,6 @@ import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplArray;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplObject;
-import spl.lexer.SyntaxError;
 import spl.util.*;
 
 import java.io.IOException;
@@ -28,7 +27,7 @@ public class Arguments extends NonEvaluate {
     private static void addArrayToArgs(Reference arrayPtr, EvaluatedArguments evaluatedArguments,
                                        Environment env, LineFilePos lineFilePos) {
         int arrAddr = arrayPtr.getPtr();
-        SplArray array = (SplArray) env.getMemory().get(arrayPtr);
+        SplArray array = env.getMemory().get(arrayPtr);
         for (int j = 0; j < array.length.value; j++) {
             evaluatedArguments.positionalArgs.add(
                     Utilities.unwrap(env.getMemory().getPrimitive(arrAddr + j + 1), env, lineFilePos)
@@ -43,24 +42,24 @@ public class Arguments extends NonEvaluate {
                                          LineFilePos lineFilePos) {
         try {
             Reference iterFnRef = (Reference) dictIns.getEnv().get(Constants.ITER_FN, lineFilePos);
-            SplMethod iterFn = (SplMethod) env.getMemory().get(iterFnRef);
+            SplMethod iterFn = env.getMemory().get(iterFnRef);
 
             Reference iteratorRef = (Reference) iterFn.call(EvaluatedArguments.of(dictRef), env, lineFilePos);
-            Instance iterator = (Instance) env.getMemory().get(iteratorRef);
+            Instance iterator = env.getMemory().get(iteratorRef);
 
             Reference nextPtr = (Reference) iterator.getEnv().get(Constants.NEXT_FN, lineFilePos);
             Reference hasNextPtr = (Reference) iterator.getEnv().get(Constants.HAS_NEXT_FN, lineFilePos);
-            SplMethod nextFn = (SplMethod) env.getMemory().get(nextPtr);
-            SplMethod hasNextFn = (SplMethod) env.getMemory().get(hasNextPtr);
+            SplMethod nextFn = env.getMemory().get(nextPtr);
+            SplMethod hasNextFn = env.getMemory().get(hasNextPtr);
 
             Reference getPtr = (Reference) dictIns.getEnv().get(Constants.GET_ITEM_FN, lineFilePos);
-            SplMethod getFn = (SplMethod) env.getMemory().get(getPtr);
+            SplMethod getFn = env.getMemory().get(getPtr);
 
             EvaluatedArguments ea = EvaluatedArguments.of(iteratorRef);
             Bool hasNext = (Bool) hasNextFn.call(ea, env, lineFilePos);
             while (hasNext.value) {
                 Reference nextKey = (Reference) nextFn.call(ea, env, lineFilePos);
-                Instance keyStr = (Instance) env.getMemory().get(nextKey);
+                Instance keyStr = env.getMemory().get(nextKey);
                 String key = SplInvokes.splStringToJavaString(keyStr, env, lineFilePos);
                 SplElement value = getFn.call(EvaluatedArguments.of(dictRef, nextKey), env, lineFilePos);
                 evaluatedArguments.keywordArgs.put(key, Utilities.unwrap(value, env, lineFilePos));
@@ -98,9 +97,15 @@ public class Arguments extends NonEvaluate {
                         leftNode.getName(), ((Assignment) argNode).getRight().evaluate(callingEnv));
                 kwargBegins = true;
             } else {
-                if (kwargBegins)
-                    throw new SyntaxError("Positional arguments follows keyword arguments. ",
-                            argNode.getLineFile());
+                if (kwargBegins) {
+                    SplInvokes.throwException(
+                            callingEnv,
+                            Constants.RUNTIME_SYNTAX_ERROR,
+                            "Positional arguments follows keyword arguments.",
+                            argNode.getLineFile()
+                    );
+                    break;
+                }
                 if (argNode instanceof StarExpr) {
                     StarExpr starExpr = (StarExpr) argNode;
                     if (starExpr.value instanceof StarExpr) {
@@ -111,7 +116,7 @@ public class Arguments extends NonEvaluate {
                                     callingEnv,
                                     Constants.TYPE_ERROR,
                                     "Only classes extends 'Dict' supports **kwargs operation.",
-                                    lineFile
+                                    argNode.getLineFile()
                             );
                             break;
                         }
@@ -124,7 +129,7 @@ public class Arguments extends NonEvaluate {
                                         callingEnv,
                                         Constants.TYPE_ERROR,
                                         "Error occurs when dealing **kwargs:",
-                                        lineFile
+                                        argNode.getLineFile()
                                 );
                                 break;
                             }
@@ -133,7 +138,7 @@ public class Arguments extends NonEvaluate {
                                     callingEnv,
                                     Constants.TYPE_ERROR,
                                     "Only classes extends 'Dict' supports **kwargs operation.",
-                                    lineFile
+                                    argNode.getLineFile()
                             );
                             break;
                         }
@@ -145,7 +150,7 @@ public class Arguments extends NonEvaluate {
                                     callingEnv,
                                     Constants.TYPE_ERROR,
                                     "Only arrays and classes extends 'List' supports *args operation.",
-                                    lineFile
+                                    argNode.getLineFile()
                             );
                             break;
                         }
@@ -156,7 +161,7 @@ public class Arguments extends NonEvaluate {
                         } else if (obj instanceof Instance &&
                                 Utilities.isInstancePtr(arg, Constants.LIST_CLASS, callingEnv, lineFile)) {
                             Reference toArrayPtr = (Reference) ((Instance) obj).getEnv().get("toArray", lineFile);
-                            SplMethod toArrayFtn = (SplMethod) callingEnv.getMemory().get(toArrayPtr);
+                            SplMethod toArrayFtn = callingEnv.getMemory().get(toArrayPtr);
                             Reference arrPtr = (Reference) toArrayFtn.call(EvaluatedArguments.of(arg), callingEnv, lineFile);
                             addArrayToArgs(arrPtr, evaluatedArguments, callingEnv, lineFile);
                         } else {
@@ -164,7 +169,7 @@ public class Arguments extends NonEvaluate {
                                     callingEnv,
                                     Constants.TYPE_ERROR,
                                     "Only arrays and classes extends 'List' supports *args operation.",
-                                    lineFile
+                                    argNode.getLineFile()
                             );
                             break;
                         }

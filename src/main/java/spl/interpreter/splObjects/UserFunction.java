@@ -1,6 +1,7 @@
 package spl.interpreter.splObjects;
 
-import spl.ast.*;
+import spl.ast.Node;
+import spl.ast.StringLiteral;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.FunctionEnvironment;
@@ -31,44 +32,31 @@ public abstract class UserFunction extends SplCallable {
     protected Node rtnContract;
     protected boolean hasContract = false;
 
-    private int minArg;
-    private int maxArg;
+    private int minPosArg;
+    private int maxPosArg;
+    private int maxKwArg;
 
-    protected UserFunction(Function.Parameter[] parameters, Environment definitionEnv, LineFilePos lineFile) {
+    protected UserFunction(Parameter[] parameters, Environment definitionEnv, LineFilePos lineFile) {
         this.params = parameters;
         this.definitionEnv = definitionEnv;
         this.lineFile = lineFile;
 
-        minArg = maxArg = 0;
-        for (SplCallable.Parameter param : params) {
+        for (Parameter param : parameters) {
             if (param.unpackCount == 0) {
-                if (param.defaultValue == null) minArg++;
-            } else maxArg = Integer.MAX_VALUE;
+                if (!param.hasDefaultValue()) {
+                    minPosArg++;
+                }
+                maxPosArg++;
+                maxKwArg++;
+            } else if (param.unpackCount == 1) {
+                maxPosArg = MAX_ARGS;
+            } else {
+                maxKwArg = MAX_ARGS;
+            }
         }
-        if (maxArg == 0) maxArg = parameters.length;
-    }
-
-    protected boolean hasParamName(String name) {
-        for (Parameter param : params) {
-            if (param.unpackCount == 2 || param.name.equals(name)) return true;
-        }
-        return false;
     }
 
     public static SplElement getContractFunction(Node conNode, FunctionEnvironment scope, LineFilePos lineFile) {
-//        if (conNode instanceof BinaryOperator) {
-//            BinaryOperator bo = (BinaryOperator) conNode;
-//            if (bo.getOperator().equals("or")) {
-//                Reference orFn = (Reference) scope.get(Constants.OR_FN, lineFile);
-//                Function function = scope.getMemory().get(orFn);
-//                Arguments args = new Arguments(new Line(lineFile, bo.getLeft(), bo.getRight()), lineFile);
-//                SplElement callRes = function.call(args, scope);
-//                if (scope.hasException()) {
-//                    return Undefined.ERROR;
-//                }
-//                return callRes;
-//            }
-//        }
         SplElement res = conNode.evaluate(scope);
         if (res instanceof Reference) return res;
         else {
@@ -80,6 +68,13 @@ public abstract class UserFunction extends SplCallable {
             );
             return Reference.NULL;
         }
+    }
+
+    protected boolean hasParamName(String name) {
+        for (Parameter param : params) {
+            if (param.unpackCount == 2 || param.name.equals(name)) return true;
+        }
+        return false;
     }
 
     protected boolean callContract(Node conNode,
@@ -173,7 +168,7 @@ public abstract class UserFunction extends SplCallable {
         for (int i = 0; i < params.length; ++i) {
             Parameter param = params[i];
             String paramName = param.name;
-            String location = "the " + Utilities.numberToOrder(i) + " argument";
+            String location = "the " + Utilities.numberToOrder(argIndex + 1) + " argument";
 
             if (param.constant) scope.defineConst(paramName, lineFile);
             else scope.defineVar(paramName, lineFile);  // declare param
@@ -209,6 +204,17 @@ public abstract class UserFunction extends SplCallable {
                 Reference arrPtr = SplArray.createArray(SplElement.POINTER, unpackArgs.length, scope);
                 for (int j = 0; j < unpackArgs.length; j++) {
                     SplElement arg = unpackArgs[j];
+                    // In this case, the only choice is check contract before actually set it.
+                    // It should not have any bad effect because 'this' cannot be '*this'
+                    if (!callContract(
+                            param.contract,
+                            arg,
+                            scope,
+                            callingEnv,
+                            lineFile,
+                            "the " + Utilities.numberToOrder(unpackArgBegin + j + 1) + " argument")) {
+                        return;
+                    }
                     if (arg instanceof Reference) {
                         SplArray.setItemAtIndex(arrPtr, j, arg, scope, lineFile);
                     } else {
@@ -216,7 +222,8 @@ public abstract class UserFunction extends SplCallable {
                                 Utilities.primitiveToWrapper(arg, scope, lineFile), scope, lineFile);
                     }
                 }
-                success = setArg(scope, callingEnv, param, arrPtr, checkContract, lineFile, location);
+                // check each args' contract instead of the array
+                success = setArg(scope, callingEnv, param, arrPtr, false, lineFile, location);
             } else if (param.unpackCount == 2) {  // **kwargs
                 noKwParam = false;
                 int size = evaluatedArgs.keywordArgs.size();
@@ -232,7 +239,7 @@ public abstract class UserFunction extends SplCallable {
                                 scope,
                                 lineFile);
                 if (dict == null) return;
-                success = setArg(scope, callingEnv, param, dict.pointer, checkContract, lineFile, location);
+                success = setArg(scope, callingEnv, param, dict.pointer, false, lineFile, location);
 
                 scope.getMemory().removeTempPtr(valueArrPtr);
                 scope.getMemory().removeTempPtr(keyArrPtr);
@@ -242,6 +249,15 @@ public abstract class UserFunction extends SplCallable {
                     SplElement keyStr = StringLiteral.createString(argEntry.getKey().toCharArray(), scope, lineFile);
                     SplArray.setItemAtIndex(keyArrPtr, j, keyStr, scope, lineFile);
                     SplElement val = argEntry.getValue();
+                    if (!callContract(
+                            param.contract,
+                            val,
+                            scope,
+                            callingEnv,
+                            lineFile,
+                            "the " + Utilities.numberToOrder(argIndex + j + 1) + " argument")) {
+                        return;
+                    }
                     if (SplElement.isPrimitive(val)) val = Utilities.primitiveToWrapper(val, scope, lineFile);
                     SplArray.setItemAtIndex(valueArrPtr, j, val, scope, lineFile);
                     j++;
@@ -267,12 +283,17 @@ public abstract class UserFunction extends SplCallable {
     }
 
     @Override
-    public int minArgCount() {
-        return minArg;
+    public int minPosArgCount() {
+        return minPosArg;
     }
 
     @Override
-    public int maxArgCount() {
-        return maxArg;
+    public int maxPosArgCount() {
+        return maxPosArg;
+    }
+
+    @Override
+    public int maxKwArgCount() {
+        return maxKwArg;
     }
 }

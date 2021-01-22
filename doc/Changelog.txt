@@ -1,3 +1,13 @@
+===== Version 4073 =====
+2021/01/22
+
+* Added a stricter check of arguments count
+* Added new reflection functions about templates and generics
+* Added attributes __checker__ for class, __class__ for checker
+* Reimplemented builtin types and checkers
+* Bug fixes:
+    * Contract of *args and **args
+
 ===== Version 4072 =====
 2021/01/22
 
