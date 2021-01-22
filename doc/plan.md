@@ -67,3 +67,4 @@
 * Unittest
 * Anonymous class
 * Multithreading
+* Const fn: avoid it to be overridden

@@ -8,6 +8,7 @@ public class Configs {
 
     public static final String CONFIG_NAME = "config.ini";
     private static final Map<String, String> map = new HashMap<>(Map.of(
+            "stackLimit", "512",
             "heapSize", "8192",
             "contract", "true"
     ));

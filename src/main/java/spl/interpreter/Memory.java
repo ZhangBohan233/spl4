@@ -30,7 +30,7 @@ public class Memory {
     private final GarbageCollector garbageCollector = new GarbageCollector();
     private final int heapSize;
     private int stackSize;
-    private int stackLimit = 1000;
+    private int stackLimit = Configs.getInt("stackLimit", 512);
     private boolean checkContract;
     private int availableHead = 1;
 
@@ -184,7 +184,6 @@ public class Memory {
     }
 
     public String memoryView() {
-//        return Arrays.toString(heap);
         return memoryViewWithAddress();
     }
 

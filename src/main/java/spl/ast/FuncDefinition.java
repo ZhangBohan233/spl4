@@ -1,7 +1,6 @@
 package spl.ast;
 
 import spl.interpreter.env.Environment;
-import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
@@ -19,12 +18,14 @@ public class FuncDefinition extends Expression {
     private final BlockStmt body;
     private final Line templateLine;
     private final StringLiteralRef docRef;
+    private final boolean isConst;
 
     public FuncDefinition(NameNode name,
                           Line parameters,
                           BlockStmt body,
                           Line templateLine,
                           StringLiteralRef docRef,
+                          boolean isConst,
                           LineFilePos lineFile) {
         super(lineFile);
 
@@ -33,19 +34,21 @@ public class FuncDefinition extends Expression {
         this.body = body;
         this.templateLine = templateLine;
         this.docRef = docRef;
+        this.isConst = isConst;
     }
 
     public static FuncDefinition reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
         NameNode name = Reconstructor.reconstruct(is);
         Line params = Reconstructor.reconstruct(is);
         BlockStmt body = Reconstructor.reconstruct(is);
+        boolean isConst = is.readBoolean();
         boolean hasTemplate = is.readBoolean();
         Line templateLine = null;
         if (hasTemplate) templateLine = Reconstructor.reconstruct(is);
         boolean hasDoc = is.readBoolean();
         StringLiteralRef docRef = null;
         if (hasDoc) docRef = Reconstructor.reconstruct(is);
-        return new FuncDefinition(name, params, body, templateLine, docRef, lineFilePos);
+        return new FuncDefinition(name, params, body, templateLine, docRef, isConst, lineFilePos);
     }
 
     @Override
@@ -53,6 +56,7 @@ public class FuncDefinition extends Expression {
         name.save(out);
         parameters.save(out);
         body.save(out);
+        out.writeBoolean(isConst);
         out.writeBoolean(templateLine != null);
         if (templateLine != null) templateLine.save(out);
         out.writeBoolean(docRef != null);
@@ -67,7 +71,11 @@ public class FuncDefinition extends Expression {
         Function function = new Function(body, params, env, name.getName(),  docRef, getLineFile());
         Reference funcPtr = env.getMemory().allocateFunction(function, env);
 
-        env.defineFunction(name.getName(), funcPtr, getLineFile());
+        if (isConst) {
+            env.defineConstFunction(name.getName(), funcPtr, getLineFile());
+        } else {
+            env.defineFunction(name.getName(), funcPtr, getLineFile());
+        }
         return funcPtr;
     }
 
@@ -107,5 +115,9 @@ public class FuncDefinition extends Expression {
 
     public NameNode getName() {
         return name;
+    }
+
+    public boolean isConst() {
+        return isConst;
     }
 }

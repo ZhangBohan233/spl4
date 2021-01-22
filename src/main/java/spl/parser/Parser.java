@@ -285,6 +285,7 @@ public class Parser {
                                 builder.addNode(new NullExpr(lineFile));
                                 break;
                             case "fn":  // function definition
+                                boolean isConst = varLevel == Declaration.CONST;
                                 DocToken doc = findDoc(index - 1, parent);
                                 StringLiteralRef docRef = null;
                                 if (doc != null) {
@@ -328,7 +329,7 @@ public class Parser {
                                         lineFile);
 
                                 FuncDefinition def = new FuncDefinition(name, paramBlock, bodyBlock, templateLine,
-                                        docRef, lineFile);
+                                        docRef, isConst, lineFile);
                                 builder.addNode(def);
 
                                 if (autoCont != null) {

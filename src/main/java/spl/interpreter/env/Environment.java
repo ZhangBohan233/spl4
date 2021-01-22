@@ -38,7 +38,11 @@ public abstract class Environment {
     }
 
     public void defineFunction(String name, Reference funcPtr, LineFilePos lineFile) {
-        variables.put(name, VarEntry.varEntry(funcPtr));
+        defineVarAndSet(name, funcPtr, lineFile);
+    }
+
+    public void defineConstFunction(String name, Reference funcPtr, LineFilePos lineFilePos) {
+        defineConstAndSet(name, funcPtr, lineFilePos);
     }
 
     public Reference getImportedModulePtr(String modulePath) {
@@ -100,7 +104,7 @@ public abstract class Environment {
     }
 
     public void defineVar(String name, LineFilePos lineFile) {
-        if (localHasName(name, lineFile)) {
+        if (localHasName(name)) {
             throwNameError("Variable '" + name + "' already defined.", lineFile);
             return;
         }
@@ -109,7 +113,7 @@ public abstract class Environment {
     }
 
     public void defineVarAndSet(String name, SplElement value, LineFilePos lineFile) {
-        if (localHasName(name, lineFile)) {
+        if (localHasName(name)) {
             throwNameError("Variable '" + name + "' already defined.", lineFile);
             return;
         }
@@ -118,7 +122,7 @@ public abstract class Environment {
     }
 
     public void defineConst(String name, LineFilePos lineFile) {
-        if (localHasName(name, lineFile)) {
+        if (localHasName(name)) {
             throwNameError("Constant '" + name + "' already defined.", lineFile);
             return;
         }
@@ -128,7 +132,7 @@ public abstract class Environment {
     }
 
     public void defineConstAndSet(String name, SplElement value, LineFilePos lineFile) {
-        if (localHasName(name, lineFile)) {
+        if (localHasName(name)) {
             throwNameError("Constant '" + name + "' already defined.", lineFile);
             return;
         }
@@ -188,18 +192,18 @@ public abstract class Environment {
         return tv;
     }
 
-    protected VarEntry localInnerGet(String name, LineFilePos lineFile) {
+    protected VarEntry localInnerGet(String name) {
         VarEntry tv = variables.get(name);
         if (tv == null) {
             if (outer != null && outer.isSub()) {
-                tv = outer.localInnerGet(name, lineFile);
+                tv = outer.localInnerGet(name);
             }
         }
         return tv;
     }
 
-    protected final boolean localHasName(String name, LineFilePos lineFile) {
-        return localInnerGet(name, lineFile) != null;
+    protected final boolean localHasName(String name) {
+        return localInnerGet(name) != null;
     }
 
     public abstract void addNamespace(ModuleEnvironment moduleEnvironment);

@@ -1,3 +1,9 @@
+===== Version 4076 =====
+2021/01/23
+
+* New syntax:
+    * `const fn someFunc() { ... }` to declare a const function, or a method that cannot be overridden.
+
 ##### SPL4 Alpha 1 #####
 ===== Version 4075 =====
 2021/01/23

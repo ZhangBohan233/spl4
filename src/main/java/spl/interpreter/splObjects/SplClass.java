@@ -35,6 +35,7 @@ public class SplClass extends NativeObject {
     private final Environment definitionEnv;
     private final LinkedHashMap<String, Node> fieldNodes = new LinkedHashMap<>();
     private final Map<String, Reference> methodPointers = new HashMap<>();
+    private final Set<String> constMethods = new HashSet<>();
     private final String[] templates;
     private final StringLiteralRef docRef;
     @Accessible
@@ -163,17 +164,25 @@ public class SplClass extends NativeObject {
         for (int i = 1; i < mroArray.length; i++) {
             Reference scRef = mroArray[i];
             SplClass sc = definitionEnv.getMemory().get(scRef);
-            Reference scMethodRef = sc.methodPointers.get(method.definedName);
-            if (scMethodRef != null) {
-                SplMethod scMethod = definitionEnv.getMemory().get(scMethodRef);
-                // System.out.println("Override! " + method.definedName + " from " + className + " to " + sc.className);
+            Reference scMethodPtr = sc.methodPointers.get(method.definedName);
+            if (scMethodPtr != null) {
+                if (sc.constMethods.contains(method.definedName)) {
+                    SplInvokes.throwException(
+                            definitionEnv,
+                            Constants.INHERITANCE_ERROR,
+                            String.format("Method '%s' is const, which cannot be overridden.", method.definedName),
+                            method.lineFile
+                    );
+                    return;
+                }
+                SplMethod scMethod = definitionEnv.getMemory().get(scMethodPtr);
                 if (scMethod.params.length != method.params.length) {
                     SplInvokes.throwException(
                             definitionEnv,
                             Constants.INHERITANCE_ERROR,
                             String.format(
-                                    "Method %s in class %s has different number of parameters from its " +
-                                            "overriding method in class %s.",
+                                    "Method '%s' in class '%s' has different number of parameters from its " +
+                                            "overriding method in class '%s'.",
                                     method.definedName,
                                     getFullName(),
                                     sc.getFullName()),
@@ -328,6 +337,7 @@ public class SplClass extends NativeObject {
             if (definitionEnv.hasException()) return false;
             Reference methodPtr = (Reference) mp;
             methodPointers.put(fd.name.getName(), methodPtr);
+            if (fd.isConst()) constMethods.add(fd.name.getName());
         } else if (lineNode instanceof ContractNode) {
             ((ContractNode) lineNode).evalAsMethod(methodPointers, className, definitionEnv);
         } else {
@@ -345,6 +355,7 @@ public class SplClass extends NativeObject {
                     new BlockStmt(LineFilePos.LF_INTERPRETER),
                     null,
                     null,
+                    false,
                     LineFilePos.LF_INTERPRETER);
 
             SplElement cp = fd.evalAsMethod(definitionEnv, classId);
@@ -442,5 +453,15 @@ public class SplClass extends NativeObject {
     @Override
     public String toString() {
         return "Class " + className + " ";
+    }
+
+    public static class MethodConst {
+        public final Reference methodPtr;
+        public final boolean isConst;
+
+        private MethodConst(Reference methodPtr, boolean isConst) {
+            this.methodPtr = methodPtr;
+            this.isConst = isConst;
+        }
     }
 }
