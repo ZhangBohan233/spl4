@@ -1,3 +1,13 @@
+===== Version 4075 =====
+
+Loop 1000000 time: 272ms
+Array access 1000000 time: 636ms
+fib=75025
+fib 25 time: 276ms
+List append 1000 object time (no gc): 118ms
+String add 5000 time (with gc): 1636ms
+Single gc time: 46ms
+
 ===== Version 4041 =====
 
 Loop 1000000 time: 260ms

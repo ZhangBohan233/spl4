@@ -83,7 +83,7 @@ public abstract class Tokenizer {
     );
 
     public static final Set<String> KEYWORDS = Utilities.mergeSets(
-            RESERVED, LAZY_BINARY, LOGICAL_UNARY
+            RESERVED, LAZY_BINARY, LOGICAL_UNARY, Set.of("is")
     );
 
     final List<Token> tokens = new ArrayList<>();

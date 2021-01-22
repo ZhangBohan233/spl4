@@ -1,3 +1,10 @@
+##### SPL4 Alpha 1 #####
+===== Version 4075 =====
+2021/01/23
+
+* Bug fixes:
+    * Added 'is' to keywords, avoiding situations like `"s" is ("s")` to be recognized as a function call to 'is'
+
 ===== Version 4074 =====
 2021/01/22
 

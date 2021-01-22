@@ -1,7 +1,9 @@
 package spl.interpreter.env;
 
+import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splErrors.RuntimeSyntaxError;
+import spl.util.Constants;
 import spl.util.LineFilePos;
 
 public class CaseBlockEnvironment extends BlockEnvironment {
@@ -19,7 +21,13 @@ public class CaseBlockEnvironment extends BlockEnvironment {
     @Override
     public void fallthrough(LineFilePos lineFile) {
         if (isExpr) {
-            throw new RuntimeSyntaxError("'fallthrough' outside cond/switch statements. ", lineFile);
+            SplInvokes.throwException(
+                    this,
+                    Constants.RUNTIME_SYNTAX_ERROR,
+                    "'fallthrough' outside cond/switch statements.",
+                    lineFile
+            );
+            return;
         }
         fallthrough = true;
     }
@@ -32,7 +40,13 @@ public class CaseBlockEnvironment extends BlockEnvironment {
     @Override
     public void yield(SplElement value, LineFilePos lineFile) {
         if (!isExpr) {
-            throw new RuntimeSyntaxError("'yield' outside cond/switch expressions. ", lineFile);
+            SplInvokes.throwException(
+                    this,
+                    Constants.RUNTIME_SYNTAX_ERROR,
+                    "'yield' outside cond/switch expressions.",
+                    lineFile
+            );
+            return;
         }
         this.yieldResult = value;
     }

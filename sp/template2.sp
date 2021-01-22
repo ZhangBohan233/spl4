@@ -37,4 +37,5 @@ fn main() {
     xx := genericOf(A?, int?, boolean?);
     print(xx(a));
     print(int?.__class__);
+    print("aa" is ("aa"));
 }
