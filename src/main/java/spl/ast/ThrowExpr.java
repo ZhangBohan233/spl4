@@ -46,7 +46,7 @@ public class ThrowExpr extends UnaryExpr {
 
     static void throwException(Reference exceptionClassPtr, Environment env, LineFilePos lineFile) {
         if (Utilities.isInstancePtr(exceptionClassPtr, Constants.EXCEPTION_CLASS, env, lineFile)) {
-            Instance excIns = (Instance) env.getMemory().get(exceptionClassPtr);
+            Instance excIns = env.getMemory().get(exceptionClassPtr);
 
             // the order of code matters.
             // if exception is thrown before 'createString' spl string, spl.interpreter would be stopped.

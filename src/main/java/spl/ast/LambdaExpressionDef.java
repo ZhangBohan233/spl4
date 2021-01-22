@@ -18,12 +18,14 @@ public class LambdaExpressionDef extends Expression {
 
     private final Line parameters;
     private final Expression body;
+    private final boolean isSync;
 
-    public LambdaExpressionDef(Line parameters, Expression body, LineFilePos lineFile) {
+    public LambdaExpressionDef(Line parameters, Expression body, boolean isSync, LineFilePos lineFile) {
         super(lineFile);
 
         this.parameters = parameters;
         this.body = body;
+        this.isSync = isSync;
     }
 
     @Override
@@ -36,7 +38,7 @@ public class LambdaExpressionDef extends Expression {
         Function.Parameter[] params = SplCallable.evalParams(parameters, env);
         if (env.hasException()) return Undefined.ERROR;
 
-        LambdaExpression lambdaExpression = new LambdaExpression(body, params, env, getLineFile());
+        LambdaExpression lambdaExpression = new LambdaExpression(body, params, env, isSync, getLineFile());
 
         return env.getMemory().allocateFunction(lambdaExpression, env);
     }
@@ -45,11 +47,13 @@ public class LambdaExpressionDef extends Expression {
     protected void internalSave(BytesOut out) throws IOException {
         parameters.save(out);
         body.save(out);
+        out.writeBoolean(isSync);
     }
 
     public static LambdaExpressionDef reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
         Line params = Reconstructor.reconstruct(in);
         Expression body = Reconstructor.reconstruct(in);
-        return new LambdaExpressionDef(params, body, lineFilePos);
+        boolean isSync = in.readBoolean();
+        return new LambdaExpressionDef(params, body, isSync, lineFilePos);
     }
 }

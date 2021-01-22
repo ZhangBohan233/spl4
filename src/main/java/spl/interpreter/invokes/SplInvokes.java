@@ -589,6 +589,23 @@ public class SplInvokes extends NativeObject {
     }
 
     @Accessible
+    public Undefined thread(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 3, "Invokes.thread", env, lineFilePos);
+
+        Reference objectPtr = (Reference) arguments.getLine().get(0).evaluate(env);
+
+        Reference targetPtr = (Reference) arguments.getLine().get(1).evaluate(env);
+        Function target = env.getMemory().get(targetPtr);
+
+        Bool daemonic = (Bool) arguments.getLine().get(2).evaluate(env);
+
+        NativeThread nt = new NativeThread(target, objectPtr, env, daemonic.value, lineFilePos);
+        nt.start();
+
+        return Undefined.UNDEFINED;
+    }
+
+    @Accessible
     public SplElement script(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, SplCallable.MAX_ARGS, "script", environment, lineFile);
 

@@ -66,5 +66,5 @@
 * Iterator remove
 * Unittest
 * Anonymous class
-* Multithreading
-* Const fn: avoid it to be overridden
+* ~~Multithreading~~ **_DONE_**
+* ~~Const fn: avoid it to be overridden~~ **_DONE_**

@@ -27,9 +27,9 @@ public class Function extends UserFunction {
      * Constructor for regular function.
      */
     public Function(BlockStmt body, SplCallable.Parameter[] params, Environment definitionEnv,
-                    String definedName, StringLiteralRef docRef, LineFilePos lineFile) {
+                    String definedName, StringLiteralRef docRef, boolean isSync, LineFilePos lineFile) {
 
-        super(params, definitionEnv, lineFile);
+        super(params, definitionEnv, isSync, lineFile);
 
         this.body = body;
         this.definedName = definedName;

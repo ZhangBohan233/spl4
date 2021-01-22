@@ -9,6 +9,7 @@ import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.SplCallable;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplObject;
+import spl.interpreter.splObjects.UserFunction;
 import spl.util.*;
 
 import java.io.IOException;
@@ -52,9 +53,11 @@ public class FuncCall extends Expression {
                     "Element '" + leftTv + "' is not callable.",
                     lineFile);
         }
-        SplObject obj = env.getMemory().get((Reference) leftTv);
+        Reference ref = (Reference) leftTv;
+        SplObject obj = env.getMemory().get(ref);
         if (obj instanceof SplCallable) {
             SplCallable function = (SplCallable) obj;
+            boolean isSync = obj instanceof UserFunction && ((UserFunction) obj).isSync();
 
             EvaluatedArguments ea = arguments.evalArgs(env);
             if (env.hasException()) return Undefined.ERROR;
@@ -65,7 +68,19 @@ public class FuncCall extends Expression {
             }
             Reference[] generics = evalGenerics(env);
             if (env.hasException()) return Undefined.ERROR;
-            return function.call(ea, generics, env, lineFile);
+            if (isSync) {
+                try {
+                    while (env.getMemory().isSynced(ref)) {
+                        Thread.sleep(1);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                env.getMemory().addSync(ref);
+            }
+            SplElement res = function.call(ea, generics, env, lineFile);
+            if (isSync) env.getMemory().removeSync(ref);
+            return res;
         } else {
             return SplInvokes.throwExceptionWithError(
                     env,

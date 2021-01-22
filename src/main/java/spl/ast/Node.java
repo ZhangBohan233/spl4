@@ -3,19 +3,15 @@ package spl.ast;
 import spl.interpreter.env.Environment;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
-
 import spl.interpreter.primitives.Undefined;
 import spl.util.BytesOut;
 import spl.util.LineFilePos;
-import spl.util.Utilities;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 public abstract class Node {
-    protected LineFilePos lineFile;
-
     static int spaceCount = 0;  // used for printing spl.ast
+    protected LineFilePos lineFile;
 
     public Node(LineFilePos lineFile) {
         this.lineFile = lineFile;

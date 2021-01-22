@@ -70,7 +70,7 @@ public class Console {
         SplInterpreter.importModules(globalEnvironment, parsedModules);
 
         SplInvokes invokes =
-                (SplInvokes) memory.get((Reference) globalEnvironment.get(Constants.INVOKES, LineFilePos.LFP_CONSOLE));
+                memory.get((Reference) globalEnvironment.get(Constants.INVOKES, LineFilePos.LFP_CONSOLE));
         invokes.setOut(out);
         invokes.setIn(in);
         invokes.setErr(err);

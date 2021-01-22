@@ -9,6 +9,7 @@ import spl.interpreter.env.GlobalEnvironment;
 import spl.interpreter.env.ModuleEnvironment;
 import spl.interpreter.invokes.NativeInFile;
 import spl.interpreter.invokes.NativeOutFile;
+import spl.interpreter.invokes.NativeThread;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.*;
 import spl.interpreter.splErrors.NativeError;
@@ -52,6 +53,7 @@ public class SplInterpreter {
                             CheckerFunction.class, "CheckerFunction",
                             NativeInFile.class, "NativeInFile",
                             NativeOutFile.class, "NativeOutFile"
+//                            NativeThread.class, "NativeThread"
                     )
             );
     private static InputStream in = System.in;

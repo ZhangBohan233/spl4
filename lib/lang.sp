@@ -1,6 +1,6 @@
 class Object {
 
-    fn __class__() {
+    const fn __class__() {
         return Invokes.getClass(this);
     }
 

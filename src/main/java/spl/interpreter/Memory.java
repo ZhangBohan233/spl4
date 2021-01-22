@@ -27,6 +27,10 @@ public class Memory {
      */
     private final Set<Reference> permanentPointers = new HashSet<>();
     private final Deque<StackTraceNode> callStack = new ArrayDeque<>();
+    /**
+     * Function pointers that are marked with keyword 'sync'
+     */
+    private final Set<Reference> syncPointers = new HashSet<>();
     private final GarbageCollector garbageCollector = new GarbageCollector();
     private final int heapSize;
     private int stackSize;
@@ -38,19 +42,6 @@ public class Memory {
         heapSize = DEFAULT_HEAP_SIZE;
         heap = new SplThing[heapSize];
     }
-
-//    public static void main(String[] args) {
-//        int[] arr = {0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8};
-//        System.arraycopy(arr, 3, arr, 1, 6);
-//        System.out.println(Arrays.toString(arr));
-//        AvailableList availableList = new AvailableList(16);
-//        System.out.println(availableList.findAva(3));
-//        System.out.println(availableList);
-//        availableList.addAvaSorted(0, 1);
-//        System.out.println(availableList);
-//        System.out.println(availableList.findAva(2));
-//        System.out.println(availableList);
-//    }
 
     public int getHeapSize() {
         return heapSize;
@@ -64,7 +55,7 @@ public class Memory {
         return heapSize - availableHead;
     }
 
-    public void pushStack(FunctionEnvironment newCallEnv, LineFilePos lineFile) {
+    public synchronized void pushStack(FunctionEnvironment newCallEnv, LineFilePos lineFile) {
         stackSize++;
         callStack.push(new StackTraceNode(newCallEnv, lineFile));
         if (stackSize > stackLimit) {
@@ -72,9 +63,21 @@ public class Memory {
         }
     }
 
-    public void decreaseStack() {
+    public synchronized void decreaseStack() {
         stackSize--;
         callStack.pop();
+    }
+
+    public synchronized void addSync(Reference ref) {
+        syncPointers.add(ref);
+    }
+
+    public synchronized void removeSync(Reference ref) {
+        syncPointers.remove(ref);
+    }
+
+    public synchronized boolean isSynced(Reference ref) {
+        return syncPointers.contains(ref);
     }
 
     public Deque<StackTraceNode> getCallStack() {
@@ -91,7 +94,6 @@ public class Memory {
             if (ptr == -1) {
                 throw new MemoryError("Cannot allocate size " + size + ": no memory available. " +
                         "Available memory: " + getAvailableSize() + ". ");
-
             }
         }
         return new Reference(ptr);
@@ -152,8 +154,7 @@ public class Memory {
         managedPointers.remove(tv);
     }
 
-    public void gc(Environment baseEnv) {
-//        System.out.println("gc!!!");
+    public synchronized void gc(Environment baseEnv) {
         garbageCollector.garbageCollect(baseEnv);
     }
 

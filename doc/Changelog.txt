@@ -1,3 +1,10 @@
+##### SPL4 Alpha 2 #####
+===== Version 4077 =====
+2021/01/23
+
+* Implemented multithreading
+* Added new keyword 'sync'
+
 ===== Version 4076 =====
 2021/01/23
 

@@ -1,10 +1,16 @@
 class Thread {
 
+    var daemonic = false;
+
     fn run() {
         throw new NotImplementedError();
     }
 
-    const fn start() {
+    fn setDaemon(daemonic: boolean?) {
+        this.daemonic = daemonic;
+    }
 
+    const fn start() {
+        Invokes.thread(this, this.run, daemonic);
     }
 }

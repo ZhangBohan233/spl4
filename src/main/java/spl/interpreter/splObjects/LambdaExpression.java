@@ -23,9 +23,9 @@ public class LambdaExpression extends UserFunction {
     private final Expression body;
 
     public LambdaExpression(Expression body, SplCallable.Parameter[] params, Environment definitionEnv,
-                            LineFilePos lineFile) {
+                            boolean isSync, LineFilePos lineFile) {
 
-        super(params, definitionEnv, lineFile);
+        super(params, definitionEnv, isSync, lineFile);
 
         this.body = body;
     }
