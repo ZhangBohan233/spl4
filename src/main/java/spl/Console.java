@@ -8,6 +8,7 @@ import spl.interpreter.env.GlobalEnvironment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
+import spl.interpreter.primitives.Undefined;
 import spl.lexer.*;
 import spl.lexer.treeList.BracketList;
 import spl.parser.ParseResult;
@@ -114,7 +115,7 @@ public class Console {
                 SplElement result = only.evaluate(globalEnvironment);
                 if (globalEnvironment.hasException()) {
                     Utilities.removeErrorAndPrint(globalEnvironment, LineFilePos.LFP_CONSOLE);
-                } else if (result != null && result != Reference.NULL) {
+                } else if (result != null && result != Reference.NULL && result != Undefined.UNDEFINED) {
                     out.println(SplInvokes.getRepr(result, globalEnvironment, LineFilePos.LFP_CONSOLE));
                 }
             }

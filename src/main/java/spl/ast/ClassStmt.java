@@ -1,41 +1,46 @@
 package spl.ast;
 
-import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
-import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
-import spl.interpreter.splObjects.Instance;
-import spl.interpreter.splObjects.NativeFunction;
+import spl.interpreter.splObjects.CheckerFunction;
 import spl.interpreter.splObjects.SplClass;
-import spl.interpreter.splObjects.SplObject;
 import spl.util.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ClassStmt extends Expression {
 
     private final String className;
     private final BlockStmt body;
     private final StringLiteralRef docRef;
+    private final List<Node> templates;  // nullable
     private List<Node> superclassesNodes;  // nullable
 
     /**
      * @param className  name of class
      * @param extensions extending node list, null if not specified.
+     * @param templates  template node list, null if not specified
      * @param body       body block
      * @param docRef     string literal reference of docstring
      * @param lineFile   line file
      */
-    public ClassStmt(String className, List<Node> extensions, BlockStmt body, StringLiteralRef docRef,
+    public ClassStmt(String className,
+                     List<Node> extensions,
+                     List<Node> templates,
+                     BlockStmt body,
+                     StringLiteralRef docRef,
                      LineFilePos lineFile) {
         super(lineFile);
 
         this.className = className;
         this.superclassesNodes = extensions;
+        this.templates = templates;
         this.body = body;
         this.docRef = docRef;
     }
@@ -46,10 +51,25 @@ public class ClassStmt extends Expression {
         boolean hasSc = is.readBoolean();
         List<Node> superclassNodes = null;
         if (hasSc) superclassNodes = is.readList();
+        boolean hasTemplates = is.readBoolean();
+        List<Node> templates = null;
+        if (hasTemplates) templates = is.readList();
         boolean hasDoc = is.readBoolean();
         StringLiteralRef docRef = null;
         if (hasDoc) docRef = Reconstructor.reconstruct(is);
-        return new ClassStmt(name, superclassNodes, body, docRef, lineFilePos);
+        return new ClassStmt(name, superclassNodes, templates, body, docRef, lineFilePos);
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        out.writeString(className);
+        body.save(out);
+        out.writeBoolean(superclassesNodes != null);
+        if (superclassesNodes != null) out.writeList(superclassesNodes);
+        out.writeBoolean(templates != null);
+        if (templates != null) out.writeList(templates);
+        out.writeBoolean(docRef != null);
+        if (docRef != null) docRef.save(out);
     }
 
     private void validateExtending() {
@@ -66,36 +86,36 @@ public class ClassStmt extends Expression {
         validateExtending();
 
         List<Reference> superclassesPointers = new ArrayList<>();
+        Map<Reference, Line> superclassGenerics = new HashMap<>();
         for (Node superclassesNode : superclassesNodes) {
             Reference scPtr = (Reference) superclassesNode.evaluate(env);
             superclassesPointers.add(scPtr);
+            if (superclassesNode instanceof GenericNode) {
+                superclassGenerics.put(scPtr, ((GenericNode) superclassesNode).getGenericLine());
+            }
+        }
+        if (superclassGenerics.size() == 0) superclassGenerics = null;
+
+        String[] templates = null;
+        if (this.templates != null) {
+            templates = ContractNode.getDefinedTemplates(this.templates, env, lineFile);
+            if (env.hasException()) return Undefined.ERROR;
         }
 
-        SplElement clazzPtr = SplClass.createClassAndAllocate(className, superclassesPointers, body, env, docRef);
+        SplElement clazzPtr =
+                SplClass.createClassAndAllocate(className, superclassesPointers, templates, superclassGenerics,
+                        body, env, docRef, lineFile);
         if (clazzPtr == Undefined.ERROR) return Undefined.ERROR;  // a quicker way to check env.hasException()
 
         env.defineVarAndSet(className, clazzPtr, getLineFile());
 
         String iofName = className + "?";
-        NativeFunction instanceOfFunc = new NativeFunction(iofName, 1) {
-            @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-                SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg instanceof Reference) {
-                    SplObject obj = callingEnv.getMemory().get((Reference) arg);
-                    if (obj instanceof Instance) {
-                        Reference argClazzPtr = ((Instance) obj).getClazzPtr();
-                        return Bool.boolValueOf(SplClass.isSuperclassOf(
-                                (Reference) clazzPtr,
-                                argClazzPtr,
-                                callingEnv.getMemory()));
-                    }
-                }
-                return Bool.FALSE;
-            }
-        };
+        CheckerFunction instanceOfFunc = new CheckerFunction(iofName, (Reference) clazzPtr);
         Reference iofPtr = env.getMemory().allocateFunction(instanceOfFunc, env);
         env.defineVarAndSet(iofName, iofPtr, getLineFile());
+
+        SplClass clazz = env.getMemory().get((Reference) clazzPtr);
+        clazz.setChecker(iofPtr);
 
         return clazzPtr;
     }
@@ -118,13 +138,11 @@ public class ClassStmt extends Expression {
         return body;
     }
 
-    @Override
-    protected void internalSave(BytesOut out) throws IOException {
-        out.writeString(className);
-        body.save(out);
-        out.writeBoolean(superclassesNodes != null);
-        if (superclassesNodes != null) out.writeList(superclassesNodes);
-        out.writeBoolean(docRef != null);
-        if (docRef != null) docRef.save(out);
+    public String getClassName() {
+        return className;
+    }
+
+    public List<Node> getTemplates() {
+        return templates;
     }
 }

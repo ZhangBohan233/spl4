@@ -4,37 +4,6 @@ class IOError(Exception) {
     }
 }
 
-class InputStream {
-    fn close() {
-    }
-
-    /*
-     * Reads one byte from the stream,
-     */
-    fn readOne() -> int? {
-        throw new NotImplementedError();
-    }
-}
-
-class OutputStream {
-    fn close() {
-    }
-
-    /*
-     * Writes one byte to the stream.
-     */
-    fn writeOne(b: byte?) {
-        throw new NotImplementedError();
-    }
-
-    /*
-     * Writes all buffered data to the actual stream.
-     */
-    fn flush() {
-        throw new NotImplementedError();
-    }
-}
-
 class FileInputStream(InputStream) {
     const file;
 
@@ -109,66 +78,9 @@ class FileOutputStream(OutputStream) {
     }
 }
 
-class FileReader {
-    const fis;
-    const bufferSize = 64;
-    var buffer = new byte[0];
-    var bufferPos = 0;
-
+class FileReader(StreamReader) {
     fn __init__(fileName: String?) {
-        fis = new FileInputStream(fileName);
-    }
-
-    /*
-     * Reads a line from the text file, or null if reaches the end of the file.
-     */
-    fn readLine(omitEol: boolean? = false) -> String? or null? {
-        notFound := true;
-        res := [];
-        while notFound {
-            for ; bufferPos < buffer.length; bufferPos++ {
-                b := buffer[bufferPos];
-                if buffer[bufferPos] == '\n' {
-                    if not omitEol {
-                        res.append(b);
-                    }
-                    notFound = false;
-                    bufferPos++;
-                    break;
-                } else {
-                    res.append(b);
-                }
-            }
-            if notFound {
-                if not _fill() {
-                    break;
-                }
-            }
-        }
-        arr := res.toArray(byte);
-        return Invokes.bytesToString(arr) if arr.length > 0 else null;
-    }
-
-    fn close() {
-        fis.close();
-    }
-
-    /*
-     * Reads the whole file as one string.
-     */
-    fn read() -> String? {
-        lst := [];
-        var s;
-        while (s = readLine()) is not null {
-            lst.append(s);
-        }
-        return strJoin("", lst);
-    }
-
-    fn _fill() -> boolean? {
-        bufferPos = 0;
-        buffer = fis.read(bufferSize);
-        return buffer.length > 0;
+        super.__init__(new FileInputStream(fileName));
     }
 }
 

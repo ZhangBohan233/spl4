@@ -1,7 +1,11 @@
 package spl.parser;
 
 import spl.ast.*;
-import spl.lexer.*;
+import spl.lexer.FileTokenizer;
+import spl.lexer.SyntaxError;
+import spl.lexer.TextProcessResult;
+import spl.lexer.Tokenizer;
+import spl.lexer.tokens.*;
 import spl.lexer.treeList.*;
 import spl.util.Constants;
 import spl.util.LineFilePos;
@@ -15,7 +19,6 @@ public class Parser {
     private final CollectiveElement rootList;
     private final Map<String, StringLiteral> stringLiterals;
     private int varLevel = Declaration.USELESS;
-    private DocToken activeDoc;
 
     /**
      * Constructor of Parser, for imported module files.
@@ -51,19 +54,7 @@ public class Parser {
         if (token instanceof IdToken) {
             String identifier = ((IdToken) token).getIdentifier();
             return FileTokenizer.StringTypes.isIdentifier(identifier) &&
-                    !FileTokenizer.RESERVED.contains(identifier);
-        }
-        return false;
-    }
-
-    private static boolean isCall(Token token, Node lastAddedNode) {
-        if (token instanceof IdToken) {
-            String identifier = ((IdToken) token).getIdentifier();
-            if (FileTokenizer.StringTypes.isIdentifier(identifier) &&
-                    !FileTokenizer.RESERVED.contains(identifier))
-                return true;
-            else return identifier.equals(")") || identifier.equals("]") ||
-                    (!(lastAddedNode instanceof BinaryOperator) && identifier.equals(">"));
+                    !FileTokenizer.KEYWORDS.contains(identifier);
         }
         return false;
     }
@@ -76,39 +67,19 @@ public class Parser {
                 return switch (identifier) {
                     case ";", "=", ":=", "->", ".", "," -> true;
                     default -> FileTokenizer.ALL_BINARY.contains(identifier) ||
-                            FileTokenizer.RESERVED.contains(identifier);
+                            FileTokenizer.KEYWORDS.contains(identifier);
                 };
             } else return !(token instanceof IntToken) &&
                     !(token instanceof FloatToken) &&
-                    !(token instanceof CharToken);
+                    !(token instanceof CharToken) &&
+                    !(token instanceof StrToken);
         } else return !(element instanceof BracketList);
-    }
-
-    private static boolean isUnary(Token token) {
-        if (token instanceof IdToken) {
-            String identifier = ((IdToken) token).getIdentifier();
-            return switch (identifier) {
-                case ";", "=", "->", "(", "[", "{", "}", ".", "," -> true;
-                default -> FileTokenizer.ALL_BINARY.contains(identifier) ||
-                        FileTokenizer.RESERVED.contains(identifier);
-            };
-        } else return !(token instanceof IntToken) && !(token instanceof FloatToken);
-    }
-
-    private static boolean isFuncType(Token token) {
-        if (token instanceof IdToken) {
-            String identifier = ((IdToken) token).getIdentifier();
-            if (identifier.equals(")")) return true;
-            else if (identifier.equals(":")) return true;
-            else return false;
-        } else {
-            return false;
-        }
     }
 
     private static ContractNode autoContract(String fnName,
                                              Line paramBlock,
                                              Expression rtnContract,
+                                             Line templateLine,
                                              LineFilePos lineFile) {
         boolean hasParamContract = false;
         Line contractLine = new Line(lineFile);
@@ -134,7 +105,7 @@ public class Parser {
 
         if (rtnContract != null || hasParamContract) {
             if (rtnContract == null) rtnContract = new NameNode(Constants.ANY_TYPE, lineFile);
-            return new ContractNode(fnName, contractLine, rtnContract, lineFile);
+            return new ContractNode(fnName, contractLine, rtnContract, templateLine, lineFile);
         } else {
             return null;
         }
@@ -145,7 +116,7 @@ public class Parser {
     }
 
     private AstBuilder parseSomeBlock(CollectiveElement collectiveElement) throws IOException {
-        AstBuilder builder = new AstBuilder();
+        AstBuilder builder = new AstBuilder(collectiveElement.lineFile);
         int i = 0;
         while (i < collectiveElement.size()) {
             i = parseOne(collectiveElement, i, builder);
@@ -164,6 +135,20 @@ public class Parser {
     private Line parseOneLineBlock(BracketList bracketList) throws IOException {
         AstBuilder builder = parseSomeBlock(bracketList);
         varLevel = Declaration.USELESS;
+        builder.finishPart();
+        return builder.getLine();
+    }
+
+    private Line parseOneLineBlock(BraceList braceList) throws IOException {
+        AstBuilder builder = parseSomeBlock(braceList);
+        varLevel = Declaration.USELESS;
+        builder.finishPart();
+        return builder.getLine();
+    }
+
+    private Line parseOneLineBlock(ArrowBracketList bracketList) throws IOException {
+        AstBuilder builder = parseSomeBlock(bracketList);
+//        varLevel = Declaration.USELESS;
         builder.finishPart();
         return builder.getLine();
     }
@@ -305,19 +290,25 @@ public class Parser {
                                 if (doc != null) {
                                     docRef = getLitRef(doc.getDoc(), lineFile);
                                 }
-
                                 next = parent.get(index++);
                                 BracketList paramList;
                                 NameNode name;
+                                Element probParams;
                                 if (next instanceof AtomicElement) {
                                     nameToken = (IdToken) ((AtomicElement) next).atom;
                                     name = new NameNode(nameToken.getIdentifier(), nameToken.getLineFile());
-                                    paramList = (BracketList) parent.get(index++);
+                                    probParams = parent.get(index++);
                                 } else {
-                                    paramList = (BracketList) next;
+                                    probParams = next;
                                     name = new NameNode("anonymous function", lineFile);
                                 }
-//                                if (doc != null) System.out.println(name + " " + doc.getDoc());
+                                Line templateLine = null;
+                                if (probParams instanceof ArrowBracketList) {
+                                    templateLine = parseOneLineBlock((ArrowBracketList) probParams);
+                                    probParams = parent.get(index++);
+                                }
+                                paramList = (BracketList) probParams;
+
                                 Expression rtnType = null;
                                 next = parent.get(index++);
                                 if (identifierOf(next, "->")) {
@@ -331,13 +322,13 @@ public class Parser {
 
                                 Line paramBlock = parseOneLineBlock(paramList);
                                 bodyBlock = parseBlock(bodyList);
-//                                System.out.println(paramBlock);
-//                                System.out.println(rtnType);
 
                                 // this line must before FuncDefinition
-                                ContractNode autoCont = autoContract(name.getName(), paramBlock, rtnType, lineFile);
+                                ContractNode autoCont = autoContract(name.getName(), paramBlock, rtnType, templateLine,
+                                        lineFile);
 
-                                FuncDefinition def = new FuncDefinition(name, paramBlock, bodyBlock, docRef, lineFile);
+                                FuncDefinition def = new FuncDefinition(name, paramBlock, bodyBlock, templateLine,
+                                        docRef, lineFile);
                                 builder.addNode(def);
 
                                 if (autoCont != null) {
@@ -363,7 +354,14 @@ public class Parser {
                                 break;
                             case "contract":
                                 nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
-                                paramList = (BracketList) parent.get(index++);
+                                probParams = parent.get(index++);
+                                templateLine = null;
+                                if (probParams instanceof ArrowBracketList) {
+                                    templateLine = parseOneLineBlock((ArrowBracketList) probParams);
+                                    probParams = parent.get(index++);
+                                }
+
+                                paramList = (BracketList) probParams;
                                 BracketList rtnTypeLst = new BracketList(null, lineFile);
                                 IdToken arrow = ((IdToken) ((AtomicElement) parent.get(index++)).atom);
                                 if (!arrow.getIdentifier().equals("->"))
@@ -381,7 +379,8 @@ public class Parser {
                                 Expression rtnCon = (Expression) rtnLine.getChildren().get(0);
 
                                 ContractNode contractNode =
-                                        new ContractNode(nameToken.getIdentifier(), paramLine, rtnCon, lineFile);
+                                        new ContractNode(nameToken.getIdentifier(), paramLine, rtnCon, templateLine,
+                                                lineFile);
                                 builder.addNode(contractNode);
                                 break;
                             case "class":
@@ -395,12 +394,20 @@ public class Parser {
                                 Element probExtendEle = parent.get(index++);
                                 BraceList bodyEle;
                                 Line extensions;
+                                templateLine = null;
+                                // extending, example:
+                                // class C(A, B) { ... }
+                                if (probExtendEle instanceof ArrowBracketList) {
+                                    templateLine = parseOneLineBlock((ArrowBracketList) probExtendEle);
+                                    probExtendEle = parent.get(index++);
+                                }
                                 if (probExtendEle instanceof BracketList) {
                                     // extending, example:
                                     // class C(A, B) { ... }
                                     bodyEle = (BraceList) parent.get(index++);
                                     extensions = parseOneLineBlock((BracketList) probExtendEle);
                                 } else {
+                                    // class C { ... }
                                     bodyEle = (BraceList) probExtendEle;
                                     extensions = null;
                                 }
@@ -408,6 +415,7 @@ public class Parser {
                                 ClassStmt classStmt = new ClassStmt(
                                         nameToken.getIdentifier(),
                                         extensions == null ? null : extensions.getChildren(),
+                                        templateLine == null ? null : templateLine.getChildren(),
                                         bodyBlock,
                                         docRef,
                                         lineFile);
@@ -613,6 +621,9 @@ public class Parser {
                                 String namespace = ((IdToken) ((AtomicElement) parent.get(index++)).atom).getIdentifier();
                                 builder.addNode(new NamespaceNode(namespace, lineFile));
                                 break;
+                            case "assert":
+                                builder.addNode(new AssertStmt(lineFile));
+                                break;
                             default:
                                 if (varLevel == Declaration.VAR) {
                                     builder.addNode(new Declaration(Declaration.VAR, identifier, lineFile));
@@ -637,11 +648,12 @@ public class Parser {
                 } else if (token instanceof ByteToken) {
                     builder.addNode(new ByteLiteral(((ByteToken) token).getValue(), lineFile));
                 } else if (token instanceof DocToken) {
-                    activeDoc = (DocToken) token;
+                    // do nothing
                 } else {
                     throw new ParseError("Unexpected token type. ", lineFile);
                 }
-            } catch (ClassCastException cce) {
+            } catch (ClassCastException | IndexOutOfBoundsException cce) {
+                cce.printStackTrace();
                 throw new SyntaxError("Syntax error, caused by " + cce, lineFile);
             }
         } else if (ele instanceof BracketList) {
@@ -649,8 +661,11 @@ public class Parser {
             LineFilePos lineFile = bracketList.lineFile;
             if (index > 1) {
                 Element probCallObj = parent.get(index - 2);
-                if (probCallObj instanceof AtomicElement && isCall(((AtomicElement) probCallObj).atom)) {
+                if (probCallObj instanceof ArrowBracketList) {
+                    probCallObj = parent.get(index - 3);
+                }
 
+                if (probCallObj instanceof AtomicElement && isCall(((AtomicElement) probCallObj).atom)) {
                     // is a call to an identifier
                     Line argLine = parseOneLineBlock(bracketList);
                     Node callObj = builder.removeLast();
@@ -695,6 +710,32 @@ public class Parser {
             Arguments arguments = new Arguments(contentLine, lineFile);
             ArrayLiteral arrayLiteral = new ArrayLiteral(arguments, lineFile);
             builder.addNode(arrayLiteral);
+        } else if (ele instanceof ArrowBracketList) {
+            ArrowBracketList bracketList = (ArrowBracketList) ele;
+            LineFilePos lineFile = bracketList.lineFile;
+            if (index > 1) {
+                Element probCallObj = parent.get(index - 2);
+                if (probCallObj instanceof AtomicElement && isCall(((AtomicElement) probCallObj).atom)) {
+                    // is a call to an identifier
+                    Line argLine = parseOneLineBlock(bracketList);
+                    Node callObj = builder.removeLast();
+                    GenericNode genericNode = new GenericNode(callObj, argLine, lineFile);
+                    builder.addNode(genericNode);
+                    return index;
+                } else if (probCallObj instanceof BracketList || probCallObj instanceof SqrBracketList) {
+                    Line argLine = parseOneLineBlock(bracketList);
+                    Node callObj = builder.removeLast();
+                    GenericNode genericNode = new GenericNode(callObj, argLine, lineFile);
+                    builder.addNode(genericNode);
+                    builder.addNode(genericNode);
+                    return index;
+                }
+            }
+        } else if (ele instanceof BraceList) {
+            // dict or set creation
+            BraceList braceList = (BraceList) ele;
+            Line content = parseOneLineBlock(braceList);
+            builder.addNode(DictSetLiteral.create(content, braceList.lineFile));
         }
         return index;
     }

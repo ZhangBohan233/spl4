@@ -36,4 +36,10 @@ public class VarEntry {
     public void setValue(SplElement value) {
         this.value = value;
     }
+
+    @Override
+    public String toString() {
+        String modifier = constant ? "const" : "var";
+        return "VarEntry{" + modifier + " " + value + "}";
+    }
 }

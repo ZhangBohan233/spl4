@@ -89,7 +89,8 @@ public class AstBuilder {
             "namespace", 150,
             "throw", 100,
             "yield", 0,
-            "return", 0
+            "return", 0,
+            "assert" , 0
     );
 
     private static final Map<String, Integer> PRECEDENCES = Utilities.mergeMaps(
@@ -98,74 +99,46 @@ public class AstBuilder {
             PCD_UNARY_NUMERIC, PCD_UNARY_LOGICAL, PCD_UNARY_SPECIAL
     );
 
-    private final BlockStmt baseBlock = new BlockStmt();
+    private final BlockStmt baseBlock;
     private final List<Node> stack = new ArrayList<>();
-    private Line activeLine = new Line();
-    private AstBuilder inner;
+    private Line activeLine;
+
+    public AstBuilder(LineFilePos initLfp) {
+        baseBlock = new BlockStmt(initLfp);
+        activeLine = new Line(initLfp);
+    }
 
     Node getLastAddedNode() {
-        if (inner == null) {
-            if (stack.isEmpty()) return null;
-            return stack.get(stack.size() - 1);
-        } else {
-            return inner.getLastAddedNode();
-        }
+        if (stack.isEmpty()) return null;
+        return stack.get(stack.size() - 1);
     }
 
     void addNode(Node node) {
-        if (inner == null) {
-            stack.add(node);
-        } else {
-            inner.addNode(node);
-        }
+        stack.add(node);
     }
 
     void addInt(long value, LineFilePos lineFile) {
-        if (inner == null) {
-            stack.add(new IntLiteral(value, lineFile));
-        } else {
-            inner.addInt(value, lineFile);
-        }
+        addNode(new IntLiteral(value, lineFile));
     }
 
     void addChar(char value, LineFilePos lineFile) {
-        if (inner == null) {
-            stack.add(new CharLiteral(value, lineFile));
-        } else {
-            inner.addChar(value, lineFile);
-        }
+        addNode(new CharLiteral(value, lineFile));
     }
 
     void addFloat(double value, LineFilePos lineFile) {
-        if (inner == null) {
-            stack.add(new FloatLiteral(value, lineFile));
-        } else {
-            inner.addFloat(value, lineFile);
-        }
+        addNode(new FloatLiteral(value, lineFile));
     }
 
     void addUnaryOperator(String op, int type, LineFilePos lineFile) {
-        if (inner == null) {
-            stack.add(new RegularUnaryOperator(op, type, lineFile));
-        } else {
-            inner.addUnaryOperator(op, type, lineFile);
-        }
+        addNode(new RegularUnaryOperator(op, type, lineFile));
     }
 
     void addBinaryOperator(String op, int type, LineFilePos lineFile) {
-        if (inner == null) {
-            stack.add(new BinaryOperator(op, type, lineFile));
-        } else {
-            inner.addBinaryOperator(op, type, lineFile);
-        }
+        addNode(new BinaryOperator(op, type, lineFile));
     }
 
     void addFakeTernary(String op, LineFilePos lineFile) {
-        if (inner == null) {
-            stack.add(new ConditionalExpr(op, lineFile));
-        } else {
-            inner.addFakeTernary(op, lineFile);
-        }
+        addNode(new ConditionalExpr(op, lineFile));
     }
 
     Node removeLast() {
@@ -176,14 +149,10 @@ public class AstBuilder {
      * This method would clear the active line.
      */
     void finishLine() {
-        if (inner == null) {
-            if (!stack.isEmpty()) finishPart();
+        if (!stack.isEmpty()) finishPart();
 
-            baseBlock.addLine(activeLine);
-            activeLine = new Line();
-        } else {
-            inner.finishLine();
-        }
+        baseBlock.addLine(activeLine);
+        activeLine = new Line();
     }
 
     Line getLine() {
@@ -198,37 +167,35 @@ public class AstBuilder {
      * This method would build all expressions in the active stack and clear the stack.
      */
     void finishPart() {
-        if (inner == null) {
-            if (!stack.isEmpty()) {
-                boolean hasExpr = false;
-                for (Node node : stack) {
-                    if (node instanceof Buildable && ((Buildable) node).notFulfilled()) hasExpr = true;
-                }
-                if (hasExpr) {
-                    buildExpr(stack);
-                }
-                activeLine.getChildren().addAll(stack);
-                stack.clear();
+        if (!stack.isEmpty()) {
+            boolean hasExpr = false;
+            for (Node node : stack) {
+                if (node instanceof Buildable && ((Buildable) node).notFulfilled()) hasExpr = true;
             }
-        } else {
-            inner.finishPart();
+            if (hasExpr) {
+                buildExpr(stack);
+            }
+            if (!activeLine.getLineFile().isReal()) {
+                if (stack.size() > 0) {
+                    activeLine.setLineFilePos(stack.get(0).getLineFile());
+                }
+            }
+            activeLine.getChildren().addAll(stack);
+            stack.clear();
         }
     }
 
     void buildExpr(List<Node> list) {
         try {
             while (true) {
-//                System.out.println(list);
                 int maxPre = -1;
                 int index = 0;
 
                 for (int i = 0; i < list.size(); i++) {
-//                for (int i = list.size() - 1; i >= 0; i--) {
                     Node node = list.get(i);
                     if (node instanceof Buildable && ((Buildable) node).notFulfilled()) {
                         int pre = PRECEDENCES.get(((Buildable) node).getOperator());
                         if (node instanceof UnaryExpr || node instanceof UnaryStmt) {
-
                             // eval right side unary operator first
                             // for example, "- -3" is -(-3)
                             if (pre >= maxPre) {
@@ -236,19 +203,16 @@ public class AstBuilder {
                                 index = i;
                             }
                         } else if (node instanceof BinaryExpr) {
-
-                            // eval left side binary operator first
-                            // for example, "2 * 8 / 4" is (2 * 8) / 4
-                            if (pre > maxPre) {
+                            BinaryExpr be = (BinaryExpr) node;
+                            // for most times, eval left side binary operator first
+                            // for example, if eval left first, "2 * 8 / 4" is (2 * 8) / 4
+                            // if eval right first, then "x = y = 3" is x = (y = 3)
+                            if (be.isLeftFirst() && pre > maxPre ||
+                                    !be.isLeftFirst() && pre >= maxPre) {
                                 maxPre = pre;
                                 index = i;
                             }
                         } else if (node instanceof IncDecOperator) {
-//                            if (((IncDecOperator) node).isIncrement) {
-//                                pre = PRECEDENCES.get("++");
-//                            } else {
-//                                pre = PRECEDENCES.get("--");
-//                            }
                             if (pre > maxPre) {
                                 maxPre = pre;
                                 index = i;
@@ -296,7 +260,12 @@ public class AstBuilder {
                 }
             }
         } catch (IndexOutOfBoundsException e) {
-            System.out.println("Error when " + list);
+            System.out.print("Error when " + list);
+            if (list.size() > 0) {
+                System.out.println(". " + list.get(0).getLineFile().toStringFileLine());
+            } else {
+                System.out.println();
+            }
             throw e;
         }
     }

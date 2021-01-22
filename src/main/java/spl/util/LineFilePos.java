@@ -54,8 +54,15 @@ public class LineFilePos {
         return lineFile.msg;
     }
 
+    /**
+     * @return whether this instance represents a real position
+     */
+    public boolean isReal() {
+        return lineFile.msg == null;
+    }
+
     public String toStringFileLine() {
-        if (lineFile.msg == null) {
+        if (isReal()) {
             return String.format("In file '%s', at %d:%d.", lineFile.file, lineFile.line, pos);
         } else {
             return String.format("In '%s'", lineFile.msg);

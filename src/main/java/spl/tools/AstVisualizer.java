@@ -45,7 +45,7 @@ public class AstVisualizer implements Initializable {
                 node.getClass().getSimpleName(),
                 node.reprString(),
                 msg,
-                node.lineFile);
+                node.getLineFile());
         TreeItem<TreeNode> treeItem = new TreeItem<>(tn);
         if (parentItem == null) {
             treeView.setRoot(treeItem);
@@ -61,6 +61,10 @@ public class AstVisualizer implements Initializable {
             for (Node part : ((Line) node).getChildren()) {
                 fill(part, treeItem, "");
             }
+        } else if (node instanceof GenericNode) {
+            GenericNode gn = (GenericNode) node;
+            fill(gn.getObj(), treeItem, "obj");
+            fill(gn.getGenericLine(), treeItem, "generics");
         } else if (node instanceof FuncDefinition) {
             FuncDefinition fd = (FuncDefinition) node;
             fill(fd.getParameters(), treeItem, "params");
@@ -76,12 +80,9 @@ public class AstVisualizer implements Initializable {
             BinaryExpr be = (BinaryExpr) node;
             fill(be.getLeft(), treeItem, "left");
             fill(be.getRight(), treeItem, "right");
-        } else if (node instanceof UnaryExpr) {
-            UnaryExpr ue = (UnaryExpr) node;
-            fill(ue.getValue(), treeItem, "value");
-        } else if (node instanceof UnaryStmt) {
-            UnaryStmt ue = (UnaryStmt) node;
-            fill(ue.getValue(), treeItem, "value");
+        } else if (node instanceof UnaryBuildable) {
+            UnaryBuildable ub = (UnaryBuildable) node;
+            fill(ub.getValue(), treeItem, "value");
         } else if (node instanceof ImportStmt) {
             BlockStmt importBody = importedModules.get(((ImportStmt) node).getPath()).getRoot();
             fill(importBody, treeItem, "imported module");

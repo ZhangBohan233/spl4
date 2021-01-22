@@ -1,8 +1,8 @@
-package spl.lexer;
+package spl.lexer.tokens;
 
 import spl.util.LineFilePos;
 
-public class FloatToken extends Token {
+public class FloatToken extends LiteralToken {
 
     private final double value;
 

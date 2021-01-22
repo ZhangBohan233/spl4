@@ -1,3 +1,115 @@
+===== Version 4074 =====
+2021/01/22
+
+* Bug fixes:
+    * Could not get native object attribute of its superclass
+
+===== Version 4073 =====
+2021/01/22
+
+* Added a stricter check of arguments count
+* Added new reflection functions about templates and generics
+* Added attributes __checker__ for class, __class__ for checker
+* Reimplemented builtin types and checkers
+* Bug fixes:
+    * Contract of *args and **args
+
+===== Version 4072 =====
+2021/01/22
+
+* New syntax:
+    * assert
+* Implemented custom stdin, stdout, stderr
+
+===== Version 4071 =====
+2021/01/22
+
+* New syntax:
+    * Right first binary expression (assignment): now supports syntax like `x = y = 3`
+* Console updates
+* IDLE updates
+* Bug fixes:
+    * Could not start IDLE due to recursive evaluation of '__instance__'
+
+===== Version 4070 =====
+2021/01/21
+
+* Implemented string format
+
+===== Version 4069 =====
+2021/01/21
+
+* String multiplication
+* Implemented library types: TreeDict, TreeSet
+* Bug fixes:
+    * Parse error of '< ... >'
+
+===== Version 4068 =====
+2021/01/21
+
+* Implemented config loader
+* Added a method of class: __superclassOf__
+
+===== Version 4067 =====
+2021/01/20
+
+* Implemented a basic decompiler
+* Recorded line file information in root block
+* Optimize AstBuilder
+
+===== Version 4066 =====
+2021/01/20
+
+* Generic array
+* Changed some error messages related to types and contracts
+* Bug fixes:
+    * Parser error when combining 'and', 'or', 'not' with parenthesis
+
+===== Version 4065 =====
+2021/01/20
+
+* Implemented library function 'genericDict'
+
+===== Version 4064 =====
+2021/01/20
+
+* Added an 'interface' class 'Collection'
+* Implemented library type HashSet
+* New syntax:
+    * HashDict creation via `{k1=v1, k2=v2, ...}`
+    * HashDict creation via `{e1, e2, ...}`
+
+===== Version 4063 =====
+2021/01/19
+
+* Added new instance attribute: __instance__
+* Bug fixes:
+    * Resolved issue #C02: generic name conflicting
+
+===== Version 4062 =====
+2021/01/19
+
+* Migrated the handler of "x? or y?" from contract to binary operator
+* Implemented generic library types in 'lib/lang'
+
+===== Version 4061 =====
+2021/01/19
+
+* Implemented generic class
+* Added simple inheritance check when dealing with generic classes
+* Changed the order of checking contract: set first, then check
+
+===== Version 4060 =====
+2021/01/19
+
+* Redesigned the method resolution system: used C3 algorithm
+* Parser of templated class
+
+===== Version 4059 =====
+2021/01/18
+
+* Generic call for functions
+
 ===== Version 4058 =====
 2021/01/18
 

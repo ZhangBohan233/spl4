@@ -34,6 +34,12 @@ fn foo(a=1,b=2) { ... }
 foo(3,a=4);  // should cause an error but does not
 ```
 
+**ISSUE F05** \
+~~Java anonymous class invoke error.~~ **_FIXED_**
+```
+int.__checker__
+```
+
 ### Class and inheritance
 
 ~~**ISSUE C01**~~ **_FIXED_** \
@@ -52,6 +58,14 @@ class B(A) {
 (new B()).printName();  // expect "B" but currently prints "A"
 
 ```
+
+~~**ISSUE C02**~~ **_FIXED_** \
+Generic name conflicting
+```
+class M<K, V>(HashDict<K, V or int?>) { { ... }
+dict := new M<int?, float?>();
+```
+In class `HashDict`, `V` should represent `float? or int?`, but it actually represents `float?`
 
 ### Mysterious bugs
 

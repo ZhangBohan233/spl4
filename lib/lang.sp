@@ -12,17 +12,17 @@ class Object {
         return Invokes.id(this);
     }
 
-    fn __str__() -> String? {
+    fn __repr__() -> String? {
         return __class__().__name__() + "@" + Invokes.id(this);
     }
 
-    fn __repr__() -> String? {
+    fn __str__() -> String? {
         return __class__().__name__() + "@" + Invokes.id(this);
     }
 }
 
 fn wrapper?(obj) {
-    return (not AbstractObject?(obj)) or Wrapper?(obj);
+    return (not Obj?(obj)) or Wrapper?(obj);
 }
 
 class Wrapper {
@@ -157,8 +157,8 @@ class Exception {
     }
 
     fn printStackTrace() {
-        Invokes.printErr(__class__().__name__() + ": " + msg + " ");
-        Invokes.printErr(traceMsg);
+        printErr(__class__().__name__() + ": " + msg + " ");
+        printErr(traceMsg);
     }
 }
 
@@ -169,6 +169,12 @@ class AttributeException(Exception) {
 }
 
 class ArgumentException(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
+class AssertionError(Exception) {
     fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
     }
@@ -199,6 +205,12 @@ class Interruption(Exception) {
 }
 
 class InvokeError(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
+
+class MutationError(Exception) {
     fn __init__(msg=null, cause=null) {
         super.__init__(msg, cause);
     }
@@ -246,18 +258,27 @@ class UnknownTypeError(Exception) {
     }
 }
 
-class Iterator {
+class Iterator<T> {
     fn __hasNext__() -> boolean? {
         throw new NotImplementedError();
     }
 
-    fn __next__() {
+    fn __next__() -> T {
         throw new NotImplementedError();
     }
 }
 
-class Iterable {
+class Iterable<T> {
     fn __iter__() -> Iterator? {
+        throw new NotImplementedError();
+    }
+}
+
+/*
+ * Extending this class indicates that the child class has collective elements.
+ */
+class Collection {
+    fn size() -> int {
         throw new NotImplementedError();
     }
 }
@@ -281,7 +302,7 @@ class ArrayIterator(Iterator) {
     }
 }
 
-class RangeIterator(Iterator) {
+class RangeIterator(Iterator<int?>) {
     var current;
     const end;
     const step;
@@ -307,7 +328,7 @@ class RangeIterator(Iterator) {
     }
 }
 
-class List(Iterable) {
+class List<T>(Iterable<T>, Collection) {
     var array;
     var _size;
 
@@ -334,30 +355,30 @@ class List(Iterable) {
 
     fn __repr__() {
         return "[" + strJoin(", ",
-                            this,
-                            lambda s -> cond {
-                                case List?(s) -> s.__class__().__name__() + "@" + Invokes.id(s);
-                                default -> repr(s);
-                            }) + "]";
+                             this,
+                             lambda s -> cond {
+                                 case Collection?(s) -> Object.__str__(s);
+                                 default -> repr(s);
+                             }) + "]";
     }
 
     fn __str__() {
         return "[" + strJoin(", ", this, repr) + "]";
     }
 
-    fn append(value) {
+    fn append(value: T) {
         set(_size++, value);
         if _size == array.length {
             _expand();
         }
     }
 
-    fn get(index) {
+    fn get(index: int?) -> T {
         _checkIndex(index)
         return array[index];
     }
 
-    fn insert(index, value) {
+    fn insert(index: int?, value: T) {
         if index == _size {
             append(value);
             return;
@@ -375,9 +396,7 @@ class List(Iterable) {
         }
     }
 
-    contract insert(int?, anyType) -> void;
-
-    fn set(index, value) {
+    fn set(index: int?, value: T) {
         _checkIndex(index)
         wrapper := wrap(value);
         array[index] = wrapper;
@@ -387,7 +406,7 @@ class List(Iterable) {
         return _size;
     }
 
-    fn remove(index) {
+    fn remove(index: int?) {
         _checkIndex(index);
         item := get(index);
         for i := index; i < _size; i++ {
@@ -398,8 +417,6 @@ class List(Iterable) {
             _collapse();
         }
     }
-
-    contract remove(int?) -> anyType;
 
     fn toArray(eleType=Object) {
         eleProc := cond {
@@ -443,17 +460,17 @@ class List(Iterable) {
     }
 }
 
-class LinkedListNode {
+class LinkedListNode<T> {
     var value;
     var next = null;
     var prev = null;
 
-    fn __init__(value) {
+    fn __init__(value: T) {
         this.value = value;
     }
 }
 
-class LinkedListIterator(Iterator) {
+class LinkedListIterator<T>(Iterator<T>) {
     var node;
 
     fn __init__(head: LinkedListNode?) {
@@ -464,14 +481,14 @@ class LinkedListIterator(Iterator) {
         return node is not null;
     }
 
-    fn __next__() {
+    fn __next__() -> T {
         rtn := node;
         node = node.next;
-        return rtn;
+        return rtn.value;
     }
 }
 
-class LinkedList(Iterable) {
+class LinkedList<T>(Iterable<T>, Collection) {
     var head = null;
     var tail = null;
     var _size = 0;
@@ -480,46 +497,63 @@ class LinkedList(Iterable) {
     }
 
     fn __iter__() {
-        return new LinkedListIterator(head);
+        return new LinkedListIterator<T>(head);
     }
 
     fn __repr__() {
-
+        return "[" + strJoin(", ",
+                             this,
+                             lambda s -> cond {
+                                 case Collection?(s) -> Object.__str__(s);
+                                 default -> repr(s);
+                             }) + "]";
     }
 
     fn __str__() {
-
+        return "[" + strJoin(", ", this, repr) + "]";
     }
 
-    fn append(value) {
-        node := new LinkedListNode(value);
+    fn append(value: T) {
+        node := new LinkedListNode<T>(value);
         node.prev = tail;
         if tail is not null {
             tail.next = node;
+        }
+        if head is null {
+            head = node;
         }
         tail = node;
         _size++;
     }
 
-    fn prepend(value) {
-        node := new LinkedListNode(value);
+    fn prepend(value: T) {
+        node := new LinkedListNode<T>(value);
         node.next = head;
         if head is not null {
             head.prev = node;
+        }
+        if tail is null {
+            tail = node;
         }
         head = node;
         _size++;
     }
 
-    fn getHead() {
+    fn getHead() -> T {
+        if _size == 0 {
+            throw new IndexError("Cannot get head from empty list");
+        }
         return head.value;
     }
 
-    fn getTail() {
+    fn getTail() -> T {
+        if _size == 0 {
+            throw new IndexError("Cannot get tail from empty list");
+        }
         return tail.value;
     }
 
-    fn removeFirst() {
+    fn removeFirst() -> T {
         if _size == 0 {
             throw new IndexError("Cannot remove from empty list");
         }
@@ -530,7 +564,7 @@ class LinkedList(Iterable) {
         return first.value;
     }
 
-    fn removeLast() {
+    fn removeLast() -> T {
         if _size == 0 {
             throw new IndexError("Cannot remove from empty list");
         }
@@ -546,7 +580,7 @@ class LinkedList(Iterable) {
     }
 }
 
-class Dict(Iterable) {
+class Dict<K, V>(Iterable<K>, Collection) {
     fn __getItem__(key) {
         return get(key);
     }
@@ -555,11 +589,29 @@ class Dict(Iterable) {
         put(key, value);
     }
 
-    fn put(key, value) {
+    fn __repr__() {
+        return "{" + strJoin(", ",
+                             this,
+                             lambda k -> repr(k) + "=" +
+                                 cond {
+                                     case Collection?(get(k)) -> Object.__str__(get(k));
+                                     default -> repr(get(k));
+                                 }) + "}";
+    }
+
+    fn __str__() {
+        return "{" + strJoin(", ", this, lambda k -> repr(k) + "=" + repr(get(k))) + "}";
+    }
+
+    fn contains(key: K) -> boolean? {
+        return get(key) is not null;
+    }
+
+    fn put(key: K, value: V) {
         throw new NotImplementedError();
     }
 
-    fn get(key) {
+    fn get(key: K) -> V or null? {
         throw new NotImplementedError();
     }
 
@@ -568,7 +620,7 @@ class Dict(Iterable) {
     }
 }
 
-class NaiveDict(Dict) {
+class NaiveDict<K, V>(Dict<K, V>) {
     const keys;
     const values;
     const length;
@@ -583,7 +635,7 @@ class NaiveDict(Dict) {
         return new ArrayIterator(keys);
     }
 
-    fn get(key) {
+    fn get(key: K) -> V or null? {
         for var i = 0; i < length; i++ {
             if (keys[i] == key) {
                 return values[i];
@@ -593,6 +645,7 @@ class NaiveDict(Dict) {
     }
 
     fn put(key, value) {
+        throw new MutationError("NaiveDict is immutable.");
     }
 
     fn size() {
@@ -600,7 +653,7 @@ class NaiveDict(Dict) {
     }
 }
 
-class HashDictIterator(Iterator) {
+class HashDictIterator<K>(Iterator<K>) {
     const dict;
     var index = 0;
     var looped = 0;
@@ -614,7 +667,7 @@ class HashDictIterator(Iterator) {
         return looped < dict.size();
     }
 
-    fn __next__() {
+    fn __next__() -> T {
         if node is null {
             while index < dict.array.length {
                 node = dict.array[index++];
@@ -630,29 +683,29 @@ class HashDictIterator(Iterator) {
     }
 }
 
-class HashEntry {
+class HashEntry<K, V> {
     var key;
     var value;
     var next = null;
 
-    fn __init__(key, value) {
+    fn __init__(key: K, value: V) {
         this.key = key;
         this.value = value;
     }
 }
 
-class HashDict(Dict) {
+class HashDict<K, V>(Dict<K, V>) {
     const loadFactor;
     var eleCount = 0;
     var array;
 
     fn __init__(initCap: int? = 8, loadFactor: float? = 0.75) {
         this.loadFactor = loadFactor;
-        this.array = new Obj[initCap];
+        this.array = new HashEntry?[initCap];
     }
 
     fn __iter__() {
-        return new HashDictIterator(this);
+        return new HashDictIterator<K>(this);
     }
 
     /*
@@ -660,7 +713,7 @@ class HashDict(Dict) {
      *
      * Do not do this while loop through this dict.
      */
-    fn put(key, value) {
+    fn put(key: K, value: V) {
         hashCode := hash(key, array.length);
         entry := array[hashCode];
         if entry is null {
@@ -689,7 +742,7 @@ class HashDict(Dict) {
         }
     }
 
-    fn get(key) {
+    fn get(key: K) -> V or null? {
         hashCode := hash(key, array.length);
         entry := array[hashCode];
         if entry is null {
@@ -710,7 +763,7 @@ class HashDict(Dict) {
      *
      * Do not do this while loop through this dict.
      */
-    fn remove(key) {
+    fn remove(key: K) -> V or null? {
         hashCode := hash(key, array.length);
         entry := array[hashCode];
         if entry is null {
@@ -750,7 +803,7 @@ class HashDict(Dict) {
         cond {
             case Object?(key) {
                 code = key.__hash__();
-            } case AbstractObject?(key) {
+            } case Obj?(key) {
                 code = key.__hash__();
             } default {
                 code = wrap(key).__hash__();
@@ -764,7 +817,7 @@ class HashDict(Dict) {
     }
 
     fn _expand() {
-        newArr := new Obj[array.length * 2];
+        newArr := new HashEntry?[array.length * 2];
         for i := 0; i < array.length; i++ {
             oldEntry := array[i];
             if oldEntry is not null {
@@ -790,6 +843,390 @@ class HashDict(Dict) {
             }
         }
         this.array = newArr;
+    }
+}
+
+class TreeEntry<K, V> {
+    var key;
+    var value;
+    var left = null;
+    var right = null;
+    var height = 1;
+
+    fn __init__(key: K, value: V) {
+        this.key = key;
+        this.value = value;
+    }
+}
+
+class TDValueContainer {
+    var node = null;
+}
+
+/*
+ * An implementation of binary search tree.
+ *
+ * This is an AVL implementation
+ */
+class TreeDict<K, V>(Dict<K, V>) {
+    var root = null;
+    var _size = 0;
+
+    fn __init__() {
+    }
+
+    fn __iter__() {
+        return linearize().__iter__();
+    }
+
+    fn put(key: K, value: V) {
+        root = _insert(key, value, root);
+    }
+
+    fn get(key: K) -> V {
+        return _get(key, root);
+    }
+
+    fn linearize(reverse: boolean? = false) -> LinkedList? {
+        list := new LinkedList<K>();
+        _lin(root, list, reverse);
+        return list;
+    }
+
+    fn maxKey() -> K {
+        if root is null {
+            return null;
+        }
+        return _max(root).key;
+    }
+
+    fn minKey() -> K {
+        if root is null {
+            return null;
+        }
+        return _min(root).key;
+    }
+
+    fn remove(key: K) -> V {
+        container := new TDValueContainer();
+        root = _delete(key, root, container);
+        if container.node is null {
+            return null;
+        }
+        return container.node.value;
+    }
+
+    fn size() {
+        return _size;
+    }
+
+    fn printTree() {
+        _printNode(root, 0, "n");
+    }
+
+    fn _printNode(node, indent, msg) {
+        if node is not null {
+            print(" " * indent + msg + ": " + str(node.key) + ": " + str(node.value));
+            _printNode(node.left, indent + 2, "l");
+            _printNode(node.right, indent + 2, "r");
+        }
+    }
+
+    fn _lin(node, list, reverse) {
+        if node is not null {
+            _lin(node.left, list, reverse);
+            if reverse {
+                list.prepend(node.key);
+            } else {
+                list.append(node.key);
+            }
+            _lin(node.right, list, reverse);
+        }
+    }
+
+    fn _max(node) {
+        if node.right is null {
+            return node;
+        }
+        return _max(node.right);
+    }
+
+    fn _min(node) {
+        if node.left is null {
+            return node;
+        }
+        return _min(node.left);
+    }
+
+    fn _get(key, node) {
+        if node is null {
+            return null;
+        }
+        cond {
+            case key < node.key {
+                return _get(key, node.left);
+            } case key > node.key {
+                return _get(key, node.right);
+            } default {
+                return node.value;
+            }
+        }
+    }
+
+    fn _height(node) {
+        if node is null {
+            return 0;
+        }
+        return node.height;
+    }
+
+    fn _balanceFactor(node) {
+        if node is null {
+            return 0;
+        }
+        return _height(node.right) - _height(node.left);
+    }
+
+    /*
+     * Insert and returns the new root at this level.
+     */
+    fn _insert(key, value, node) {
+        if node is null {
+            _size++;
+            return new TreeEntry<K, V>(key, value);
+        }
+        cond {
+            case key < node.key {
+                node.left = _insert(key, value, node.left);
+            }
+            case key > node.key {
+                node.right = _insert(key, value, node.right);
+            }
+            default {
+                node.value = value;
+                return node;
+            }
+        }
+        leftH := _height(node.left);
+        rightH := _height(node.right);
+        node.height = 1 + max(leftH, rightH);
+        bf := rightH - leftH
+        leftBf := _balanceFactor(node.left);
+        rightBf := _balanceFactor(node.right);
+        if bf < -1 {  // left longer
+            if leftBf < 0 {
+                return _rotationLL(node);
+            }
+            if leftBf > 0 {
+                return _rotationLR(node);
+            }
+            // it is impossible that the bf of left child is 0
+            throw new IndexError("Unexpected case.");
+        }
+        if bf > 1 {
+            if rightBf < 0 {
+                return _rotationRL(node);
+            }
+            if rightBf > 0 {
+                return _rotationRR(node);
+            }
+            throw new IndexError("Unexpected case.");
+        }
+        return node;
+    }
+
+    fn _delete(key, node, container=null) {
+        if node is null {
+            return null;
+        }
+        var ret;
+        cond {
+            case key < node.key {
+                node.left = _delete(key, node.left, container);
+                ret = node;
+            }
+            case key > node.key {
+                node.right = _delete(key, node.right, container);
+                ret = node;
+            }
+            default {
+                if container is not null {
+                    container.node = node;
+                }
+                cond {
+                    case node.left is null {
+                        rn := node.right;
+                        node.right = null;
+                        _size--;
+                        if rn is null {
+                            return null;
+                        }
+                        ret = rn;
+                    }
+                    case node.right is null {
+                        ln := node.left;
+                        node.left = null;
+                        _size--;
+                        ret = ln;  // the last case guarantees ln is not null
+                    }
+                    default {
+                        replacement := _min(node.right);  // use the minimum element that is bigger than node
+                        replacement.right = _delete(replacement.key, node.right);  // remove that element from its pos
+                        replacement.left = node.left;
+
+                        //node.left = null;
+                        //node.right = null;
+
+                        ret = replacement;
+                    }
+                }
+            }
+        }
+
+        leftH := _height(ret.left);
+        rightH := _height(ret.right);
+        ret.height = 1 + max(leftH, rightH);
+        bf := rightH - leftH
+        leftBf := _balanceFactor(ret.left);
+        rightBf := _balanceFactor(ret.right);
+        if bf < -1 {  // left longer
+            if leftBf <= 0 {
+                return _rotationLL(ret);
+            }
+            if leftBf > 0 {
+                return _rotationLR(ret);
+            }
+        }
+        if bf > 1 {
+            if rightBf < 0 {
+                return _rotationRL(ret);
+            }
+            if rightBf >= 0 {
+                return _rotationRR(ret);
+            }
+        }
+        return ret;
+    }
+
+    /* The full name of _rotateLL is 'do rotation in the Left-Left case' */
+
+    fn _rotationLL(node) {
+        temp := node.left.right;
+        newRoot := node.left;
+        newRoot.right = node;
+        node.left = temp;
+
+        node.height = 1 + max(_height(node.left), _height(node.right));
+        newRoot.height = 1 + max(_height(newRoot.left), _height(newRoot.right));
+
+        return newRoot;
+    }
+
+    fn _rotationRR(node) {
+        temp := node.right.left;
+        newRoot := node.right;
+        newRoot.left = node;
+        node.right = temp;
+
+        node.height = 1 + max(_height(node.left), _height(node.right));
+        newRoot.height = 1 + max(_height(newRoot.left), _height(newRoot.right));
+
+        return newRoot;
+    }
+
+    fn _rotationLR(node) {
+        node.left := _rotationRR(node.left);
+        return _rotationLL(node);
+    }
+
+    fn _rotationRL(node) {
+        node.right := _rotationLL(node.right);
+        return _rotationRR(node);
+    }
+}
+
+class Set<T>(Iterable<T>, Collection) {
+    fn __repr__() {
+        return "{" + strJoin(", ",
+                             this,
+                             lambda s -> cond {
+                                 case Collection?(s) -> Object.__str__(s);
+                                 default -> repr(s);
+                             }) + "}";
+    }
+
+    fn __str__() {
+        return "{" + strJoin(", ", this, repr) + "}";
+    }
+
+    fn remove(item: T) -> T or null? {
+        throw new NotImplementedError();
+    }
+
+    fn contains(key: K) -> boolean? {
+        throw new NotImplementedError();
+    }
+
+    fn put(item: T) {
+        throw new NotImplementedError();
+    }
+}
+
+class HashSet<T>(Set<T>) {
+    const dict;
+    const present = new Object();
+
+    fn __init__(initCap: int? = 8, loadFactor: float? = 0.75) {
+        dict = new HashDict<T, Object?>(initCap, loadFactor);
+    }
+
+    fn __iter__() {
+        return dict.__iter__();
+    }
+
+    fn contains(key: K) -> boolean? {
+        return dict.contains(key);
+    }
+
+    fn put(item: T) {
+        dict.put(item, present);
+    }
+
+    fn remove(item: T) -> T or null? {
+        return dict.remove(item);
+    }
+
+    fn size() {
+        return dict.size();
+    }
+}
+
+class TreeSet<T>(Set<T>) {
+    const dict;
+    const present = new Object();
+
+    fn __init__(initCap: int? = 8, loadFactor: float? = 0.75) {
+        dict = new TreeDict<T, Object?>();
+    }
+
+    fn __iter__() {
+        return dict.__iter__();
+    }
+
+    fn contains(key: K) -> boolean? {
+        return dict.contains(key);
+    }
+
+    fn put(item: T) {
+        dict.put(item, present);
+    }
+
+    fn remove(item: T) -> T or null? {
+        return dict.remove(item);
+    }
+
+    fn size() {
+        return dict.size();
     }
 }
 
@@ -830,8 +1267,27 @@ class String {
         return true;
     }
 
+    fn __getItem__(index: int?) -> char? {
+        return __chars__[index];
+    }
+
+    fn __mul__(multiplier: int?) -> String? {
+        if multiplier < 0 {
+            throw new ArgumentException("String multiplication must have non-negative multiplier.");
+        }
+        destLen := length * multiplier;
+        array := new char[destLen];
+        for i := 0; i < multiplier; i++ {
+            st := i * length;
+            for j := 0; j < length; j++ {
+                array[st + j] = __chars__[j];
+            }
+        }
+        return new String(array);
+    }
+
     fn __ne__(other) {
-        return type(this) is not type(other) or not __eq__(other);
+        return not __eq__(other);
     }
 
     fn __hash__() {
@@ -840,6 +1296,85 @@ class String {
             hash = hash * 33 + int(ch);
         }
         return hash;
+    }
+
+    fn format(*args) -> String? {
+        plainList := new List<String?>();
+        patternList := new List<String?>();
+        curBegin := 0;
+        argIndex := 0;
+        for i := 0; i < length - 1; i++ {
+            c := __chars__[i];
+            if c == '%' {
+                next := __chars__[i + 1];
+                switch next {
+                    case 'd' {
+                        plainList.append(substring(curBegin, i));
+                        curBegin = i + 2;
+                        patternList.append(str(int(args[argIndex++])));
+                        i++;
+                    }
+                    case 'f' {
+                        plainList.append(substring(curBegin, i));
+                        curBegin = i + 2;
+                        patternList.append(str(float(args[argIndex++])));
+                        i++;
+                    }
+                    case 's' {
+                        plainList.append(substring(curBegin, i));
+                        curBegin = i + 2;
+                        patternList.append(str(args[argIndex++]));
+                        i++;
+                    }
+                }
+            }
+        }
+        plainList.append(substring(curBegin));
+        totalLen := 0;
+        for part in plainList {
+            totalLen += part.length;
+        }
+        for part in patternList {
+            totalLen += part.length;
+        }
+        array := new char[totalLen];
+        index := 0;
+        for i := 0; i < patternList.size(); i++ {
+            pla := plainList.get(i);
+            pat := patternList.get(i);
+            for j := 0; j < pla.length; j++ {
+                array[index++] = pla[j];
+            }
+            for j := 0; j < pat.length; j++ {
+                array[index++] = pat[j];
+            }
+        }
+        pla := plainList.get(plainList.size() - 1);
+        for j := 0; j < pla.length; j++ {
+            array[index++] = pla[j];
+        }
+        return new String(array);
+    }
+
+    fn substring(begin: int?, end: int? or null? = null) -> String? {
+        if end is null {
+            end = length;
+        }
+        if begin > end {
+            throw new IndexError("End must greater than begin.");
+        }
+        if begin < 0 {
+            throw new IndexError("Negative index.");
+        }
+        if end > length {
+             throw new IndexError("Index out of string length.");
+        }
+        size := end - begin;
+        array := new char[size];
+        for i := 0; i < size; i++ {
+            array[i] = __chars__[i + begin];
+        }
+        return new String(array);
     }
 
     fn toUpper() -> String? {
@@ -869,12 +1404,172 @@ class String {
     }
 }
 
+class InputStream {
+    fn close() {
+    }
+
+    /*
+     * Reads one byte from the stream,
+     */
+    fn readOne() -> int? {
+        throw new NotImplementedError();
+    }
+}
+
+class OutputStream {
+    fn close() {
+    }
+
+    /*
+     * Writes one byte to the stream.
+     */
+    fn writeOne(b: byte?) {
+        throw new NotImplementedError();
+    }
+
+    /*
+     * Writes all buffered data to the actual stream.
+     */
+    fn flush() {
+        throw new NotImplementedError();
+    }
+}
+
+class PrintStream(OutputStream) {
+    fn print(s, line: boolean? = true) {
+        throw new NotImplementedError();
+    }
+
+    fn flush() {
+    }
+
+    fn writeOne(b: byte?) {
+    }
+}
+
+/*
+ * Native wrapper class of stdout
+ */
+class NativeOutStream(PrintStream) {
+    fn print(s, line: boolean? = true) {
+        if line {
+            Invokes.println(s);
+        } else {
+            Invokes.print(s);
+        }
+    }
+}
+
+/*
+ * Native wrapper class of stderr
+ */
+class NativeErrStream(PrintStream) {
+    fn print(s, line: boolean? = true) {
+        if line {
+            Invokes.printlnErr(s);
+        } else {
+            Invokes.printErr(s);
+        }
+    }
+}
+
+class Reader {
+    fn readLine(omitEol: boolean? = false) {
+        throw new NotImplementedError();
+    }
+
+    fn close() {
+    }
+}
+
+class StreamReader {
+    const fis;
+    const bufferSize = 64;
+    var buffer = new byte[0];
+    var bufferPos = 0;
+
+    fn __init__(inputStream: InputStream?) {
+        fis = inputStream;
+    }
+
+    /*
+     * Reads a line from the text file, or null if reaches the end of the file.
+     */
+    fn readLine(omitEol: boolean? = false) -> String? or null? {
+        notFound := true;
+        res := [];
+        while notFound {
+            for ; bufferPos < buffer.length; bufferPos++ {
+                b := buffer[bufferPos];
+                if buffer[bufferPos] == '\n' {
+                    if not omitEol {
+                        res.append(b);
+                    }
+                    notFound = false;
+                    bufferPos++;
+                    break;
+                } else {
+                    res.append(b);
+                }
+            }
+            if notFound {
+                if not _fill() {
+                    break;
+                }
+            }
+        }
+        arr := res.toArray(byte);
+        return Invokes.bytesToString(arr) if arr.length > 0 else null;
+    }
+
+    fn close() {
+        fis.close();
+    }
+
+    /*
+     * Reads the whole file as one string.
+     */
+    fn read() -> String? {
+        lst := [];
+        var s;
+        while (s = readLine()) is not null {
+            lst.append(s);
+        }
+        return strJoin("", lst);
+    }
+
+    fn _fill() -> boolean? {
+        bufferPos = 0;
+        buffer = fis.read(bufferSize);
+        return buffer.length > 0;
+    }
+}
+
+/*
+ * Native wrapper class of stdin
+ */
+class NativeReader(Reader) {
+    fn readLine(omitEol: boolean? = false) {
+        return Invokes.input();
+    }
+}
+
 fn anyType(_) {
     return true;
 }
 
+/*
+ * This function returns a boolean function that:
+ *     It returns true if and only if the argument is an array and:
+ *         1. The array has element type that is exactly 'eleType', or
+ *         2. The array is a generic array and has the generic is exactly 'eleType'
+ *
+ * For example, `array?(Object?)(new String?[2])` returns false although 'String' extends 'Object'.
+ */
 fn array?(eleType) {
-    return lambda x -> Array?(x) and x.type is eleType;
+    return fn arrayType(x) {
+        return Array?(x) and (x.type is eleType or x.generics is eleType);
+    }
 }
 
 fn clock() -> int? {
@@ -904,15 +1599,24 @@ fn orFn(fn1: Callable?, fn2: Callable?) {
 }
 
 fn input(prompt: String?="") {
-    return Invokes.input(prompt);
+    print(prompt, line=false);
+    return stdin.readLine();
+}
+
+fn max(a, b) {
+    return a if a > b else b;
+}
+
+fn min(a, b) {
+    return b if a > b else a;
 }
 
 fn print(s, line: boolean? = true) {
-    if line {
-        Invokes.println(s);
-    } else {
-        Invokes.print(s);
-    }
+    stdout.print(s, line);
+}
+
+fn printErr(s, line: boolean? = true) {
+    stderr.print(s, line);
 }
 
 fn printArray(arr: Array?, line: boolean = true) {
@@ -929,7 +1633,7 @@ fn script(path, *args) {
     return Invokes.script(path, *args);
 }
 
-contract script(String?, String?) -> anyType;
+contract script(String?, String?) -> any?;
 
 fn str(obj) {
     return Invokes.string(obj);
@@ -983,7 +1687,7 @@ fn strJoin(deliminator: String?, iter: array?(Obj) or Iterable?, processor: Call
 fn type(obj) {
     return cond {
         case Object?(obj) -> obj.__class__();
-        case AbstractObject?(obj) -> Invokes.nativeType(obj);
+        case Obj?(obj) -> Invokes.nativeType(obj);
         case int?(obj) -> int;
         case float?(obj) -> float;
         case char?(obj) -> char;
@@ -1040,7 +1744,7 @@ fn unwrapNum(num) {
     cond {
         case Wrapper?(num) {
             return num.value;
-        } case AbstractObject?(num) {
+        } case Obj?(num) {
             throw new TypeError("Cannot unwrap non-wrapper object.");
         } default {  // primitive
             return num;
@@ -1086,14 +1790,66 @@ fn setAttr(obj: Object?, attr: String?, value) {
     }
 }
 
-fn getClassByName(name: String?) {
+fn getClassByName(name: String?) -> Class? {
     if Invokes.hasGlobalName(name) {
         value := Invokes.getGlobalByName(name);
-        if Class?(value) {
-            return value;
-        }
     }
     throw new AttributeException("Name ''" + name + "' does not exist or is not a class.");
+}
+
+fn genericDict(obj: Object?) -> Dict? {
+    return Invokes.genericsMap(obj);
+}
+
+fn listTemplates(clazz: Class? or Object?) -> array?(String?) {
+    if Object?(clazz) {
+        return listTemplates(clazz.__class__());
+    }
+    return Invokes.listTemplates(clazz);
+}
+
+/*
+ * Usage: genericOf(GenClass?)(object);
+ */
+fn genericOf(clazz: Callable? or Class?, *generics: Callable?) {
+    if CheckerFunction?(clazz) {
+        return genericOf(clazz.__class__, *generics);
+    }
+    if not Class?(clazz) {
+        throw new TypeError("Not a generic type.");
+    }
+    typeChecker := clazz.__checker__;
+
+    return fn genericChecker(obj) -> boolean? {
+        if typeChecker(obj) {
+            temps := listTemplates(clazz);
+            if temps.length != generics.length {
+                return false;
+            }
+            gens := genericDict(obj);
+            for i := 0; i < temps.length; i++ {
+                actual := gens[temps[i]];
+                given := generics[i];
+                if actual != given {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+}
+
+fn setIn(newIn: Reader?) {
+    stdin = newIn;
+}
+
+fn setOut(out: PrintStream?) {
+    stdout = out;
+}
+
+fn setErr(err: PrintStream?) {
+    stderr = err;
 }
 
 // Constants
@@ -1101,3 +1857,8 @@ fn getClassByName(name: String?) {
 const copyright = "Copyright (C) Trash Software Studio.";
 const NATIVE_ERROR = new Exception();
 const INTERRUPTION = new Interruption("User interruption");
+
+// Variables
+var stdout = new NativeOutStream();
+var stderr = new NativeErrStream();
+var stdin = new NativeReader();

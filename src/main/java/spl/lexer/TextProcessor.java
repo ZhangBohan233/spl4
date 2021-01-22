@@ -1,5 +1,8 @@
 package spl.lexer;
 
+import spl.lexer.tokens.IdToken;
+import spl.lexer.tokens.StrToken;
+import spl.lexer.tokens.Token;
 import spl.lexer.treeList.*;
 import spl.util.LineFilePos;
 
@@ -11,6 +14,9 @@ public class TextProcessor {
 
     private final CollectiveElement root;
     private final boolean importLang;
+    /**
+     * Keeps evaluation order exactly the same as the parse order.
+     */
     private final LinkedHashMap<String, CollectiveElement> importedPaths;
 
     public TextProcessor(TokenizeResult tokenizeResult, boolean importLang) {
@@ -40,6 +46,8 @@ public class TextProcessor {
             resultEle = new BracketList(parentOfResult, collectiveElement.lineFile);
         else if (collectiveElement instanceof SqrBracketList)
             resultEle = new SqrBracketList(parentOfResult, collectiveElement.lineFile);
+        else if (collectiveElement instanceof ArrowBracketList)
+            resultEle = new ArrowBracketList(parentOfResult, collectiveElement.lineFile);
         else
             throw new SyntaxError("Unexpected element. ", collectiveElement.lineFile);
 

@@ -9,11 +9,6 @@ public abstract class SubAbstractEnvironment extends Environment {
         super(outer.memory, outer);
     }
 
-//    @Override
-//    public void defineFunction(String name, TypeValue funcTv, LineFile lineFile) {
-//        throw new EnvironmentError();
-//    }
-
     @Override
     public boolean isSub() {
         return true;

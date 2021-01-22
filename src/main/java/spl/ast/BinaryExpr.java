@@ -2,19 +2,23 @@ package spl.ast;
 
 import spl.util.BytesOut;
 import spl.util.LineFilePos;
-import spl.util.Utilities;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 public abstract class BinaryExpr extends Expression implements Buildable {
+    protected final String operator;
+    transient protected final boolean isLeftFirst;  // whether to evaluate left side at first
     protected Expression left;
     protected Expression right;
-    protected String operator;
 
-    public BinaryExpr(String operator, LineFilePos lineFile) {
+    public BinaryExpr(String operator, boolean isLeftFirst, LineFilePos lineFile) {
         super(lineFile);
         this.operator = operator;
+        this.isLeftFirst = isLeftFirst;
+    }
+
+    public BinaryExpr(String operator, LineFilePos lineFilePos) {
+        this(operator, true, lineFilePos);
     }
 
     @Override
@@ -31,20 +35,24 @@ public abstract class BinaryExpr extends Expression implements Buildable {
         return left;
     }
 
+    public void setLeft(Expression left) {
+        this.left = left;
+    }
+
     public Expression getRight() {
         return right;
+    }
+
+    public void setRight(Expression right) {
+        this.right = right;
     }
 
     public String getOperator() {
         return operator;
     }
 
-    public void setLeft(Expression left) {
-        this.left = left;
-    }
-
-    public void setRight(Expression right) {
-        this.right = right;
+    public boolean isLeftFirst() {
+        return isLeftFirst;
     }
 
     @Override

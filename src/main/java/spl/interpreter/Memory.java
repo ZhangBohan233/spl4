@@ -6,14 +6,15 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.splObjects.*;
+import spl.util.Configs;
 import spl.util.LineFilePos;
 
 import java.util.*;
 
 public class Memory {
 
-    public static final int INTERVAL = 1;
-    private static final int DEFAULT_HEAP_SIZE = 8192;
+//    public static final int INTERVAL = 1;
+    private static final int DEFAULT_HEAP_SIZE = Configs.getInt("heapSize", 8192);
     public final DebugAttributes debugs = new DebugAttributes();
     private final SplThing[] heap;
     private final Set<Environment> temporaryEnvs = new HashSet<>();
@@ -27,10 +28,10 @@ public class Memory {
     private final Set<Reference> permanentPointers = new HashSet<>();
     private final Deque<StackTraceNode> callStack = new ArrayDeque<>();
     private final GarbageCollector garbageCollector = new GarbageCollector();
-    private int heapSize;
+    private final int heapSize;
     private int stackSize;
     private int stackLimit = 1000;
-    private boolean checkContract = true;
+    private boolean checkContract;
     private int availableHead = 1;
 
     public Memory() {
@@ -53,10 +54,6 @@ public class Memory {
 
     public int getHeapSize() {
         return heapSize;
-    }
-
-    public void setHeapSize(int heapSize) {
-        this.heapSize = heapSize;
     }
 
     public int getHeapUsed() {
@@ -238,15 +235,15 @@ public class Memory {
 
     private class GarbageCollector {
 
-        private final Map<Integer, Set<Reference>> markedRefs = new HashMap<>();
+        private final Map<Integer, Set<ReferenceWrapper>> markedRefs = new HashMap<>();
 
         private void addRef(int addr, Reference ref) {
-            Set<Reference> refs = markedRefs.get(addr);
+            Set<ReferenceWrapper> refs = markedRefs.get(addr);
             if (refs != null) {
-                refs.add(ref);
+                refs.add(new ReferenceWrapper(ref));
             } else {
                 refs = new HashSet<>();
-                refs.add(ref);
+                refs.add(new ReferenceWrapper(ref));
                 markedRefs.put(addr, refs);
             }
         }
@@ -348,15 +345,6 @@ public class Memory {
             } else if (obj instanceof Instance) {
                 Instance instance = (Instance) obj;
                 mark(instance.getEnv());
-            } else if (obj instanceof SplClass) {
-                SplClass clazz = (SplClass) obj;
-                List<Reference> classPointers = clazz.getAllAttrPointers();
-                for (Reference attrPtr : classPointers) {
-                    if (attrPtr != null) {
-                        SplObject attrObj = get(attrPtr);
-                        markObjectAsUsed(attrObj, attrPtr.getPtr(), attrPtr);
-                    }
-                }
             }
 
             List<Reference> attrRefs = obj.listAttrReferences();
@@ -370,12 +358,13 @@ public class Memory {
         private void sweep() {
             int curAddr = 1;
             for (int p = 1; p < heapSize; p++) {
-                Set<Reference> refs = markedRefs.get(p);
+                Set<ReferenceWrapper> refs = markedRefs.get(p);
                 if (refs != null) {
                     int newAddr = curAddr++;
                     int objAddr = 0;
                     Reference firstRef = null;
-                    for (Reference ref : refs) {
+                    for (ReferenceWrapper refW : refs) {
+                        Reference ref = refW.reference;
                         if (firstRef == null) {
                             firstRef = ref;
                             objAddr = firstRef.getPtr();
@@ -396,6 +385,30 @@ public class Memory {
                 }
             }
             availableHead = curAddr;
+        }
+    }
+
+    /**
+     * This class creates a wrapper, which is used as the key in hashmap.
+     *
+     * This class compares two references by their memory location in java. The only way its {@code equals} returns
+     * {@code true} is two references are one.
+     */
+    private static class ReferenceWrapper {
+        private final Reference reference;
+
+        ReferenceWrapper(Reference reference) {
+            this.reference = reference;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return getClass() == o.getClass() && reference == ((ReferenceWrapper) o).reference;
+        }
+
+        @Override
+        public int hashCode() {
+            return reference != null ? reference.hashCode() : 0;
         }
     }
 }

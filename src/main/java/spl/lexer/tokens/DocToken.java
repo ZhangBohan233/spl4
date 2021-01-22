@@ -1,8 +1,8 @@
-package spl.lexer;
+package spl.lexer.tokens;
 
 import spl.util.LineFilePos;
 
-public class DocToken extends Token {
+public class DocToken extends LiteralToken {
 
     private final String doc;
 

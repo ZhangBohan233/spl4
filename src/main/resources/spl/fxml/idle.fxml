@@ -31,6 +31,9 @@
             <MenuItem onAction="#openFileAction" text="Open"/>
             <MenuItem onAction="#saveFileAction" text="Save"/>
         </Menu>
+        <Menu text="Tools">
+            <MenuItem onAction="#viewAstAction" text="View AST"/>
+        </Menu>
     </MenuBar>
 
 <!--    <TextArea fx:id="codeArea" GridPane.rowIndex="1"/>-->

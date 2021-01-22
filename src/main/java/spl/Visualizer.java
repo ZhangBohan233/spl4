@@ -24,8 +24,21 @@ public class Visualizer extends Application {
     private static Map<String, ParseResult> importedModules;
 
     public static void main(String[] args) throws IOException {
-        if (new Visualizer().load(args))
-            launch();
+        run(args, true);
+    }
+
+    public static boolean run(String[] args, boolean firstRun) throws IOException {
+        Visualizer visualizer = new Visualizer();
+        if (visualizer.load(args)) {
+            if (firstRun) {
+                launch();
+            } else {
+                Stage stage = new Stage();
+                visualizer.start(stage);
+            }
+            return true;
+        }
+        return false;
     }
 
     private boolean load(String[] args) throws IOException {

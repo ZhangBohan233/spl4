@@ -8,6 +8,7 @@ public class Constants {
 
     public static final String MAIN_FN = "main";
     public static final String INVOKES = "Invokes";
+    public static final String OBJ = "Obj";
     public static final String OBJECT_CLASS = "Object";
     public static final String STRING_CLASS = "String";
     public static final String EXCEPTION_CLASS = "Exception";
@@ -17,9 +18,12 @@ public class Constants {
     public static final String LIST_CLASS = "List";
     public static final String DICT_CLASS = "Dict";
     public static final String NAIVE_DICT = "NaiveDict";
+    public static final String HASH_DICT = "HashDict";
+    public static final String HASH_SET = "HashSet";
     public static final String WRAPPER = "Wrapper";
     public static final String THIS = "this";
     public static final String SUPER = "super";
+    public static final String INSTANCE_NAME = "__instance__";
     public static final String CLASS_NAME = "__name__";
     public static final String CONSTRUCTOR = "__init__";
     public static final String TO_STRING_FN = "__str__";
@@ -29,6 +33,7 @@ public class Constants {
     public static final String HAS_NEXT_FN = "__hasNext__";
     public static final String GET_ITEM_FN = "__getItem__";
     public static final String SET_ITEM_FN = "__setItem__";
+    public static final String PUT_FN = "put";
     public static final String STRING_CHARS = "__chars__";
     public static final String CLASS_MRO = "__mro__";
     public static final String WRAPPER_ATTR = "value";
@@ -36,8 +41,9 @@ public class Constants {
     public static final String DOC_ATTR = "__doc__";
     public static final String ARRAY_LENGTH = "length";
     public static final String ARRAY_TYPE = "type";
-    public static final String ANY_TYPE = "anyType";
+    public static final String ANY_TYPE = "any?";
     public static final String OR_FN = "orFn";
+    public static final String TYPE_FN = "type";
 
     /**
      * Error names
@@ -55,6 +61,7 @@ public class Constants {
     public static final String INHERITANCE_ERROR = "InheritanceError";
     public static final String PARAMETER_EXCEPTION = "ParameterException";
     public static final String RUNTIME_SYNTAX_ERROR = "RuntimeSyntaxError";
+    public static final String ASSERTION_ERROR = "AssertionError";
 
     public static final String INTERRUPTION_INS = "INTERRUPTION";
     public static final String NATIVE_ERROR_INS = "NATIVE_ERROR";

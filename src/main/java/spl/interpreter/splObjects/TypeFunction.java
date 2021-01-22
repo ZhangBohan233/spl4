@@ -1,11 +1,18 @@
 package spl.interpreter.splObjects;
 
+import spl.interpreter.primitives.Reference;
+import spl.util.Accessible;
+
 public abstract class TypeFunction extends NativeFunction {
-    public TypeFunction(String name, int leastArg, int mostArg) {
-        super(name, leastArg, mostArg);
+
+    @Accessible
+    public Reference __checker__ = Reference.NULL;
+
+    public TypeFunction(String name) {
+        super(name, 1);
     }
 
-    public TypeFunction(String name, int argCount) {
-        super(name, argCount);
+    public void setChecker(Reference __checker__) {
+        this.__checker__ = __checker__;
     }
 }

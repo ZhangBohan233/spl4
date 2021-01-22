@@ -36,6 +36,12 @@ public class FuncCall extends Expression {
     }
 
     @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        callObj.save(out);
+        arguments.save(out);
+    }
+
+    @Override
     protected SplElement internalEval(Environment env) {
         SplElement leftTv = callObj.evaluate(env);
         if (env.hasException()) return Undefined.ERROR;
@@ -53,11 +59,13 @@ public class FuncCall extends Expression {
             EvaluatedArguments ea = arguments.evalArgs(env);
             if (env.hasException()) return Undefined.ERROR;
             if (function instanceof SplMethod && env.hasName(Constants.THIS)) {
-                // calling a method inside class
+                // calling a method inside a method in class
                 Reference thisPtr = (Reference) env.get(Constants.THIS, lineFile);
                 ea.insertThis(thisPtr);
             }
-            return function.call(ea, env, lineFile);
+            Reference[] generics = evalGenerics(env);
+            if (env.hasException()) return Undefined.ERROR;
+            return function.call(ea, generics, env, lineFile);
         } else {
             return SplInvokes.throwExceptionWithError(
                     env,
@@ -65,6 +73,28 @@ public class FuncCall extends Expression {
                     "Object '" + obj + "' is not callable.",
                     lineFile);
         }
+    }
+
+    public Reference[] evalGenerics(Environment callingEnv) {
+        if (!(callObj instanceof GenericNode)) return null;
+        GenericNode genericNode = (GenericNode) callObj;
+        Reference[] generics = new Reference[genericNode.getGenericLine().size()];
+        for (int i = 0 ; i < generics.length; i++) {
+            Node n = genericNode.getGenericLine().get(i);
+            SplElement se = n.evaluate(callingEnv);
+            if (se instanceof Reference) {
+                generics[i] = (Reference) se;
+            } else {
+                SplInvokes.throwException(
+                        callingEnv,
+                        Constants.ARGUMENT_EXCEPTION,
+                        "Generic must be callable.",
+                        lineFile
+                );
+                return null;
+            }
+        }
+        return generics;
     }
 
     @Override
@@ -86,11 +116,5 @@ public class FuncCall extends Expression {
 
     public void setCallObj(Expression callObj) {
         this.callObj = callObj;
-    }
-
-    @Override
-    protected void internalSave(BytesOut out) throws IOException {
-        callObj.save(out);
-        arguments.save(out);
     }
 }

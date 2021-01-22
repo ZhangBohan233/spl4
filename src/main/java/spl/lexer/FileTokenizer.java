@@ -1,5 +1,7 @@
 package spl.lexer;
 
+import spl.lexer.tokens.IdToken;
+import spl.lexer.tokens.Token;
 import spl.lexer.treeList.BraceList;
 import spl.lexer.treeList.CollectiveElement;
 import spl.util.LineFilePos;
@@ -23,8 +25,8 @@ public class FileTokenizer extends Tokenizer {
         this.importLang = importLang;
     }
 
-    private static BraceList makeTreeList(List<Token> tokenList) {
-        BraceList root = new BraceList(null, LineFilePos.LF_TOKENIZER);
+    private BraceList makeTreeList(List<Token> tokenList) {
+        BraceList root = new BraceList(null, new LineFilePos(new LineFilePos.LineFile(0, srcFile), 0));
         CollectiveElement currentActive = root;
         for (int i = 0; i < tokenList.size(); ++i) {
             currentActive = makeTreeListRec(currentActive, tokenList, i);

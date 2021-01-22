@@ -4,6 +4,7 @@ import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import spl.ast.*;
 import spl.lexer.*;
+import spl.lexer.tokens.CharToken;
 import spl.parser.ParseError;
 import spl.parser.Parser;
 import spl.util.LineFilePos;

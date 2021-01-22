@@ -13,7 +13,7 @@ public class ArgumentParser {
     private boolean gcInfo;
     private boolean gcTrigger;
     private boolean saveCache;
-    private boolean checkContract = true;
+    private boolean checkContract = Configs.getBoolean("contract", true);
     private String msg;
     private String[] splArgs;
 
@@ -45,7 +45,7 @@ public class ArgumentParser {
                 } else {
                     mainSrcFile = new File(s);
                     if (!mainSrcFile.exists()) {
-                        msg = "Source file does not exist.";
+                        msg = "Source file '" + s + "' does not exist.";
                         allValid = false;
                         return;
                     }

@@ -1,6 +1,6 @@
 package spl.lexer.treeList;
 
-import spl.lexer.Token;
+import spl.lexer.tokens.Token;
 
 public class AtomicElement extends Element {
 

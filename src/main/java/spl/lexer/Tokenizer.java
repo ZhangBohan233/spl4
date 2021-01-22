@@ -1,5 +1,6 @@
 package spl.lexer;
 
+import spl.lexer.tokens.*;
 import spl.lexer.treeList.*;
 import spl.util.LineFilePos;
 import spl.util.Utilities;
@@ -73,10 +74,12 @@ public abstract class Tokenizer {
     );
 
     public static final Set<String> RESERVED = Set.of(
-            "class", "fn", "if", "else", "new", "return", "break",
-            "continue", "true", "false", "null", "while", "for", "import", "namespace",
-            "const", "var", "assert", "as", "super", "this", "lambda",
-            "cond", "switch", "case", "default", "fallthrough", "in", "yield"
+            "class", "fn", "if", "else", "new",
+            "return", "break", "continue", "true", "false",
+            "null", "while", "for", "import", "namespace",
+            "const", "var", "assert", "as", "super",
+            "this", "lambda", "cond", "switch", "case",
+            "default", "fallthrough", "in", "yield", "sync"
     );
 
     public static final Set<String> KEYWORDS = Utilities.mergeSets(
@@ -123,6 +126,21 @@ public abstract class Tokenizer {
                         throw new SyntaxError("'}' must close a '{', not a '" + symbol + "'. ",
                                 tk.getLineFile());
                     }
+                case "<":
+                    if (hasClosingArrowBracket(tokenList, index)) {
+                        return new ArrowBracketList(currentActive, tk.getLineFile());
+                    } else {
+                        currentActive.add(new AtomicElement(tk, currentActive));  // less than
+                        return currentActive;
+                    }
+                case ">":
+                    if (currentActive instanceof ArrowBracketList) {
+                        currentActive.parentElement.add(currentActive);
+                        return currentActive.parentElement;
+                    } else {
+                        currentActive.add(new AtomicElement(tk, currentActive));  // greater than
+                        return currentActive;
+                    }
                 default:
                     currentActive.add(new AtomicElement(tk, currentActive));
                     return currentActive;
@@ -131,6 +149,21 @@ public abstract class Tokenizer {
             currentActive.add(new AtomicElement(tk, currentActive));
             return currentActive;
         }
+    }
+
+    private static boolean hasClosingArrowBracket(List<Token> tokenList, int leftArrIndex) {
+        for (int i = leftArrIndex + 1; i < tokenList.size(); i++) {
+            Token tk = tokenList.get(i);
+            if (tk instanceof IdToken) {
+                String symbol = ((IdToken) tk).getIdentifier();
+                switch (symbol) {
+                    case ">": return true;
+                    case ";": return false;
+                }
+                if (RESERVED.contains(symbol)) return false;  // except 'and', 'or', 'not', so do not use KEYWORDS
+            } else if (tk instanceof LiteralToken) return false;
+        }
+        return false;
     }
 
     void proceedLine(String line, LineFilePos.LineFile lineFile) {

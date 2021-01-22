@@ -3,28 +3,27 @@ package spl.interpreter.splObjects;
 import spl.ast.Arguments;
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
+import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.util.LineFilePos;
 
+/**
+ * Native function, implemented in Java.
+ * <p>
+ * Note that native functions support neither variable length arguments nor keyword arguments.
+ */
 public abstract class NativeFunction extends SplCallable {
 
     private final String name;
-    private final int leastArg;
-    private final int mostArg;
-
-    public NativeFunction(String name, int leastArg, int mostArg) {
-        this.name = name;
-        this.leastArg = leastArg;
-        this.mostArg = mostArg;
-    }
+    private final int argCount;
 
     public NativeFunction(String name, int argCount) {
         this.name = name;
-        leastArg = argCount;
-        mostArg = argCount;
+        this.argCount = argCount;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -56,14 +55,15 @@ public abstract class NativeFunction extends SplCallable {
     protected abstract SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv);
 
     public SplElement call(Arguments arguments, Environment callingEnv) {
-        checkValidArgCount(arguments.getLine().size(), name, callingEnv, arguments.lineFile);
+        checkValidArgCount(arguments.getLine().size(), 0, name, callingEnv, arguments.getLineFile());
         if (callingEnv.hasException()) return Undefined.ERROR;
 
         return callFuncWithNode(arguments, callingEnv);
     }
 
-    public SplElement call(EvaluatedArguments evaluatedArgs, Environment callingEnv, LineFilePos lineFile) {
-        checkValidArgCount(evaluatedArgs.positionalArgs.size() + evaluatedArgs.keywordArgs.size(),
+    public SplElement call(EvaluatedArguments evaluatedArgs, Reference[] generics,
+                           Environment callingEnv, LineFilePos lineFile) {
+        checkValidArgCount(evaluatedArgs.positionalArgs.size(), evaluatedArgs.keywordArgs.size(),
                 name, callingEnv, lineFile);
         if (callingEnv.hasException()) return Undefined.ERROR;
 
@@ -76,12 +76,17 @@ public abstract class NativeFunction extends SplCallable {
     }
 
     @Override
-    public int maxArgCount() {
-        return mostArg;
+    public int maxPosArgCount() {
+        return argCount;
     }
 
     @Override
-    public int minArgCount() {
-        return leastArg;
+    public int minPosArgCount() {
+        return argCount;
+    }
+
+    @Override
+    public int maxKwArgCount() {
+        return 0;
     }
 }

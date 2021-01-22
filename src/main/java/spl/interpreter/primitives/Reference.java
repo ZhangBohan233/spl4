@@ -29,7 +29,7 @@ public class Reference extends SplElement {
 
     @Override
     public String toString() {
-        return ptr == 0 ? "null" : "Ref<" + ptr + ">";
+        return ptr == 0 ? "Ref<null>" : "Ref<" + ptr + ">";
     }
 
     public int getPtr() {
@@ -57,16 +57,11 @@ public class Reference extends SplElement {
 
     @Override
     public boolean equals(Object o) {
-        return this == o;
+        return getClass() == o.getClass() && ptr == ((Reference) o).ptr;
     }
 
     @Override
     public int hashCode() {
         return super.hashCode();
-    }
-
-    @Override
-    public boolean valueEquals(SplElement other) {
-        return getClass() == other.getClass() && ptr == ((Reference) other).ptr;
     }
 }
