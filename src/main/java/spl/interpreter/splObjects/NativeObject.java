@@ -18,10 +18,25 @@ import java.lang.reflect.Method;
 
 public class NativeObject extends SplObject {
 
+    @SuppressWarnings("unchecked")
+    private static Field getFieldRecursive(Class<? extends NativeObject> clazz, String attrName)
+            throws NoSuchFieldException {
+        try {
+            return clazz.getDeclaredField(attrName);
+        } catch (NoSuchFieldException e) {
+            if (clazz == NativeObject.class) throw new NoSuchFieldException();
+            try {
+                return getFieldRecursive((Class<? extends NativeObject>) clazz.getSuperclass(), attrName);
+            } catch (ClassCastException e2) {
+                throw new NoSuchFieldException();
+            }
+        }
+    }
+
     private static SplElement nativeAttribute(NativeObject obj, String attrName, Environment env,
                                               LineFilePos lineFile) {
         try {
-            Field field = obj.getClass().getDeclaredField(attrName);
+            Field field = getFieldRecursive(obj.getClass(), attrName);
             Accessible accessible = field.getAnnotation(Accessible.class);
             if (accessible != null) {
                 field.setAccessible(true);

@@ -36,5 +36,5 @@ fn main() {
     }
     xx := genericOf(A?, int?, boolean?);
     print(xx(a));
-    //print(int.__checker__);
+    print(int?.__class__);
 }

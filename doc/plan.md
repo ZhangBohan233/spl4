@@ -29,7 +29,6 @@
 * ~~String literal duplicate removal~~ **_DONE_**
 * ~~Reference count garbage collection~~ **_DISCARDED_**
 * ~~Memory reallocation during full gc~~ **_DONE_**
-* Multithreading
 * ~~String operations (upper, lower)~~ **_DONE_**
 * ~~Type wrapper of primitive and abstract object~~ **_DONE_**
 * ~~Type of array element~~ **_DONE_**
@@ -67,3 +66,4 @@
 * Iterator remove
 * Unittest
 * Anonymous class
+* Multithreading

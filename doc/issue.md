@@ -35,7 +35,7 @@ foo(3,a=4);  // should cause an error but does not
 ```
 
 **ISSUE F05** \
-Java anonymous class invoke error.
+~~Java anonymous class invoke error.~~ **_FIXED_**
 ```
 int.__checker__
 ```

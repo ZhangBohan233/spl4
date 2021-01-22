@@ -1,3 +1,9 @@
+===== Version 4074 =====
+2021/01/22
+
+* Bug fixes:
+    * Could not get native object attribute of its superclass
+
 ===== Version 4073 =====
 2021/01/22
 
