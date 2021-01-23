@@ -9,6 +9,7 @@ import spl.interpreter.env.GlobalEnvironment;
 import spl.interpreter.env.ModuleEnvironment;
 import spl.interpreter.invokes.NativeInFile;
 import spl.interpreter.invokes.NativeOutFile;
+import spl.interpreter.invokes.NativeThread;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.*;
 import spl.interpreter.splErrors.NativeError;
@@ -51,8 +52,8 @@ public class SplInterpreter {
                     Map.of(
                             CheckerFunction.class, "CheckerFunction",
                             NativeInFile.class, "NativeInFile",
-                            NativeOutFile.class, "NativeOutFile"
-//                            NativeThread.class, "NativeThread"
+                            NativeOutFile.class, "NativeOutFile",
+                            NativeThread.class, "NativeThread"
                     )
             );
     private static InputStream in = System.in;
@@ -525,7 +526,7 @@ public class SplInterpreter {
                     new EvaluatedArguments() : makeSplArgArray(args, globalEnvironment);
 
             SplElement rtn = mainFunc.call(splArg, globalEnvironment, Main.LF_MAIN);
-            while (globalEnvironment.getMemory().getThreadPoolSize() > 0) {
+            while (globalEnvironment.getMemory().getThreadPoolSize() > 1) {
                 Thread.sleep(1);
             }
 

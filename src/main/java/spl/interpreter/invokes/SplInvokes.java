@@ -297,7 +297,7 @@ public class SplInvokes extends NativeObject {
     }
 
     @Accessible
-    public SplElement string(Arguments arguments, Environment environment, LineFilePos lineFile) {
+    public synchronized SplElement string(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, "string", environment, lineFile);
 
         SplElement typeValue = arguments.getLine().getChildren().get(0).evaluate(environment);
@@ -306,7 +306,7 @@ public class SplInvokes extends NativeObject {
     }
 
     @Accessible
-    public SplElement repr(Arguments arguments, Environment environment, LineFilePos lineFile) {
+    public synchronized SplElement repr(Arguments arguments, Environment environment, LineFilePos lineFile) {
         checkArgCount(arguments, 1, "repr", environment, lineFile);
 
         SplElement typeValue = arguments.getLine().getChildren().get(0).evaluate(environment);
@@ -589,7 +589,7 @@ public class SplInvokes extends NativeObject {
     }
 
     @Accessible
-    public Undefined thread(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+    public Reference thread(Arguments arguments, Environment env, LineFilePos lineFilePos) {
         checkArgCount(arguments, 3, "Invokes.thread", env, lineFilePos);
 
         Reference objectPtr = (Reference) arguments.getLine().get(0).evaluate(env);
@@ -600,9 +600,8 @@ public class SplInvokes extends NativeObject {
         Bool daemonic = (Bool) arguments.getLine().get(2).evaluate(env);
 
         NativeThread nt = new NativeThread(target, objectPtr, env, daemonic.value, lineFilePos);
-        nt.start();
 
-        return Undefined.UNDEFINED;
+        return env.getMemory().allocateObject(nt, env);
     }
 
     @Accessible

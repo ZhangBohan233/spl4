@@ -1,3 +1,10 @@
+##### SPL4 Alpha 3 #####
+===== Version 4080 =====
+2021/01/23
+
+* Modified threading system: NativeThread is now a spl NativeType
+* Added new methods in Thread
+
 ===== Version 4079 =====
 2021/01/23
 

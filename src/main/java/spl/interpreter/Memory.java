@@ -37,7 +37,7 @@ public class Memory {
     private int stackLimit = Configs.getInt("stackLimit", 512);
     private boolean checkContract;
     private int availableHead = 1;
-    private int threadPoolSize = 0;
+    private int threadPoolSize = 1;  // one for the main thread
 
     public Memory() {
         heapSize = DEFAULT_HEAP_SIZE;
@@ -81,8 +81,8 @@ public class Memory {
         return syncPointers.contains(ref);
     }
 
-    public synchronized void newThread() {
-        threadPoolSize++;
+    public synchronized int newThread() {
+        return threadPoolSize++;
     }
 
     public synchronized void endThread() {
