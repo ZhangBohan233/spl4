@@ -350,7 +350,7 @@ public abstract class Tokenizer {
         private static final int UNDEFINED = 0;
 
         private static final int[] SELF_CONCATENATE = {
-                DIGIT, LETTER, GT, EQ, LT, AND, OR, UNDERSCORE, PLUS, MINUS, DOT
+                DIGIT, LETTER, GT, EQ, LT, AND, OR, UNDERSCORE, PLUS, MINUS, QUESTION
         };
         private static final int[][] CROSS_CONCATENATE = {
                 {LETTER, UNDERSCORE},

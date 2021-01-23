@@ -1,3 +1,12 @@
+===== Version 4079 =====
+2021/01/23
+
+* New syntax:
+    * Implemented anonymous class initialization via '<-'
+* Main thread wait for all threads to end
+* Bug fixes:
+    * Fixed an unexpected error while checking *args and **kwargs if there was no contract
+
 ===== Version 4078 =====
 2021/01/23
 

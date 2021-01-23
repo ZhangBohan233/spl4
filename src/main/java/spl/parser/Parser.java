@@ -16,6 +16,8 @@ import java.util.Map;
 
 public class Parser {
 
+    private static int anonymousFnCount = 0;
+    private static int anonymousClassCount = 0;
     private final CollectiveElement rootList;
     private final Map<String, StringLiteral> stringLiterals;
     private int varLevel = Declaration.USELESS;
@@ -276,6 +278,13 @@ public class Parser {
                                 varLevel = Declaration.USELESS;
                                 builder.finishPart();
                                 break;
+                            case "<-":
+                                Node callObj = builder.removeLast();
+                                bodyList = (BraceList) parent.get(index++);
+                                bodyBlock = parseBlock(bodyList);
+                                builder.addNode(new AnonymousClassExpr(
+                                        (FuncCall) callObj, bodyBlock, anonymousClassCount++, lineFile));
+                                break;
                             case "true":
                                 builder.addNode(new BoolLiteral(true, lineFile));
                                 break;
@@ -302,7 +311,7 @@ public class Parser {
                                     probParams = parent.get(index++);
                                 } else {
                                     probParams = next;
-                                    name = new NameNode("anonymous function", lineFile);
+                                    name = new NameNode("af-" + (anonymousFnCount++), lineFile);
                                 }
                                 Line templateLine = null;
                                 if (probParams instanceof ArrowBracketList) {

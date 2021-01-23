@@ -12,7 +12,6 @@ import spl.util.LineFilePos;
 import spl.util.Reconstructor;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 public class LambdaExpressionDef extends Expression {
 
@@ -26,6 +25,13 @@ public class LambdaExpressionDef extends Expression {
         this.parameters = parameters;
         this.body = body;
         this.isSync = isSync;
+    }
+
+    public static LambdaExpressionDef reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
+        Line params = Reconstructor.reconstruct(in);
+        Expression body = Reconstructor.reconstruct(in);
+        boolean isSync = in.readBoolean();
+        return new LambdaExpressionDef(params, body, isSync, lineFilePos);
     }
 
     @Override
@@ -48,12 +54,5 @@ public class LambdaExpressionDef extends Expression {
         parameters.save(out);
         body.save(out);
         out.writeBoolean(isSync);
-    }
-
-    public static LambdaExpressionDef reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
-        Line params = Reconstructor.reconstruct(in);
-        Expression body = Reconstructor.reconstruct(in);
-        boolean isSync = in.readBoolean();
-        return new LambdaExpressionDef(params, body, isSync, lineFilePos);
     }
 }

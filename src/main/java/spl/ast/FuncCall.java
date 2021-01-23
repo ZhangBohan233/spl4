@@ -69,7 +69,7 @@ public class FuncCall extends Expression {
             Reference[] generics = evalGenerics(env);
             if (env.hasException()) return Undefined.ERROR;
             if (isSync) {
-                try {
+                try {  // Note that the sync wait must after all arguments are evaluated.
                     while (env.getMemory().isSynced(ref)) {
                         Thread.sleep(1);
                     }

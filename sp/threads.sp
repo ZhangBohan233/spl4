@@ -1,6 +1,6 @@
 import threading
 
-sync fn foo(msg, i, gap) {
+fn foo(msg, i, gap) {
     print(msg + i);
     sleep(gap);
 }
@@ -27,4 +27,5 @@ fn main() {
     a.start();
     b.start();
     sleep(3000);
+    print("Main terminated.");
 }

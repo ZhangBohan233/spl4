@@ -87,13 +87,17 @@ public class ClassStmt extends Expression {
     }
 
     @Override
-    protected SplElement internalEval(Environment env) {
+    protected SplElement internalEval(Environment env) { ;
+        return crossEnvEval(env, env);
+    }
+
+    public SplElement crossEnvEval(Environment supClassDefEnv, Environment callingEnv) {
         validateExtending();
 
         List<Reference> superclassesPointers = new ArrayList<>();
         Map<Reference, Line> superclassGenerics = new HashMap<>();
         for (Node superclassesNode : superclassesNodes) {
-            Reference scPtr = (Reference) superclassesNode.evaluate(env);
+            Reference scPtr = (Reference) superclassesNode.evaluate(supClassDefEnv);
             superclassesPointers.add(scPtr);
             if (superclassesNode instanceof GenericNode) {
                 superclassGenerics.put(scPtr, ((GenericNode) superclassesNode).getGenericLine());
@@ -103,23 +107,23 @@ public class ClassStmt extends Expression {
 
         String[] templates = null;
         if (this.templates != null) {
-            templates = ContractNode.getDefinedTemplates(this.templates, env, lineFile);
-            if (env.hasException()) return Undefined.ERROR;
+            templates = ContractNode.getDefinedTemplates(this.templates, callingEnv, lineFile);
+            if (callingEnv.hasException()) return Undefined.ERROR;
         }
 
         SplElement clazzPtr =
                 SplClass.createClassAndAllocate(className, superclassesPointers, templates, superclassGenerics,
-                        body, env, docRef, isConst, lineFile);
+                        body, callingEnv, docRef, isConst, lineFile);
         if (clazzPtr == Undefined.ERROR) return Undefined.ERROR;  // a quicker way to check env.hasException()
 
-        env.defineVarAndSet(className, clazzPtr, getLineFile());
+        callingEnv.defineVarAndSet(className, clazzPtr, getLineFile());
 
         String iofName = className + "?";
         CheckerFunction instanceOfFunc = new CheckerFunction(iofName, (Reference) clazzPtr);
-        Reference iofPtr = env.getMemory().allocateFunction(instanceOfFunc, env);
-        env.defineVarAndSet(iofName, iofPtr, getLineFile());
+        Reference iofPtr = callingEnv.getMemory().allocateFunction(instanceOfFunc, callingEnv);
+        callingEnv.defineVarAndSet(iofName, iofPtr, getLineFile());
 
-        SplClass clazz = env.getMemory().get((Reference) clazzPtr);
+        SplClass clazz = callingEnv.getMemory().get((Reference) clazzPtr);
         clazz.setChecker(iofPtr);
 
         return clazzPtr;
@@ -127,7 +131,7 @@ public class ClassStmt extends Expression {
 
     @Override
     public String toString() {
-        return String.format("class %s(%s)", className, superclassesNodes);
+        return String.format("class %s(%s) %s", className, superclassesNodes, body);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package spl.ast;
 
+import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Int;
@@ -10,10 +11,10 @@ import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplArray;
 import spl.interpreter.splObjects.SplModule;
-import spl.parser.ParseError;
 import spl.util.*;
 
 import java.io.IOException;
+import java.util.List;
 
 public class NewExpr extends UnaryExpr {
 
@@ -28,15 +29,12 @@ public class NewExpr extends UnaryExpr {
         return se;
     }
 
-    @Override
-    protected void internalSave(BytesOut out) throws IOException {
-        value.save(out);
-    }
-
     private static SplElement directInitClass(Node node, Environment classDefEnv, Environment callEnv,
                                               LineFilePos lineFile) {
         if (node instanceof FuncCall) {
             return instanceCreation((FuncCall) node, classDefEnv, callEnv, lineFile);
+        } else if (node instanceof AnonymousClassExpr) {
+            return anonymousInstanceCreation((AnonymousClassExpr) node, classDefEnv, callEnv, lineFile);
         } else if (node instanceof IndexingNode) {
             return arrayCreation((IndexingNode) node, classDefEnv, callEnv, lineFile);
         } else if (node instanceof Dot) {
@@ -51,10 +49,15 @@ public class NewExpr extends UnaryExpr {
                 );
                 return Undefined.ERROR;
             }
-            SplModule module = (SplModule) classDefEnv.getMemory().get((Reference) dotLeft);
+            SplModule module = classDefEnv.getMemory().get((Reference) dotLeft);
             return directInitClass(dot.right, module.getEnv(), callEnv, lineFile);
         } else {
-            throw new NativeError("Class instantiation must be a call. Got " + node + " instead. ", lineFile);
+            return SplInvokes.throwExceptionWithError(
+                    callEnv,
+                    Constants.RUNTIME_SYNTAX_ERROR,
+                    "Class instantiation must be a call. Got " + node + " instead. ",
+                    lineFile
+            );
         }
     }
 
@@ -75,10 +78,31 @@ public class NewExpr extends UnaryExpr {
         return iap.pointer;
     }
 
+    private static SplElement anonymousInstanceCreation(AnonymousClassExpr ace,
+                                                        Environment supClassDefEnv,
+                                                        Environment callEnv,
+                                                        LineFilePos lineFilePos) {
+        ClassStmt cs = new ClassStmt(
+                ace.getAnonymousName(),
+                List.of(ace.getCall().callObj),
+                null,
+                ace.getBody(),
+                null,
+                false,
+                lineFilePos);
+        cs.crossEnvEval(supClassDefEnv, callEnv);
+        if (callEnv.hasException()) return Undefined.ERROR;
+        Instance.InstanceAndPtr iap = Instance.createInstanceWithInitCall(
+                ace.getAnonymousName(), EvaluatedArguments.of(), callEnv, lineFilePos
+        );
+        if (iap == null) return Undefined.ERROR;
+        return iap.pointer;
+    }
+
     private static SplElement arrayCreation(IndexingNode node,
-                                           Environment classDefEnv,
-                                           Environment callEnv,
-                                           LineFilePos lineFile) {
+                                            Environment classDefEnv,
+                                            Environment callEnv,
+                                            LineFilePos lineFile) {
 
         if (node.getArgs().getChildren().size() == 1) {
             Int length = (Int) node.getArgs().getChildren().get(0).evaluate(callEnv);
@@ -89,11 +113,12 @@ public class NewExpr extends UnaryExpr {
     }
 
     @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        value.save(out);
+    }
+
+    @Override
     protected SplElement internalEval(Environment env) {
-        if (value instanceof AnonymousClassExpr) {
-            throw new ParseError("Unexpected expression in right side of '<-'. ", getLineFile());
-        } else {
-            return directInitClass(value, env, env, getLineFile());
-        }
+        return directInitClass(value, env, env, getLineFile());
     }
 }

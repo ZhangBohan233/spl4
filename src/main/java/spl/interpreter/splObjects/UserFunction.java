@@ -101,7 +101,7 @@ public abstract class UserFunction extends SplCallable {
                                 location,
                                 callable.getName(),
                                 Utilities.typeName(arg, callingEnv, lineFile)),
-                        lineFile);
+                        conNode.getLineFile());
                 return false;
             }
         } else {
@@ -207,7 +207,7 @@ public abstract class UserFunction extends SplCallable {
                     SplElement arg = unpackArgs[j];
                     // In this case, the only choice is check contract before actually set it.
                     // It should not have any bad effect because 'this' cannot be '*this'
-                    if (!callContract(
+                    if (checkContract && !callContract(
                             param.contract,
                             arg,
                             scope,
@@ -250,7 +250,7 @@ public abstract class UserFunction extends SplCallable {
                     SplElement keyStr = StringLiteral.createString(argEntry.getKey().toCharArray(), scope, lineFile);
                     SplArray.setItemAtIndex(keyArrPtr, j, keyStr, scope, lineFile);
                     SplElement val = argEntry.getValue();
-                    if (!callContract(
+                    if (checkContract && !callContract(
                             param.contract,
                             val,
                             scope,

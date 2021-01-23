@@ -513,7 +513,7 @@ public class SplInterpreter {
         return true;
     }
 
-    void callMain(String[] args) {
+    void callMain(String[] args) throws InterruptedException {
         if (globalEnvironment.hasName(Constants.MAIN_FN)) {
             Reference mainPtr = (Reference) globalEnvironment.get(Constants.MAIN_FN, Main.LF_MAIN);
 
@@ -525,6 +525,9 @@ public class SplInterpreter {
                     new EvaluatedArguments() : makeSplArgArray(args, globalEnvironment);
 
             SplElement rtn = mainFunc.call(splArg, globalEnvironment, Main.LF_MAIN);
+            while (globalEnvironment.getMemory().getThreadPoolSize() > 0) {
+                Thread.sleep(1);
+            }
 
             if (globalEnvironment.hasException()) {
                 Utilities.removeErrorAndPrint(globalEnvironment, Main.LF_MAIN);

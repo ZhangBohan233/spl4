@@ -40,7 +40,6 @@ public class AstBuilder {
 
     private static final Map<String, Integer> PCD_BIN_SPECIAL = Map.of(
             ".", 500,
-            "<-", 160,  // must bigger than 'new'
             "->", 4,
             "in", 3,
             ":", 3,

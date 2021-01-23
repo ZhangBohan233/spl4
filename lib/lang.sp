@@ -1558,6 +1558,26 @@ fn anyType(_) {
     return true;
 }
 
+fn int??(x) {
+    return int?(x) or Integer?(x);
+}
+
+fn float??(x) {
+    return float?(x) or Float?(x);
+}
+
+fn char??(x) {
+    return char?(x) or Character(x);
+}
+
+fn boolean??(x) {
+    return boolean?(x) or Boolean?(x);
+}
+
+fn byte??(x) {
+    return byte?(x) or Byte?(x);
+}
+
 /*
  * This function returns a boolean function that:
  *     It returns true if and only if the argument is an array and:
@@ -1598,7 +1618,7 @@ fn orFn(fn1: Callable?, fn2: Callable?) {
     return lambda x -> fn1(x) or fn2(x);
 }
 
-fn input(prompt: String?="") {
+sync fn input(prompt: String?="") {
     print(prompt, line=false);
     return stdin.readLine();
 }
@@ -1611,18 +1631,12 @@ fn min(a, b) {
     return b if a > b else a;
 }
 
-fn print(s, line: boolean? = true) {
+sync fn print(s, line: boolean? = true) {
     stdout.print(s, line);
 }
 
-fn printErr(s, line: boolean? = true) {
+sync fn printErr(s, line: boolean? = true) {
     stderr.print(s, line);
-}
-
-fn printArray(arr: Array?, line: boolean = true) {
-    print("'[", line=false);
-    print(strJoin(", ", arr, repr), line=false);
-    print("]", line=line);
 }
 
 fn range(begin, end, step=1) {

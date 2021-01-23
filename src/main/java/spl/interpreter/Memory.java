@@ -37,6 +37,7 @@ public class Memory {
     private int stackLimit = Configs.getInt("stackLimit", 512);
     private boolean checkContract;
     private int availableHead = 1;
+    private int threadPoolSize = 0;
 
     public Memory() {
         heapSize = DEFAULT_HEAP_SIZE;
@@ -78,6 +79,18 @@ public class Memory {
 
     public synchronized boolean isSynced(Reference ref) {
         return syncPointers.contains(ref);
+    }
+
+    public synchronized void newThread() {
+        threadPoolSize++;
+    }
+
+    public synchronized void endThread() {
+        threadPoolSize--;
+    }
+
+    public synchronized int getThreadPoolSize() {
+        return threadPoolSize;
     }
 
     public Deque<StackTraceNode> getCallStack() {

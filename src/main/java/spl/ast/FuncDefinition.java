@@ -16,8 +16,8 @@ public class FuncDefinition extends Expression {
     public final NameNode name;
     private final Line parameters;
     private final BlockStmt body;
-    private final Line templateLine;
-    private final StringLiteralRef docRef;
+    private final Line templateLine;  // nullable
+    private final StringLiteralRef docRef;  // nullable
     private final boolean isConst;
     private final boolean isSync;
 

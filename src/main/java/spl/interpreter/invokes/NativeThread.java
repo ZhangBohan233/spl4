@@ -25,6 +25,8 @@ public class NativeThread extends Thread {
 
     @Override
     public void run() {
+        callingEnv.getMemory().newThread();
         target.call(EvaluatedArguments.of(object), callingEnv, callingLf);
+        callingEnv.getMemory().endThread();
     }
 }
