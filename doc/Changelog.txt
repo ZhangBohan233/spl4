@@ -1,3 +1,8 @@
+===== Version 4081 =====
+2021/01/25
+
+* Implemented bitwise operations for `Integer`
+
 ##### SPL4 Alpha 3 #####
 ===== Version 4080 =====
 2021/01/23

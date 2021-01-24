@@ -37,6 +37,15 @@ public class BinaryOperator extends BinaryExpr {
             "<", "__lt__"
     );
 
+    private static final Map<String, String> BITWISE_OP_MAP = Map.of(
+            "<<", "__lShift__",
+            ">>", "__rShift__",
+            ">>>", "__rShiftLogic__",
+            "&", "__bAnd__",
+            "|", "__bOr__",
+            "^", "__bXor__"
+    );
+
     private static final Set<String> UNCHANGED_LOGICAL = Set.of(
             "is", "is not"
     );
@@ -49,6 +58,50 @@ public class BinaryOperator extends BinaryExpr {
         this.type = type;
     }
 
+    private static SplElement pointerBitwise(Reference leftPtr,
+                                             SplElement rightEle,
+                                             String operator,
+                                             Environment env,
+                                             LineFilePos lineFilePos) {
+        SplObject leftObj = env.getMemory().get(leftPtr);
+        if (leftObj instanceof Instance) {
+            return callOpFunction(leftPtr,
+                    (Instance) leftObj,
+                    rightEle,
+                    operator,
+                    BITWISE_OP_MAP.get(operator),
+                    env,
+                    lineFilePos);
+        } else {
+            return SplInvokes.throwExceptionWithError(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Binary operator type error. Left side: ",
+                    lineFilePos);
+        }
+    }
+
+    private static SplElement callOpFunction(Reference leftPtr,
+                                             Instance leftObj,
+                                             SplElement rightEle,
+                                             String operator,
+                                             String fnName,
+                                             Environment env,
+                                             LineFilePos lineFilePos) {
+        if (fnName == null) return SplInvokes.throwExceptionWithError(
+                env,
+                Constants.TYPE_ERROR,
+                "Type '" + leftObj.getClass().getName() + "' does not support operator " + operator,
+                lineFilePos
+        );
+        Environment instanceEnv = leftObj.getEnv();
+        SplElement fnEle = instanceEnv.get(fnName, lineFilePos);
+        if (fnEle == Undefined.ERROR) return Undefined.ERROR;
+        Reference fnPtr = (Reference) fnEle;
+        SplMethod opFn = env.getMemory().get(fnPtr);
+        return opFn.call(EvaluatedArguments.of(leftPtr, rightEle), env, lineFilePos);
+    }
+
     private static SplElement pointerNumericArithmetic(Reference leftPtr,
                                                        SplElement rightEle,
                                                        String operator,
@@ -56,13 +109,13 @@ public class BinaryOperator extends BinaryExpr {
                                                        LineFilePos lineFile) {
         SplObject leftObj = env.getMemory().get(leftPtr);
         if (leftObj instanceof Instance) {
-            String fnName = ARITHMETIC_OP_MAP.get(operator);
-            Environment instanceEnv = ((Instance) leftObj).getEnv();
-            SplElement fnEle = instanceEnv.get(fnName, lineFile);
-            if (fnEle == Undefined.ERROR) return fnEle;
-            Reference fnPtr = (Reference) fnEle;
-            SplMethod opFn = env.getMemory().get(fnPtr);
-            return opFn.call(EvaluatedArguments.of(leftPtr, rightEle), env, lineFile);
+            return callOpFunction(leftPtr,
+                    (Instance) leftObj,
+                    rightEle,
+                    operator,
+                    ARITHMETIC_OP_MAP.get(operator),
+                    env,
+                    lineFile);
         } else {
             return SplInvokes.throwExceptionWithError(
                     env,
@@ -133,11 +186,14 @@ public class BinaryOperator extends BinaryExpr {
         } else {
             SplObject leftObj = env.getMemory().get(l);
             if (leftObj instanceof Instance) {
-                String fnName = LOGICAL_OP_MAP.get(op);
-                Environment instanceEnv = ((Instance) leftObj).getEnv();
-                Reference fnPtr = (Reference) instanceEnv.get(fnName, lineFile);
-                SplMethod opFn = env.getMemory().get(fnPtr);
-                SplElement res = opFn.call(EvaluatedArguments.of(l, r), env, lineFile);
+                SplElement res = callOpFunction(
+                        l,
+                        (Instance) leftObj,
+                        r,
+                        op,
+                        LOGICAL_OP_MAP.get(op),
+                        env,
+                        lineFile);
                 if (res instanceof Bool) {
                     return res;
                 }
@@ -188,6 +244,17 @@ public class BinaryOperator extends BinaryExpr {
         };
     }
 
+    public static BinaryOperator reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
+        String op = is.readString();
+        Expression left = Reconstructor.reconstruct(is);
+        Expression right = Reconstructor.reconstruct(is);
+        int type = is.readInt();
+        BinaryOperator be = new BinaryOperator(op, type, lineFilePos);
+        be.setLeft(left);
+        be.setRight(right);
+        return be;
+    }
+
     @Override
     protected SplElement internalEval(Environment env) {
         if (type == ARITHMETIC) {
@@ -223,9 +290,13 @@ public class BinaryOperator extends BinaryExpr {
             SplElement leftEle = left.evaluate(env);
             SplElement rightEle = right.evaluate(env);
             if (env.hasException()) return Undefined.ERROR;
-            if (leftEle.isIntLike() && rightEle.isIntLike()) {
+
+            if (leftEle instanceof Reference) {
+                return pointerBitwise((Reference) leftEle, rightEle, operator, env, lineFile);
+            } else if (leftEle.isIntLike() && rightEle.isIntLike()) {
                 return bitwise(operator, env, leftEle.intValue(), rightEle.intValue(), lineFile);
             }
+
             return SplInvokes.throwExceptionWithError(
                     env,
                     Constants.TYPE_ERROR,
@@ -366,16 +437,5 @@ public class BinaryOperator extends BinaryExpr {
     protected void internalSave(BytesOut out) throws IOException {
         super.internalSave(out);
         out.writeInt(type);
-    }
-
-    public static BinaryOperator reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
-        String op = is.readString();
-        Expression left = Reconstructor.reconstruct(is);
-        Expression right = Reconstructor.reconstruct(is);
-        int type = is.readInt();
-        BinaryOperator be = new BinaryOperator(op, type, lineFilePos);
-        be.setLeft(left);
-        be.setRight(right);
-        return be;
     }
 }

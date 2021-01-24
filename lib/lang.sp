@@ -100,6 +100,36 @@ class Integer(Wrapper) {
     fn __hash__() {
         return value;
     }
+
+    fn __lShift__(o: int??) {
+        r := unwrapNum(o);
+        return new Integer(value << r);
+    }
+
+    fn __rShift__(o: int??) {
+        r := unwrapNum(o);
+        return new Integer(value >> r);
+    }
+
+    fn __rShiftLogic__(o: int??) {
+        r := unwrapNum(o);
+        return new Integer(value >>> r);
+    }
+
+    fn __bAnd__(o: int??) {
+        r := unwrapNum(o);
+        return new Integer(value & r);
+    }
+
+    fn __bOr__(o: int??) {
+        r := unwrapNum(o);
+        return new Integer(value | r);
+    }
+
+    fn __bXor__(o: int??) {
+        r := unwrapNum(o);
+        return new Integer(value ^ r);
+    }
 }
 
 class Float(Wrapper) {

@@ -150,7 +150,8 @@ public abstract class SplCallable extends NativeObject {
 
     public abstract int maxKwArgCount();
 
-    protected void checkValidArgCount(int posArgs, int kwArgs, String fnName, Environment callingEnv, LineFilePos callingLf) {
+    protected void checkValidArgCount(int posArgs, int kwArgs, String fnName, Environment callingEnv,
+                                      LineFilePos callingLf) {
         int leastPosArg = minPosArgCount();
         int mostPosArg = maxPosArgCount();
         int mostKwArg = maxKwArgCount();  // Note that minimum number of keyword arguments is always 0

@@ -529,7 +529,6 @@ public class SplInterpreter {
             while (globalEnvironment.getMemory().getThreadPoolSize() > 1) {
                 Thread.sleep(1);
             }
-
             if (globalEnvironment.hasException()) {
                 Utilities.removeErrorAndPrint(globalEnvironment, Main.LF_MAIN);
             } else {

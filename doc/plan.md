@@ -70,3 +70,5 @@
 * ~~Const fn: avoid it to be overridden~~ **_DONE_**
 * ~~Const class~~ **_DONE_**
 * Json
+* Bitwise operations for wrapper types
+* Error occurs while dealing with errors

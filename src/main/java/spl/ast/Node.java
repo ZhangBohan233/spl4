@@ -26,7 +26,7 @@ public abstract class Node {
         SplElement res = internalEval(env);
 
         // post
-//        if (env.hasException()) return null;
+//        if (env.hasException()) return Undefined.ERROR;
 
         return res;
     }
