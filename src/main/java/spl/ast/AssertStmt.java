@@ -31,6 +31,7 @@ public class AssertStmt extends UnaryStmt {
 
     @Override
     protected void internalProcess(Environment env) {
+        if (!env.getMemory().isCheckAssert()) return;
         SplElement val = value.evaluate(env);
         if (val instanceof Bool) {
             if (((Bool) val).value) return;

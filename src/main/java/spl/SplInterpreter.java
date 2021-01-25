@@ -22,10 +22,7 @@ import spl.lexer.TokenizeResult;
 import spl.lexer.treeList.CollectiveElement;
 import spl.parser.ParseResult;
 import spl.parser.Parser;
-import spl.util.ArgumentParser;
-import spl.util.Constants;
-import spl.util.LineFilePos;
-import spl.util.Utilities;
+import spl.util.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -483,10 +480,14 @@ public class SplInterpreter {
 
     private void initMemoryNoImport(ArgumentParser argumentParser) {
         vmStartBegin = System.currentTimeMillis();
-        Memory memory = new Memory();
+        Memory memory = new Memory(
+                new Memory.Options(
+                        Configs.getInt("stackLimit", 512),
+                        Configs.getInt("heapSize", 8192),
+                        argumentParser.isCheckContract(),
+                        Configs.getBoolean("assert", true)));
         if (argumentParser.isGcInfo()) memory.debugs.setPrintGcRes(true);
         if (argumentParser.isGcTrigger()) memory.debugs.setPrintGcTrigger(true);
-        memory.setCheckContract(argumentParser.isCheckContract());
         if (globalEnvironment == null) {
             globalEnvironment = new GlobalEnvironment(memory);
             initNatives(globalEnvironment);

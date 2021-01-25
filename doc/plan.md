@@ -71,6 +71,6 @@
 * ~~Const class~~ **_DONE_**
 * Json
 * ~~Bitwise operations for wrapper types~~ **_DONE_**
-* Error occurs while dealing with errors 
-* Array creation via `new int[3]{1, 2, 3}`
+* ~~Error occurs while dealing with errors~~ **_PARTIAL DONE_**
+* ~~Array creation via~~ `new int[3]{1, 2, 3}` **_DONE_**
 * ~~Comma in switch-case~~ **_DONE_**

@@ -44,4 +44,9 @@ public class BytesOut extends BufferedOutputStream {
             node.save(this);
         }
     }
+
+    public void writeOptional(Node nodeOrNull) throws IOException {
+        writeBoolean(nodeOrNull != null);
+        if (nodeOrNull != null) nodeOrNull.save(this);
+    }
 }

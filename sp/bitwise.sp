@@ -12,4 +12,5 @@ fn main() {
     print("asdasdax".split("a"));
 
     print(Callable.__superclassOf__(NativeType_Function));
+    print("This is a shit.".split(' '));
 }

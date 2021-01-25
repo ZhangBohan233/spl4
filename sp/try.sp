@@ -7,5 +7,8 @@ fn main() {
         throw new Exception("xxs");
     } catch NameError? as e {
 
+    } catch IndexError? as e {
+        print("index error");
+        throw new Exception(cause=e);
     }
 }

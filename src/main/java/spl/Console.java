@@ -13,6 +13,7 @@ import spl.lexer.*;
 import spl.lexer.treeList.BracketList;
 import spl.parser.ParseResult;
 import spl.parser.Parser;
+import spl.util.Configs;
 import spl.util.Constants;
 import spl.util.LineFilePos;
 import spl.util.Utilities;
@@ -59,7 +60,11 @@ public class Console {
         ParseResult pr = parser.parse();
         strLitBundleMap = parser.getStringLiterals();
 
-        Memory memory = new Memory();
+        Memory memory = new Memory(new Memory.Options(
+                Configs.getInt("stackLimit", 512),
+                Configs.getInt("heapSize", 8192),
+                Configs.getBoolean("contract", true),
+                Configs.getBoolean("assert", true)));
         globalEnvironment = new GlobalEnvironment(memory);
 
         LinkedHashMap<String, ParseResult> parsedModules = SplInterpreter.parseImportedModules(

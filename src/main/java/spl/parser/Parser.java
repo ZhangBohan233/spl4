@@ -754,7 +754,13 @@ public class Parser {
             // dict or set creation
             BraceList braceList = (BraceList) ele;
             Line content = parseOneLineBlock(braceList);
-            builder.addNode(DictSetLiteral.create(content, braceList.lineFile));
+            DictSetLiteral dcl = DictSetLiteral.create(content, braceList.lineFile);
+            if (builder.getLastAddedNode() instanceof IndexingNode) {
+                IndexingNode indexingNode = (IndexingNode) builder.getLastAddedNode();
+                indexingNode.setInitialValue(dcl);
+            } else {
+                builder.addNode(dcl);
+            }
         }
         return index;
     }

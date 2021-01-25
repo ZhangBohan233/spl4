@@ -105,8 +105,27 @@ public class NewExpr extends UnaryExpr {
                                             LineFilePos lineFile) {
 
         if (node.getArgs().getChildren().size() == 1) {
-            Int length = (Int) node.getArgs().getChildren().get(0).evaluate(callEnv);
-            return SplArray.createArray(node.getCallObj(), (int) length.value, callEnv, lineFile);
+            SplElement lengthRaw = node.getArgs().getChildren().get(0).evaluate(callEnv);
+            if (!(lengthRaw instanceof Int)) return SplInvokes.throwExceptionWithError(
+                    callEnv,
+                    Constants.TYPE_ERROR,
+                    "Array creation takes int as length.",
+                    lineFile
+            );
+            Int length = (Int) lengthRaw;
+            SplElement arrPtr = SplArray.createArray(node.getCallObj(), (int) length.value, callEnv, lineFile);
+            if (arrPtr == Undefined.ERROR) return Undefined.ERROR;
+            Reference arrPtrReal = (Reference) arrPtr;
+            if (node.getInitialValue() != null) {
+                DictSetLiteral initV = node.getInitialValue();
+                for (int i = 0; i < initV.getNodes().size(); i++) {
+                    SplElement val = initV.getNodes().get(i).evaluate(callEnv);
+                    if (val == Undefined.ERROR) return Undefined.ERROR;
+                    SplArray.setItemAtIndex(arrPtrReal, i, val, callEnv, lineFile);
+                }
+            }
+
+            return arrPtrReal;
         } else {
             throw new NativeError("Array creation must take exactly one int as argument. ", lineFile);
         }

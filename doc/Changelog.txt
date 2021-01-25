@@ -1,3 +1,11 @@
+===== Version 4083 =====
+2021/01/26
+
+* New syntax:
+    * Direct array creation via 'new int[4]{1, 2, 3, 4}'
+* Exception handler: print cause if it has a cause
+* More memory options
+
 ##### SPL4 Alpha 4 #####
 ===== Version 4082 =====
 2021/01/26
@@ -10,6 +18,7 @@
     * __class__()
 * Implemented more string operations
 * Improved 'array?(x)' and 'List.toArray' functions
+* Cancelled contract creation when no contract is specified by user
 
 ===== Version 4081 =====
 2021/01/25

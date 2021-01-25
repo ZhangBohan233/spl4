@@ -6,16 +6,14 @@ import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splErrors.NativeError;
 import spl.interpreter.splObjects.*;
-import spl.util.Configs;
 import spl.util.LineFilePos;
 
 import java.util.*;
 
 public class Memory {
 
-//    public static final int INTERVAL = 1;
-    private static final int DEFAULT_HEAP_SIZE = Configs.getInt("heapSize", 8192);
     public final DebugAttributes debugs = new DebugAttributes();
+    public final Options options;
     private final SplThing[] heap;
     private final Set<Environment> temporaryEnvs = new HashSet<>();
     /**
@@ -33,14 +31,14 @@ public class Memory {
     private final Set<Reference> syncPointers = new HashSet<>();
     private final GarbageCollector garbageCollector = new GarbageCollector();
     private final int heapSize;
-    private int stackSize;
-    private int stackLimit = Configs.getInt("stackLimit", 512);
-    private boolean checkContract;
+    private int stackPointer;
     private int availableHead = 1;
     private int threadPoolSize = 1;  // one for the main thread
 
-    public Memory() {
-        heapSize = DEFAULT_HEAP_SIZE;
+    public Memory(Options options) {
+        this.options = options;
+
+        heapSize = options.getHeapSize();
         heap = new SplThing[heapSize];
     }
 
@@ -57,15 +55,15 @@ public class Memory {
     }
 
     public synchronized void pushStack(FunctionEnvironment newCallEnv, LineFilePos lineFile) {
-        stackSize++;
+        stackPointer++;
         callStack.push(new StackTraceNode(newCallEnv, lineFile));
-        if (stackSize > stackLimit) {
+        if (stackPointer > options.getStackLimit()) {
             throw new MemoryError("Stack overflow. ");
         }
     }
 
     public synchronized void decreaseStack() {
-        stackSize--;
+        stackPointer--;
         callStack.pop();
     }
 
@@ -206,15 +204,15 @@ public class Memory {
     }
 
     public void setStackLimit(int stackLimit) {
-        this.stackLimit = stackLimit;
+        options.setStackLimit(stackLimit);
     }
 
     public boolean isCheckContract() {
-        return checkContract;
+        return options.isCheckContract();
     }
 
-    public void setCheckContract(boolean checkContract) {
-        this.checkContract = checkContract;
+    public boolean isCheckAssert() {
+        return options.isCheckAssert();
     }
 
     public static class MemoryError extends NativeError {
@@ -243,6 +241,68 @@ public class Memory {
         StackTraceNode(FunctionEnvironment env, LineFilePos callLineFile) {
             this.env = env;
             this.callLineFile = callLineFile;
+        }
+    }
+
+    /**
+     * This class creates a wrapper, which is used as the key in hashmap.
+     * <p>
+     * This class compares two references by their memory location in java. The only way its {@code equals} returns
+     * {@code true} is two references are one.
+     */
+    private static class ReferenceWrapper {
+        private final Reference reference;
+
+        ReferenceWrapper(Reference reference) {
+            this.reference = reference;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return getClass() == o.getClass() && reference == ((ReferenceWrapper) o).reference;
+        }
+
+        @Override
+        public int hashCode() {
+            return reference != null ? reference.hashCode() : 0;
+        }
+    }
+
+    public static class Options {
+        private final boolean checkContract;
+        private final boolean checkAssert;
+        private int stackLimit;
+        private int heapSize;
+
+        public Options(int stackLimit, int heapSize, boolean checkContract, boolean checkAssert) {
+            this.stackLimit = stackLimit;
+            this.heapSize = heapSize;
+            this.checkContract = checkContract;
+            this.checkAssert = checkAssert;
+        }
+
+        public int getHeapSize() {
+            return heapSize;
+        }
+
+        public void setHeapSize(int heapSize) {
+            this.heapSize = heapSize;
+        }
+
+        public int getStackLimit() {
+            return stackLimit;
+        }
+
+        public void setStackLimit(int stackLimit) {
+            this.stackLimit = stackLimit;
+        }
+
+        public boolean isCheckContract() {
+            return checkContract;
+        }
+
+        public boolean isCheckAssert() {
+            return checkAssert;
         }
     }
 
@@ -398,30 +458,6 @@ public class Memory {
                 }
             }
             availableHead = curAddr;
-        }
-    }
-
-    /**
-     * This class creates a wrapper, which is used as the key in hashmap.
-     *
-     * This class compares two references by their memory location in java. The only way its {@code equals} returns
-     * {@code true} is two references are one.
-     */
-    private static class ReferenceWrapper {
-        private final Reference reference;
-
-        ReferenceWrapper(Reference reference) {
-            this.reference = reference;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            return getClass() == o.getClass() && reference == ((ReferenceWrapper) o).reference;
-        }
-
-        @Override
-        public int hashCode() {
-            return reference != null ? reference.hashCode() : 0;
         }
     }
 }

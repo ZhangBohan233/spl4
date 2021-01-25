@@ -209,6 +209,10 @@ class Exception {
     fn printStackTrace() {
         printErr(__class__().__name__() + ": " + msg + " ");
         printErr(traceMsg);
+        if Exception?(cause) {
+            printErr("Caused by:");
+            cause.printStackTrace();
+        }
     }
 }
 
@@ -1377,9 +1381,7 @@ class String {
 
     fn count(target: String? or char??) -> int? {
         if char??(target) {
-            arr := new char[1];
-            arr[0] = unwrap(target);
-            target = new String(arr);
+            target = new String(new char[1]{unwrap(target)});
         }
         tl := target.length;
         if tl > length {
@@ -1397,9 +1399,7 @@ class String {
 
     fn find(target: String? or char??) -> int? {
         if char??(target) {
-            arr := new char[1];
-            arr[0] = unwrap(target);
-            target = new String(arr);
+            target = new String(new char[1]{unwrap(target)});
         }
         tl := target.length;
         if tl > length {
@@ -1416,9 +1416,7 @@ class String {
 
     fn rfind(target: String? or char??) -> int? {
         if char??(target) {
-            arr := new char[1];
-            arr[0] = unwrap(target);
-            target = new String(arr);
+            target = new String(new char[1]{unwrap(target)});
         }
         tl := target.length;
         if tl > length {
@@ -1548,9 +1546,7 @@ class String {
 
     fn split(d: String? or char??) -> array?(String?) {
         if char??(d) {
-            arr := new char[1];
-            arr[0] = unwrap(target);
-            d = new String(arr);
+            d = new String(new char[1]{unwrap(d)});
         }
         tl := d.length;
         if tl > length {

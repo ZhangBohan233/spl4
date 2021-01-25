@@ -11,6 +11,7 @@ import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplArray;
 import spl.interpreter.splObjects.SplMethod;
 import spl.interpreter.splObjects.SplObject;
+import spl.lexer.SyntaxError;
 import spl.util.*;
 
 import java.io.IOException;
@@ -20,6 +21,7 @@ public class IndexingNode extends Expression {
 
     private final Expression callObj;
     private final Line args;
+    private DictSetLiteral initialValue;
 
     public IndexingNode(Expression callObj, Line args, LineFilePos lineFile) {
         super(lineFile);
@@ -31,7 +33,27 @@ public class IndexingNode extends Expression {
     public static IndexingNode reconstruct(BytesIn in, LineFilePos lineFilePos) throws Exception {
         Expression callObj = Reconstructor.reconstruct(in);
         Line args = Reconstructor.reconstruct(in);
-        return new IndexingNode(callObj, args, lineFilePos);
+        var node = new IndexingNode(callObj, args, lineFilePos);
+        node.setInitialValue(in.readOptional());
+        return node;
+    }
+
+    @Override
+    protected void internalSave(BytesOut out) throws IOException {
+        callObj.save(out);
+        args.save(out);
+        out.writeOptional(initialValue);
+    }
+
+    public void setInitialValue(DictSetLiteral initialValue) {
+        if (initialValue.isDict())
+            throw new SyntaxError("Direct array creation must not contain assignments. ",
+                initialValue.getLineFile());
+        this.initialValue = initialValue;
+    }
+
+    public DictSetLiteral getInitialValue() {
+        return initialValue;
     }
 
     public Line getArgs() {
@@ -108,12 +130,6 @@ public class IndexingNode extends Expression {
 
     @Override
     public String toString() {
-        return callObj + " " + args;
-    }
-
-    @Override
-    protected void internalSave(BytesOut out) throws IOException {
-        callObj.save(out);
-        args.save(out);
+        return callObj + " " + args + (initialValue == null ? null : initialValue);
     }
 }

@@ -10,7 +10,8 @@ public class Configs {
     private static final Map<String, String> map = new HashMap<>(Map.of(
             "stackLimit", "512",
             "heapSize", "8192",
-            "contract", "true"
+            "contract", "true",
+            "assert", "true"
     ));
 
     public static void load() {

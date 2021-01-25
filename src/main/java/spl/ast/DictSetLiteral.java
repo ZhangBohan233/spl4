@@ -2,14 +2,16 @@ package spl.ast;
 
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
-import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.Instance;
 import spl.interpreter.splObjects.SplCallable;
 import spl.lexer.SyntaxError;
-import spl.util.*;
+import spl.util.BytesIn;
+import spl.util.BytesOut;
+import spl.util.Constants;
+import spl.util.LineFilePos;
 
 import java.io.IOException;
 import java.util.List;
@@ -47,6 +49,21 @@ public class DictSetLiteral extends Expression {
         List<Node> nodes = is.readList();
         boolean isDict = is.readBoolean();
         return new DictSetLiteral(nodes, isDict, lineFilePos);
+    }
+
+    public static SplElement javaMapToSplMap(Map<String, SplElement> map, Environment env, LineFilePos lineFilePos) {
+        Instance.InstanceAndPtr iap = Instance.createInstanceWithInitCall(
+                Constants.HASH_DICT, EvaluatedArguments.of(), env, lineFilePos);
+        if (iap == null) return Undefined.ERROR;
+        Reference putFnPtr = (Reference) iap.instance.getEnv().get(Constants.SET_ITEM_FN, lineFilePos);
+        SplCallable putFn = env.getMemory().get(putFnPtr);
+
+        for (Map.Entry<String, SplElement> entry : map.entrySet()) {
+            SplElement key = StringLiteral.createString(entry.getKey().toCharArray(), env, lineFilePos);
+
+            putFn.call(EvaluatedArguments.of(iap.pointer, key, entry.getValue()), env, lineFilePos);
+        }
+        return iap.pointer;
     }
 
     @Override
@@ -96,18 +113,17 @@ public class DictSetLiteral extends Expression {
         return iap.pointer;
     }
 
-    public static SplElement javaMapToSplMap(Map<String, SplElement> map, Environment env, LineFilePos lineFilePos) {
-        Instance.InstanceAndPtr iap = Instance.createInstanceWithInitCall(
-                Constants.HASH_DICT, EvaluatedArguments.of(), env, lineFilePos);
-        if (iap == null) return Undefined.ERROR;
-        Reference putFnPtr = (Reference) iap.instance.getEnv().get(Constants.SET_ITEM_FN, lineFilePos);
-        SplCallable putFn = env.getMemory().get(putFnPtr);
+    public boolean isDict() {
+        return isDict;
+    }
 
-        for (Map.Entry<String, SplElement> entry : map.entrySet()) {
-            SplElement key = StringLiteral.createString(entry.getKey().toCharArray(), env, lineFilePos);
+    public List<Node> getNodes() {
+        return nodes;
+    }
 
-            putFn.call(EvaluatedArguments.of(iap.pointer, key, entry.getValue()), env, lineFilePos);
-        }
-        return iap.pointer;
+    @Override
+    public String toString() {
+        if (isDict) return "Dict{" + nodes + "}";
+        else return "Set{" + nodes + "}";
     }
 }
