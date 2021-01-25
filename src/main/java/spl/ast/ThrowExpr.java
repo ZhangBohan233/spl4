@@ -69,7 +69,12 @@ public class ThrowExpr extends UnaryExpr {
         StringBuilder builder = new StringBuilder();
         builder.append(lineFile.toStringFileLine()).append('\n');
         for (Memory.StackTraceNode stn : env.getMemory().getCallStack()) {
-            builder.append("    at ").append(stn.env.definedName).append(". ").append(stn.callLineFile.toStringFileLine()).append('\n');
+            builder
+                    .append("    at ")
+                    .append(stn.env.definedName)
+                    .append(". ")
+                    .append(stn.callLineFile.toStringFileLine())
+                    .append('\n');
         }
         return builder.toString();
     }

@@ -91,7 +91,7 @@ public class Memory {
         return threadPoolSize;
     }
 
-    public Deque<StackTraceNode> getCallStack() {
+    public synchronized Deque<StackTraceNode> getCallStack() {
         return callStack;
     }
 

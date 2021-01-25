@@ -21,6 +21,7 @@ class AThread(threading.Thread) {
             }
             foo(msg, i, gap, threadId());
         }
+        throw new Exception();
     }
 }
 
