@@ -15,7 +15,7 @@ import spl.util.LineFilePos;
 
 import java.util.*;
 
-public class SplClass extends NativeObject {
+public class SplClass extends NativeObject implements ClassLike {
 
     private static int classCount = 0;
 
@@ -39,8 +39,7 @@ public class SplClass extends NativeObject {
     private final String[] templates;
     private final boolean isConst;
     private final StringLiteralRef docRef;
-    @Accessible
-    Reference __checker__;
+    Reference checker;
     // mro array used by spl
     @Accessible
     Reference __mro__;
@@ -123,23 +122,18 @@ public class SplClass extends NativeObject {
         return clazzPtr;
     }
 
-    public void setChecker(Reference checkFnPtr) {
-        this.__checker__ = checkFnPtr;
-    }
-
-    public boolean isSuperclassOf(SplElement childClassEle, Memory memory) {
-        if (childClassEle instanceof Reference) {
-            SplObject childClassObj = memory.get((Reference) childClassEle);
-            if (childClassObj instanceof SplClass) {
-                for (Reference supPtr : ((SplClass) childClassObj).mroArray) {
-                    SplClass supClass = memory.get(supPtr);
-                    if (supClass == this) return true;
-                }
-            }
-        }
-        return false;
-    }
-
+    /**
+     * Returns whether the class pointed by the first argument is the superclass of the class pointed by the
+     * second argument.
+     * <p>
+     * If the second argument is not a pointer, return false.
+     *
+     * @param superclassPtr superclass pointer
+     * @param childClassEle probable child class element
+     * @param memory        memory
+     * @return whether the class pointed by the first argument is the superclass of the class pointed by the
+     * second argument
+     */
     public static boolean isSuperclassOf(Reference superclassPtr, SplElement childClassEle, Memory memory) {
         if (childClassEle.equals(superclassPtr)) return true;
         if (childClassEle instanceof Reference) {
@@ -149,6 +143,32 @@ public class SplClass extends NativeObject {
                 SplClass childClazz = (SplClass) splObject;
                 for (Reference supPtr : childClazz.mroArray) {
                     if (superclassPtr.equals(supPtr)) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void setChecker(Reference checkFnPtr) {
+        this.checker = checkFnPtr;
+    }
+
+    /**
+     * Returns whether this class is the superclass of the class pointed by the first argument.
+     * <p>
+     * If the second argument is not a pointer, return false
+     *
+     * @param childClassEle probable child class element
+     * @param memory        memory
+     * @return whether this class is the superclass of the class pointed by the first argument
+     */
+    public boolean isSuperclassOf(SplElement childClassEle, Memory memory) {
+        if (childClassEle instanceof Reference) {
+            SplObject childClassObj = memory.get((Reference) childClassEle);
+            if (childClassObj instanceof SplClass) {
+                for (Reference supPtr : ((SplClass) childClassObj).mroArray) {
+                    SplClass supClass = memory.get(supPtr);
+                    if (supClass == this) return true;
                 }
             }
         }
@@ -436,7 +456,14 @@ public class SplClass extends NativeObject {
     }
 
     @Accessible
-    public SplElement __superclassOf__(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+    public Reference __checker__(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 0, "Class.__checker__", env, lineFilePos);
+
+        return checker;
+    }
+
+    @Accessible
+    public Bool __superclassOf__(Arguments arguments, Environment env, LineFilePos lineFilePos) {
         checkArgCount(arguments, 1, "Class.__superclassOf__", env, lineFilePos);
 
         SplElement sub = arguments.getLine().get(0).evaluate(env);
@@ -464,7 +491,7 @@ public class SplClass extends NativeObject {
         refs.addAll(superclassPointers);
         refs.addAll(methodPointers.values());
         refs.addAll(Arrays.asList(mroArray));
-        refs.add(__checker__);
+        refs.add(checker);
         refs.add(__mro__);
         if (classNameRef != null) refs.add(classNameRef);
         return refs;

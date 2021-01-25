@@ -35,7 +35,7 @@ import java.util.Map;
 
 public class SplInterpreter {
 
-    public static final Map<Class<? extends SplObject>, String> NATIVE_TYPE_NAMES =
+    public static final Map<Class<? extends NativeObject>, String> NATIVE_TYPE_NAMES =
             Utilities.mergeMaps(
                     Map.of(
                             SplInvokes.class, "Invoke",
@@ -119,11 +119,11 @@ public class SplInterpreter {
 
     private static void initNativeTypeCheckers(GlobalEnvironment ge) {
         Memory memory = ge.getMemory();
-        for (Map.Entry<Class<? extends SplObject>, String> entry : NATIVE_TYPE_NAMES.entrySet()) {
+        for (Map.Entry<Class<? extends NativeObject>, String> entry : NATIVE_TYPE_NAMES.entrySet()) {
             final String name = entry.getValue();
             final String checkerName = name + "?";
-            final Class<? extends SplObject> clazz = entry.getKey();
-            NativeType nt = new NativeType(name);
+            final Class<? extends NativeObject> clazz = entry.getKey();
+            NativeType nt = new NativeType(name, clazz);
             Reference ntPtr = memory.allocateObject(nt, ge);
             ge.defineConstAndSet(
                     NativeType.shownName(name),
@@ -132,7 +132,8 @@ public class SplInterpreter {
             );
             CheckerFunction checker = new CheckerFunction(checkerName, ntPtr) {
                 @Override
-                protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+                protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                        LineFilePos callingLfp) {
                     SplElement arg = evaluatedArgs.positionalArgs.get(0);
                     if (arg instanceof Reference) {
                         SplObject object = callingEnv.getMemory().get((Reference) arg);
@@ -142,6 +143,7 @@ public class SplInterpreter {
                 }
             };
             Reference checkerPtr = memory.allocateFunction(checker, ge);
+            nt.setCheckerFn(checkerPtr);
             ge.defineConstAndSet(
                     checkerName,
                     checkerPtr,
@@ -151,17 +153,18 @@ public class SplInterpreter {
     }
 
     private static void initNativeFunctions(GlobalEnvironment ge) {
-        TypeFunction toInt = new TypeFunction("int") {
+        TypeFunction toInt = new TypeFunction.Primitive("int") {
             @Override
-            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                          LineFilePos callingLfp) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 if (arg.getClass() == Int.class) return arg;
                 if (arg instanceof Reference) {
-                    return new Int(
-                            Utilities.wrapperToPrimitive(
-                                    (Reference) arg,
-                                    callingEnv,
-                                    LineFilePos.LF_INTERPRETER).intValue());
+                    return Utilities.objectToPrimitive(
+                            (Reference) arg,
+                            Constants.TO_INT_FN,
+                            callingEnv,
+                            callingLfp);
                 } else {
                     return new Int(arg.intValue());
                 }
@@ -172,7 +175,8 @@ public class SplInterpreter {
 
         CheckerFunction isInt = new CheckerFunction("int?", toIntPtr) {
             @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                    LineFilePos callingLfp) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 return Bool.boolValueOf(arg instanceof Int);
             }
@@ -181,17 +185,18 @@ public class SplInterpreter {
         ge.defineFunction(isInt.getName(), isIntPtr, LineFilePos.LF_INTERPRETER);
         toInt.setChecker(isIntPtr);
 
-        TypeFunction toFloat = new TypeFunction("float") {
+        TypeFunction toFloat = new TypeFunction.Primitive("float") {
             @Override
-            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                          LineFilePos callingLfp) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 if (arg.getClass() == SplFloat.class) return arg;
                 if (arg instanceof Reference) {
-                    return new SplFloat(
-                            Utilities.wrapperToPrimitive(
-                                    (Reference) arg,
-                                    callingEnv,
-                                    LineFilePos.LF_INTERPRETER).floatValue());
+                    return Utilities.objectToPrimitive(
+                            (Reference) arg,
+                            Constants.TO_FLOAT_FN,
+                            callingEnv,
+                            callingLfp);
                 } else {
                     return new SplFloat(arg.floatValue());
                 }
@@ -202,7 +207,8 @@ public class SplInterpreter {
 
         CheckerFunction isFloat = new CheckerFunction("float?", toFloatPtr) {
             @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                    LineFilePos callingLfp) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 return Bool.boolValueOf(arg instanceof SplFloat);
             }
@@ -211,17 +217,18 @@ public class SplInterpreter {
         ge.defineFunction(isFloat.getName(), isFloatPtr, LineFilePos.LF_INTERPRETER);
         toFloat.setChecker(isFloatPtr);
 
-        TypeFunction toChar = new TypeFunction("char") {
+        TypeFunction toChar = new TypeFunction.Primitive("char") {
             @Override
-            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                          LineFilePos callingLfp) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 if (arg.getClass() == Char.class) return arg;
                 if (arg instanceof Reference) {
-                    return new Char(
-                            (char) Utilities.wrapperToPrimitive(
-                                    (Reference) arg,
-                                    callingEnv,
-                                    LineFilePos.LF_INTERPRETER).intValue());
+                    return Utilities.objectToPrimitive(
+                            (Reference) arg,
+                            Constants.TO_CHAR_FN,
+                            callingEnv,
+                            callingLfp);
                 } else {
                     return new Char((char) arg.intValue());
                 }
@@ -232,7 +239,8 @@ public class SplInterpreter {
 
         CheckerFunction isChar = new CheckerFunction("char?", toCharPtr) {
             @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                    LineFilePos callingLfp) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 return Bool.boolValueOf(arg instanceof Char);
             }
@@ -241,17 +249,18 @@ public class SplInterpreter {
         ge.defineFunction(isChar.getName(), isCharPtr, LineFilePos.LF_INTERPRETER);
         toChar.setChecker(isCharPtr);
 
-        TypeFunction toByte = new TypeFunction("byte") {
+        TypeFunction toByte = new TypeFunction.Primitive("byte") {
             @Override
-            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                          LineFilePos callingLfp) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 if (arg.getClass() == SplByte.class) return arg;
                 if (arg instanceof Reference) {
-                    return new SplByte(
-                            (byte) Utilities.wrapperToPrimitive(
-                                    (Reference) arg,
-                                    callingEnv,
-                                    LineFilePos.LF_INTERPRETER).intValue());
+                    return Utilities.objectToPrimitive(
+                            (Reference) arg,
+                            Constants.TO_BYTE_FN,
+                            callingEnv,
+                            callingLfp);
                 } else {
                     return new SplByte((byte) arg.intValue());
                 }
@@ -262,7 +271,8 @@ public class SplInterpreter {
 
         CheckerFunction isByte = new CheckerFunction("byte?", toBytePtr) {
             @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                    LineFilePos callingLfp) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 return Bool.boolValueOf(arg instanceof SplByte);
             }
@@ -271,17 +281,18 @@ public class SplInterpreter {
         ge.defineFunction(isByte.getName(), isBytePtr, LineFilePos.LF_INTERPRETER);
         toByte.setChecker(isBytePtr);
 
-        TypeFunction toBool = new TypeFunction("boolean") {
+        TypeFunction toBool = new TypeFunction.Primitive("boolean") {
             @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                          LineFilePos callingLfp) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
-                if (arg.getClass() == Bool.class) return (Bool) arg;
+                if (arg.getClass() == Bool.class) return arg;
                 if (arg instanceof Reference) {
-                    return Bool.boolValueOf(
-                            Utilities.wrapperToPrimitive(
-                                    (Reference) arg,
-                                    callingEnv,
-                                    LineFilePos.LF_INTERPRETER).booleanValue());
+                    return Utilities.objectToPrimitive(
+                            (Reference) arg,
+                            Constants.TO_BOOLEAN_FN,
+                            callingEnv,
+                            callingLfp);
                 } else {
                     return Bool.boolValueOf(arg.booleanValue());
                 }
@@ -292,7 +303,8 @@ public class SplInterpreter {
 
         CheckerFunction isBool = new CheckerFunction("boolean?", toBoolPtr) {
             @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                    LineFilePos callingLfp) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 return Bool.boolValueOf(arg instanceof Bool);
             }
@@ -303,8 +315,14 @@ public class SplInterpreter {
 
         TypeFunction abstractObject = new TypeFunction("Obj") {
             @Override
-            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
-                return Utilities.wrap(evaluatedArgs.positionalArgs.get(0), callingEnv, LineFilePos.LF_INTERPRETER);
+            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                          LineFilePos callingLfp) {
+                return Utilities.wrap(evaluatedArgs.positionalArgs.get(0), callingEnv, callingLfp);
+            }
+
+            @Override
+            public boolean isSuperOf(Reference otherPtr, ClassLike other) {
+                return !(other instanceof TypeFunction.Primitive);
             }
         };
         Reference objPtr = ge.getMemory().allocateFunction(abstractObject, ge);
@@ -312,7 +330,8 @@ public class SplInterpreter {
 
         CheckerFunction isAbstractObject = new CheckerFunction("Obj?", objPtr) {
             @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                    LineFilePos callingLfp) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 if (arg instanceof Reference) {
                     SplObject object = callingEnv.getMemory().get((Reference) arg);
@@ -325,9 +344,32 @@ public class SplInterpreter {
         ge.defineFunction(isAbstractObject.getName(), isObjPtr, LineFilePos.LF_INTERPRETER);
         abstractObject.setChecker(isObjPtr);
 
-        NativeFunction isCallable = new NativeFunction("Callable?", 1) {
+        // This is just a placeholder function
+        TypeFunction toCallable = new TypeFunction("Callable") {
             @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+            protected SplElement callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                          LineFilePos callingLfp) {
+                return SplInvokes.throwExceptionWithError(
+                        callingEnv,
+                        Constants.INVOKE_ERROR,
+                        "Function 'Callable' is not callable.",
+                        callingLfp
+                );
+            }
+
+            @Override
+            public boolean isSuperOf(Reference otherPtr, ClassLike other) {
+                return other instanceof NativeType &&
+                        Utilities.superclassOf(SplCallable.class, ((NativeType) other).getClazz());
+            }
+        };
+        Reference callablePtr = ge.getMemory().allocateFunction(toCallable, ge);
+        ge.defineFunction(toCallable.getName(), callablePtr, LineFilePos.LF_INTERPRETER);
+
+        CheckerFunction isCallable = new CheckerFunction("Callable?", callablePtr) {
+            @Override
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                    LineFilePos callingLfp) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 if (arg instanceof Reference) {
                     SplObject object = callingEnv.getMemory().get((Reference) arg);
@@ -336,10 +378,14 @@ public class SplInterpreter {
                 return Bool.FALSE;
             }
         };
+        Reference isCallablePtr = ge.getMemory().allocateFunction(isCallable, ge);
+        ge.defineFunction(isCallable.getName(), isCallablePtr, LineFilePos.LF_INTERPRETER);
+        toCallable.setChecker(isCallablePtr);
 
         NativeFunction isNull = new NativeFunction("null?", 1) {
             @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                    LineFilePos callingLfp) {
                 SplElement arg = evaluatedArgs.positionalArgs.get(0);
                 if (arg instanceof Reference) {
                     return Bool.boolValueOf(((Reference) arg).getPtr() == 0);
@@ -350,13 +396,13 @@ public class SplInterpreter {
 
         NativeFunction isAny = new NativeFunction("any?", 1) {
             @Override
-            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv) {
+            protected Bool callFunc(EvaluatedArguments evaluatedArgs, Environment callingEnv,
+                                    LineFilePos callingLfp) {
                 return Bool.TRUE;
             }
         };
 
         NativeFunction[] nativeFunctions = new NativeFunction[]{
-                isCallable,
                 isNull,
                 isAny
         };

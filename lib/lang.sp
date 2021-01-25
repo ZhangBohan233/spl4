@@ -90,6 +90,26 @@ class Wrapper {
     fn __ne__(other) {
         return not __eq__(other);
     }
+
+    fn __int__() {
+        return int(value);
+    }
+
+    fn __char__() {
+        return char(value);
+    }
+
+    fn __byte__() {
+        return byte(value);
+    }
+
+    fn __float__() {
+        return float(value);
+    }
+
+    fn __boolean__() {
+        return value != 0;
+    }
 }
 
 class Integer(Wrapper) {
@@ -448,13 +468,20 @@ class List<T>(Iterable<T>, Collection) {
         }
     }
 
-    fn toArray(eleType=Object) {
+    /*
+     * Usage: toArray(), toArray(int), toArray(String)
+     */
+    fn toArray(eleType=Obj) {
         eleProc := cond {
-                       case eleType is Object -> lambda x -> x;
-                       case Callable?(eleType) -> eleType;
-                   };
+            case TypeFunction?(eleType) -> eleType;
+            default -> lambda x -> x;
+        };
+        arrCon := switch eleType {
+            case Obj, int, float, char, boolean, byte -> eleType;
+            default -> eleType.__checker__();
+        }
 
-        resArray := new eleType[_size];
+        resArray := new arrCon[_size];
         for i := 0; i < _size; i++ {
             resArray[i] = eleProc(array[i]);
         }
@@ -1328,6 +1355,84 @@ class String {
         return hash;
     }
 
+    fn __int__() {
+        return parseInt(10);
+    }
+
+    fn __float__() {
+        return parseFloat();
+    }
+
+    fn __char__() {
+        return char(__int__());
+    }
+
+    fn __byte__() {
+        return byte(__int__());
+    }
+
+    fn __boolean__() {
+        return this == "true";
+    }
+
+    fn count(target: String? or char??) -> int? {
+        if char??(target) {
+            arr := new char[1];
+            arr[0] = unwrap(target);
+            target = new String(arr);
+        }
+        tl := target.length;
+        if tl > length {
+            return 0;
+        }
+        res := 0;
+        stopLen := length - tl;
+        for i := 0; i < stopLen; i++ {
+            if substring(i, i + tl).equals(target) {
+                res++;
+            }
+        }
+        return res;
+    }
+
+    fn find(target: String? or char??) -> int? {
+        if char??(target) {
+            arr := new char[1];
+            arr[0] = unwrap(target);
+            target = new String(arr);
+        }
+        tl := target.length;
+        if tl > length {
+            return -1;
+        }
+        stopLen := length - tl;
+        for i := 0; i < stopLen; i++ {
+            if substring(i, i + tl) == target {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    fn rfind(target: String? or char??) -> int? {
+        if char??(target) {
+            arr := new char[1];
+            arr[0] = unwrap(target);
+            target = new String(arr);
+        }
+        tl := target.length;
+        if tl > length {
+            return -1;
+        }
+        stopLen := length - tl;
+        for i := stopLen - 1; i >= 0; i-- {
+            if substring(i, i + tl) == target {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     fn format(*args) -> String? {
         plainList := new List<String?>();
         patternList := new List<String?>();
@@ -1384,6 +1489,82 @@ class String {
             array[index++] = pla[j];
         }
         return new String(array);
+    }
+
+    fn parseInt(radix: int??) {
+        if length == 0 {
+            throw new TypeError("Cannot parse empty string.");
+        }
+        base := 0;
+        sign := 1;
+        for i := 0; i < length; i++ {
+            ch := __chars__[i];
+            cond {
+                case ch >= '0' and ch <= '9' {
+                    base *= radix;
+                    base += ch - '0';
+                }
+                case ch == '-' and i == 0 {
+                    sign = -sign;
+                }
+                case ch == '_' {
+                }
+                default {
+                    throw new TypeError("Cannot parse '" + this + "' to int or float.");
+                }
+            }
+        }
+        return base * sign;
+    }
+
+    fn parseFloat() {
+        if length == 0 {
+            throw new TypeError("Cannot parse empty string.");
+        }
+        parts := split(".");
+        if parts.length != 2 {
+            throw new TypeError("Float must have exactly one point.");
+        }
+        front := parts[0].__int__();
+        fracStr := parts[1];
+        frac := 0;
+        mul := 1 if front >= 0 else -1;
+        for i := 0; i < fracStr.length; i++ {
+            ch := fracStr[i];
+            cond {
+                case ch >= '0' and ch <= '9' {
+                    mul *= 0.1;
+                    frac += mul * (ch - '0');
+                }
+                case ch == '_' {
+                }
+                default {
+                    throw new TypeError("Cannot parse '" + this + "' to float.");
+                }
+            }
+        }
+        return front + frac;
+    }
+
+    fn split(d: String? or char??) -> array?(String?) {
+        if char??(d) {
+            arr := new char[1];
+            arr[0] = unwrap(target);
+            d = new String(arr);
+        }
+        tl := d.length;
+        if tl > length {
+            return this;
+        }
+        rList := new List<String?>();
+        var newFound;
+        remaining := this;
+        while (newFound = remaining.find(d)) != -1 {
+            rList.append(remaining.substring(0, newFound));
+            remaining = remaining.substring(newFound + tl);
+        }
+        rList.append(remaining);
+        return rList.toArray(String);
     }
 
     fn substring(begin: int?, end: int? or null? = null) -> String? {
@@ -1584,10 +1765,6 @@ class NativeReader(Reader) {
     }
 }
 
-fn anyType(_) {
-    return true;
-}
-
 fn int??(x) {
     return int?(x) or Integer?(x);
 }
@@ -1597,7 +1774,7 @@ fn float??(x) {
 }
 
 fn char??(x) {
-    return char?(x) or Character(x);
+    return char?(x) or Character?(x);
 }
 
 fn boolean??(x) {
@@ -1612,13 +1789,29 @@ fn byte??(x) {
  * This function returns a boolean function that:
  *     It returns true if and only if the argument is an array and:
  *         1. The array has element type that is exactly 'eleType', or
- *         2. The array is a generic array and has the generic is exactly 'eleType'
+ *         2. The array is a generic array and has the generic of a subclass of 'eleType'
  *
- * For example, `array?(Object?)(new String?[2])` returns false although 'String' extends 'Object'.
+ * For example, `array?(Object?)(new String?[2])` returns true because String extends Object
  */
 fn array?(eleType) {
     return fn arrayType(x) {
-        return Array?(x) and (x.type is eleType or x.generics is eleType);
+        if Array?(x) {
+            if x.type == eleType {
+                return true;
+            }
+            if x.generics == eleType {
+                return true;
+            }
+            if x.generics == any? {
+                return true;
+            }
+            if x.generics is not null and CheckerFunction?(eleType) {
+                genClass := x.generics.__class__();
+                templateClass := eleType.__class__();
+                return templateClass.__superclassOf__(genClass);
+            }
+        }
+        return false;
     }
 }
 
@@ -1784,6 +1977,9 @@ fn unwrap(value) {
     return value;
 }
 
+/*
+ * Unwrap wrappers if it is, or throw error if it is not.
+ */
 fn unwrapNum(num) {
     cond {
         case Wrapper?(num) {

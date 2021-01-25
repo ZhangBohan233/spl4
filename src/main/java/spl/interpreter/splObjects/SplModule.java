@@ -2,7 +2,7 @@ package spl.interpreter.splObjects;
 
 import spl.interpreter.env.ModuleEnvironment;
 
-public class SplModule extends SplObject {
+public class SplModule extends NativeObject {
 
     private final String importedPath;
     private final ModuleEnvironment env;

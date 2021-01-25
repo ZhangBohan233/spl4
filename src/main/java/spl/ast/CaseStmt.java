@@ -13,25 +13,33 @@ public class CaseStmt extends Statement {
 
     public final Node bodyBlock;
     public final boolean isExpr;
-    private final Expression condition;
-    private final BinaryOperator binaryCondition;
+    private final Line conditions;  // in 'default', it is null
+    private final BinaryOperator[] binaryConditions;
 
-    public CaseStmt(Expression condition, Node bodyBlock, boolean isExpr, LineFilePos lineFile) {
+    public CaseStmt(Line conditions, Node bodyBlock, boolean isExpr, LineFilePos lineFile) {
         super(lineFile);
 
-        this.condition = condition;
+        this.conditions = conditions;
         this.bodyBlock = bodyBlock;
         this.isExpr = isExpr;
 
-        binaryCondition = new BinaryOperator("==", BinaryOperator.LOGICAL, lineFile);
-        binaryCondition.right = condition;
+        if (conditions == null) {
+            binaryConditions = null;
+        } else {
+            binaryConditions = new BinaryOperator[conditions.size()];
+            for (int i = 0; i < binaryConditions.length; i++) {
+                BinaryOperator binaryCondition = new BinaryOperator("==", BinaryOperator.LOGICAL, lineFile);
+                binaryCondition.right = (Expression) conditions.get(i);
+                binaryConditions[i] = binaryCondition;
+            }
+        }
     }
 
     public static CaseStmt reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
         Node body = Reconstructor.reconstruct(is);
         boolean expr = is.readBoolean();
         boolean hasCond = is.readBoolean();
-        Expression cond = null;
+        Line cond = null;
         if (hasCond) cond = Reconstructor.reconstruct(is);
 
         return new CaseStmt(cond, body, expr, lineFilePos);
@@ -41,22 +49,32 @@ public class CaseStmt extends Statement {
     protected void internalSave(BytesOut out) throws IOException {
         bodyBlock.save(out);
         out.writeBoolean(isExpr);
-        out.writeBoolean(condition != null);
-        if (condition != null)
-            condition.save(out);
+        out.writeBoolean(conditions != null);
+        if (conditions != null)
+            conditions.save(out);
         // do not save binary condition
     }
 
     public void setSwitchExpr(Expression switchExpr) {
-        binaryCondition.left = switchExpr;
+//        binaryCondition.left = switchExpr;
+        if (binaryConditions != null)
+            for (BinaryOperator bo : binaryConditions) {
+                bo.left = switchExpr;
+            }
     }
 
     public boolean evalCondition(Environment env) {
-        return Bool.evalBoolean(binaryCondition, env, lineFile).value;
+//        return Bool.evalBoolean(binaryCondition, env, lineFile).value;
+        if (binaryConditions == null) return true;
+        for (BinaryOperator bo : binaryConditions) {
+            Bool val = Bool.evalBoolean(bo, env, lineFile);
+            if (val.value) return true;
+        }
+        return false;
     }
 
     public boolean isDefault() {
-        return condition == null;
+        return conditions == null;
     }
 
     @Override
@@ -67,6 +85,6 @@ public class CaseStmt extends Statement {
     @Override
     public String toString() {
         String arrow = isExpr ? " -> " : " ";
-        return isDefault() ? ("default: " + arrow + bodyBlock) : ("case " + condition + arrow + bodyBlock);
+        return isDefault() ? ("default: " + arrow + bodyBlock) : ("case " + conditions + arrow + bodyBlock);
     }
 }

@@ -8,11 +8,16 @@ import spl.lexer.SyntaxError;
 import spl.util.BytesIn;
 import spl.util.BytesOut;
 import spl.util.LineFilePos;
-import spl.util.Reconstructor;
 
 import java.io.IOException;
 import java.util.Objects;
 
+/**
+ * Although it extends {@code Expression}, it is actually a statement.
+ * <p>
+ * It does not return any useful thing, but extends {@code Expression} because it can be the left hand side operand
+ * of assignments.
+ */
 public class Declaration extends Expression {
 
     public static final int VAR = 1;

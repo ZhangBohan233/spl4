@@ -266,6 +266,26 @@ public class Utilities {
         }
     }
 
+    public static SplElement objectToPrimitive(Reference objPtr, String fnName, Environment env,
+                                               LineFilePos lineFilePos) {
+        SplObject obj = env.getMemory().get(objPtr);
+        if (obj instanceof Instance) {
+            Instance ins = (Instance) obj;
+            if (ins.getEnv().hasName(fnName)) {
+                SplElement fnPtr = ins.getEnv().get(fnName, lineFilePos);
+                if (fnPtr instanceof Reference) {
+                    SplCallable callable = env.getMemory().get((Reference) fnPtr);
+                    return callable.call(EvaluatedArguments.of(objPtr), env, lineFilePos);
+                }
+            }
+        }
+        return SplInvokes.throwExceptionWithError(
+                env,
+                Constants.TYPE_ERROR,
+                "Cannot convert '" + typeName(objPtr, env, lineFilePos) + "' to primitive.",
+                lineFilePos);
+    }
+
     public static boolean isInstancePtr(SplElement element, String className, Environment env, LineFilePos lineFile) {
         Reference insFtnPtr = (Reference) env.get(className + "?", lineFile);
         SplCallable insFtn = env.getMemory().get(insFtnPtr);
@@ -298,11 +318,18 @@ public class Utilities {
         }
         int backCount = srcPath.length - 1 - index;
         StringBuilder sb = new StringBuilder();
-        for (int i = 0 ; i < backCount; i++) {
+        for (int i = 0; i < backCount; i++) {
             sb.append("..").append(File.separator);
         }
         return sb.append(String.join(File.separator, Arrays.copyOfRange(targetPath, index, targetPath.length)))
                 .toString();
+    }
+
+    public static boolean superclassOf(Class<?> superclass, Class<?> childClass) {
+        if (superclass == childClass) return true;
+        Class<?> superOfChild = childClass.getSuperclass();
+        if (superOfChild != null) return superclassOf(superclass, superOfChild);
+        return false;
     }
 
     public static void main(String[] args) {

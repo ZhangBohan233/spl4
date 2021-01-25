@@ -65,10 +65,12 @@
 ### After 4.0 alpha
 * Iterator remove
 * Unittest
-* Anonymous class
+* ~~Anonymous class~~ **_DONE_**
 * ~~Multithreading~~ **_DONE_**
 * ~~Const fn: avoid it to be overridden~~ **_DONE_**
 * ~~Const class~~ **_DONE_**
 * Json
-* Bitwise operations for wrapper types
-* Error occurs while dealing with errors
+* ~~Bitwise operations for wrapper types~~ **_DONE_**
+* Error occurs while dealing with errors 
+* Array creation via `new int[3]{1, 2, 3}`
+* ~~Comma in switch-case~~ **_DONE_**

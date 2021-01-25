@@ -75,6 +75,8 @@ public class ContractNode extends Statement {
 
     @Override
     protected void internalProcess(Environment env) {
+        if (!env.getMemory().isCheckContract()) return;
+
         String[] templateNames = getDefinedTemplates(templateLine, env, lineFile);
         if (env.hasException()) return;
 

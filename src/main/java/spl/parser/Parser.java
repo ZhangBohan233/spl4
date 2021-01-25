@@ -245,6 +245,7 @@ public class Parser {
                         BlockStmt bodyBlock;
                         BracketList conditionList;
                         Expression condition;
+                        Line conditions;
                         BracketList singleBodyList;
                         CaseStmt caseStmt;
 
@@ -524,19 +525,19 @@ public class Parser {
                                     conditionList.add(next);
                                 }
 
-                                condition = parseOnePartBlock(conditionList);
+                                conditions = parseOneLineBlock(conditionList);
                                 if (next instanceof BraceList) {
                                     // case ... { ... }
                                     bodyList = (BraceList) next;
                                     bodyBlock = parseBlock(bodyList);
-                                    caseStmt = new CaseStmt(condition, bodyBlock, false, lineFile);
+                                    caseStmt = new CaseStmt(conditions, bodyBlock, false, lineFile);
                                 } else {
                                     next = parent.get(index);
                                     if (next instanceof BraceList) {
                                         // case ... -> { ... }
                                         index++;
                                         bodyBlock = parseBlock((CollectiveElement) next);
-                                        caseStmt = new CaseStmt(condition, bodyBlock, true, lineFile);
+                                        caseStmt = new CaseStmt(conditions, bodyBlock, true, lineFile);
                                     } else {
                                         // case ... -> ...;
                                         singleBodyList = new BracketList(null, lineFile);
@@ -544,7 +545,7 @@ public class Parser {
                                             singleBodyList.add(next);
                                         }
                                         Expression body = parseOnePartBlock(singleBodyList);
-                                        caseStmt = new CaseStmt(condition, body, true, lineFile);
+                                        caseStmt = new CaseStmt(conditions, body, true, lineFile);
                                     }
                                 }
                                 builder.addNode(caseStmt);

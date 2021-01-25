@@ -1,3 +1,16 @@
+##### SPL4 Alpha 4 #####
+===== Version 4082 =====
+2021/01/26
+
+* New syntax:
+    * Multiple conditions in one line of switch-case, cond-case statements and expressions, separated with comma.
+* Changed the mechanism of primitive type function: class need to override methods like '__int__' to suite 'int()'
+* New mechanism between type function, class, native type and checker function:
+    * __checker__()
+    * __class__()
+* Implemented more string operations
+* Improved 'array?(x)' and 'List.toArray' functions
+
 ===== Version 4081 =====
 2021/01/25
 

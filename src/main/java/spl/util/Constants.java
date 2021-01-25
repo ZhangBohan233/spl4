@@ -28,6 +28,11 @@ public class Constants {
     public static final String CONSTRUCTOR = "__init__";
     public static final String TO_STRING_FN = "__str__";
     public static final String TO_REPR_FN = "__repr__";
+    public static final String TO_INT_FN = "__int__";
+    public static final String TO_FLOAT_FN = "__float__";
+    public static final String TO_BOOLEAN_FN = "__boolean__";
+    public static final String TO_CHAR_FN = "__char__";
+    public static final String TO_BYTE_FN = "__byte__";
     public static final String ITER_FN = "__iter__";
     public static final String NEXT_FN = "__next__";
     public static final String HAS_NEXT_FN = "__hasNext__";
