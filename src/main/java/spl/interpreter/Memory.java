@@ -15,15 +15,15 @@ public class Memory {
     public final DebugAttributes debugs = new DebugAttributes();
     public final Options options;
     private final SplThing[] heap;
-    private final Set<Environment> temporaryEnvs = new HashSet<>();
+    private final Set<Environment> temporaryEnvs = Collections.synchronizedSet(new HashSet<>());
     /**
      * Pointers that are managed by memory directly, not from environment.
      */
-    private final Set<Reference> managedPointers = new HashSet<>();
+    private final Set<Reference> managedPointers = Collections.synchronizedSet(new HashSet<>());
     /**
      * Permanent objects that do not collected by garbage collector, such as string literals.
      */
-    private final Set<Reference> permanentPointers = new HashSet<>();
+    private final Set<Reference> permanentPointers = Collections.synchronizedSet(new HashSet<>());
     private final Map<Integer, ThreadStack> threadCallStacks = Collections.synchronizedMap(new TreeMap<>());
     /**
      * Function pointers that are marked with keyword 'sync'
@@ -115,6 +115,7 @@ public class Memory {
     }
 
     public synchronized Reference allocate(int size, Environment env) {
+        waitGc();
         int ptr = innerAllocate(size);
         if (ptr == -1) {
             if (debugs.printGcTrigger)
@@ -129,6 +130,16 @@ public class Memory {
         return new Reference(ptr);
     }
 
+    public synchronized void waitGc() {
+        try {
+            while (garbageCollector.isInProcess) {
+                Thread.sleep(1);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     private int innerAllocate(int size) {
         if (getAvailableSize() >= size) {
             int ptr = availableHead;
@@ -140,27 +151,45 @@ public class Memory {
     }
 
     public void set(Reference ptr, SplObject obj) {
+        waitGc();
         heap[ptr.getPtr()] = obj;
     }
 
     public void set(int addr, SplThing obj) {
+        waitGc();
         heap[addr] = obj;
     }
 
-    @SuppressWarnings("unchecked")
     public <T extends SplObject> T get(Reference ptr) {
+        waitGc();
+        return getNow(ptr);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends SplObject> T getNow(Reference ptr) {
         return (T) heap[ptr.getPtr()];
     }
 
     public SplObject get(int addr) {
+        waitGc();
+        return getNow(addr);
+    }
+
+    private SplObject getNow(int addr) {
         return (SplObject) heap[addr];
     }
 
     public SplThing getRaw(int addr) {
+        waitGc();
         return heap[addr];
     }
 
     public SplElement getPrimitive(int addr) {
+        waitGc();
+        return getPrimitiveNow(addr);
+    }
+
+    private SplElement getPrimitiveNow(int addr) {
         return (SplElement) heap[addr];
     }
 
@@ -184,7 +213,8 @@ public class Memory {
         managedPointers.remove(tv);
     }
 
-    public synchronized void gc(Environment baseEnv) {
+    public void gc(Environment baseEnv) {
+        waitGc();
         garbageCollector.garbageCollect(baseEnv);
     }
 
@@ -360,48 +390,51 @@ public class Memory {
          */
         private void garbageCollect(Environment baseEnv) {
             isInProcess = true;
-            long beginTime = System.currentTimeMillis();
-            if (debugs.printGcRes)
-                System.out.println("Doing gc! Available before gc: " + getAvailableSize());
+            try {
+                long beginTime = System.currentTimeMillis();
+                if (debugs.printGcRes)
+                    System.out.println("Doing gc! Available before gc: " + getAvailableSize());
 
-            // set all marks to 0
-            initMarks();
+                // set all marks to 0
+                initMarks();
 
-            // mark
-            // global root
-            mark(baseEnv);
+                // mark
+                // global root
+                mark(baseEnv);
 
-            // call stack roots
-            for (ThreadStack threadStack : threadCallStacks.values()) {
-                for (StackTraceNode stn : threadStack.callStack) {
-                    mark(stn.env);
+                // call stack roots
+                for (ThreadStack threadStack : threadCallStacks.values()) {
+                    for (StackTraceNode stn : threadStack.callStack) {
+                        mark(stn.env);
+                    }
                 }
+
+                // other roots
+                for (Environment env : temporaryEnvs) {
+                    mark(env);
+                }
+
+                // permanent objects
+                for (Reference pr : permanentPointers) {
+                    SplObject obj = getNow(pr);
+                    markObjectAsUsed(obj, pr.getPtr(), pr);
+                }
+
+                // temp object roots
+                for (Reference tempPtr : managedPointers) {
+                    SplObject obj = getNow(tempPtr);
+                    markObjectAsUsed(obj, tempPtr.getPtr(), tempPtr);
+                }
+
+                // sweep
+                sweep();
+
+                if (debugs.printGcRes)
+                    System.out.println("gc done! Available after gc: " + getAvailableSize() +
+                            ". Time used: " + (System.currentTimeMillis() - beginTime));
+            } finally {
+                isInProcess = false;
             }
-
-            // other roots
-            for (Environment env : temporaryEnvs) {
-                mark(env);
-            }
-
-            // permanent objects
-            for (Reference pr : permanentPointers) {
-                SplObject obj = get(pr);
-                markObjectAsUsed(obj, pr.getPtr(), pr);
-            }
-
-            // temp object roots
-            for (Reference tempPtr : managedPointers) {
-                SplObject obj = get(tempPtr);
-                markObjectAsUsed(obj, tempPtr.getPtr(), tempPtr);
-            }
-
-            // sweep
-            sweep();
-
-            if (debugs.printGcRes)
-                System.out.println("gc done! Available after gc: " + getAvailableSize() +
-                        ". Time used: " + (System.currentTimeMillis() - beginTime));
-            isInProcess = false;
         }
 
         private void initMarks() {
@@ -417,7 +450,7 @@ public class Memory {
                     Reference ptr = (Reference) ele;
 
                     // the null case represent those constants which has not been set yet
-                    SplObject obj = get(ptr);
+                    SplObject obj = getNow(ptr);
                     markObjectAsUsed(obj, ptr.getPtr(), ptr);
                 }
             }
@@ -440,11 +473,11 @@ public class Memory {
                 SplArray array = (SplArray) obj;
                 for (int i = 0; i < array.length.value; i++) {
                     int p = arrBegin + i;
-                    SplElement ele = getPrimitive(p);
+                    SplElement ele = getPrimitiveNow(p);
                     if (ele instanceof Reference) {
                         // Object[] stores reference as array element, they should also be retargeted
                         Reference refInArray = (Reference) ele;
-                        SplObject pointed = get(refInArray);
+                        SplObject pointed = getNow(refInArray);
                         markObjectAsUsed(pointed, p, null);
                         addRef(refInArray.getPtr(), refInArray);
                     }
@@ -482,7 +515,7 @@ public class Memory {
                         ref.setPtr(newAddr);
                     }
 
-                    SplObject obj = get(objAddr);
+                    SplObject obj = getNow(objAddr);
                     heap[newAddr] = heap[objAddr];
                     if (obj instanceof SplArray) {
                         SplArray array = (SplArray) obj;

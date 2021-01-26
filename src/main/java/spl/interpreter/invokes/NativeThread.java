@@ -2,6 +2,7 @@ package spl.interpreter.invokes;
 
 import spl.ast.Arguments;
 import spl.interpreter.EvaluatedArguments;
+import spl.interpreter.Memory;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.ThreadEnvironment;
 import spl.interpreter.primitives.Int;
@@ -10,6 +11,7 @@ import spl.interpreter.primitives.Undefined;
 import spl.interpreter.splObjects.Function;
 import spl.interpreter.splObjects.NativeObject;
 import spl.util.Accessible;
+import spl.util.Constants;
 import spl.util.LineFilePos;
 import spl.util.Utilities;
 

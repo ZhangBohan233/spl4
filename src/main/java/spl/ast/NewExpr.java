@@ -116,6 +116,7 @@ public class NewExpr extends UnaryExpr {
             SplElement arrPtr = SplArray.createArray(node.getCallObj(), (int) length.value, callEnv, lineFile);
             if (arrPtr == Undefined.ERROR) return Undefined.ERROR;
             Reference arrPtrReal = (Reference) arrPtr;
+            callEnv.getMemory().addTempPtr(arrPtrReal);
             if (node.getInitialValue() != null) {
                 DictSetLiteral initV = node.getInitialValue();
                 for (int i = 0; i < initV.getNodes().size(); i++) {
@@ -124,6 +125,7 @@ public class NewExpr extends UnaryExpr {
                     SplArray.setItemAtIndex(arrPtrReal, i, val, callEnv, lineFile);
                 }
             }
+            callEnv.getMemory().removeTempPtr(arrPtrReal);
 
             return arrPtrReal;
         } else {
