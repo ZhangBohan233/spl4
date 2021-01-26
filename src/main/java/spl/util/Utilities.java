@@ -2,7 +2,7 @@ package spl.util;
 
 import spl.interpreter.EvaluatedArguments;
 import spl.interpreter.env.Environment;
-import spl.interpreter.env.GlobalEnvironment;
+import spl.interpreter.env.ExceptionContainerEnv;
 import spl.interpreter.invokes.SplInvokes;
 import spl.interpreter.primitives.Bool;
 import spl.interpreter.primitives.Reference;
@@ -206,18 +206,18 @@ public class Utilities {
     /**
      * Removes the exception/error in global environment and then print the error message to standard error stream.
      *
-     * @param globalEnvironment the global environment
-     * @param lineFile          line and file
+     * @param env      the environment
+     * @param lineFile line and file
      */
-    public static void removeErrorAndPrint(GlobalEnvironment globalEnvironment, LineFilePos lineFile) {
-        Reference errPtr = globalEnvironment.getExceptionInsPtr();
-        globalEnvironment.removeException();
+    public static void removeErrorAndPrint(ExceptionContainerEnv env, LineFilePos lineFile) {
+        Reference errPtr = env.getExceptionInsPtr();
+        env.removeException();
 
-        Instance errIns = globalEnvironment.getMemory().get(errPtr);
+        Instance errIns = env.getMemory().get(errPtr);
 
         Reference stackTraceFtnPtr = (Reference) errIns.getEnv().get("printStackTrace", lineFile);
-        Function stackTraceFtn = globalEnvironment.getMemory().get(stackTraceFtnPtr);
-        stackTraceFtn.call(EvaluatedArguments.of(errPtr), globalEnvironment, lineFile);
+        Function stackTraceFtn = env.getMemory().get(stackTraceFtnPtr);
+        stackTraceFtn.call(EvaluatedArguments.of(errPtr), env, lineFile);
     }
 
     public static SplElement unwrap(SplElement ele, Environment env, LineFilePos lineFilePos) {

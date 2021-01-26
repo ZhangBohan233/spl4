@@ -47,6 +47,28 @@ public class SplInvokes extends NativeObject {
      * Static field
      */
 
+//    public static void throwExceptionWithCause(Environment env,
+//                                               String exceptionClassName,
+//                                               String msg,
+//                                               Reference cause,
+//                                               LineFilePos lineFile) {
+//        if (env.hasName(exceptionClassName) && env.hasName(Constants.STRING_CLASS)) {
+//            StringLiteral sl = new StringLiteral(msg.toCharArray(), lineFile);
+//            FuncCall funcCall = new FuncCall(
+//                    new NameNode(exceptionClassName, lineFile),
+//                    new Arguments(new Line(lineFile, sl), lineFile),
+//                    lineFile);
+//            NewExpr newExpr = new NewExpr(lineFile);
+//            newExpr.setValue(funcCall);
+//            ThrowExpr throwStmt = new ThrowExpr(lineFile);
+//            throwStmt.setValue(newExpr);
+//            throwStmt.evaluate(env);
+//        } else {
+//            throw new NativeError("Cannot throw exception '" + exceptionClassName + "' because the exception" +
+//                    "is not defined or 'String' is not defined. ", lineFile);
+//        }
+//    }
+
     public static void throwException(Environment env, String exceptionClassName, String msg, LineFilePos lineFile) {
         if (env.hasName(exceptionClassName) && env.hasName(Constants.STRING_CLASS)) {
             StringLiteral sl = new StringLiteral(msg.toCharArray(), lineFile);
@@ -602,6 +624,13 @@ public class SplInvokes extends NativeObject {
         NativeThread nt = new NativeThread(target, objectPtr, env, daemonic.value, lineFilePos);
 
         return env.getMemory().allocateObject(nt, env);
+    }
+
+    @Accessible
+    public Int threadId(Arguments arguments, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(arguments, 0, "Invokes.threadId", env, lineFilePos);
+
+        return new Int(env.getThreadId());
     }
 
     @Accessible

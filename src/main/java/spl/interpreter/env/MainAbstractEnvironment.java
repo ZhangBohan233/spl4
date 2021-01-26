@@ -97,4 +97,8 @@ public abstract class MainAbstractEnvironment extends Environment {
         throw new EnvironmentError("'yield' outside cond/switch-case expressions. ");  // do not change this
     }
 
+    @Override
+    public int getThreadId() {
+        return outer.getThreadId();
+    }
 }

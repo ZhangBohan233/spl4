@@ -75,6 +75,8 @@ public abstract class Environment {
 
     public abstract SplElement yieldResult();
 
+    public abstract int getThreadId();
+
     public void throwException(Reference exceptionPtr) {
         outer.throwException(exceptionPtr);
     }

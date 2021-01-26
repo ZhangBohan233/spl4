@@ -10,6 +10,7 @@ import spl.interpreter.splObjects.Instance;
 import spl.util.*;
 
 import java.io.IOException;
+import java.util.Deque;
 
 /**
  * In spl, throw statement is an expression.
@@ -68,7 +69,8 @@ public class ThrowExpr extends UnaryExpr {
     private static String makeTraceMsg(Environment env, LineFilePos lineFile) {
         StringBuilder builder = new StringBuilder();
         builder.append(lineFile.toStringFileLine()).append('\n');
-        for (Memory.StackTraceNode stn : env.getMemory().getCallStack()) {
+        Deque<Memory.StackTraceNode> callStack = env.getMemory().getCallStack(env.getThreadId());
+        for (Memory.StackTraceNode stn : callStack) {
             builder
                     .append("    at ")
                     .append(stn.env.definedName)

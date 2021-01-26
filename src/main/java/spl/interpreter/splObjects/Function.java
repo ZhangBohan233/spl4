@@ -206,9 +206,10 @@ public class Function extends UserFunction {
 
         setArgs(evaluatedArgs, scope, callingEnv, argLineFile);
 
-        scope.getMemory().pushStack(scope, argLineFile);
+        int threadId = callingEnv.getThreadId();
+        scope.getMemory().pushStack(scope, threadId, argLineFile);
         body.evaluate(scope);
-        scope.getMemory().decreaseStack();
+        scope.getMemory().decreaseStack(threadId);
 
         if (scope.hasException()) return Undefined.ERROR;
 

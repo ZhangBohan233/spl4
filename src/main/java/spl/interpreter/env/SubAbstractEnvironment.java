@@ -53,4 +53,9 @@ public abstract class SubAbstractEnvironment extends Environment {
     public SplElement yieldResult() {
         return outer.yieldResult();
     }
+
+    @Override
+    public int getThreadId() {
+        return outer.getThreadId();
+    }
 }

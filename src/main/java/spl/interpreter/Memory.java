@@ -24,22 +24,23 @@ public class Memory {
      * Permanent objects that do not collected by garbage collector, such as string literals.
      */
     private final Set<Reference> permanentPointers = new HashSet<>();
-    private final Deque<StackTraceNode> callStack = new ArrayDeque<>();
+    private final Map<Integer, ThreadStack> threadCallStacks = Collections.synchronizedMap(new TreeMap<>());
     /**
      * Function pointers that are marked with keyword 'sync'
      */
-    private final Set<Reference> syncPointers = new HashSet<>();
+    private final Set<Reference> syncPointers = Collections.synchronizedSet(new HashSet<>());
     private final GarbageCollector garbageCollector = new GarbageCollector();
     private final int heapSize;
-    private int stackPointer;
     private int availableHead = 1;
-    private int threadPoolSize = 1;  // one for the main thread
+    private int threadIdAllocator = 1;  // one for the main thread
 
     public Memory(Options options) {
         this.options = options;
 
         heapSize = options.getHeapSize();
         heap = new SplThing[heapSize];
+
+        threadCallStacks.put(0, new ThreadStack());  // stack of main thread
     }
 
     public int getHeapSize() {
@@ -54,17 +55,25 @@ public class Memory {
         return heapSize - availableHead;
     }
 
-    public synchronized void pushStack(FunctionEnvironment newCallEnv, LineFilePos lineFile) {
-        stackPointer++;
-        callStack.push(new StackTraceNode(newCallEnv, lineFile));
-        if (stackPointer > options.getStackLimit()) {
+    public synchronized void pushStack(FunctionEnvironment newCallEnv, int threadId, LineFilePos lineFile) {
+        ThreadStack threadStack = threadCallStacks.get(threadId);
+        if (threadStack == null) {
+            throw new MemoryError("No such thread " + threadId);
+        }
+        threadStack.stackPointer++;
+        threadStack.callStack.push(new StackTraceNode(newCallEnv, lineFile));
+        if (threadStack.stackPointer > options.getStackLimit()) {
             throw new MemoryError("Stack overflow. ");
         }
     }
 
-    public synchronized void decreaseStack() {
-        stackPointer--;
-        callStack.pop();
+    public synchronized void decreaseStack(int threadId) {
+        ThreadStack threadStack = threadCallStacks.get(threadId);
+        if (threadStack == null) {
+            throw new MemoryError("No such thread " + threadId);
+        }
+        threadStack.stackPointer--;
+        threadStack.callStack.pop();
     }
 
     public synchronized void addSync(Reference ref) {
@@ -80,22 +89,32 @@ public class Memory {
     }
 
     public synchronized int newThread() {
-        return threadPoolSize++;
+        int id = threadIdAllocator++;
+        ThreadStack threadStack = new ThreadStack();
+        threadCallStacks.put(id, threadStack);
+        return id;
     }
 
-    public synchronized void endThread() {
-        threadPoolSize--;
+    public synchronized void endThread(int threadId) {
+        ThreadStack threadStack = threadCallStacks.remove(threadId);
+        if (threadStack == null) {
+            throw new MemoryError("No such thread " + threadId);
+        }
     }
 
     public synchronized int getThreadPoolSize() {
-        return threadPoolSize;
+        return threadCallStacks.size();
     }
 
-    public synchronized Deque<StackTraceNode> getCallStack() {
-        return callStack;
+    public synchronized Deque<StackTraceNode> getCallStack(int threadId) {
+        ThreadStack threadStack = threadCallStacks.get(threadId);
+        if (threadStack == null) {
+            throw new MemoryError("No such thread " + threadId);
+        }
+        return threadStack.callStack;
     }
 
-    public Reference allocate(int size, Environment env) {
+    public synchronized Reference allocate(int size, Environment env) {
         int ptr = innerAllocate(size);
         if (ptr == -1) {
             if (debugs.printGcTrigger)
@@ -245,6 +264,14 @@ public class Memory {
     }
 
     /**
+     * The private call stack for each thread.
+     */
+    private static class ThreadStack {
+        private final Deque<StackTraceNode> callStack = new ArrayDeque<>();
+        private int stackPointer = 1;
+    }
+
+    /**
      * This class creates a wrapper, which is used as the key in hashmap.
      * <p>
      * This class compares two references by their memory location in java. The only way its {@code equals} returns
@@ -309,6 +336,7 @@ public class Memory {
     private class GarbageCollector {
 
         private final Map<Integer, Set<ReferenceWrapper>> markedRefs = new HashMap<>();
+        private boolean isInProcess = false;
 
         private void addRef(int addr, Reference ref) {
             Set<ReferenceWrapper> refs = markedRefs.get(addr);
@@ -325,7 +353,13 @@ public class Memory {
             return markedRefs.containsKey(objAddr);
         }
 
+        /**
+         * Since gc() is synchronized, there is no need to synchronize this method.
+         *
+         * @param baseEnv the environment where the gc happens
+         */
         private void garbageCollect(Environment baseEnv) {
+            isInProcess = true;
             long beginTime = System.currentTimeMillis();
             if (debugs.printGcRes)
                 System.out.println("Doing gc! Available before gc: " + getAvailableSize());
@@ -338,8 +372,10 @@ public class Memory {
             mark(baseEnv);
 
             // call stack roots
-            for (StackTraceNode stn : callStack) {
-                mark(stn.env);
+            for (ThreadStack threadStack : threadCallStacks.values()) {
+                for (StackTraceNode stn : threadStack.callStack) {
+                    mark(stn.env);
+                }
             }
 
             // other roots
@@ -365,6 +401,7 @@ public class Memory {
             if (debugs.printGcRes)
                 System.out.println("gc done! Available after gc: " + getAvailableSize() +
                         ". Time used: " + (System.currentTimeMillis() - beginTime));
+            isInProcess = false;
         }
 
         private void initMarks() {

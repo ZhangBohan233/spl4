@@ -42,9 +42,10 @@ public class LambdaExpression extends UserFunction {
 
         setArgs(evaluatedArgs, scope, callingEnv, lineFile);
 
-        scope.getMemory().pushStack(scope, lineFile);
+        int threadId = callingEnv.getThreadId();
+        scope.getMemory().pushStack(scope, threadId, lineFile);
         SplElement evalResult = body.evaluate(scope);
-        scope.getMemory().decreaseStack();
+        scope.getMemory().decreaseStack(threadId);
 
         return evalResult;
     }

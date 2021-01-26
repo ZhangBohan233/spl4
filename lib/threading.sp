@@ -4,6 +4,11 @@ class InterruptedError(Exception) {
     }
 }
 
+class ThreadException(Exception) {
+    fn __init__(msg=null, cause=null) {
+        super.__init__(msg, cause);
+    }
+}
 
 class Thread {
     var daemonic = false;

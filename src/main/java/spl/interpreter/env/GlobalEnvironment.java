@@ -3,19 +3,15 @@ package spl.interpreter.env;
 import spl.interpreter.Memory;
 import spl.interpreter.primitives.Reference;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-public class GlobalEnvironment extends MainAbstractEnvironment {
+public class GlobalEnvironment extends ExceptionContainerEnv {
 
     /**
      * A map to avoided duplicate module in memory.
      */
     private final Map<String, Reference> importedModules = new HashMap<>();
-
-    protected Reference exceptionInsPtr;
 
     public GlobalEnvironment(Memory memory) {
         super(memory, null);
@@ -53,5 +49,10 @@ public class GlobalEnvironment extends MainAbstractEnvironment {
     @Override
     public void addImportedModulePtr(String modulePath, Reference modulePtr) {
         importedModules.put(modulePath, modulePtr);
+    }
+
+    @Override
+    public int getThreadId() {
+        return 0;  // global
     }
 }
