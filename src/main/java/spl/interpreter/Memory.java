@@ -2,6 +2,7 @@ package spl.interpreter;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.FunctionEnvironment;
+import spl.interpreter.env.ThreadEnvironment;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splErrors.NativeError;
