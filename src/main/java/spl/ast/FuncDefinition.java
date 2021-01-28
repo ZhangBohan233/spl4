@@ -19,7 +19,6 @@ public class FuncDefinition extends Expression {
     private final Line templateLine;  // nullable
     private final StringLiteralRef docRef;  // nullable
     private final boolean isConst;
-    private final boolean isSync;
 
     public FuncDefinition(NameNode name,
                           Line parameters,
@@ -27,7 +26,6 @@ public class FuncDefinition extends Expression {
                           Line templateLine,
                           StringLiteralRef docRef,
                           boolean isConst,
-                          boolean isSync,
                           LineFilePos lineFile) {
         super(lineFile);
 
@@ -37,7 +35,6 @@ public class FuncDefinition extends Expression {
         this.templateLine = templateLine;
         this.docRef = docRef;
         this.isConst = isConst;
-        this.isSync = isSync;
     }
 
     public static FuncDefinition reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
@@ -45,14 +42,13 @@ public class FuncDefinition extends Expression {
         Line params = Reconstructor.reconstruct(is);
         BlockStmt body = Reconstructor.reconstruct(is);
         boolean isConst = is.readBoolean();
-        boolean isSync = is.readBoolean();
         boolean hasTemplate = is.readBoolean();
         Line templateLine = null;
         if (hasTemplate) templateLine = Reconstructor.reconstruct(is);
         boolean hasDoc = is.readBoolean();
         StringLiteralRef docRef = null;
         if (hasDoc) docRef = Reconstructor.reconstruct(is);
-        return new FuncDefinition(name, params, body, templateLine, docRef, isConst, isSync, lineFilePos);
+        return new FuncDefinition(name, params, body, templateLine, docRef, isConst, lineFilePos);
     }
 
     @Override
@@ -61,7 +57,6 @@ public class FuncDefinition extends Expression {
         parameters.save(out);
         body.save(out);
         out.writeBoolean(isConst);
-        out.writeBoolean(isSync);
         out.writeBoolean(templateLine != null);
         if (templateLine != null) templateLine.save(out);
         out.writeBoolean(docRef != null);
@@ -73,7 +68,7 @@ public class FuncDefinition extends Expression {
         Function.Parameter[] params = SplCallable.evalParams(parameters, env);
         if (env.hasException()) return Undefined.ERROR;
 
-        Function function = new Function(body, params, env, name.getName(), docRef, isSync, getLineFile());
+        Function function = new Function(body, params, env, name.getName(), docRef, getLineFile());
         Reference funcPtr = env.getMemory().allocateFunction(function, env);
 
         if (isConst) {
@@ -91,7 +86,7 @@ public class FuncDefinition extends Expression {
         assert oldParams != null;
         Function.Parameter[] params = SplCallable.insertThis(oldParams);
 
-        SplMethod function = new SplMethod(body, params, classDefEnv, name.getName(), docRef, isSync, defClassId,
+        SplMethod function = new SplMethod(body, params, classDefEnv, name.getName(), docRef, defClassId,
                 getLineFile());
 
         return classDefEnv.getMemory().allocateFunction(function, classDefEnv);

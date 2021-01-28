@@ -1,3 +1,9 @@
+===== Version 4086 =====
+2021/01/28
+
+* Removed multithreading
+* Added check for generic array
+
 ===== Version 4085 =====
 2021/01/28
 

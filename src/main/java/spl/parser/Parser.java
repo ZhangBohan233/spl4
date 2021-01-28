@@ -21,7 +21,6 @@ public class Parser {
     private final CollectiveElement rootList;
     private final Map<String, StringLiteral> stringLiterals;
     private int varLevel = Declaration.USELESS;
-    private boolean isSync = false;
 
     /**
      * Constructor of Parser, for imported module files.
@@ -340,9 +339,8 @@ public class Parser {
                                         lineFile);
 
                                 FuncDefinition def = new FuncDefinition(name, paramBlock, bodyBlock, templateLine,
-                                        docRef, isConst, isSync, lineFile);
+                                        docRef, isConst, lineFile);
                                 builder.addNode(def);
-                                isSync = false;
 
                                 if (autoCont != null) {
                                     builder.addNode(autoCont);
@@ -362,9 +360,8 @@ public class Parser {
                                 paramBlock = parseOneLineBlock(paramList);
                                 Expression bodyNode = parseOnePartBlock(singleBodyList);
                                 LambdaExpressionDef lambdaFunctionDef =
-                                        new LambdaExpressionDef(paramBlock, bodyNode, isSync, lineFile);
+                                        new LambdaExpressionDef(paramBlock, bodyNode, lineFile);
                                 builder.addNode(lambdaFunctionDef);
-                                isSync = false;
                                 break;
                             case "contract":
                                 nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
@@ -604,9 +601,6 @@ public class Parser {
                                 builder.addNode(forLoopStmt);
                                 builder.finishPart();
                                 builder.finishLine();
-                                break;
-                            case "sync":
-                                isSync = true;
                                 break;
                             case "try":
                                 bodyList = (BraceList) parent.get(index++);

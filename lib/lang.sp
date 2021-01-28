@@ -1837,7 +1837,7 @@ fn orFn(fn1: Callable?, fn2: Callable?) {
     return lambda x -> fn1(x) or fn2(x);
 }
 
-sync fn input(prompt: String?="") {
+fn input(prompt: String?="") {
     print(prompt, line=false);
     return stdin.readLine();
 }
@@ -1850,11 +1850,11 @@ fn min(a, b) {
     return b if a > b else a;
 }
 
-sync fn print(s, line: boolean? = true) {
+fn print(s, line: boolean? = true) {
     stdout.print(s, line);
 }
 
-sync fn printErr(s, line: boolean? = true) {
+fn printErr(s, line: boolean? = true) {
     stderr.print(s, line);
 }
 

@@ -62,7 +62,6 @@ public class AnonymousClassExpr extends Expression {
                 null,
                 null,
                 false,
-                false,
                 lineFile
         );
 

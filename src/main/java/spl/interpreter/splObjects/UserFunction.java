@@ -28,7 +28,6 @@ public abstract class UserFunction extends SplCallable {
 
     protected final Function.Parameter[] params;
     protected final LineFilePos lineFile;
-    protected final boolean isSync;
 
     protected Node rtnContract;
     protected boolean hasContract = false;
@@ -37,11 +36,10 @@ public abstract class UserFunction extends SplCallable {
     private int maxPosArg;
     private int maxKwArg;
 
-    protected UserFunction(Parameter[] parameters, Environment definitionEnv, boolean isSync, LineFilePos lineFile) {
+    protected UserFunction(Parameter[] parameters, Environment definitionEnv, LineFilePos lineFile) {
         this.params = parameters;
         this.definitionEnv = definitionEnv;
         this.lineFile = lineFile;
-        this.isSync = isSync;
 
         for (Parameter param : parameters) {
             if (param.unpackCount == 0) {
@@ -296,9 +294,5 @@ public abstract class UserFunction extends SplCallable {
     @Override
     public int maxKwArgCount() {
         return maxKwArg;
-    }
-
-    public boolean isSync() {
-        return isSync;
     }
 }

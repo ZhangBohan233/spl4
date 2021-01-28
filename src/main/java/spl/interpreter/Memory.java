@@ -25,15 +25,10 @@ public class Memory {
      */
     private final Set<Reference> permanentPointers = new HashSet<>();
     private final Deque<StackTraceNode> callStack = new ArrayDeque<>();
-    /**
-     * Function pointers that are marked with keyword 'sync'
-     */
-    private final Set<Reference> syncPointers = new HashSet<>();
     private final GarbageCollector garbageCollector = new GarbageCollector();
     private final int heapSize;
     private int stackPointer;
     private int availableHead = 1;
-    private int threadPoolSize = 1;  // one for the main thread
 
     public Memory(Options options) {
         this.options = options;
@@ -65,30 +60,6 @@ public class Memory {
     public synchronized void decreaseStack() {
         stackPointer--;
         callStack.pop();
-    }
-
-    public synchronized void addSync(Reference ref) {
-        syncPointers.add(ref);
-    }
-
-    public synchronized void removeSync(Reference ref) {
-        syncPointers.remove(ref);
-    }
-
-    public synchronized boolean isSynced(Reference ref) {
-        return syncPointers.contains(ref);
-    }
-
-    public synchronized int newThread() {
-        return threadPoolSize++;
-    }
-
-    public synchronized void endThread() {
-        threadPoolSize--;
-    }
-
-    public synchronized int getThreadPoolSize() {
-        return threadPoolSize;
     }
 
     public synchronized Deque<StackTraceNode> getCallStack() {
@@ -435,6 +406,7 @@ public class Memory {
             for (int p = 1; p < heapSize; p++) {
                 Set<ReferenceWrapper> refs = markedRefs.get(p);
                 if (refs != null) {
+                    if (refs.size() != 1) System.err.println("More than one pointers points to one address.");
                     int newAddr = curAddr++;
                     int objAddr = 0;
                     Reference firstRef = null;

@@ -395,7 +395,6 @@ public class SplClass extends NativeObject implements ClassLike {
                     null,
                     null,
                     false,
-                    false,
                     LineFilePos.LF_INTERPRETER);
 
             SplElement cp = fd.evalAsMethod(definitionEnv, classId);

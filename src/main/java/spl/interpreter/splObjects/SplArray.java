@@ -152,7 +152,16 @@ public class SplArray extends NativeObject {
                 return;
             }
             if (array.generics != Reference.NULL && env.getMemory().isCheckContract()) {
-                SplCallable genericFn = env.getMemory().get(array.generics);
+                SplObject genericObj = env.getMemory().get(array.generics);
+                if (!(genericObj instanceof SplCallable)) {
+                    SplInvokes.throwException(
+                            env,
+                            Constants.TYPE_ERROR,
+                            "Array generic must be callable.",
+                            lineFile);
+                    return;
+                }
+                SplCallable genericFn = (SplCallable) genericObj;
                 SplElement genRes = genericFn.call(EvaluatedArguments.of(value), env, lineFile);
                 if (!(genRes instanceof Bool)) {
                     SplInvokes.throwException(

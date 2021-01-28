@@ -21,10 +21,9 @@ public class SplMethod extends Function {
                      Environment classDefEnv,
                      String definedName,
                      StringLiteralRef docRef,
-                     boolean isSync,
                      int methodDefClassId,
                      LineFilePos lineFile) {
-        super(body, params, classDefEnv, definedName, docRef, isSync, lineFile);
+        super(body, params, classDefEnv, definedName, docRef, lineFile);
 
         this.methodDefClassId = methodDefClassId;
     }

@@ -57,8 +57,6 @@ public class FuncCall extends Expression {
         SplObject obj = env.getMemory().get(ref);
         if (obj instanceof SplCallable) {
             SplCallable function = (SplCallable) obj;
-            boolean isSync = obj instanceof UserFunction && ((UserFunction) obj).isSync();
-
             EvaluatedArguments ea = arguments.evalArgs(env);
             if (env.hasException()) return Undefined.ERROR;
             if (function instanceof SplMethod && env.hasName(Constants.THIS)) {
@@ -68,19 +66,7 @@ public class FuncCall extends Expression {
             }
             Reference[] generics = evalGenerics(env);
             if (env.hasException()) return Undefined.ERROR;
-            if (isSync) {
-                try {  // Note that the sync wait must after all arguments are evaluated.
-                    while (env.getMemory().isSynced(ref)) {
-                        Thread.sleep(1);
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                env.getMemory().addSync(ref);
-            }
-            SplElement res = function.call(ea, generics, env, lineFile);
-            if (isSync) env.getMemory().removeSync(ref);
-            return res;
+            return function.call(ea, generics, env, lineFile);
         } else {
             return SplInvokes.throwExceptionWithError(
                     env,
