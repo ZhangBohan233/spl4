@@ -29,6 +29,7 @@ public class Memory {
     private final int heapSize;
     private int stackPointer;
     private int availableHead = 1;
+    private long totalGcTime = 0;
 
     public Memory(Options options) {
         this.options = options;
@@ -186,6 +187,10 @@ public class Memory {
         return options.isCheckAssert();
     }
 
+    public long getTotalGcTime() {
+        return totalGcTime;
+    }
+
     public static class MemoryError extends NativeError {
         MemoryError(String msg) {
             super(msg);
@@ -279,16 +284,16 @@ public class Memory {
 
     private class GarbageCollector {
 
-        private final Map<Integer, Set<ReferenceWrapper>> markedRefs = new HashMap<>();
+        private final Map<Integer, Reference> markedRefs = new HashMap<>();
 
         private void addRef(int addr, Reference ref) {
-            Set<ReferenceWrapper> refs = markedRefs.get(addr);
-            if (refs != null) {
-                refs.add(new ReferenceWrapper(ref));
+            Reference addedRef = markedRefs.get(addr);
+            if (addedRef != null) {
+                if (addedRef != ref) {
+                    throw new MemoryError("Multiple references point to same address.");
+                }
             } else {
-                refs = new HashSet<>();
-                refs.add(new ReferenceWrapper(ref));
-                markedRefs.put(addr, refs);
+                markedRefs.put(addr, ref);
             }
         }
 
@@ -333,6 +338,7 @@ public class Memory {
             // sweep
             sweep();
 
+            totalGcTime += (System.currentTimeMillis() - beginTime);
             if (debugs.printGcRes)
                 System.out.println("gc done! Available after gc: " + getAvailableSize() +
                         ". Time used: " + (System.currentTimeMillis() - beginTime));
@@ -404,31 +410,20 @@ public class Memory {
         private void sweep() {
             int curAddr = 1;
             for (int p = 1; p < heapSize; p++) {
-                Set<ReferenceWrapper> refs = markedRefs.get(p);
-                if (refs != null) {
-                    if (refs.size() != 1) System.err.println("More than one pointers points to one address.");
+                Reference ref = markedRefs.get(p);
+                if (ref != null) {
                     int newAddr = curAddr++;
-                    int objAddr = 0;
-                    Reference firstRef = null;
-                    for (ReferenceWrapper refW : refs) {
-                        Reference ref = refW.reference;
-                        if (firstRef == null) {
-                            firstRef = ref;
-                            objAddr = firstRef.getPtr();
-                        }
-                        ref.setPtr(newAddr);
-                    }
+                    ref.setPtr(newAddr);
 
-                    SplObject obj = get(objAddr);
-                    heap[newAddr] = heap[objAddr];
+                    SplObject obj = get(p);
+                    heap[newAddr] = heap[p];
                     if (obj instanceof SplArray) {
                         SplArray array = (SplArray) obj;
                         // avoid using System.arraycopy() because this may overlap
                         for (int i = 0; i < array.length.value; i++) {
-                            heap[curAddr++] = heap[objAddr + i + 1];
+                            heap[curAddr++] = heap[++p];
                         }
                     }
-
                 }
             }
             availableHead = curAddr;

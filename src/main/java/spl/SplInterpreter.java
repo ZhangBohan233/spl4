@@ -528,11 +528,12 @@ public class SplInterpreter {
             }
             if (argumentParser.isTimer()) {
                 out.printf(
-                        "Parse time: %d ms, cache time: %d ms, VM startup time: %d ms, running time: %d ms.%n",
+                        "Parse time: %d ms, cache time: %d ms, VM startup time: %d ms, running time: %d ms.%n, total gc time %d ms",
                         cacheBegin - parseBegin,
                         vmStartBegin - cacheBegin,
                         runBegin - vmStartBegin,
-                        processEnd - runBegin
+                        processEnd - runBegin,
+                        globalEnvironment.getMemory().getTotalGcTime()
                 );
             }
         } else {
