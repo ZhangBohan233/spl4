@@ -116,14 +116,19 @@ public class NewExpr extends UnaryExpr {
             SplElement arrPtr = SplArray.createArray(node.getCallObj(), (int) length.value, callEnv, lineFile);
             if (arrPtr == Undefined.ERROR) return Undefined.ERROR;
             Reference arrPtrReal = (Reference) arrPtr;
+            callEnv.getMemory().addTempPtr(arrPtrReal);
             if (node.getInitialValue() != null) {
                 DictSetLiteral initV = node.getInitialValue();
                 for (int i = 0; i < initV.getNodes().size(); i++) {
                     SplElement val = initV.getNodes().get(i).evaluate(callEnv);
-                    if (val == Undefined.ERROR) return Undefined.ERROR;
+                    if (val == Undefined.ERROR) {
+                        callEnv.getMemory().removeTempPtr(arrPtrReal);
+                        return Undefined.ERROR;
+                    }
                     SplArray.setItemAtIndex(arrPtrReal, i, val, callEnv, lineFile);
                 }
             }
+            callEnv.getMemory().removeTempPtr(arrPtrReal);
 
             return arrPtrReal;
         } else {

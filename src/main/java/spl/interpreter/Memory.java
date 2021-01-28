@@ -423,7 +423,9 @@ public class Memory {
             List<Reference> attrRefs = obj.listAttrReferences();
             if (attrRefs != null) {
                 for (Reference attrRef : attrRefs) {
-                    if (attrRef != null) addRef(attrRef.getPtr(), attrRef);
+                    if (attrRef != null) {
+                        markObjectAsUsed(get(attrRef), attrRef.getPtr(), attrRef);
+                    }
                 }
             }
         }
