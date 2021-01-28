@@ -83,6 +83,10 @@ public abstract class Environment {
         return globalEnv.hasException();
     }
 
+    public int getThreadId() {
+        return 0;
+    }
+
     public Set<SplElement> attributes() {
         Set<SplElement> set = new HashSet<>();
         for (VarEntry entry : variables.values()) {

@@ -17,7 +17,7 @@ public abstract class Node {
         this.lineFile = lineFile;
     }
 
-    public final SplElement evaluate(Environment env) {
+    public final SplElement evaluate2(Environment env) {
         // pre
         if (env.interrupted()) return Reference.NULL;
         if (env.hasException()) return Undefined.ERROR;
@@ -29,6 +29,12 @@ public abstract class Node {
 //        if (env.hasException()) return Undefined.ERROR;
 
         return res;
+    }
+
+    public final SplElement evaluate(Environment env) {
+        int threadId = env.getThreadId();
+        env.getMemory().executor.addTask(this, env, threadId);
+        return env.getMemory().executor.getResult(threadId);
     }
 
     protected abstract SplElement internalEval(Environment env);

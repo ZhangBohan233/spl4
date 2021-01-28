@@ -1,7 +1,9 @@
 package spl.interpreter;
 
+import spl.ast.Node;
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.FunctionEnvironment;
+import spl.interpreter.primitives.Int;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splErrors.NativeError;
@@ -30,6 +32,7 @@ public class Memory {
      */
     private final Set<Reference> syncPointers = new HashSet<>();
     private final GarbageCollector garbageCollector = new GarbageCollector();
+    public final Executor executor = new Executor();
     private final int heapSize;
     private int stackPointer;
     private int availableHead = 1;
@@ -40,6 +43,8 @@ public class Memory {
 
         heapSize = options.getHeapSize();
         heap = new SplThing[heapSize];
+
+        executor.start();
     }
 
     public int getHeapSize() {
@@ -460,6 +465,59 @@ public class Memory {
                 }
             }
             availableHead = curAddr;
+        }
+    }
+
+    public static class Executor extends Thread {
+        private final Queue<ExecutorTask> nodeQueue = new ArrayDeque<>();
+        private final Map<Integer, SplElement> resultMap = new TreeMap<>();
+        private boolean running = true;
+
+        public void terminate() {
+            running = false;
+        }
+
+        public void addTask(Node node, Environment env, int threadId) {
+            nodeQueue.add(new ExecutorTask(node, env, threadId));
+        }
+
+        public SplElement getResult(int threadId) {
+            try {
+                while (!resultMap.containsKey(threadId)) {
+                    Thread.sleep(1);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return resultMap.get(threadId);
+        }
+
+        @Override
+        public void run() {
+            while (running) {
+                if (!nodeQueue.isEmpty()) {
+                    ExecutorTask task = nodeQueue.remove();
+                    System.out.println(task.node.getClass());
+                    if (resultMap.containsKey(task.threadId)) {
+                        nodeQueue.add(task);
+                        continue;
+                    }
+                    SplElement se = task.node.evaluate2(task.env);
+                    resultMap.put(task.threadId, se);
+                }
+            }
+        }
+    }
+
+    private static class ExecutorTask {
+        private final Node node;
+        private final Environment env;
+        private final int threadId;
+
+        private ExecutorTask(Node node, Environment env, int threadId) {
+            this.node = node;
+            this.env = env;
+            this.threadId = threadId;
         }
     }
 }

@@ -573,9 +573,11 @@ public class SplInterpreter {
                     new EvaluatedArguments() : makeSplArgArray(args, globalEnvironment);
 
             SplElement rtn = mainFunc.call(splArg, globalEnvironment, Main.LF_MAIN);
-            while (globalEnvironment.getMemory().getThreadPoolSize() > 1) {
-                Thread.sleep(1);
-            }
+
+            globalEnvironment.getMemory().executor.terminate();
+//            while (globalEnvironment.getMemory().getThreadPoolSize() > 1) {
+//                Thread.sleep(1);
+//            }
             if (globalEnvironment.hasException()) {
                 Utilities.removeErrorAndPrint(globalEnvironment, Main.LF_MAIN);
             } else {
