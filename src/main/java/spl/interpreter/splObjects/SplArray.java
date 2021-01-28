@@ -74,7 +74,7 @@ public class SplArray extends NativeObject {
                                         int arrSize,
                                         Environment env) {
         Memory memory = env.getMemory();
-        Reference arrPtr = memory.allocate(arrSize + 1, env);
+        Reference arrPtr = memory.allocate(arrSize + 1, env, env.getThreadId());
         SplArray arrIns = new SplArray(eleType, typeRef, generics, arrSize);
         memory.set(arrPtr, arrIns);
         fillInitValue(eleType, arrPtr, memory, arrSize);

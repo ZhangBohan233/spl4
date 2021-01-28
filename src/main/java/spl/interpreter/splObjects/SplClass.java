@@ -34,6 +34,9 @@ public class SplClass extends NativeObject implements ClassLike {
     private final String className;
     private final Environment definitionEnv;
     private final LinkedHashMap<String, Node> fieldNodes = new LinkedHashMap<>();
+    /**
+     * Only containing self method pointers (does not include methods of superclasses).
+     */
     private final Map<String, Reference> methodPointers = new HashMap<>();
     private final Set<String> constMethods = new HashSet<>();
     private final String[] templates;
@@ -110,7 +113,7 @@ public class SplClass extends NativeObject implements ClassLike {
                 body, definitionEnv, docRef, isConst);
         if (definitionEnv.hasException()) return Undefined.ERROR;
 
-        Reference clazzPtr = definitionEnv.getMemory().allocateObject(clazz, definitionEnv);
+        Reference clazzPtr = definitionEnv.getMemory().allocateObject(clazz, definitionEnv, definitionEnv.getThreadId());
 
         definitionEnv.getMemory().addTempPtr(clazzPtr);
 
@@ -423,7 +426,7 @@ public class SplClass extends NativeObject implements ClassLike {
 
     public String getFullName() {
         if (definitionEnv instanceof ModuleEnvironment) {
-            return ((ModuleEnvironment) definitionEnv).getModuleName() + "$" + getClassName();
+            return ((ModuleEnvironment) definitionEnv).getModulePath() + "$" + getClassName();
         } else {
             return getClassName();
         }

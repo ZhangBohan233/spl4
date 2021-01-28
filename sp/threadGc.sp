@@ -13,16 +13,16 @@ class AThread(threading.Thread) {
     }
 
     fn run() {
-        var s;
-        for i := 0; i < 100; i++ {
-            s = new X();
+        s = "s";
+        for i := 0; i < 40; i++ {
+            s += "a";
         }
     }
 }
 
 
 fn main() {
-    arr := new AThread?[4];
+    arr := new AThread?[2];
     for i := 0; i < arr.length; i++ {
         arr[i] = new AThread();
     }

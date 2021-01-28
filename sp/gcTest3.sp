@@ -1,15 +1,16 @@
-fn main() {
-    for i := 0; i < 1000; i++ {
-        class A {
-            var a = i;
-            fn __init__() {
+class A {
+    var x = 3;
 
-            }
-
-            fn foo() {
-                return i + 1;
-            }
-        }
-        a := new A();
+    fn test(a) {
+        return a.x;
     }
+}
+
+
+
+fn main() {
+    Invokes.gc();
+    a := new Integer(3);
+    //Invokes.gc();
+    return a + 2;
 }

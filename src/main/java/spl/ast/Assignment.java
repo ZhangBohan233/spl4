@@ -115,6 +115,7 @@ public class Assignment extends BinaryExpr {
         SplElement rightRes = right.evaluate(env);
 
         assignment(left, rightRes, env, getLineFile());
+        env.getMemory().clearNewPointers(env.getThreadId());
         return rightRes;
     }
 }

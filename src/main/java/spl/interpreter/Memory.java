@@ -2,7 +2,7 @@ package spl.interpreter;
 
 import spl.interpreter.env.Environment;
 import spl.interpreter.env.FunctionEnvironment;
-import spl.interpreter.env.ThreadEnvironment;
+import spl.interpreter.invokes.NativeThread;
 import spl.interpreter.primitives.Reference;
 import spl.interpreter.primitives.SplElement;
 import spl.interpreter.splErrors.NativeError;
@@ -21,6 +21,7 @@ public class Memory {
      * Pointers that are managed by memory directly, not from environment.
      */
     private final Set<Reference> managedPointers = Collections.synchronizedSet(new HashSet<>());
+//    private final Set<Reference> newPointers = Collections.synchronizedSet(new HashSet<>());
     /**
      * Permanent objects that do not collected by garbage collector, such as string literals.
      */
@@ -34,6 +35,7 @@ public class Memory {
     private final int heapSize;
     private int availableHead = 1;
     private int threadIdAllocator = 1;  // one for the main thread
+    private boolean outOfMemory = false;
 
     public Memory(Options options) {
         this.options = options;
@@ -115,8 +117,12 @@ public class Memory {
         return threadStack.callStack;
     }
 
-    public synchronized Reference allocate(int size, Environment env) {
-        waitGc();
+    public synchronized void clearNewPointers(int threadId) {
+        threadCallStacks.get(threadId).newPointers.clear();
+    }
+
+    public synchronized Reference allocate(int size, Environment env, int threadId) {
+        waitForGc();
         int ptr = innerAllocate(size);
         if (ptr == -1) {
             if (debugs.printGcTrigger)
@@ -124,20 +130,26 @@ public class Memory {
             gc(env);
             ptr = innerAllocate(size);
             if (ptr == -1) {
+                outOfMemory = true;
                 throw new MemoryError("Cannot allocate size " + size + ": no memory available. " +
                         "Available memory: " + getAvailableSize() + ". ");
             }
         }
-        return new Reference(ptr);
+        Reference ref = new Reference(ptr);
+        threadCallStacks.get(threadId).newPointers.add(ref);
+        return ref;
     }
 
-    public synchronized void waitGc() {
+    public synchronized void waitForGc() {
         try {
             while (garbageCollector.isInProcess) {
                 Thread.sleep(1);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+        if (outOfMemory) {
+            throw new MemoryError("Another thread has run out of the system memory.");
         }
     }
 
@@ -152,27 +164,27 @@ public class Memory {
     }
 
     public void set(Reference ptr, SplObject obj) {
-        waitGc();
+        waitForGc();
         heap[ptr.getPtr()] = obj;
     }
 
     public void set(int addr, SplThing obj) {
-        waitGc();
+        waitForGc();
         heap[addr] = obj;
     }
 
     public <T extends SplObject> T get(Reference ptr) {
-        waitGc();
+        waitForGc();
         return getNow(ptr);
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends SplObject> T getNow(Reference ptr) {
+    public  <T extends SplObject> T getNow(Reference ptr) {
         return (T) heap[ptr.getPtr()];
     }
 
     public SplObject get(int addr) {
-        waitGc();
+        waitForGc();
         return getNow(addr);
     }
 
@@ -181,12 +193,12 @@ public class Memory {
     }
 
     public SplThing getRaw(int addr) {
-        waitGc();
+        waitForGc();
         return heap[addr];
     }
 
     public SplElement getPrimitive(int addr) {
-        waitGc();
+        waitForGc();
         return getPrimitiveNow(addr);
     }
 
@@ -199,34 +211,42 @@ public class Memory {
     }
 
     public void addTempEnv(Environment env) {
+//        waitForGc();
         temporaryEnvs.add(env);
     }
 
     public void removeTempEnv(Environment env) {
+//        waitForGc();
         temporaryEnvs.remove(env);
     }
 
     public void addTempPtr(Reference tv) {
+//        waitForGc();
         managedPointers.add(tv);
     }
 
     public void removeTempPtr(Reference tv) {
+//        waitForGc();
         managedPointers.remove(tv);
     }
 
     public void gc(Environment baseEnv) {
-        waitGc();
+        waitForGc();
         garbageCollector.garbageCollect(baseEnv);
     }
 
-    public Reference allocateFunction(SplCallable function, Environment env) {
-        Reference ptr = allocate(1, env);
+    public Reference allocateFunction(SplCallable function, Environment env, int threadId) {
+        Reference ptr = allocate(1, env, threadId);
         set(ptr, function);
         return ptr;
     }
 
-    public Reference allocateObject(SplObject object, Environment env) {
-        Reference ptr = allocate(1, env);
+    public Reference allocateFunction(SplCallable function, Environment env) {
+        return allocateFunction(function, env, 0);
+    }
+
+    public Reference allocateObject(SplObject object, Environment env, int threadId) {
+        Reference ptr = allocate(1, env, threadId);
         set(ptr, object);
         return ptr;
     }
@@ -299,6 +319,7 @@ public class Memory {
      */
     private static class ThreadStack {
         private final Deque<StackTraceNode> callStack = new ArrayDeque<>();
+        private final Set<Reference> newPointers = new HashSet<>();
         private int stackPointer = 1;
     }
 
@@ -390,11 +411,14 @@ public class Memory {
          * @param baseEnv the environment where the gc happens
          */
         private void garbageCollect(Environment baseEnv) {
+//            System.out.println(memoryViewWithAddress());
             isInProcess = true;
             try {
                 long beginTime = System.currentTimeMillis();
                 if (debugs.printGcRes)
                     System.out.println("Doing gc! Available before gc: " + getAvailableSize());
+
+                Thread.sleep(10);
 
                 // set all marks to 0
                 initMarks();
@@ -407,6 +431,10 @@ public class Memory {
                 for (ThreadStack threadStack : threadCallStacks.values()) {
                     for (StackTraceNode stn : threadStack.callStack) {
                         mark(stn.env);
+                    }
+                    for (Reference ref : threadStack.newPointers) {
+                        SplObject obj = getNow(ref);
+                        markObjectAsUsed(obj, ref.getPtr(), ref);
                     }
                 }
 
@@ -430,9 +458,13 @@ public class Memory {
                 // sweep
                 sweep();
 
+//                clearNewPointers();
+
                 if (debugs.printGcRes)
                     System.out.println("gc done! Available after gc: " + getAvailableSize() +
                             ". Time used: " + (System.currentTimeMillis() - beginTime));
+            } catch (InterruptedException e) {
+                //
             } finally {
                 isInProcess = false;
             }
@@ -489,12 +521,17 @@ public class Memory {
             } else if (obj instanceof Instance) {
                 Instance instance = (Instance) obj;
                 mark(instance.getEnv());
+            } else if (obj instanceof NativeThread) {
+                NativeThread thread = (NativeThread) obj;
+                mark(thread.getThreadEnv());
             }
 
             List<Reference> attrRefs = obj.listAttrReferences();
             if (attrRefs != null) {
                 for (Reference attrRef : attrRefs) {
-                    if (attrRef != null) addRef(attrRef.getPtr(), attrRef);
+                    if (attrRef != null) {
+                        markObjectAsUsed(getNow(attrRef), attrRef.getPtr(), attrRef);
+                    }
                 }
             }
         }
@@ -504,6 +541,7 @@ public class Memory {
             for (int p = 1; p < heapSize; p++) {
                 Set<ReferenceWrapper> refs = markedRefs.get(p);
                 if (refs != null) {
+                    if (refs.size() != 1) System.err.println("More than 1 reference refers to one address");
                     int newAddr = curAddr++;
                     int objAddr = 0;
                     Reference firstRef = null;
@@ -523,9 +561,12 @@ public class Memory {
                         // avoid using System.arraycopy() because this may overlap
                         for (int i = 0; i < array.length.value; i++) {
                             heap[curAddr++] = heap[objAddr + i + 1];
+                            p++;
                         }
                     }
-
+                } else {
+//                    System.out.print(p + " ");
+//                    System.out.println(heap[p]);
                 }
             }
             availableHead = curAddr;

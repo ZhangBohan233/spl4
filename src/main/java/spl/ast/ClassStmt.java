@@ -120,7 +120,7 @@ public class ClassStmt extends Expression {
 
         String iofName = className + "?";
         CheckerFunction instanceOfFunc = new CheckerFunction(iofName, (Reference) clazzPtr);
-        Reference iofPtr = callingEnv.getMemory().allocateFunction(instanceOfFunc, callingEnv);
+        Reference iofPtr = callingEnv.getMemory().allocateFunction(instanceOfFunc, callingEnv, callingEnv.getThreadId());
         callingEnv.defineVarAndSet(iofName, iofPtr, getLineFile());
 
         SplClass clazz = callingEnv.getMemory().get((Reference) clazzPtr);

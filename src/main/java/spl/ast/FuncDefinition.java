@@ -74,7 +74,7 @@ public class FuncDefinition extends Expression {
         if (env.hasException()) return Undefined.ERROR;
 
         Function function = new Function(body, params, env, name.getName(), docRef, isSync, getLineFile());
-        Reference funcPtr = env.getMemory().allocateFunction(function, env);
+        Reference funcPtr = env.getMemory().allocateFunction(function, env, env.getThreadId());
 
         if (isConst) {
             env.defineConstFunction(name.getName(), funcPtr, getLineFile());
@@ -94,7 +94,7 @@ public class FuncDefinition extends Expression {
         SplMethod function = new SplMethod(body, params, classDefEnv, name.getName(), docRef, isSync, defClassId,
                 getLineFile());
 
-        return classDefEnv.getMemory().allocateFunction(function, classDefEnv);
+        return classDefEnv.getMemory().allocateFunction(function, classDefEnv, classDefEnv.getThreadId());
     }
 
     @Override

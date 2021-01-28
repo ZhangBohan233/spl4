@@ -46,7 +46,7 @@ public class LambdaExpressionDef extends Expression {
 
         LambdaExpression lambdaExpression = new LambdaExpression(body, params, env, isSync, getLineFile());
 
-        return env.getMemory().allocateFunction(lambdaExpression, env);
+        return env.getMemory().allocateFunction(lambdaExpression, env, env.getThreadId());
     }
 
     @Override

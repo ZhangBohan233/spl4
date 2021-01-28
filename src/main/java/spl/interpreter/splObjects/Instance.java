@@ -67,7 +67,9 @@ public class Instance extends SplObject {
                                                             LineFilePos lineFile) {
         InstanceAndPtr iap = createInstanceAndAllocate(className, callingEnv, lineFile);
         if (iap == null) return null;
+        callingEnv.getMemory().addTempPtr(iap.pointer);
         callInit(iap, evaluatedArgs, callingEnv, lineFile);
+        callingEnv.getMemory().removeTempPtr(iap.pointer);
         return iap;
     }
 
@@ -78,7 +80,9 @@ public class Instance extends SplObject {
                                                             LineFilePos lineFile) {
         InstanceAndPtr iap = createInstanceAndAllocate(clazzPtr, generics, callingEnv, lineFile);
         if (iap == null) return null;
+        callingEnv.getMemory().addTempPtr(iap.pointer);
         callInit(iap, evaluatedArgs, callingEnv, lineFile);
+        callingEnv.getMemory().removeTempPtr(iap.pointer);
         return iap;
     }
 
@@ -106,7 +110,7 @@ public class Instance extends SplObject {
         callingEnv.getMemory().addTempEnv(instanceEnv);
 
         Instance instance = new Instance(clazzPtr, instanceEnv);
-        Reference instancePtr = callingEnv.getMemory().allocateObject(instance, instanceEnv);
+        Reference instancePtr = callingEnv.getMemory().allocateObject(instance, instanceEnv, instanceEnv.getThreadId());
         instanceEnv.defineConstAndSet(Constants.INSTANCE_NAME, instancePtr, lineFile);
 
         String[] templates = clazz.getTemplates();
@@ -140,10 +144,8 @@ public class Instance extends SplObject {
                         SplElement probScGen = scGens.get(i).evaluate(instanceEnv);
                         if (probScGen == Undefined.ERROR) return null;
                         Reference scGen = (Reference) probScGen;
-//                        System.out.println(scTemplates[i] + " " + scGens.get(i) + " " + callingEnv.getMemory().get(scGen));
                         gensForSupClass.put(scTemplates[i], scGen);
                     }
-//                    System.out.println(supClazz.getClassName() + " " + gensForSupClass);
                 }
             }
 

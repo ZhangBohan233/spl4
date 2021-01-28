@@ -80,7 +80,7 @@ public class SplInterpreter {
         SplInvokes system = new SplInvokes(out, in, err);
 
         Memory memory = globalEnvironment.getMemory();
-        Reference sysPtr = memory.allocateObject(system, globalEnvironment);
+        Reference sysPtr = memory.allocateObject(system, globalEnvironment, 0);
 
         globalEnvironment.defineConstAndSet(
                 Constants.INVOKES,
@@ -94,7 +94,7 @@ public class SplInterpreter {
             entry.getValue().getRoot().evaluate(moduleScope);
             SplModule module = new SplModule(entry.getKey(), moduleScope);
 
-            Reference ptr = ge.getMemory().allocateObject(module, moduleScope);
+            Reference ptr = ge.getMemory().allocateObject(module, moduleScope, 0);
 
             ge.addImportedModulePtr(entry.getKey(), ptr);
         }
@@ -121,7 +121,7 @@ public class SplInterpreter {
             final String checkerName = name + "?";
             final Class<? extends NativeObject> clazz = entry.getKey();
             NativeType nt = new NativeType(name, clazz);
-            Reference ntPtr = memory.allocateObject(nt, ge);
+            Reference ntPtr = memory.allocateObject(nt, ge, 0);
             ge.defineConstAndSet(
                     NativeType.shownName(name),
                     ntPtr,
@@ -526,7 +526,8 @@ public class SplInterpreter {
             long processEnd = System.currentTimeMillis();
 
             if (argumentParser.isPrintMem()) {
-                globalEnvironment.getMemory().printMemory();
+                System.out.println("Heap used: " + globalEnvironment.getMemory().getHeapUsed());
+                System.out.println(globalEnvironment.getMemory().memoryViewWithAddress());
             }
             if (argumentParser.isTimer()) {
                 out.printf(

@@ -20,6 +20,7 @@ public class NativeThread extends NativeObject {
     private final Function target;
     private final Reference object;
     private final Environment callingEnv;
+    private ThreadEnvironment threadEnv;
     private final LineFilePos callingLf;
     private final RealThread realThread;
     private int threadId = -1;
@@ -33,6 +34,10 @@ public class NativeThread extends NativeObject {
 
         this.realThread = new RealThread();
         realThread.setDaemon(daemonic);
+    }
+
+    public ThreadEnvironment getThreadEnv() {
+        return threadEnv;
     }
 
     @Accessible
@@ -64,7 +69,7 @@ public class NativeThread extends NativeObject {
         @Override
         public void run() {
             threadId = callingEnv.getMemory().newThread();
-            ThreadEnvironment threadEnv = new ThreadEnvironment(callingEnv, threadId);
+            threadEnv = new ThreadEnvironment(callingEnv, threadId);
             try {
                 target.call(EvaluatedArguments.of(object), threadEnv, callingLf);
                 if (threadEnv.hasException()) {

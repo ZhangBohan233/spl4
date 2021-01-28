@@ -575,7 +575,7 @@ public class SplInvokes extends NativeObject {
 
         NativeInFile nf = NativeInFile.create(fileName);
         if (nf == null) return Reference.NULL;
-        return env.getMemory().allocateObject(nf, env);
+        return env.getMemory().allocateObject(nf, env, env.getThreadId());
     }
 
     @Accessible
@@ -589,7 +589,7 @@ public class SplInvokes extends NativeObject {
 
         NativeOutFile nf = NativeOutFile.create(fileName);
         if (nf == null) return Reference.NULL;
-        return env.getMemory().allocateObject(nf, env);
+        return env.getMemory().allocateObject(nf, env, env.getThreadId());
     }
 
     @Accessible
@@ -623,7 +623,7 @@ public class SplInvokes extends NativeObject {
 
         NativeThread nt = new NativeThread(target, objectPtr, env, daemonic.value, lineFilePos);
 
-        return env.getMemory().allocateObject(nt, env);
+        return env.getMemory().allocateObject(nt, env, env.getThreadId());
     }
 
     @Accessible

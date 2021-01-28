@@ -19,7 +19,7 @@ public abstract class Node {
 
     public final SplElement evaluate(Environment env) {
         // pre
-        env.getMemory().waitGc();
+//        env.getMemory().waitForGc();
         if (env.interrupted()) return Reference.NULL;
         if (env.hasException()) return Undefined.ERROR;
 

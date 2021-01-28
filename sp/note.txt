@@ -1,0 +1,59 @@
+53 Obj[1]
+54 Ref<52>
+57 Method __init__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 31:4.}
+58 Method __str__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 35:4.}
+59 Method __repr__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 39:4.}
+60 Method __add__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 43:4.}
+61 Method __sub__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 50:4.}
+62 Method __mul__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 57:4.}
+63 Method __div__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 64:4.}
+64 Method __mod__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 71:4.}
+65 Method __gt__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 77:4.}
+66 Method __lt__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 81:4.}
+67 Method __eq__: {3 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 85:4.}
+68 Method __ne__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 90:4.}
+69 Method __int__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 94:4.}
+70 Method __char__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 98:4.}
+71 Method __byte__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 102:4.}
+72 Method __float__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 106:4.}
+73 Method __boolean__: {2 lines, defined in Class Wrapper . In file 'lib\lang.sp', at 110:4.}
+75 Obj[2]
+76 Ref<55>
+77 Ref<52>
+129 Obj[2]
+130 Ref<106>
+131 Ref<52>
+253 Method __iter__: {2 lines, defined in Class Iterable . In file 'lib\lang.sp', at 326:4.}
+254 Method __init__: {0 lines, defined in Class Iterable . In 'Interpreter'}
+256 Obj[2]
+257 Ref<228>
+258 Ref<52>
+260 Method size: {2 lines, defined in Class Collection . In file 'lib\lang.sp', at 335:4.}
+261 Method __init__: {0 lines, defined in Class Collection . In 'Interpreter'}
+263 Obj[2]
+264 Ref<230>
+265 Ref<52>
+342 Method __getItem__: {2 lines, defined in Class Dict . In file 'lib\lang.sp', at 645:4.}
+343 Method __setItem__: {2 lines, defined in Class Dict . In file 'lib\lang.sp', at 649:4.}
+344 Method __repr__: {2 lines, defined in Class Dict . In file 'lib\lang.sp', at 653:4.}
+345 Method __str__: {2 lines, defined in Class Dict . In file 'lib\lang.sp', at 663:4.}
+346 Method contains: {2 lines, defined in Class Dict . In file 'lib\lang.sp', at 667:4.}
+347 Method put: {2 lines, defined in Class Dict . In file 'lib\lang.sp', at 671:4.}
+348 Method get: {2 lines, defined in Class Dict . In file 'lib\lang.sp', at 675:4.}
+349 Method size: {2 lines, defined in Class Dict . In file 'lib\lang.sp', at 679:4.}
+350 Method __init__: {0 lines, defined in Class Dict . In 'Interpreter'}
+352 Obj[4]
+353 Ref<307>
+354 Ref<228>
+355 Ref<230>
+356 Ref<52>
+527 Obj[2]
+528 Ref<477>
+529 Ref<52>
+536 Obj[3]
+537 Ref<483>
+538 Ref<477>
+539 Ref<52>
+
+
+531 532 533 534
