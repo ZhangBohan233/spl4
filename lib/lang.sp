@@ -329,7 +329,7 @@ class Iterable<T> {
 }
 
 /*
- * Extending this class indicates that the child class has collective elements.
+ Extending this class indicates that the child class has collective elements.
  */
 class Collection {
     fn size() -> int {
@@ -473,7 +473,7 @@ class List<T>(Iterable<T>, Collection) {
     }
 
     /*
-     * Usage: toArray(), toArray(int), toArray(String)
+     Usage: toArray(), toArray(int), toArray(String)
      */
     fn toArray(eleType=Obj) {
         eleProc := cond {
@@ -770,9 +770,9 @@ class HashDict<K, V>(Dict<K, V>) {
     }
 
     /*
-     * Adds a key and its corresponding value to this dict.
+     Adds a key and its corresponding value to this dict.
      *
-     * Do not do this while loop through this dict.
+     Do not do this while loop through this dict.
      */
     fn put(key: K, value: V) {
         hashCode := hash(key, array.length);
@@ -820,9 +820,9 @@ class HashDict<K, V>(Dict<K, V>) {
     }
 
     /*
-     * Removes a key from this dict.
+     Removes a key from this dict.
      *
-     * Do not do this while loop through this dict.
+     Do not do this while loop through this dict.
      */
     fn remove(key: K) -> V or null? {
         hashCode := hash(key, array.length);
@@ -857,7 +857,7 @@ class HashDict<K, V>(Dict<K, V>) {
     }
 
     /*
-     * Returns the actual index in array.
+     Returns the actual index in array.
      */
     fn hash(key, capacity: int?) -> int? {
         var code;
@@ -920,14 +920,17 @@ class TreeEntry<K, V> {
     }
 }
 
+/*
+ Value container of tree dict, used to contain the returning value.
+ */
 class TDValueContainer {
     var node = null;
 }
 
 /*
- * An implementation of binary search tree.
+ An implementation of binary search tree.
  *
- * This is an AVL implementation
+ This is an AVL implementation.
  */
 class TreeDict<K, V>(Dict<K, V>) {
     var root = null;
@@ -1049,7 +1052,7 @@ class TreeDict<K, V>(Dict<K, V>) {
     }
 
     /*
-     * Insert and returns the new root at this level.
+     Insert and returns the new root at this level.
      */
     fn _insert(key, value, node) {
         if node is null {
@@ -1616,7 +1619,7 @@ class InputStream {
     }
 
     /*
-     * Reads one byte from the stream,
+     Reads one byte from the stream,
      */
     fn readOne() -> int? {
         throw new NotImplementedError();
@@ -1628,14 +1631,14 @@ class OutputStream {
     }
 
     /*
-     * Writes one byte to the stream.
+     Writes one byte to the stream.
      */
     fn writeOne(b: byte?) {
         throw new NotImplementedError();
     }
 
     /*
-     * Writes all buffered data to the actual stream.
+     Writes all buffered data to the actual stream.
      */
     fn flush() {
         throw new NotImplementedError();
@@ -1655,7 +1658,7 @@ class PrintStream(OutputStream) {
 }
 
 /*
- * Native wrapper class of stdout
+ Native wrapper class of stdout
  */
 class NativeOutStream(PrintStream) {
     fn print(s, line: boolean? = true) {
@@ -1668,7 +1671,7 @@ class NativeOutStream(PrintStream) {
 }
 
 /*
- * Native wrapper class of stderr
+ Native wrapper class of stderr
  */
 class NativeErrStream(PrintStream) {
     fn print(s, line: boolean? = true) {
@@ -1700,7 +1703,7 @@ class StreamReader {
     }
 
     /*
-     * Reads a line from the text file, or null if reaches the end of the file.
+     Reads a line from the text file, or null if reaches the end of the file.
      */
     fn readLine(omitEol: boolean? = false) -> String? or null? {
         notFound := true;
@@ -1734,7 +1737,7 @@ class StreamReader {
     }
 
     /*
-     * Reads the whole file as one string.
+     Reads the whole file as one string.
      */
     fn read() -> String? {
         lst := [];
@@ -1753,7 +1756,7 @@ class StreamReader {
 }
 
 /*
- * Native wrapper class of stdin
+ Native wrapper class of stdin
  */
 class NativeReader(Reader) {
     fn readLine(omitEol: boolean? = false) {
@@ -1782,12 +1785,12 @@ fn byte??(x) {
 }
 
 /*
- * This function returns a boolean function that:
- *     It returns true if and only if the argument is an array and:
- *         1. The array has element type that is exactly 'eleType', or
- *         2. The array is a generic array and has the generic of a subclass of 'eleType'
- *
- * For example, `array?(Object?)(new String?[2])` returns true because String extends Object
+ This function returns a boolean function that:
+     It returns true if and only if the argument is an array and:
+         1. The array has element type that is exactly 'eleType', or
+         2. The array is a generic array and has the generic of a subclass of 'eleType'
+
+ For example, `array?(Object?)(new String?[2])` returns true because String extends Object
  */
 fn array?(eleType) {
     return fn arrayType(x) {
@@ -1935,7 +1938,7 @@ fn void(x) {
 }
 
 /*
- * Wraps any primitive to wrapper. Leave any referenced value unchanged.
+ Wraps any primitive to wrapper. Leave any referenced value unchanged.
  */
 fn wrap(value) {
     cond {
@@ -1964,7 +1967,7 @@ fn wrapNum(num) {
 }
 
 /*
- * Unwrap wrappers if it is, or returns the value itself.
+ Unwrap wrappers if it is, or returns the value itself.
  */
 fn unwrap(value) {
     if Wrapper?(value) {
@@ -1974,7 +1977,7 @@ fn unwrap(value) {
 }
 
 /*
- * Unwrap wrappers if it is, or throw error if it is not.
+ Unwrap wrappers if it is, or throw error if it is not.
  */
 fn unwrapNum(num) {
     cond {
@@ -2045,7 +2048,7 @@ fn listTemplates(clazz: Class? or Object?) -> array?(String?) {
 }
 
 /*
- * Usage: genericOf(GenClass?)(object);
+ Usage: genericOf(GenClass?)(object);
  */
 fn genericOf(clazz: Callable? or Class?, *generics: Callable?) {
     if CheckerFunction?(clazz) {

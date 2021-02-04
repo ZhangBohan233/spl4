@@ -1,3 +1,9 @@
+===== Version 4088 =====
+2021/02/05
+
+* Optimized binary operator assignment
+* Changed standard format of documentation
+
 ===== Version 4087 =====
 2021/01/28
 

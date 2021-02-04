@@ -220,30 +220,6 @@ public class Memory {
         }
     }
 
-    /**
-     * This class creates a wrapper, which is used as the key in hashmap.
-     * <p>
-     * This class compares two references by their memory location in java. The only way its {@code equals} returns
-     * {@code true} is two references are one.
-     */
-    private static class ReferenceWrapper {
-        private final Reference reference;
-
-        ReferenceWrapper(Reference reference) {
-            this.reference = reference;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            return getClass() == o.getClass() && reference == ((ReferenceWrapper) o).reference;
-        }
-
-        @Override
-        public int hashCode() {
-            return reference != null ? reference.hashCode() : 0;
-        }
-    }
-
     public static class Options {
         private final boolean checkContract;
         private final boolean checkAssert;
@@ -419,7 +395,7 @@ public class Memory {
                     heap[newAddr] = heap[p];
                     if (obj instanceof SplArray) {
                         SplArray array = (SplArray) obj;
-                        // avoid using System.arraycopy() because this may overlap
+                        // avoid using System.arraycopy() because that may overlap
                         for (int i = 0; i < array.length.value; i++) {
                             heap[curAddr++] = heap[++p];
                         }
