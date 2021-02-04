@@ -32,7 +32,10 @@ public class BlockStmt extends Statement {
         builder.append("\n").append(" ".repeat(Math.max(0, Node.spaceCount))).append("{");
         Node.spaceCount += 2;
         for (Line line : children) {
-            builder.append("\n").append(" ".repeat(Math.max(0, Node.spaceCount))).append(line.toString()).append(';');
+            builder.append("\n")
+                    .append(" ".repeat(Math.max(0, Node.spaceCount)))
+                    .append(line.toString())
+                    .append(';');
         }
         Node.spaceCount -= 2;
         builder.append("\n").append(" ".repeat(Math.max(0, Node.spaceCount))).append("}");
