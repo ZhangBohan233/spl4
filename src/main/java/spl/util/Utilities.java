@@ -242,6 +242,7 @@ public class Utilities {
 
     public static Reference primitiveToWrapper(SplElement prim, Environment env, LineFilePos lineFile) {
         String wrapperName = Constants.WRAPPERS.get(prim.type());
+        if (wrapperName == null) return Reference.NULL;
         Instance.InstanceAndPtr iap = Instance.createInstanceWithInitCall(
                 wrapperName,
                 EvaluatedArguments.of(prim),
