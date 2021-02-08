@@ -192,6 +192,20 @@ class Byte(Wrapper) {
     }
 }
 
+/*
+Superclass of all annotations.
+*
+Any child class extends this must have a default constructor that takes 0 arguments.
+*/
+class Annotation {
+}
+
+class Deprecated(Annotation) {
+}
+
+class Override(Annotation) {
+}
+
 class Exception {
     const cause;
     const msg;

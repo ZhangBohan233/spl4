@@ -73,4 +73,10 @@ public class BytesIn extends BufferedInputStream {
         if (b) return Reconstructor.reconstruct(this);
         else return null;
     }
+
+    public <T extends Node> List<T> readOptionalList() throws Exception {
+        boolean b = readBoolean();
+        if (b) return readList();
+        else return null;
+    }
 }

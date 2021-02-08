@@ -85,10 +85,7 @@ public class NewExpr extends UnaryExpr {
         ClassStmt cs = new ClassStmt(
                 ace.getAnonymousName(),
                 List.of(ace.getCall().callObj),
-                null,
                 ace.getBody(),
-                null,
-                false,
                 lineFilePos);
         cs.crossEnvEval(supClassDefEnv, callEnv);
         if (callEnv.hasException()) return Undefined.ERROR;

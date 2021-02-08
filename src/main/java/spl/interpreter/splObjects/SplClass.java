@@ -40,6 +40,8 @@ public class SplClass extends NativeObject implements ClassLike {
     private final boolean isConst;
     private final StringLiteralRef docRef;
     Reference checker;
+    @Accessible
+    Reference __annotations__;
     // mro array used by spl
     @Accessible
     Reference __mro__;
@@ -58,9 +60,12 @@ public class SplClass extends NativeObject implements ClassLike {
      * @param className          name of class
      * @param superclassPointers pointer to direct superclass
      * @param templates          defined template names
+     * @param superclassGenerics generics of superclass
      * @param body               class body
      * @param definitionEnv      environment of definition
      * @param docRef             string literal reference of docstring
+     * @param annArrRef          pointer to annotation array
+     * @param isConst            whether this class cannot be extended
      */
     private SplClass(String className,
                      List<Reference> superclassPointers,
@@ -69,6 +74,7 @@ public class SplClass extends NativeObject implements ClassLike {
                      BlockStmt body,
                      Environment definitionEnv,
                      StringLiteralRef docRef,
+                     Reference annArrRef,
                      boolean isConst) {
         this.className = className;
         this.superclassPointers = superclassPointers;
@@ -76,6 +82,7 @@ public class SplClass extends NativeObject implements ClassLike {
         this.superclassGenerics = superclassGenerics;
         this.definitionEnv = definitionEnv;
         this.docRef = docRef;
+        this.__annotations__ = annArrRef;
         this.isConst = isConst;
 
         evalBody(body, definitionEnv);
@@ -89,6 +96,7 @@ public class SplClass extends NativeObject implements ClassLike {
                                                     BlockStmt body,
                                                     Environment definitionEnv,
                                                     StringLiteralRef docRef,
+                                                    Reference annArrRef,
                                                     boolean isConst,
                                                     LineFilePos lineFilePos) {
         if (superclassGenerics != null) {
@@ -107,7 +115,7 @@ public class SplClass extends NativeObject implements ClassLike {
         }
 
         SplClass clazz = new SplClass(className, superclassPointers, templates, superclassGenerics,
-                body, definitionEnv, docRef, isConst);
+                body, definitionEnv, docRef, annArrRef, isConst);
         if (definitionEnv.hasException()) return Undefined.ERROR;
 
         Reference clazzPtr = definitionEnv.getMemory().allocateObject(clazz, definitionEnv);
@@ -170,6 +178,16 @@ public class SplClass extends NativeObject implements ClassLike {
                     SplClass supClass = memory.get(supPtr);
                     if (supClass == this) return true;
                 }
+            }
+        }
+        return false;
+    }
+
+    public boolean isInstance(SplElement probInstanceEle, Memory memory) {
+        if (probInstanceEle instanceof Reference) {
+            SplObject obj = memory.get((Reference) probInstanceEle);
+            if (obj instanceof Instance) {
+                return isSuperclassOf(((Instance) obj).getClazzPtr(), memory);
             }
         }
         return false;
@@ -392,9 +410,6 @@ public class SplClass extends NativeObject implements ClassLike {
                     new NameNode(Constants.CONSTRUCTOR, LineFilePos.LF_INTERPRETER),
                     new Line(),
                     new BlockStmt(LineFilePos.LF_INTERPRETER),
-                    null,
-                    null,
-                    false,
                     LineFilePos.LF_INTERPRETER);
 
             SplElement cp = fd.evalAsMethod(definitionEnv, classId);
@@ -469,6 +484,14 @@ public class SplClass extends NativeObject implements ClassLike {
         return Bool.boolValueOf(isSuperclassOf(sub, env.getMemory()));
     }
 
+    @Accessible
+    public SplElement __isInstance__(Arguments args, Environment env, LineFilePos lineFilePos) {
+        checkArgCount(args, 1, "Class.__isInstance__", env, lineFilePos);
+
+        SplElement ins = args.getLine().get(0).evaluate(env);
+        return Bool.boolValueOf(isInstance(ins, env.getMemory()));
+    }
+
     @Override
     public SplElement getDynamicAttr(String attrName) {
         return methodPointers.get(attrName);  // nullable
@@ -486,12 +509,13 @@ public class SplClass extends NativeObject implements ClassLike {
 
     @Override
     public List<Reference> listAttrReferences() {
-        List<Reference> refs = new ArrayList<>();
+        List<Reference> refs = super.listAttrReferences();
         refs.addAll(superclassPointers);
         refs.addAll(methodPointers.values());
         refs.addAll(Arrays.asList(mroArray));
         refs.add(checker);
         refs.add(__mro__);
+        refs.add(__annotations__);
         if (classNameRef != null) refs.add(classNameRef);
         return refs;
     }

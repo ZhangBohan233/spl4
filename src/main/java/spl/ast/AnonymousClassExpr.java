@@ -59,9 +59,6 @@ public class AnonymousClassExpr extends Expression {
                 new NameNode(Constants.CONSTRUCTOR, lineFile),
                 new Line(lineFile),
                 initBody,
-                null,
-                null,
-                false,
                 lineFile
         );
 

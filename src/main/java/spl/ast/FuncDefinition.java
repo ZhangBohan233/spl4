@@ -10,6 +10,7 @@ import spl.interpreter.splObjects.SplMethod;
 import spl.util.*;
 
 import java.io.IOException;
+import java.util.List;
 
 public class FuncDefinition extends Expression {
 
@@ -18,6 +19,7 @@ public class FuncDefinition extends Expression {
     private final BlockStmt body;
     private final Line templateLine;  // nullable
     private final StringLiteralRef docRef;  // nullable
+    private final List<AnnotationNode> annotations;  // nullable
     private final boolean isConst;
 
     public FuncDefinition(NameNode name,
@@ -25,6 +27,7 @@ public class FuncDefinition extends Expression {
                           BlockStmt body,
                           Line templateLine,
                           StringLiteralRef docRef,
+                          List<AnnotationNode> annotations,
                           boolean isConst,
                           LineFilePos lineFile) {
         super(lineFile);
@@ -34,7 +37,23 @@ public class FuncDefinition extends Expression {
         this.body = body;
         this.templateLine = templateLine;
         this.docRef = docRef;
+        this.annotations = annotations;
         this.isConst = isConst;
+    }
+
+    public FuncDefinition(NameNode name,
+                          Line parameters,
+                          BlockStmt body,
+                          LineFilePos lineFile) {
+        this(
+                name,
+                parameters,
+                body,
+                null,
+                null,
+                null,
+                false,
+                lineFile);
     }
 
     public static FuncDefinition reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
@@ -48,7 +67,8 @@ public class FuncDefinition extends Expression {
         boolean hasDoc = is.readBoolean();
         StringLiteralRef docRef = null;
         if (hasDoc) docRef = Reconstructor.reconstruct(is);
-        return new FuncDefinition(name, params, body, templateLine, docRef, isConst, lineFilePos);
+        List<AnnotationNode> ann = is.readOptionalList();
+        return new FuncDefinition(name, params, body, templateLine, docRef, ann, isConst, lineFilePos);
     }
 
     @Override
@@ -61,14 +81,17 @@ public class FuncDefinition extends Expression {
         if (templateLine != null) templateLine.save(out);
         out.writeBoolean(docRef != null);
         if (docRef != null) docRef.save(out);
+        out.writeOptional(annotations);
     }
 
     @Override
     protected SplElement internalEval(Environment env) {
         Function.Parameter[] params = SplCallable.evalParams(parameters, env);
         if (env.hasException()) return Undefined.ERROR;
+        Reference annotationArrRef = AnnotationNode.evalAnnotations(annotations, env, lineFile);
+        if (annotationArrRef == null) return Undefined.ERROR;
 
-        Function function = new Function(body, params, env, name.getName(), docRef, getLineFile());
+        Function function = new Function(body, params, env, name.getName(), docRef, annotationArrRef, getLineFile());
         Reference funcPtr = env.getMemory().allocateFunction(function, env);
 
         if (isConst) {
@@ -82,22 +105,26 @@ public class FuncDefinition extends Expression {
     public SplElement evalAsMethod(Environment classDefEnv, int defClassId) {
         Function.Parameter[] oldParams = SplCallable.evalParams(parameters, classDefEnv);
         if (classDefEnv.hasException()) return Undefined.ERROR;
+        Reference annotationArrRef = AnnotationNode.evalAnnotations(annotations, classDefEnv, lineFile);
+        if (annotationArrRef == null) return Undefined.ERROR;
 
         assert oldParams != null;
         Function.Parameter[] params = SplCallable.insertThis(oldParams);
 
-        SplMethod function = new SplMethod(body, params, classDefEnv, name.getName(), docRef, defClassId,
-                getLineFile());
+        SplMethod function = new SplMethod(body, params, classDefEnv, name.getName(), docRef, annotationArrRef,
+                defClassId, getLineFile());
 
         return classDefEnv.getMemory().allocateFunction(function, classDefEnv);
     }
 
     @Override
     public String toString() {
+        String prefix = annotations == null ? "" : (annotations.toString() + " ");
+
         if (name == null)
-            return String.format("fn(%s): %s", parameters, body);
+            return String.format("%sfn(%s): %s", prefix, parameters, body);
         else
-            return String.format("fn %s(%s): %s", name, parameters, body);
+            return String.format("%sfn %s(%s): %s", prefix, name, parameters, body);
     }
 
     @Override

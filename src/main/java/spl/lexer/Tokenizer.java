@@ -1,5 +1,6 @@
 package spl.lexer;
 
+import javafx.fxml.FXML;
 import spl.lexer.tokens.*;
 import spl.lexer.treeList.*;
 import spl.util.LineFilePos;
@@ -48,7 +49,7 @@ public abstract class Tokenizer {
     );
 
     public static final Set<String> OTHERS = Set.of(
-            "=", "->", "<-", ":=", "++", "--", "...", "$"
+            "=", "->", "<-", ":=", "++", "--", "$", "@"
     );
 
     public static final Set<String> EXTRA_IDENTIFIERS = Utilities.mergeSets(
@@ -287,6 +288,8 @@ public abstract class Tokenizer {
                 }
             } else if (StringTypes.isIdentifier(s)) {
                 tokens.add(new IdToken(s, new LineFilePos(lineFile, pos)));
+            } else if (s.equals("@")) {
+                tokens.add(new AnnotationToken(list.get(++i), new LineFilePos(lineFile, pos)));
             } else if (EXTRA_IDENTIFIERS.contains(s)) {
                 tokens.add(new IdToken(s, new LineFilePos(lineFile, pos)));
             }
@@ -347,6 +350,7 @@ public abstract class Tokenizer {
         private static final int ESCAPE = 25;
         private static final int QUESTION = 26;
         private static final int DOLLAR = 27;
+        private static final int AT = 28;
         private static final int UNDEFINED = 0;
 
         private static final int[] SELF_CONCATENATE = {
@@ -418,13 +422,13 @@ public abstract class Tokenizer {
                 case '\\' -> ESCAPE;
                 case '?' -> QUESTION;
                 case '$' -> DOLLAR;
+                case '@' -> AT;
                 default -> UNDEFINED;
             };
         }
     }
 
     public static class StringTypes {
-
         private static boolean isInteger(String s) {
             for (char c : s.toCharArray()) {
                 if (!(Character.isDigit(c) || c == '_')) return false;

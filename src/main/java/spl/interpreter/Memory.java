@@ -345,6 +345,7 @@ public class Memory {
 
         private void markObjectAsUsed(SplObject obj, int objAddr, Reference ref) {
             if (obj == null) return;
+            if (objAddr == 0) return;
             if (refAlreadyAdded(objAddr)) return;
 
             if (ref != null) {

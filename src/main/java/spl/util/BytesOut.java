@@ -45,8 +45,16 @@ public class BytesOut extends BufferedOutputStream {
         }
     }
 
-    public void writeOptional(Node nodeOrNull) throws IOException {
-        writeBoolean(nodeOrNull != null);
-        if (nodeOrNull != null) nodeOrNull.save(this);
+    public <T> void writeOptional(T nodeListNull) throws IOException {
+        writeBoolean(nodeListNull != null);
+        if (nodeListNull != null) {
+            if (nodeListNull instanceof Node) {
+                ((Node) nodeListNull).save(this);
+            } else if (nodeListNull instanceof List) {
+                writeList((List<? extends Node>) nodeListNull);
+            } else {
+                throw new IOException("Not supported type.");
+            }
+        }
     }
 }

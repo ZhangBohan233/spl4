@@ -1,3 +1,10 @@
+===== Version 4089 =====
+2021/02/09
+
+* Annotation system
+* Optimized gc (changed listAttrRefs)
+* Class.isInstance
+
 ===== Version 4088 =====
 2021/02/05
 

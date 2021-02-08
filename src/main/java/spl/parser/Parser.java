@@ -11,7 +11,9 @@ import spl.util.Constants;
 import spl.util.LineFilePos;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Parser {
@@ -297,6 +299,7 @@ public class Parser {
                             case "fn":  // function definition
                                 boolean isConst = varLevel == Declaration.CONST;
                                 DocToken doc = findDoc(index - 1, parent);
+                                List<AnnotationNode> annotations = findAnnotations(index - 1, parent);
                                 StringLiteralRef docRef = null;
                                 if (doc != null) {
                                     docRef = getLitRef(doc.getDoc(), lineFile);
@@ -339,7 +342,7 @@ public class Parser {
                                         lineFile);
 
                                 FuncDefinition def = new FuncDefinition(name, paramBlock, bodyBlock, templateLine,
-                                        docRef, isConst, lineFile);
+                                        docRef, annotations, isConst, lineFile);
                                 builder.addNode(def);
 
                                 if (autoCont != null) {
@@ -401,6 +404,7 @@ public class Parser {
                                 if (doc != null) {
                                     docRef = getLitRef(doc.getDoc(), lineFile);
                                 }
+                                annotations = findAnnotations(index - 1, parent);
 
                                 nameToken = (IdToken) ((AtomicElement) parent.get(index++)).atom;
                                 Element probExtendEle = parent.get(index++);
@@ -430,6 +434,7 @@ public class Parser {
                                         templateLine == null ? null : templateLine.getChildren(),
                                         bodyBlock,
                                         docRef,
+                                        annotations,
                                         isConst,
                                         lineFile);
                                 builder.addNode(classStmt);
@@ -660,7 +665,7 @@ public class Parser {
                     builder.addChar(((CharToken) token).getValue(), lineFile);
                 } else if (token instanceof ByteToken) {
                     builder.addNode(new ByteLiteral(((ByteToken) token).getValue(), lineFile));
-                } else if (token instanceof DocToken) {
+                } else if (token instanceof DocToken || token instanceof AnnotationToken) {
                     // do nothing
                 } else {
                     throw new ParseError("Unexpected token type. ", lineFile);
@@ -772,6 +777,31 @@ public class Parser {
         return new StringLiteralRef(lit, lineFilePos);
     }
 
+    private List<AnnotationNode> findAnnotations(int definedIndex, CollectiveElement block) {
+        List<AnnotationToken> list = new ArrayList<>();
+        int index = definedIndex - 1;
+        while (index >= 0) {
+            Element ele = block.get(index);
+            if (ele instanceof AtomicElement) {
+                Token token = ((AtomicElement) ele).atom;
+                if (token instanceof DocToken) {
+                    index--;
+                    continue;
+                } else if (token instanceof AnnotationToken) {
+                    list.add((AnnotationToken) token);
+                    index--;
+                    continue;
+                }
+            }
+            break;
+        }
+        List<AnnotationNode> res = new ArrayList<>();
+        for (AnnotationToken token : list) {
+            res.add(new AnnotationNode(token.getAnnotation(), token.getLineFile()));
+        }
+        return res;
+    }
+
     private DocToken findDoc(int classFnIndex, CollectiveElement block) {
         int index = classFnIndex - 1;
         while (index >= 0) {
@@ -780,6 +810,9 @@ public class Parser {
                 Token token = ((AtomicElement) ele).atom;
                 if (token instanceof DocToken) {
                     return (DocToken) token;
+                } else if (token instanceof AnnotationToken) {
+                    index--;
+                    continue;
                 }
             }
             break;

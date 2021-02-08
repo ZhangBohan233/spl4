@@ -13,6 +13,8 @@ import spl.util.Constants;
 import spl.util.LineFilePos;
 import spl.util.Utilities;
 
+import java.util.List;
+
 public class SplArray extends NativeObject {
 
     /**
@@ -22,7 +24,7 @@ public class SplArray extends NativeObject {
     public final Int length;
 
     /**
-     * Reference to the element type function
+     * Reference to the element type function, e.g. Obj
      */
     @Accessible
     final Reference type;
@@ -68,6 +70,26 @@ public class SplArray extends NativeObject {
         };
     }
 
+    public static Reference createGenericArray(String genClassName,
+                                               int arrSize,
+                                               Environment env,
+                                               LineFilePos lineFilePos) {
+        Reference type = (Reference) env.get(Constants.OBJ, lineFilePos);
+        SplElement genRaw = env.get(genClassName, lineFilePos);
+        if (genRaw instanceof Reference) {
+            Reference gen = (Reference) genRaw;
+            return createArray(SplElement.POINTER, type, gen, arrSize, env);
+        } else {
+            SplInvokes.throwException(
+                    env,
+                    Constants.TYPE_ERROR,
+                    "Generic must be reference.",
+                    lineFilePos
+            );
+            return null;
+        }
+    }
+
     public static Reference createArray(int eleType,
                                         Reference typeRef,
                                         Reference generics,
@@ -83,7 +105,7 @@ public class SplArray extends NativeObject {
 
     public static Reference createArray(int eleType, int arrSize, Environment env, LineFilePos lineFilePos) {
         SplElement t = codeToType(eleType, env, lineFilePos);
-        if (env.hasException()) return Reference.NULL;
+        if (env.hasException()) return null;
 
         return createArray(eleType, (Reference) t, Reference.NULL, arrSize, env);
     }
@@ -229,7 +251,7 @@ public class SplArray extends NativeObject {
     public static Reference fromJavaArray(String[] array, Environment env, LineFilePos lineFilePos) {
         Reference obj = (Reference) env.get(Constants.OBJ, lineFilePos);
         Reference isString = (Reference) env.get(Constants.STRING_CLASS + "?", lineFilePos);
-        Reference arrayRef = createArray(SplElement.POINTER, obj, isString , array.length, env);
+        Reference arrayRef = createArray(SplElement.POINTER, obj, isString, array.length, env);
         for (int i = 0; i < array.length; i++) {
             SplElement key = StringLiteral.createString(array[i].toCharArray(), env, lineFilePos);
             setItemAtIndex(arrayRef, i, key, env, lineFilePos);
@@ -249,5 +271,13 @@ public class SplArray extends NativeObject {
     @Override
     public String toString() {
         return SplElement.typeToString(elementTypeCode) + "[" + length + "]";
+    }
+
+    @Override
+    public List<Reference> listAttrReferences() {
+        List<Reference> list = super.listAttrReferences();
+        list.add(type);
+        list.add(generics);
+        return list;
     }
 }

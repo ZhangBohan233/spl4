@@ -21,6 +21,7 @@ public class Constants {
     public static final String HASH_DICT = "HashDict";
     public static final String HASH_SET = "HashSet";
     public static final String WRAPPER = "Wrapper";
+    public static final String ANNOTATION = "Annotation";
     public static final String THIS = "this";
     public static final String SUPER = "super";
     public static final String INSTANCE_NAME = "__instance__";

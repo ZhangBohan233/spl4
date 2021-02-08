@@ -14,6 +14,7 @@ import spl.util.Constants;
 import spl.util.LineFilePos;
 import spl.util.Utilities;
 
+import java.util.List;
 import java.util.Map;
 
 public class Function extends UserFunction {
@@ -21,19 +22,25 @@ public class Function extends UserFunction {
     protected final BlockStmt body;
     protected final String definedName;
     private final StringLiteralRef docRef;
+    /**
+     * Pointer to an array of all annotation instances, empty array if none
+     */
+    @Accessible
+    Reference __annotations__;
     private String[] templates;
 
     /**
      * Constructor for regular function.
      */
     public Function(BlockStmt body, SplCallable.Parameter[] params, Environment definitionEnv,
-                    String definedName, StringLiteralRef docRef,  LineFilePos lineFile) {
+                    String definedName, StringLiteralRef docRef, Reference annotationRefs, LineFilePos lineFile) {
 
         super(params, definitionEnv, lineFile);
 
         this.body = body;
         this.definedName = definedName;
         this.docRef = docRef;
+        this.__annotations__ = annotationRefs;
     }
 
     public Node getBody() {
@@ -222,6 +229,13 @@ public class Function extends UserFunction {
     @Override
     public String getName() {
         return definedName;
+    }
+
+    @Override
+    public List<Reference> listAttrReferences() {
+        List<Reference> sup = super.listAttrReferences();
+        sup.add(__annotations__);
+        return sup;
     }
 
     @Accessible

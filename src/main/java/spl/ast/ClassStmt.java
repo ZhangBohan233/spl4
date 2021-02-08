@@ -20,22 +20,26 @@ public class ClassStmt extends Expression {
     private final BlockStmt body;
     private final StringLiteralRef docRef;
     private final List<Node> templates;  // nullable
-    private List<Node> superclassesNodes;  // nullable
+    private final List<AnnotationNode> annotations;  // nullable
     private final boolean isConst;
+    private List<Node> superclassesNodes;  // nullable
 
     /**
-     * @param className  name of class
-     * @param extensions extending node list, null if not specified.
-     * @param templates  template node list, null if not specified
-     * @param body       body block
-     * @param docRef     string literal reference of docstring
-     * @param lineFile   line file
+     * @param className   name of class
+     * @param extensions  extending node list, null if not specified.
+     * @param templates   template node list, null if not specified
+     * @param body        body block
+     * @param docRef      string literal reference of docstring
+     * @param annotations list of annotations
+     * @param isConst     whether this class cannot be extended
+     * @param lineFile    line file
      */
     public ClassStmt(String className,
                      List<Node> extensions,
                      List<Node> templates,
                      BlockStmt body,
                      StringLiteralRef docRef,
+                     List<AnnotationNode> annotations,
                      boolean isConst,
                      LineFilePos lineFile) {
         super(lineFile);
@@ -45,7 +49,15 @@ public class ClassStmt extends Expression {
         this.templates = templates;
         this.body = body;
         this.docRef = docRef;
+        this.annotations = annotations;
         this.isConst = isConst;
+    }
+
+    public ClassStmt(String className,
+                     List<Node> extensions,
+                     BlockStmt body,
+                     LineFilePos lineFilePos) {
+        this(className, extensions, null, body, null, null, false, lineFilePos);
     }
 
     public static ClassStmt reconstruct(BytesIn is, LineFilePos lineFilePos) throws Exception {
@@ -61,7 +73,8 @@ public class ClassStmt extends Expression {
         boolean hasDoc = is.readBoolean();
         StringLiteralRef docRef = null;
         if (hasDoc) docRef = Reconstructor.reconstruct(is);
-        return new ClassStmt(name, superclassNodes, templates, body, docRef, isConst, lineFilePos);
+        List<AnnotationNode> annotationNodes = is.readOptionalList();
+        return new ClassStmt(name, superclassNodes, templates, body, docRef, annotationNodes, isConst, lineFilePos);
     }
 
     @Override
@@ -75,6 +88,7 @@ public class ClassStmt extends Expression {
         if (templates != null) out.writeList(templates);
         out.writeBoolean(docRef != null);
         if (docRef != null) docRef.save(out);
+        out.writeOptional(annotations);
     }
 
     private void validateExtending() {
@@ -87,7 +101,7 @@ public class ClassStmt extends Expression {
     }
 
     @Override
-    protected SplElement internalEval(Environment env) { ;
+    protected SplElement internalEval(Environment env) {
         return crossEnvEval(env, env);
     }
 
@@ -111,9 +125,12 @@ public class ClassStmt extends Expression {
             if (callingEnv.hasException()) return Undefined.ERROR;
         }
 
+        Reference annotationArrRef = AnnotationNode.evalAnnotations(annotations, callingEnv, lineFile);
+        if (annotationArrRef == null) return Undefined.ERROR;
+
         SplElement clazzPtr =
                 SplClass.createClassAndAllocate(className, superclassesPointers, templates, superclassGenerics,
-                        body, callingEnv, docRef, isConst, lineFile);
+                        body, callingEnv, docRef, annotationArrRef, isConst, lineFile);
         if (clazzPtr == Undefined.ERROR) return Undefined.ERROR;  // a quicker way to check env.hasException()
 
         callingEnv.defineVarAndSet(className, clazzPtr, getLineFile());
