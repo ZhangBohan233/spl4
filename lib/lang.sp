@@ -216,6 +216,7 @@ class Exception {
         this.msg = msg if msg is not null else "";
     }
 
+    @Override
     fn __str__() {
         return "Exception " + msg;
     }
@@ -361,10 +362,12 @@ class ArrayIterator(Iterator) {
         this.endIndex = array.length if endIndex is null else endIndex;
     }
 
+    @Override
     fn __hasNext__() {
         return index < endIndex;
     }
 
+    @Override
     fn __next__() {
         return array[index++];
     }
@@ -381,6 +384,7 @@ class RangeIterator(Iterator<int?>) {
         this.step = step;
     }
 
+    @Override
     fn __hasNext__() {
         if step >= 0 {
             return current < end;
@@ -389,6 +393,7 @@ class RangeIterator(Iterator<int?>) {
         }
     }
 
+    @Override
     fn __next__() {
         val := current;
         current += step;
@@ -417,10 +422,12 @@ class List<T>(Iterable<T>, Collection) {
         return set(index, value);
     }
 
+    @Override
     fn __iter__() {
         return new ArrayIterator(array, _size);
     }
 
+    @Override
     fn __repr__() {
         return "[" + strJoin(", ",
                              this,
@@ -430,6 +437,7 @@ class List<T>(Iterable<T>, Collection) {
                              }) + "]";
     }
 
+    @Override
     fn __str__() {
         return "[" + strJoin(", ", this, repr) + "]";
     }
@@ -470,6 +478,7 @@ class List<T>(Iterable<T>, Collection) {
         array[index] = wrapper;
     }
 
+    @Override
     fn size() {
         return _size;
     }
@@ -552,10 +561,12 @@ class LinkedListIterator<T>(Iterator<T>) {
         this.node = head;
     }
 
+    @Override
     fn __hasNext__() {
         return node is not null;
     }
 
+    @Override
     fn __next__() -> T {
         rtn := node;
         node = node.next;
@@ -571,10 +582,12 @@ class LinkedList<T>(Iterable<T>, Collection) {
     fn __init__() {
     }
 
+    @Override
     fn __iter__() {
         return new LinkedListIterator<T>(head);
     }
 
+    @Override
     fn __repr__() {
         return "[" + strJoin(", ",
                              this,
@@ -584,6 +597,7 @@ class LinkedList<T>(Iterable<T>, Collection) {
                              }) + "]";
     }
 
+    @Override
     fn __str__() {
         return "[" + strJoin(", ", this, repr) + "]";
     }
@@ -650,6 +664,7 @@ class LinkedList<T>(Iterable<T>, Collection) {
         return last.value;
     }
 
+    @Override
     fn size() {
         return _size;
     }
@@ -664,6 +679,7 @@ class Dict<K, V>(Iterable<K>, Collection) {
         put(key, value);
     }
 
+    @Override
     fn __repr__() {
         return "{" + strJoin(", ",
                              this,
@@ -674,6 +690,7 @@ class Dict<K, V>(Iterable<K>, Collection) {
                                  }) + "}";
     }
 
+    @Override
     fn __str__() {
         return "{" + strJoin(", ", this, lambda k -> repr(k) + "=" + repr(get(k))) + "}";
     }
@@ -690,6 +707,7 @@ class Dict<K, V>(Iterable<K>, Collection) {
         throw new NotImplementedError();
     }
 
+    @Override
     fn size() {
         throw new NotImplementedError();
     }
@@ -706,6 +724,7 @@ class NaiveDict<K, V>(Dict<K, V>) {
         this.length = keys.length;
     }
 
+    @Override
     fn __iter__() {
         return new ArrayIterator(keys);
     }
@@ -723,6 +742,7 @@ class NaiveDict<K, V>(Dict<K, V>) {
         throw new MutationError("NaiveDict is immutable.");
     }
 
+    @Override
     fn size() {
         return length;
     }
@@ -738,10 +758,12 @@ class HashDictIterator<K>(Iterator<K>) {
         this.dict = dict;
     }
 
+    @Override
     fn __hasNext__() -> boolean? {
         return looped < dict.size();
     }
 
+    @Override
     fn __next__() -> T {
         if node is null {
             while index < dict.array.length {
@@ -779,15 +801,16 @@ class HashDict<K, V>(Dict<K, V>) {
         this.array = new HashEntry?[initCap];
     }
 
+    @Override
     fn __iter__() {
         return new HashDictIterator<K>(this);
     }
 
     /*
-     Adds a key and its corresponding value to this dict.
-     *
-     Do not do this while loop through this dict.
-     */
+    Adds a key and its corresponding value to this dict.
+    *
+    Do not do this while loop through this dict.
+    */
     fn put(key: K, value: V) {
         hashCode := hash(key, array.length);
         entry := array[hashCode];
@@ -834,10 +857,10 @@ class HashDict<K, V>(Dict<K, V>) {
     }
 
     /*
-     Removes a key from this dict.
-     *
-     Do not do this while loop through this dict.
-     */
+    Removes a key from this dict.
+    *
+    Do not do this while loop through this dict.
+    */
     fn remove(key: K) -> V or null? {
         hashCode := hash(key, array.length);
         entry := array[hashCode];
@@ -866,6 +889,7 @@ class HashDict<K, V>(Dict<K, V>) {
         return unwrap(rtn);
     }
 
+    @Override
     fn size() {
         return eleCount;
     }
@@ -942,10 +966,10 @@ class TDValueContainer {
 }
 
 /*
- An implementation of binary search tree.
- *
- This is an AVL implementation.
- */
+An implementation of binary search tree.
+*
+This is an AVL implementation.
+*/
 class TreeDict<K, V>(Dict<K, V>) {
     var root = null;
     var _size = 0;
@@ -953,6 +977,7 @@ class TreeDict<K, V>(Dict<K, V>) {
     fn __init__() {
     }
 
+    @Override
     fn __iter__() {
         return linearize().__iter__();
     }
@@ -994,6 +1019,7 @@ class TreeDict<K, V>(Dict<K, V>) {
         return container.node.value;
     }
 
+    @Override
     fn size() {
         return _size;
     }
@@ -1066,8 +1092,8 @@ class TreeDict<K, V>(Dict<K, V>) {
     }
 
     /*
-     Insert and returns the new root at this level.
-     */
+    Insert and returns the new root at this level.
+    */
     fn _insert(key, value, node) {
         if node is null {
             _size++;
@@ -1224,6 +1250,7 @@ class TreeDict<K, V>(Dict<K, V>) {
 }
 
 class Set<T>(Iterable<T>, Collection) {
+    @Override
     fn __repr__() {
         return "{" + strJoin(", ",
                              this,
@@ -1233,6 +1260,7 @@ class Set<T>(Iterable<T>, Collection) {
                              }) + "}";
     }
 
+    @Override
     fn __str__() {
         return "{" + strJoin(", ", this, repr) + "}";
     }
@@ -1258,22 +1286,27 @@ class HashSet<T>(Set<T>) {
         dict = new HashDict<T, Object?>(initCap, loadFactor);
     }
 
+    @Override
     fn __iter__() {
         return dict.__iter__();
     }
 
+    @Override
     fn contains(key: K) -> boolean? {
         return dict.contains(key);
     }
 
+    @Override
     fn put(item: T) {
         dict.put(item, present);
     }
 
+    @Override
     fn remove(item: T) -> T or null? {
         return dict.remove(item);
     }
 
+    @Override
     fn size() {
         return dict.size();
     }
@@ -1287,22 +1320,27 @@ class TreeSet<T>(Set<T>) {
         dict = new TreeDict<T, Object?>();
     }
 
+    @Override
     fn __iter__() {
         return dict.__iter__();
     }
 
+    @Override
     fn contains(key: K) -> boolean? {
         return dict.contains(key);
     }
 
+    @Override
     fn put(item: T) {
         dict.put(item, present);
     }
 
+    @Override
     fn remove(item: T) -> T or null? {
         return dict.remove(item);
     }
 
+    @Override
     fn size() {
         return dict.size();
     }
@@ -1633,8 +1671,8 @@ class InputStream {
     }
 
     /*
-     Reads one byte from the stream,
-     */
+    Reads one byte from the stream,
+    */
     fn readOne() -> int? {
         throw new NotImplementedError();
     }
@@ -1645,15 +1683,15 @@ class OutputStream {
     }
 
     /*
-     Writes one byte to the stream.
-     */
+    Writes one byte to the stream.
+    */
     fn writeOne(b: byte?) {
         throw new NotImplementedError();
     }
 
     /*
-     Writes all buffered data to the actual stream.
-     */
+    Writes all buffered data to the actual stream.
+    */
     fn flush() {
         throw new NotImplementedError();
     }
@@ -1664,17 +1702,20 @@ class PrintStream(OutputStream) {
         throw new NotImplementedError();
     }
 
+    @Override
     fn flush() {
     }
 
+    @Override
     fn writeOne(b: byte?) {
     }
 }
 
 /*
- Native wrapper class of stdout
- */
+Native wrapper class of stdout
+*/
 class NativeOutStream(PrintStream) {
+    @Override
     fn print(s, line: boolean? = true) {
         if line {
             Invokes.println(s);
@@ -1685,9 +1726,10 @@ class NativeOutStream(PrintStream) {
 }
 
 /*
- Native wrapper class of stderr
- */
+Native wrapper class of stderr
+*/
 class NativeErrStream(PrintStream) {
+    @Override
     fn print(s, line: boolean? = true) {
         if line {
             Invokes.printlnErr(s);
@@ -1702,6 +1744,7 @@ class Reader {
         throw new NotImplementedError();
     }
 
+    @Override
     fn close() {
     }
 }
@@ -1717,8 +1760,9 @@ class StreamReader {
     }
 
     /*
-     Reads a line from the text file, or null if reaches the end of the file.
-     */
+    Reads a line from the text file, or null if reaches the end of the file.
+    */
+    @Override
     fn readLine(omitEol: boolean? = false) -> String? or null? {
         notFound := true;
         res := [];
@@ -1746,13 +1790,14 @@ class StreamReader {
         return Invokes.bytesToString(arr) if arr.length > 0 else null;
     }
 
+    @Override
     fn close() {
         fis.close();
     }
 
     /*
-     Reads the whole file as one string.
-     */
+    Reads the whole file as one string.
+    */
     fn read() -> String? {
         lst := [];
         var s;
@@ -1770,9 +1815,10 @@ class StreamReader {
 }
 
 /*
- Native wrapper class of stdin
- */
+Native wrapper class of stdin
+*/
 class NativeReader(Reader) {
+    @Override
     fn readLine(omitEol: boolean? = false) {
         return Invokes.input();
     }
@@ -1799,13 +1845,13 @@ fn byte??(x) {
 }
 
 /*
- This function returns a boolean function that:
-     It returns true if and only if the argument is an array and:
-         1. The array has element type that is exactly 'eleType', or
-         2. The array is a generic array and has the generic of a subclass of 'eleType'
-
- For example, `array?(Object?)(new String?[2])` returns true because String extends Object
- */
+This function returns a boolean function that:
+    It returns true if and only if the argument is an array and:
+        1. The array has element type that is exactly 'eleType', or
+        2. The array is a generic array and has the generic of a subclass of 'eleType'
+*
+For example, `array?(Object?)(new String?[2])` returns true because String extends Object
+*/
 fn array?(eleType) {
     return fn arrayType(x) {
         if Array?(x) {
@@ -1952,8 +1998,8 @@ fn void(x) {
 }
 
 /*
- Wraps any primitive to wrapper. Leave any referenced value unchanged.
- */
+Wraps any primitive to wrapper. Leave any referenced value unchanged.
+*/
 fn wrap(value) {
     cond {
         case int?(value) {
@@ -1991,8 +2037,8 @@ fn unwrap(value) {
 }
 
 /*
- Unwrap wrappers if it is, or throw error if it is not.
- */
+Unwrap wrappers if it is, or throw error if it is not.
+*/
 fn unwrapNum(num) {
     cond {
         case Wrapper?(num) {
@@ -2062,8 +2108,8 @@ fn listTemplates(clazz: Class? or Object?) -> array?(String?) {
 }
 
 /*
- Usage: genericOf(GenClass?)(object);
- */
+Usage: genericOf(GenClass?)(object);
+*/
 fn genericOf(clazz: Callable? or Class?, *generics: Callable?) {
     if CheckerFunction?(clazz) {
         return genericOf(clazz.__class__, *generics);
